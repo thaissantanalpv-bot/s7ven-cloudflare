@@ -1606,14 +1606,16 @@ export const PRODUCTS: Product[] = [
 // "Sabores: A, B, C" e "Cores: A, B" viram opções selecionáveis no catálogo
 for (const p of PRODUCTS) {
   const m = /^(Sabores|Cores):\s*(.+)$/i.exec(p.description.trim());
-  if (!m) continue;
-  const list = m[2]
+  const label = m[1] ?? "";
+  const raw = m[2] ?? "";
+  if (!raw) continue;
+  const list = raw
     .split(",")
     .map((s) => s.trim().replace(/\.+$/, ""))
     .filter(Boolean);
   if (!list.length) continue;
   p.options = list;
-  p.optionLabel = m[1].toLowerCase() === "sabores" ? "Sabor" : "Cor";
+  p.optionLabel = label.toLowerCase() === "sabores" ? "Sabor" : "Cor";
 }
 
 export const PAYMENT_METHODS = ["Pix", "Cartão de crédito", "Cartão de débito", "Dinheiro"];
