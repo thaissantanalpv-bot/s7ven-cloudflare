@@ -8,7 +8,7 @@ export type Product = {
 };
 
 // Número do WhatsApp da loja (somente dígitos, com DDI + DDD)
-export const WHATSAPP_NUMBER = "5511999999999";
+export const WHATSAPP_NUMBER = "5518988244263";
 export const STORE_NAME = "S7VEN Lounge e Tabacaria";
 
 export const CATEGORIES = ["Todos", "Bebidas", "Cases", "Charuto", "Fluido", "Headshop", "Isqueiros/Maçarico", "Juice", "Narguiles", "Palheiros", "Piteiras", "Pod Descartável", "Sedas", "Tabaco", "Tereré", "Tesoura", "Narguiles > Abafadores", "Narguiles > Alumínio", "Narguiles > Caixa de Carvão", "Narguiles > COMBOS DE ESSÊNCIAS", "Narguiles > Essências", "Narguiles > Piteira Para Narguile", "Narguiles > Rosh", "Narguiles > Vasos"];
