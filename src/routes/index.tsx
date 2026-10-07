@@ -8,6 +8,7 @@ import {
   WHATSAPP_NUMBER,
   STORE_NAME,
   brl,
+  type Product,
 } from "@/lib/products";
 
 export const Route = createFileRoute("/")({
@@ -25,7 +26,12 @@ export const Route = createFileRoute("/")({
 });
 
 type Cart = Record<string, number>;
+type Line = { product: Product; key: string; qty: number; option: string };
+
 const KEY = "catalogo-carrinho";
+const SEP = "::";
+const OTHER = "__outro__";
+const keyOf = (id: string, opt?: string) => (opt ? `${id}${SEP}${opt}` : id);
 
 const orderSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome").max(80),
@@ -43,6 +49,8 @@ function Catalog() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", address: "", payment: "", change: "", notes: "" });
   const [error, setError] = useState("");
+  const [sel, setSel] = useState<Record<string, string>>({});
+  const [typed, setTyped] = useState<Record<string, string>>({});
 
   useEffect(() => {
     try {
@@ -69,16 +77,26 @@ function Catalog() {
     );
   }, [query, cat]);
 
-  const items = PRODUCTS.filter((p) => cart[p.id]).map((p) => ({ ...p, qty: cart[p.id] ?? 0 }));
+  const items: Line[] = useMemo(
+    () =>
+      Object.entries(cart)
+        .map(([key, qty]) => {
+          const [id, opt] = key.split(SEP);
+          const product = PRODUCTS.find((p) => p.id === id);
+          return product && qty > 0 ? { product, key, qty, option: opt ?? "" } : null;
+        })
+        .filter((l): l is Line => l !== null),
+    [cart],
+  );
   const count = items.reduce((s, i) => s + i.qty, 0);
-  const total = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const total = items.reduce((s, i) => s + i.qty * i.product.price, 0);
 
-  const change = (id: string, d: number) =>
+  const change = (key: string, d: number) =>
     setCart((c) => {
-      const n = Math.max(0, (c[id] || 0) + d);
+      const n = Math.max(0, (c[key] || 0) + d);
       const next = { ...c };
-      if (n === 0) delete next[id];
-      else next[id] = n;
+      if (n === 0) delete next[key];
+      else next[key] = n;
       return next;
     });
 
@@ -91,7 +109,10 @@ function Catalog() {
     const lines = [
       `*Novo pedido — ${STORE_NAME}*`,
       "",
-      ...items.map((i) => `${i.qty}x ${i.name} — ${brl(i.qty * i.price)}`),
+      ...items.map(
+        (i) =>
+          `${i.qty}x ${i.product.name}${i.option ? ` (${i.product.optionLabel}: ${i.option})` : ""} — ${brl(i.qty * i.product.price)}`,
+      ),
       "",
       `*Total: ${brl(total)}*`,
       "",
@@ -151,33 +172,16 @@ function Catalog() {
           <p className="col-span-full py-16 text-center text-muted-foreground">Nenhum produto encontrado.</p>
         )}
         {filtered.map((p) => (
-          <article key={p.id} className="flex gap-4 rounded-2xl border bg-card p-4 shadow-soft sm:flex-col">
-            <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-card text-5xl sm:h-48 sm:w-full sm:text-6xl">
-              {p.image ? (
-                <img src={p.image} alt={p.name} loading="lazy" className="h-full w-full object-contain" />
-              ) : (
-                p.emoji
-              )}
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{p.category}</span>
-              <h2 className="font-display text-lg font-semibold leading-tight">{p.name}</h2>
-              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
-              <div className="mt-auto flex items-center justify-between pt-3">
-                <span className="font-semibold text-primary">{brl(p.price)}</span>
-                {cart[p.id] ? (
-                  <Qty qty={cart[p.id] ?? 0} onMinus={() => change(p.id, -1)} onPlus={() => change(p.id, 1)} />
-                ) : (
-                  <button
-                    onClick={() => change(p.id, 1)}
-                    className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground"
-                  >
-                    Adicionar
-                  </button>
-                )}
-              </div>
-            </div>
-          </article>
+          <ProductCard
+            key={p.id}
+            p={p}
+            cart={cart}
+            sel={sel}
+            typed={typed}
+            onSel={(id, v) => setSel((s) => ({ ...s, [id]: v }))}
+            onTyped={(id, v) => setTyped((s) => ({ ...s, [id]: v }))}
+            onChange={change}
+          />
         ))}
       </main>
 
@@ -207,17 +211,22 @@ function Catalog() {
               ) : (
                 <ul className="space-y-3">
                   {items.map((i) => (
-                    <li key={i.id} className="flex items-center gap-3">
-                      {i.image ? (
-                        <img src={i.image} alt={i.name} className="h-12 w-12 shrink-0 rounded-lg object-contain" />
+                    <li key={i.key} className="flex items-center gap-3">
+                      {i.product.image ? (
+                        <img src={i.product.image} alt={i.product.name} className="h-12 w-12 shrink-0 rounded-lg object-contain" />
                       ) : (
-                        <span className="text-3xl">{i.emoji}</span>
+                        <span className="text-3xl">{i.product.emoji}</span>
                       )}
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{i.name}</p>
-                        <p className="text-xs text-muted-foreground">{brl(i.price)} · subtotal {brl(i.price * i.qty)}</p>
+                        <p className="truncate text-sm font-medium">{i.product.name}</p>
+                        {i.option && (
+                          <p className="truncate text-xs font-medium text-primary">
+                            {i.product.optionLabel}: {i.option}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">{brl(i.product.price)} · subtotal {brl(i.product.price * i.qty)}</p>
                       </div>
-                      <Qty qty={i.qty} onMinus={() => change(i.id, -1)} onPlus={() => change(i.id, 1)} />
+                      <Qty qty={i.qty} onMinus={() => change(i.key, -1)} onPlus={() => change(i.key, 1)} />
                     </li>
                   ))}
                 </ul>
@@ -268,6 +277,109 @@ function Catalog() {
         </div>
       )}
     </div>
+  );
+}
+
+function ProductCard({
+  p,
+  cart,
+  sel,
+  typed,
+  onSel,
+  onTyped,
+  onChange,
+}: {
+  p: Product;
+  cart: Cart;
+  sel: Record<string, string>;
+  typed: Record<string, string>;
+  onSel: (id: string, v: string) => void;
+  onTyped: (id: string, v: string) => void;
+  onChange: (key: string, d: number) => void;
+}) {
+  const hasOpts = !!p.options?.length;
+  const chosen = sel[p.id] ?? "";
+  const isOther = chosen === OTHER;
+  const text = (typed[p.id] ?? "").trim();
+  const option = hasOpts ? (isOther ? text : chosen) : "";
+  const key = keyOf(p.id, option || undefined);
+  const qty = cart[key] ?? 0;
+  const ready = !hasOpts || (isOther ? !!text : !!chosen);
+
+  return (
+    <article className="flex gap-4 rounded-2xl border bg-card p-4 shadow-soft sm:flex-col">
+      <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-card text-5xl sm:h-48 sm:w-full sm:text-6xl">
+        {p.image ? (
+          <img src={p.image} alt={p.name} loading="lazy" className="h-full w-full object-contain" />
+        ) : (
+          p.emoji
+        )}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{p.category}</span>
+        <h2 className="font-display text-lg font-semibold leading-tight">{p.name}</h2>
+        {hasOpts ? (
+          <div className="mt-2">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{p.optionLabel}</p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {p.options!.map((o) => (
+                <button
+                  key={o}
+                  type="button"
+                  onClick={() => onSel(p.id, o)}
+                  aria-pressed={chosen === o}
+                  className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                    chosen === o ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:border-primary"
+                  }`}
+                >
+                  {o}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => onSel(p.id, OTHER)}
+                aria-pressed={isOther}
+                className={`rounded-full border border-dashed px-2.5 py-1 text-xs transition ${
+                  isOther ? "border-primary bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
+                }`}
+              >
+                Outro
+              </button>
+            </div>
+            {isOther && (
+              <input
+                className="field mt-2"
+                placeholder={`Qual ${p.optionLabel === "Cor" ? "cor" : "sabor"}?`}
+                maxLength={40}
+                value={typed[p.id] ?? ""}
+                onChange={(e) => onTyped(p.id, e.target.value)}
+              />
+            )}
+          </div>
+        ) : (
+          p.description && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
+        )}
+        <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+          <span className="font-semibold text-primary">{brl(p.price)}</span>
+          {qty > 0 ? (
+            <Qty qty={qty} onMinus={() => onChange(key, -1)} onPlus={() => onChange(key, 1)} />
+          ) : (
+            <button
+              onClick={() => onChange(key, 1)}
+              disabled={!ready}
+              className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Adicionar
+            </button>
+          )}
+        </div>
+        {hasOpts && !ready && (
+          <p className="pt-1 text-right text-[11px] text-muted-foreground">
+            Escolha {p.optionLabel === "Cor" ? "uma cor" : "um sabor"} para adicionar
+          </p>
+        )}
+      </div>
+    </article>
   );
 }
 
