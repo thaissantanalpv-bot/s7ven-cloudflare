@@ -1,4 +1,6 @@
 // Chave Pix da loja (CPF) e geração do QR Code "BR Code" (Pix Copia e Cola)
+import { STORE_NAME } from "./products";
+
 export const PIX_KEY = "46713887821";
 export const PIX_CITY = "ARACATUBA";
 
@@ -48,7 +50,7 @@ export function buildPixPayload(amount = 0): string {
 
   payload +=
     f("58", "BR") +
-    f("59", emvText(STORE_NAME_FALLBACK, 25)) +
+    f("59", emvText(STORE_NAME, 25)) +
     f("60", emvText(PIX_CITY, 15)) +
     f("62", f("05", "***")) +
     "6304";
