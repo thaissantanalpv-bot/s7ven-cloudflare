@@ -5,6 +5,7 @@ export type Product = {
   price: number;
   category: string;
   emoji: string;
+  image?: string;
 };
 
 // Número do WhatsApp da loja (somente dígitos, com DDI + DDD)
@@ -20,7 +21,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 45.0,
     "category": "Bebidas",
-    "emoji": "🍹"
+    "emoji": "🍹",
+    "image": "/produtos/p1.jpg"
   },
   {
     "id": "p2",
@@ -28,7 +30,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 12.9,
     "category": "Bebidas",
-    "emoji": "🍹"
+    "emoji": "🍹",
+    "image": "/produtos/p2.jpg"
   },
   {
     "id": "p3",
@@ -36,7 +39,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Coco, Maçã Verde, Melancia...",
     "price": 4.0,
     "category": "Bebidas",
-    "emoji": "🍹"
+    "emoji": "🍹",
+    "image": "/produtos/p3.jpg"
   },
   {
     "id": "p4",
@@ -44,7 +48,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Maçã verde, Melancia, Morango...",
     "price": 20.9,
     "category": "Bebidas",
-    "emoji": "🍹"
+    "emoji": "🍹",
+    "image": "/produtos/p4.jpg"
   },
   {
     "id": "p5",
@@ -52,7 +57,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 35.0,
     "category": "Cases",
-    "emoji": "🎒"
+    "emoji": "🎒",
+    "image": "/produtos/p5.jpg"
   },
   {
     "id": "p6",
@@ -60,7 +66,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 39.9,
     "category": "Cases",
-    "emoji": "🎒"
+    "emoji": "🎒",
+    "image": "/produtos/p6.jpg"
   },
   {
     "id": "p7",
@@ -68,7 +75,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 49.9,
     "category": "Cases",
-    "emoji": "🎒"
+    "emoji": "🎒",
+    "image": "/produtos/p7.jpg"
   },
   {
     "id": "p8",
@@ -76,7 +84,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 49.9,
     "category": "Cases",
-    "emoji": "🎒"
+    "emoji": "🎒",
+    "image": "/produtos/p8.jpg"
   },
   {
     "id": "p9",
@@ -84,7 +93,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 49.9,
     "category": "Cases",
-    "emoji": "🎒"
+    "emoji": "🎒",
+    "image": "/produtos/p9.jpg"
   },
   {
     "id": "p10",
@@ -92,7 +102,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 49.9,
     "category": "Cases",
-    "emoji": "🎒"
+    "emoji": "🎒",
+    "image": "/produtos/p10.jpg"
   },
   {
     "id": "p11",
@@ -100,7 +111,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 139.9,
     "category": "Cases",
-    "emoji": "🎒"
+    "emoji": "🎒",
+    "image": "/produtos/p11.jpg"
   },
   {
     "id": "p12",
@@ -108,7 +120,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 19.9,
     "category": "Cases",
-    "emoji": "🎒"
+    "emoji": "🎒",
+    "image": "/produtos/p12.jpg"
   },
   {
     "id": "p13",
@@ -116,7 +129,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 8.0,
     "category": "Charuto",
-    "emoji": "🚬"
+    "emoji": "🚬",
+    "image": "/produtos/p13.jpg"
   },
   {
     "id": "p14",
@@ -124,7 +138,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 6.0,
     "category": "Charuto",
-    "emoji": "🚬"
+    "emoji": "🚬",
+    "image": "/produtos/p14.jpg"
   },
   {
     "id": "p15",
@@ -132,7 +147,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 12.0,
     "category": "Fluido",
-    "emoji": "🧴"
+    "emoji": "🧴",
+    "image": "/produtos/p15.jpg"
   },
   {
     "id": "p16",
@@ -140,7 +156,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 22.0,
     "category": "Fluido",
-    "emoji": "🧴"
+    "emoji": "🧴",
+    "image": "/produtos/p16.jpg"
   },
   {
     "id": "p17",
@@ -148,7 +165,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 12.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p17.jpg"
   },
   {
     "id": "p18",
@@ -156,7 +174,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 12.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p18.jpg"
   },
   {
     "id": "p19",
@@ -164,7 +183,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 30.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p19.jpg"
   },
   {
     "id": "p20",
@@ -172,7 +192,8 @@ export const PRODUCTS: Product[] = [
     "description": "Cores: Azul, Branco, Laranja Claro...",
     "price": 25.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p20.jpg"
   },
   {
     "id": "p21",
@@ -180,7 +201,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 29.9,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p21.jpg"
   },
   {
     "id": "p22",
@@ -188,7 +210,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 5.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p22.jpg"
   },
   {
     "id": "p23",
@@ -196,7 +219,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 12.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p23.jpg"
   },
   {
     "id": "p24",
@@ -204,7 +228,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 9.9,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p24.jpg"
   },
   {
     "id": "p25",
@@ -212,7 +237,8 @@ export const PRODUCTS: Product[] = [
     "description": "Cores: Amarelo, Preto, Verde",
     "price": 10.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p25.jpg"
   },
   {
     "id": "p26",
@@ -220,7 +246,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 45.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p26.jpg"
   },
   {
     "id": "p27",
@@ -228,7 +255,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 25.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p27.jpg"
   },
   {
     "id": "p28",
@@ -236,7 +264,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 10.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p28.jpg"
   },
   {
     "id": "p29",
@@ -244,7 +273,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 7.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p29.jpg"
   },
   {
     "id": "p30",
@@ -252,7 +282,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 15.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p30.jpg"
   },
   {
     "id": "p31",
@@ -260,7 +291,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 13.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p31.jpg"
   },
   {
     "id": "p32",
@@ -268,7 +300,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 3.5,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p32.jpg"
   },
   {
     "id": "p33",
@@ -276,7 +309,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 7.99,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p33.jpg"
   },
   {
     "id": "p34",
@@ -284,7 +318,8 @@ export const PRODUCTS: Product[] = [
     "description": "Cores: Dourada, Prata, Rose",
     "price": 16.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p34.jpg"
   },
   {
     "id": "p35",
@@ -292,7 +327,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 12.0,
     "category": "Headshop",
-    "emoji": "🌿"
+    "emoji": "🌿",
+    "image": "/produtos/p35.jpg"
   },
   {
     "id": "p36",
@@ -300,7 +336,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 6.5,
     "category": "Isqueiros/Maçarico",
-    "emoji": "🔥"
+    "emoji": "🔥",
+    "image": "/produtos/p36.jpg"
   },
   {
     "id": "p37",
@@ -308,7 +345,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 2.0,
     "category": "Isqueiros/Maçarico",
-    "emoji": "🔥"
+    "emoji": "🔥",
+    "image": "/produtos/p37.jpg"
   },
   {
     "id": "p38",
@@ -316,7 +354,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 2.0,
     "category": "Isqueiros/Maçarico",
-    "emoji": "🔥"
+    "emoji": "🔥",
+    "image": "/produtos/p38.jpg"
   },
   {
     "id": "p39",
@@ -324,7 +363,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 10.0,
     "category": "Isqueiros/Maçarico",
-    "emoji": "🔥"
+    "emoji": "🔥",
+    "image": "/produtos/p39.jpg"
   },
   {
     "id": "p40",
@@ -332,7 +372,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 14.0,
     "category": "Isqueiros/Maçarico",
-    "emoji": "🔥"
+    "emoji": "🔥",
+    "image": "/produtos/p40.jpg"
   },
   {
     "id": "p41",
@@ -340,7 +381,8 @@ export const PRODUCTS: Product[] = [
     "description": "Cores: Azul, Roxo, Verde Militar...",
     "price": 16.0,
     "category": "Isqueiros/Maçarico",
-    "emoji": "🔥"
+    "emoji": "🔥",
+    "image": "/produtos/p41.jpg"
   },
   {
     "id": "p42",
@@ -348,7 +390,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: 7 Belo, Blueberry, Bubaloo...",
     "price": 19.9,
     "category": "Juice",
-    "emoji": "💨"
+    "emoji": "💨",
+    "image": "/produtos/p42.jpg"
   },
   {
     "id": "p43",
@@ -356,7 +399,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 15.0,
     "category": "Narguiles",
-    "emoji": "🫧"
+    "emoji": "🫧",
+    "image": "/produtos/p43.jpg"
   },
   {
     "id": "p44",
@@ -364,7 +408,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 30.0,
     "category": "Narguiles",
-    "emoji": "🫧"
+    "emoji": "🫧",
+    "image": "/produtos/p44.jpg"
   },
   {
     "id": "p45",
@@ -372,7 +417,8 @@ export const PRODUCTS: Product[] = [
     "description": "Cores: Azul, Laranja, Rosa...",
     "price": 10.0,
     "category": "Narguiles",
-    "emoji": "🫧"
+    "emoji": "🫧",
+    "image": "/produtos/p45.jpg"
   },
   {
     "id": "p46",
@@ -380,7 +426,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 70.0,
     "category": "Narguiles",
-    "emoji": "🫧"
+    "emoji": "🫧",
+    "image": "/produtos/p46.jpg"
   },
   {
     "id": "p47",
@@ -388,7 +435,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 130.0,
     "category": "Narguiles",
-    "emoji": "🫧"
+    "emoji": "🫧",
+    "image": "/produtos/p47.jpg"
   },
   {
     "id": "p48",
@@ -396,7 +444,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 250.0,
     "category": "Narguiles",
-    "emoji": "🫧"
+    "emoji": "🫧",
+    "image": "/produtos/p48.jpg"
   },
   {
     "id": "p49",
@@ -404,7 +453,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 45.0,
     "category": "Narguiles",
-    "emoji": "🫧"
+    "emoji": "🫧",
+    "image": "/produtos/p49.jpg"
   },
   {
     "id": "p50",
@@ -412,7 +462,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 35.0,
     "category": "Narguiles",
-    "emoji": "🫧"
+    "emoji": "🫧",
+    "image": "/produtos/p50.jpg"
   },
   {
     "id": "p51",
@@ -420,7 +471,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 14.0,
     "category": "Narguiles",
-    "emoji": "🫧"
+    "emoji": "🫧",
+    "image": "/produtos/p51.jpg"
   },
   {
     "id": "p52",
@@ -428,7 +480,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 7.5,
     "category": "Palheiros",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p52.jpg"
   },
   {
     "id": "p53",
@@ -436,7 +489,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 34.0,
     "category": "Palheiros",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p53.jpg"
   },
   {
     "id": "p54",
@@ -444,7 +498,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Menta, Tradicional",
     "price": 8.0,
     "category": "Palheiros",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p54.jpg"
   },
   {
     "id": "p55",
@@ -452,7 +507,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Menta, Uva",
     "price": 9.0,
     "category": "Palheiros",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p55.jpg"
   },
   {
     "id": "p56",
@@ -460,7 +516,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Menta",
     "price": 24.0,
     "category": "Palheiros",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p56.jpg"
   },
   {
     "id": "p57",
@@ -468,7 +525,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 4.0,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p57.jpg"
   },
   {
     "id": "p58",
@@ -476,7 +534,8 @@ export const PRODUCTS: Product[] = [
     "description": "Peça: Mangueira, Rosh, Vaso",
     "price": 6.0,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p58.jpg"
   },
   {
     "id": "p59",
@@ -484,7 +543,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 5.0,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p59.jpg"
   },
   {
     "id": "p60",
@@ -492,7 +552,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 4.0,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p60.jpg"
   },
   {
     "id": "p61",
@@ -500,7 +561,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 9.9,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p61.jpg"
   },
   {
     "id": "p62",
@@ -508,7 +570,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 6.0,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p62.jpg"
   },
   {
     "id": "p63",
@@ -516,7 +579,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 8.0,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p63.jpg"
   },
   {
     "id": "p64",
@@ -524,7 +588,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 4.5,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p64.jpg"
   },
   {
     "id": "p65",
@@ -532,7 +597,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 7.0,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p65.jpg"
   },
   {
     "id": "p66",
@@ -540,7 +606,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 7.5,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p66.jpg"
   },
   {
     "id": "p67",
@@ -548,7 +615,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 4.0,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p67.jpg"
   },
   {
     "id": "p68",
@@ -556,7 +624,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 7.0,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p68.jpg"
   },
   {
     "id": "p69",
@@ -564,7 +633,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 6.0,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p69.jpg"
   },
   {
     "id": "p70",
@@ -572,7 +642,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 9.0,
     "category": "Piteiras",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p70.jpg"
   },
   {
     "id": "p71",
@@ -580,7 +651,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Dragon Fruit Watermelon, Melon...",
     "price": 130.0,
     "category": "Pod Descartável",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p71.jpg"
   },
   {
     "id": "p72",
@@ -588,7 +660,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Baunilha, Chocolate, Maçã Verde...",
     "price": 10.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p72.jpg"
   },
   {
     "id": "p73",
@@ -596,7 +669,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 5.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p73.jpg"
   },
   {
     "id": "p74",
@@ -604,7 +678,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 4.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p74.jpg"
   },
   {
     "id": "p75",
@@ -612,7 +687,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 5.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p75.jpg"
   },
   {
     "id": "p76",
@@ -620,7 +696,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 4.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p76.jpg"
   },
   {
     "id": "p77",
@@ -628,7 +705,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 4.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p77.jpg"
   },
   {
     "id": "p78",
@@ -636,7 +714,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 3.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p78.jpg"
   },
   {
     "id": "p79",
@@ -644,7 +723,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Chocolate, Morango",
     "price": 10.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p79.jpg"
   },
   {
     "id": "p80",
@@ -652,7 +732,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 8.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p80.jpg"
   },
   {
     "id": "p81",
@@ -660,7 +741,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 8.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p81.jpg"
   },
   {
     "id": "p82",
@@ -668,7 +750,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 3.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p82.jpg"
   },
   {
     "id": "p83",
@@ -676,7 +759,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 1.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p83.jpg"
   },
   {
     "id": "p84",
@@ -684,7 +768,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 3.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p84.jpg"
   },
   {
     "id": "p85",
@@ -692,7 +777,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 3.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p85.jpg"
   },
   {
     "id": "p86",
@@ -700,7 +786,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 3.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p86.jpg"
   },
   {
     "id": "p87",
@@ -708,7 +795,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 6.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p87.jpg"
   },
   {
     "id": "p88",
@@ -716,7 +804,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 7.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p88.jpg"
   },
   {
     "id": "p89",
@@ -724,7 +813,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 7.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p89.jpg"
   },
   {
     "id": "p90",
@@ -732,7 +822,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 4.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p90.jpg"
   },
   {
     "id": "p91",
@@ -740,7 +831,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 4.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p91.jpg"
   },
   {
     "id": "p92",
@@ -748,7 +840,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 4.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p92.jpg"
   },
   {
     "id": "p93",
@@ -756,7 +849,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 8.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p93.jpg"
   },
   {
     "id": "p94",
@@ -764,7 +858,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 6.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p94.jpg"
   },
   {
     "id": "p95",
@@ -772,7 +867,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 3.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p95.jpg"
   },
   {
     "id": "p96",
@@ -780,7 +876,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 8.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p96.jpg"
   },
   {
     "id": "p97",
@@ -788,7 +885,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 2.5,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p97.jpg"
   },
   {
     "id": "p98",
@@ -796,7 +894,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 2.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p98.jpg"
   },
   {
     "id": "p99",
@@ -804,7 +903,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 3.0,
     "category": "Sedas",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p99.jpg"
   },
   {
     "id": "p100",
@@ -812,7 +912,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 8.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p100.jpg"
   },
   {
     "id": "p101",
@@ -820,7 +921,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 15.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p101.jpg"
   },
   {
     "id": "p102",
@@ -828,7 +930,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 69.9,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p102.jpg"
   },
   {
     "id": "p103",
@@ -836,7 +939,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 16.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p103.jpg"
   },
   {
     "id": "p104",
@@ -844,7 +948,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 16.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p104.jpg"
   },
   {
     "id": "p105",
@@ -852,7 +957,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 15.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p105.jpg"
   },
   {
     "id": "p106",
@@ -860,7 +966,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 18.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p106.jpg"
   },
   {
     "id": "p107",
@@ -868,7 +975,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 15.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p107.jpg"
   },
   {
     "id": "p108",
@@ -876,7 +984,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 15.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p108.jpg"
   },
   {
     "id": "p109",
@@ -884,7 +993,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 18.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p109.jpg"
   },
   {
     "id": "p110",
@@ -892,7 +1002,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 16.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p110.jpg"
   },
   {
     "id": "p111",
@@ -900,7 +1011,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 16.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p111.jpg"
   },
   {
     "id": "p112",
@@ -908,7 +1020,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 16.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p112.jpg"
   },
   {
     "id": "p113",
@@ -916,7 +1029,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 15.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p113.jpg"
   },
   {
     "id": "p114",
@@ -924,7 +1038,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 15.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p114.jpg"
   },
   {
     "id": "p115",
@@ -932,7 +1047,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 10.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p115.jpg"
   },
   {
     "id": "p116",
@@ -940,7 +1056,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 18.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p116.jpg"
   },
   {
     "id": "p117",
@@ -948,7 +1065,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 15.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p117.jpg"
   },
   {
     "id": "p118",
@@ -956,7 +1074,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 18.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p118.jpg"
   },
   {
     "id": "p119",
@@ -964,7 +1083,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 14.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p119.jpg"
   },
   {
     "id": "p120",
@@ -972,7 +1092,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 12.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p120.jpg"
   },
   {
     "id": "p121",
@@ -980,7 +1101,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Limão, Uva",
     "price": 19.9,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p121.jpg"
   },
   {
     "id": "p122",
@@ -988,7 +1110,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 15.0,
     "category": "Tabaco",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p122.jpg"
   },
   {
     "id": "p123",
@@ -996,7 +1119,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Cereja Ice, Menta e Boldo",
     "price": 22.0,
     "category": "Tereré",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p123.jpg"
   },
   {
     "id": "p124",
@@ -1004,7 +1128,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Cereja Ice, Limão Rosa, Menta...",
     "price": 19.9,
     "category": "Tereré",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p124.jpg"
   },
   {
     "id": "p125",
@@ -1012,7 +1137,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Extreme Mint, Intense, Menta...",
     "price": 18.0,
     "category": "Tereré",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p125.jpg"
   },
   {
     "id": "p126",
@@ -1020,7 +1146,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 12.0,
     "category": "Tesoura",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p126.jpg"
   },
   {
     "id": "p127",
@@ -1028,7 +1155,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 16.0,
     "category": "Tesoura",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p127.jpg"
   },
   {
     "id": "p128",
@@ -1036,7 +1164,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 12.0,
     "category": "Tesoura",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p128.jpg"
   },
   {
     "id": "p129",
@@ -1044,7 +1173,8 @@ export const PRODUCTS: Product[] = [
     "description": "Cores: Prata, Rosa",
     "price": 30.0,
     "category": "Narguiles > Abafadores",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p129.jpg"
   },
   {
     "id": "p130",
@@ -1052,7 +1182,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 13.0,
     "category": "Narguiles > Alumínio",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p130.jpg"
   },
   {
     "id": "p131",
@@ -1060,7 +1191,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 0.5,
     "category": "Narguiles > Alumínio",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p131.jpg"
   },
   {
     "id": "p132",
@@ -1068,7 +1200,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 28.0,
     "category": "Narguiles > Caixa de Carvão",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p132.jpg"
   },
   {
     "id": "p133",
@@ -1076,7 +1209,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 35.0,
     "category": "Narguiles > Caixa de Carvão",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p133.jpg"
   },
   {
     "id": "p134",
@@ -1084,7 +1218,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 50.0,
     "category": "Narguiles > Caixa de Carvão",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p134.jpg"
   },
   {
     "id": "p135",
@@ -1092,7 +1227,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 22.0,
     "category": "Narguiles > Caixa de Carvão",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p135.jpg"
   },
   {
     "id": "p136",
@@ -1100,7 +1236,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 50.0,
     "category": "Narguiles > Caixa de Carvão",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p136.jpg"
   },
   {
     "id": "p137",
@@ -1108,7 +1245,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 25.0,
     "category": "Narguiles > Caixa de Carvão",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p137.jpg"
   },
   {
     "id": "p138",
@@ -1116,7 +1254,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 0.5,
     "category": "Narguiles > Caixa de Carvão",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p138.jpg"
   },
   {
     "id": "p139",
@@ -1124,7 +1263,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 1.0,
     "category": "Narguiles > Caixa de Carvão",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p139.jpg"
   },
   {
     "id": "p140",
@@ -1132,7 +1272,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 30.0,
     "category": "Narguiles > COMBOS DE ESSÊNCIAS",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p140.jpg"
   },
   {
     "id": "p141",
@@ -1140,7 +1281,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 30.0,
     "category": "Narguiles > COMBOS DE ESSÊNCIAS",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p141.jpg"
   },
   {
     "id": "p142",
@@ -1148,7 +1290,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 30.0,
     "category": "Narguiles > COMBOS DE ESSÊNCIAS",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p142.jpg"
   },
   {
     "id": "p143",
@@ -1156,7 +1299,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 7.0,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p143.jpg"
   },
   {
     "id": "p144",
@@ -1164,7 +1308,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Banana, Melancia, Tutti Frutti...",
     "price": 10.0,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p144.jpg"
   },
   {
     "id": "p145",
@@ -1172,7 +1317,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 19.9,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p145.jpg"
   },
   {
     "id": "p146",
@@ -1180,7 +1326,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Mint, Pineapple, Watermelon...",
     "price": 11.0,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p146.jpg"
   },
   {
     "id": "p147",
@@ -1188,7 +1335,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Berries Blend, Blueberry Gra...",
     "price": 10.0,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p147.jpg"
   },
   {
     "id": "p148",
@@ -1196,7 +1344,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Chocomenta, Coco com Limão,...",
     "price": 12.0,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p148.jpg"
   },
   {
     "id": "p149",
@@ -1204,7 +1353,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 7.0,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p149.jpg"
   },
   {
     "id": "p150",
@@ -1212,7 +1362,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 7.0,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p150.jpg"
   },
   {
     "id": "p151",
@@ -1220,7 +1371,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Absolut Mint, Baunilha Mix,...",
     "price": 12.0,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p151.jpg"
   },
   {
     "id": "p152",
@@ -1228,7 +1380,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Cherry Lemon, Cherry Orange,...",
     "price": 13.0,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p152.jpg"
   },
   {
     "id": "p153",
@@ -1236,7 +1389,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: 7 Belo, Banana Tropical, Bur...",
     "price": 10.0,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p153.jpg"
   },
   {
     "id": "p154",
@@ -1244,7 +1398,8 @@ export const PRODUCTS: Product[] = [
     "description": "Sabores: Bala de Morango, Blueberry,...",
     "price": 10.0,
     "category": "Narguiles > Essências",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p154.jpg"
   },
   {
     "id": "p155",
@@ -1252,7 +1407,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 20.0,
     "category": "Narguiles > Piteira Para Narguile",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p155.jpg"
   },
   {
     "id": "p156",
@@ -1260,7 +1416,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 80.0,
     "category": "Narguiles > Piteira Para Narguile",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p156.jpg"
   },
   {
     "id": "p157",
@@ -1268,7 +1425,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 20.0,
     "category": "Narguiles > Piteira Para Narguile",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p157.jpg"
   },
   {
     "id": "p158",
@@ -1276,7 +1434,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 19.9,
     "category": "Narguiles > Rosh",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p158.jpg"
   },
   {
     "id": "p159",
@@ -1284,7 +1443,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 20.0,
     "category": "Narguiles > Rosh",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p159.jpg"
   },
   {
     "id": "p160",
@@ -1292,7 +1452,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 25.0,
     "category": "Narguiles > Rosh",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p160.jpg"
   },
   {
     "id": "p161",
@@ -1300,7 +1461,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 45.0,
     "category": "Narguiles > Rosh",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p161.jpg"
   },
   {
     "id": "p162",
@@ -1308,7 +1470,8 @@ export const PRODUCTS: Product[] = [
     "description": "Cores: Azul Bebê, Branco",
     "price": 25.0,
     "category": "Narguiles > Rosh",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p162.jpg"
   },
   {
     "id": "p163",
@@ -1316,7 +1479,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 25.0,
     "category": "Narguiles > Rosh",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p163.jpg"
   },
   {
     "id": "p164",
@@ -1324,7 +1488,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 49.9,
     "category": "Narguiles > Rosh",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p164.jpg"
   },
   {
     "id": "p165",
@@ -1332,7 +1497,8 @@ export const PRODUCTS: Product[] = [
     "description": "Cores: Azul, Branco, Cinza...",
     "price": 20.0,
     "category": "Narguiles > Rosh",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p165.jpg"
   },
   {
     "id": "p166",
@@ -1340,7 +1506,8 @@ export const PRODUCTS: Product[] = [
     "description": "Cores: Azul Bebê, Preto",
     "price": 19.9,
     "category": "Narguiles > Rosh",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p166.jpg"
   },
   {
     "id": "p167",
@@ -1348,7 +1515,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 25.0,
     "category": "Narguiles > Rosh",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p167.jpg"
   },
   {
     "id": "p168",
@@ -1356,7 +1524,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 39.9,
     "category": "Narguiles > Rosh",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p168.jpg"
   },
   {
     "id": "p169",
@@ -1364,7 +1533,8 @@ export const PRODUCTS: Product[] = [
     "description": "Cores: Branco, Preto",
     "price": 0.0,
     "category": "Narguiles > Vasos",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p169.jpg"
   },
   {
     "id": "p170",
@@ -1372,7 +1542,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 49.9,
     "category": "Narguiles > Vasos",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p170.jpg"
   },
   {
     "id": "p171",
@@ -1380,7 +1551,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 29.9,
     "category": "Narguiles > Vasos",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p171.jpg"
   },
   {
     "id": "p172",
@@ -1388,7 +1560,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 50.0,
     "category": "Narguiles > Vasos",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p172.jpg"
   },
   {
     "id": "p173",
@@ -1396,7 +1569,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 90.0,
     "category": "Narguiles > Vasos",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p173.jpg"
   },
   {
     "id": "p174",
@@ -1404,7 +1578,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 20.0,
     "category": "Narguiles > Vasos",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p174.jpg"
   },
   {
     "id": "p175",
@@ -1412,7 +1587,8 @@ export const PRODUCTS: Product[] = [
     "description": "Cores: Amarelo com Preto, Branco, Preto...",
     "price": 35.0,
     "category": "Narguiles > Vasos",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p175.jpg"
   },
   {
     "id": "p176",
@@ -1420,7 +1596,8 @@ export const PRODUCTS: Product[] = [
     "description": "",
     "price": 25.0,
     "category": "Narguiles > Vasos",
-    "emoji": "🛍️"
+    "emoji": "🛍️",
+    "image": "/produtos/p176.jpg"
   }
 ];
 

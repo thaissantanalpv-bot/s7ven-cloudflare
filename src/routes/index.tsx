@@ -152,8 +152,12 @@ function Catalog() {
         )}
         {filtered.map((p) => (
           <article key={p.id} className="flex gap-4 rounded-2xl border bg-card p-4 shadow-soft sm:flex-col">
-            <div className="grid h-24 w-24 shrink-0 place-items-center rounded-xl bg-secondary text-5xl sm:h-36 sm:w-full sm:text-6xl">
-              {p.emoji}
+            <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-card text-5xl sm:h-48 sm:w-full sm:text-6xl">
+              {p.image ? (
+                <img src={p.image} alt={p.name} loading="lazy" className="h-full w-full object-contain" />
+              ) : (
+                p.emoji
+              )}
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{p.category}</span>
@@ -204,7 +208,11 @@ function Catalog() {
                 <ul className="space-y-3">
                   {items.map((i) => (
                     <li key={i.id} className="flex items-center gap-3">
-                      <span className="text-3xl">{i.emoji}</span>
+                      {i.image ? (
+                        <img src={i.image} alt={i.name} className="h-12 w-12 shrink-0 rounded-lg object-contain" />
+                      ) : (
+                        <span className="text-3xl">{i.emoji}</span>
+                      )}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{i.name}</p>
                         <p className="text-xs text-muted-foreground">{brl(i.price)} · subtotal {brl(i.price * i.qty)}</p>
