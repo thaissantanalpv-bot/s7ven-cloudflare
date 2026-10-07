@@ -6,6 +6,8 @@ export type Product = {
   category: string;
   emoji: string;
   image?: string;
+  options?: string[];
+  optionLabel?: string;
 };
 
 // Número do WhatsApp da loja (somente dígitos, com DDI + DDD)
@@ -1600,6 +1602,21 @@ export const PRODUCTS: Product[] = [
     "image": "/produtos/p176.jpg"
   }
 ];
+
+// "Sabores: A, B, C" e "Cores: A, B" viram opções selecionáveis no catálogo
+for (const p of PRODUCTS) {
+  const m = /^(Sabores|Cores):\s*(.+)$/i.exec(p.description.trim());
+  const label = m?.[1] ?? "";
+  const raw = m?.[2] ?? "";
+  if (!raw) continue;
+  const list = raw
+    .split(",")
+    .map((s) => s.trim().replace(/\.+$/, ""))
+    .filter(Boolean);
+  if (!list.length) continue;
+  p.options = list;
+  p.optionLabel = label.toLowerCase() === "sabores" ? "Sabor" : "Cor";
+}
 
 export const PAYMENT_METHODS = ["Pix", "Cartão de crédito", "Cartão de débito", "Dinheiro"];
 
