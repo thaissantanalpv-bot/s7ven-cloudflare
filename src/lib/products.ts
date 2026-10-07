@@ -1606,8 +1606,8 @@ export const PRODUCTS: Product[] = [
 // "Sabores: A, B, C" e "Cores: A, B" viram opções selecionáveis no catálogo
 for (const p of PRODUCTS) {
   const m = /^(Sabores|Cores):\s*(.+)$/i.exec(p.description.trim());
-  const label = m[1] ?? "";
-  const raw = m[2] ?? "";
+  const label = m?.[1] ?? "";
+  const raw = m?.[2] ?? "";
   if (!raw) continue;
   const list = raw
     .split(",")
