@@ -86,7 +86,7 @@ function Catalog() {
     setError("");
     if (!items.length) return setError("Seu carrinho está vazio.");
     const r = orderSchema.safeParse(form);
-    if (!r.success) return setError(r.error.issues[0].message);
+    if (!r.success) return setError(r.error.issues[0]?.message ?? "Verifique os dados");
     const d = r.data;
     const lines = [
       `*Novo pedido — ${STORE_NAME}*`,
