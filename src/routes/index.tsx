@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { z } from "zod";
 import {
   PRODUCTS,
@@ -10,6 +11,7 @@ import {
   brl,
   type Product,
 } from "@/lib/products";
+import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -51,6 +53,7 @@ function Catalog() {
   const [error, setError] = useState("");
   const [sel, setSel] = useState<Record<string, string>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
+  const [copied, setCopied] = useState("");
 
   useEffect(() => {
     try {
@@ -90,6 +93,14 @@ function Catalog() {
   );
   const count = items.reduce((s, i) => s + i.qty, 0);
   const total = items.reduce((s, i) => s + i.qty * i.product.price, 0);
+
+  const pixPayload = useMemo(() => buildPixPayload(total), [total]);
+  const copy = async (text: string, label: string) => {
+    if (await copyToClipboard(text)) {
+      setCopied(label);
+      setTimeout(() => setCopied(""), 2500);
+    }
+  };
 
   const change = (key: string, d: number) =>
     setCart((c) => {
@@ -253,6 +264,46 @@ function Catalog() {
                     ))}
                   </div>
                 </Field>
+                {form.payment === "Pix" &&
+                  (total > 0 ? (
+                    <div className="space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold">Pague com Pix — {brl(total)}</p>
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                          valor no QR
+                        </span>
+                      </div>
+                      <div className="flex justify-center rounded-xl bg-white p-3">
+                        <QRCodeSVG value={pixPayload} size={172} level="M" marginSize={2} />
+                      </div>
+                      <p className="text-center text-xs text-muted-foreground">
+                        Abra o app do seu banco, escaneie o código e confirme o pagamento.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => copy(PIX_KEY, "chave")}
+                          className="rounded-xl border border-primary/40 bg-card px-3 py-2 text-sm"
+                        >
+                          {copied === "chave" ? "Chave copiada!" : "Copiar chave"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copy(pixPayload, "codigo")}
+                          className="rounded-xl border border-primary/40 bg-card px-3 py-2 text-sm"
+                        >
+                          {copied === "codigo" ? "Código copiado!" : "Pix copia e cola"}
+                        </button>
+                      </div>
+                      <p className="text-center text-xs text-muted-foreground">
+                        Chave: <span className="font-medium text-foreground">{PIX_KEY}</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Adicione produtos ao carrinho para gerar o QR Code do Pix com o valor do pedido.
+                    </p>
+                  ))}
                 {form.payment === "Dinheiro" && (
                   <Field label="Troco para quanto?">
                     <input className="field" maxLength={30} placeholder="Ex: R$ 100" value={form.change} onChange={(e) => setForm({ ...form, change: e.target.value })} />
