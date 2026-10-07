@@ -69,7 +69,7 @@ function Catalog() {
     );
   }, [query, cat]);
 
-  const items = PRODUCTS.filter((p) => cart[p.id]).map((p) => ({ ...p, qty: cart[p.id] }));
+  const items = PRODUCTS.filter((p) => cart[p.id]).map((p) => ({ ...p, qty: cart[p.id] ?? 0 }));
   const count = items.reduce((s, i) => s + i.qty, 0);
   const total = items.reduce((s, i) => s + i.qty * i.price, 0);
 
@@ -162,7 +162,7 @@ function Catalog() {
               <div className="mt-auto flex items-center justify-between pt-3">
                 <span className="font-semibold text-primary">{brl(p.price)}</span>
                 {cart[p.id] ? (
-                  <Qty qty={cart[p.id]} onMinus={() => change(p.id, -1)} onPlus={() => change(p.id, 1)} />
+                  <Qty qty={cart[p.id] ?? 0} onMinus={() => change(p.id, -1)} onPlus={() => change(p.id, 1)} />
                 ) : (
                   <button
                     onClick={() => change(p.id, 1)}
