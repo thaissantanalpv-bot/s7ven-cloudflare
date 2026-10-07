@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { z } from "zod";
 import {
   PRODUCTS,
@@ -10,6 +11,7 @@ import {
   brl,
   type Product,
 } from "@/lib/products";
+import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -51,6 +53,7 @@ function Catalog() {
   const [error, setError] = useState("");
   const [sel, setSel] = useState<Record<string, string>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
+  const [copied, setCopied] = useState("");
 
   useEffect(() => {
     try {
@@ -90,6 +93,14 @@ function Catalog() {
   );
   const count = items.reduce((s, i) => s + i.qty, 0);
   const total = items.reduce((s, i) => s + i.qty * i.product.price, 0);
+
+  const pixPayload = useMemo(() => buildPixPayload(total), [total]);
+  const copy = async (text: string, label: string) => {
+    if (await copyToClipboard(text)) {
+      setCopied(label);
+      setTimeout(() => setCopied(""), 2500);
+    }
+  };
 
   const change = (key: string, d: number) =>
     setCart((c) => {
