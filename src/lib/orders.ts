@@ -65,6 +65,10 @@ export type OrderItem = {
   price: number;
 };
 export type Order = {
+  source?: "catalog" | "counter";
+  cash_received?: number | null;
+  cash_change?: number | null;
+  cashier_id?: string | null;
   id: string;
   number: number;
   customer_name: string;

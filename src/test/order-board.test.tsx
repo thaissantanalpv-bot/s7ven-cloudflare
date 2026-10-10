@@ -55,6 +55,15 @@ const mount = () =>
     </QueryClientProvider>,
   );
 describe("Kanban order management", () => {
+  it("excludes counter sales from delivery columns and new order alerts", async () => {
+    mount();
+    await screen.findByText("Cliente teste");
+    mocks.list.mockImplementation(async () => [row, { ...row, id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", number: 44, source: "counter", customer_name: "Cliente balcão" }]);
+    fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
+    await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+    expect(screen.queryByText("Cliente balcão")).not.toBeInTheDocument();
+    expect(screen.queryByText("1 novo pedido recebido")).not.toBeInTheDocument();
+  });
   it("moves through every stage and builds matching customer updates", async () => {
     mount();
     await screen.findByText("Cliente teste");

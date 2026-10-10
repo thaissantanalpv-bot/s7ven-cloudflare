@@ -84,6 +84,7 @@ export const listOrders = createServerFn({ method: "POST" })
       result.push(
         ...data.map((row) => ({
           ...row,
+          source: z.enum(["catalog", "counter"]).parse(row.source),
           status: statusSchema.parse(row.status),
           items: row.items as Order["items"],
           subtotal: Number(row.subtotal),
@@ -110,6 +111,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       .from("orders")
       .update({ status: data.status, updated_at: new Date().toISOString() })
       .eq("id", data.id)
+       .eq("source", "catalog")
       .eq("status", data.expected)
       .select("id")
       .maybeSingle();

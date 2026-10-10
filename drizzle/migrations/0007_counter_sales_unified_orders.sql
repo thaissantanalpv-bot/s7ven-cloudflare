@@ -1,0 +1,4 @@
+ALTER TABLE public.orders ADD COLUMN source text NOT NULL DEFAULT 'catalog' CONSTRAINT orders_source_valid CHECK (source IN ('catalog', 'counter')), ADD COLUMN cash_received numeric(12,2), ADD COLUMN cash_change numeric(12,2), ADD COLUMN cashier_id uuid;
+ALTER TABLE public.orders ADD CONSTRAINT orders_cash_valid CHECK ((cash_received IS NULL AND cash_change IS NULL) OR (source = 'counter' AND payment = 'Dinheiro' AND cash_received >= total AND cash_change = cash_received - total));
+CREATE INDEX orders_source_created_idx ON public.orders (source, created_at DESC);
+COMMENT ON COLUMN public.orders.source IS 'catalog: delivery order; counter: completed in-person sale using the same atomic stock reservation.';

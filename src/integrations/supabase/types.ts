@@ -47,6 +47,9 @@ export type Database = {
       orders: {
         Row: {
           address: string
+          cash_change: number | null
+          cash_received: number | null
+          cashier_id: string | null
           change_for: string
           created_at: string
           customer_name: string
@@ -60,6 +63,7 @@ export type Database = {
           number: number
           payment: string
           request_id: string
+          source: string
           status: string
           subtotal: number
           total: number
@@ -67,6 +71,9 @@ export type Database = {
         }
         Insert: {
           address: string
+          cash_change?: number | null
+          cash_received?: number | null
+          cashier_id?: string | null
           change_for?: string
           created_at?: string
           customer_name: string
@@ -80,6 +87,7 @@ export type Database = {
           number?: never
           payment: string
           request_id: string
+          source?: string
           status?: string
           subtotal: number
           total: number
@@ -87,6 +95,9 @@ export type Database = {
         }
         Update: {
           address?: string
+          cash_change?: number | null
+          cash_received?: number | null
+          cashier_id?: string | null
           change_for?: string
           created_at?: string
           customer_name?: string
@@ -100,6 +111,7 @@ export type Database = {
           number?: never
           payment?: string
           request_id?: string
+          source?: string
           status?: string
           subtotal?: number
           total?: number
