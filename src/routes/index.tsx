@@ -177,18 +177,18 @@ function Catalog() {
         </div>
         <div className="relative mx-4 mb-4 md:hidden"><Search className="absolute left-3 top-3 size-4 text-muted-foreground"/><input aria-label="Buscar produto" value={query} onChange={e => setQuery(e.target.value)} placeholder="O que você procura hoje?" className="field pl-10"/></div>
       </header>
-      <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-8 sm:pt-10">
+      <section className="mx-auto max-w-7xl px-4 pt-5 sm:px-8 sm:pt-10">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div><p className="mb-2 text-xs font-medium uppercase text-primary">Bebidas · Tabacaria · Acessórios</p><h1 className="font-display text-3xl font-bold sm:text-4xl">S7VEN Lounge e Tabacaria</h1><p className="mt-3 text-sm text-muted-foreground">Sua seleção para brindar, relaxar e aproveitar.</p></div>
           <Button variant="outline" onClick={() => setHoursOpen(!hoursOpen)} className="h-10"><span className={`size-2 rounded-full ${status.open && status.configured ? "bg-whatsapp" : "bg-muted-foreground"}`}/>{status.label}<Clock className="ml-2"/></Button>
         </div>
         {hoursOpen && <div className="mt-5 border-y py-4"><h2 className="mb-3 text-sm font-semibold">Horários de atendimento · Brasília</h2>{settings.hours_enabled ? <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">{settings.opening_hours.map(h => <p key={h.day} className="flex justify-between gap-4 pr-4"><span className="text-muted-foreground">{DAYS[h.day]}</span><span>{h.enabled ? `${h.open} – ${h.close}${h.open > h.close ? " (+1 dia)" : ""}` : "Fechado"}</span></p>)}</div> : <p className="text-sm text-muted-foreground">Confirme os horários pelo WhatsApp.</p>}</div>}
-        <div className="no-scrollbar mt-8 flex gap-3 overflow-x-auto pb-2">
+        <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2 sm:mt-8">
           {[{ name: "Bebidas", image: "p1", label: "Para brindar", Icon: Wine }, { name: "Narguiles > Essências", image: "p141", label: "Essências", Icon: Flame }, { name: "Tabaco", image: "p88", label: "Tabacaria", Icon: Leaf }, { name: "Headshop", image: "p27", label: "Headshop", Icon: Package }].map(c => <Button key={c.name} variant="secondary" onClick={() => {setCat(c.name); setQuery("");}} className="h-28 min-w-48 flex-1 justify-start overflow-hidden border p-0 text-left sm:h-32"><img src={`/produtos/${c.image}.jpg`} alt="" className="h-full w-24 object-cover"/><span className="flex flex-1 flex-col gap-2 px-4"><c.Icon className="text-primary"/><span className="text-sm font-semibold">{c.label}</span><ArrowUpRight className="text-muted-foreground"/></span></Button>)}
         </div>
-        <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 border-b pb-5 text-xs text-muted-foreground"><span className="flex items-center gap-2"><Truck className="size-4 text-primary"/>Entrega {settings.delivery_enabled ? "por região" : "a combinar"}</span><span className="flex items-center gap-2"><MessageCircle className="size-4 text-primary"/>Pedido pelo WhatsApp</span><span className="flex items-center gap-2"><ShoppingBag className="size-4 text-primary"/>Pix, cartão ou dinheiro</span></div>
+        <div className="mt-4 flex flex-wrap gap-x-8 gap-y-2 border-b pb-4 text-xs text-muted-foreground"><span className="flex items-center gap-2"><Truck className="size-4 text-primary"/>Entrega {settings.delivery_enabled ? "por região" : "a combinar"}</span><span className="flex items-center gap-2"><MessageCircle className="size-4 text-primary"/>Pedido pelo WhatsApp</span><span className="flex items-center gap-2"><ShoppingBag className="size-4 text-primary"/>Pix, cartão ou dinheiro</span></div>
       </section>
-      <section className="mx-auto max-w-7xl px-4 py-7 sm:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-5 sm:px-8 sm:py-7">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div className="flex items-baseline gap-3"><h2 className="font-display text-xl font-semibold">{cat === "Todos" ? "Explore o catálogo" : cat.replace("Narguiles > ", "")}</h2><span className="text-xs text-muted-foreground">{filtered.length} produtos</span></div><select aria-label="Ordenar produtos" value={sort} onChange={e => setSort(e.target.value)} className="rounded-md border bg-card px-3 py-2 text-xs"><option value="catalog">Ordem do catálogo</option><option value="low">Menor preço</option><option value="high">Maior preço</option><option value="name">Nome: A–Z</option></select></div>
         <nav aria-label="Categorias" className="no-scrollbar mb-6 flex gap-2 overflow-x-auto pb-2">{CATEGORIES.map(c => <Button key={c} variant={cat === c ? "default" : "outline"} onClick={() => setCat(c)} size="sm" className="shrink-0">{c.replace("Narguiles > ", "")}</Button>)}</nav>
         <main className="grid grid-cols-1 gap-4 min-[440px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -252,6 +252,7 @@ function Catalog() {
                   <div className="grid grid-cols-2 gap-2">
                     {PAYMENT_METHODS.map((m) => (
                       <Button
+                        variant="outline"
                         key={m}
                         type="button"
                         onClick={() => setForm({ ...form, payment: m })}
@@ -279,6 +280,7 @@ function Catalog() {
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         <Button
+                          variant="outline"
                           type="button"
                           onClick={() => copy(PIX_KEY, "chave")}
                           className="rounded-xl border border-primary/40 bg-card px-3 py-2 text-sm"
@@ -286,6 +288,7 @@ function Catalog() {
                           {copied === "chave" ? "Chave copiada!" : "Copiar chave"}
                         </Button>
                         <Button
+                          variant="outline"
                           type="button"
                           onClick={() => copy(pixPayload, "codigo")}
                           className="rounded-xl border border-primary/40 bg-card px-3 py-2 text-sm"
