@@ -43,6 +43,13 @@
       "when": 1791604964688,
       "tag": "0005_catalog_product_overrides",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791605003984,
+      "tag": "0006_reserve_product_stock_on_order",
+      "breakpoints": true
     }
   ]
 }

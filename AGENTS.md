@@ -15,3 +15,6 @@
 - Use TanStack Query for shared settings and the pathless authenticated layout for the panel, keeping public catalog reads independent of login.
 - Persist customer orders through a validated public checkout server function with server-calculated catalog prices, random idempotency keys and bounded submission frequency; never expose private order reads publicly.
 - Keep order management in an admin-only panel module with authenticated status writes, conflict detection, paginated polling and user-activated audio; WhatsApp stage actions open prefilled messages rather than claiming automatic delivery.
+- Keep the imported catalog as the immutable baseline and merge validated `catalog_products` overrides on public reads and checkout; this preserves existing product IDs and saved cart keys without reseeding.
+- Store product photos in private native storage with public read-only signed URLs and admin-only uploads; this respects workspace public-bucket restrictions.
+- Reserve tracked product and variation stock atomically on order insertion using row locks, and reject stale prices; this prevents overselling across concurrent customers.
