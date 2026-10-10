@@ -103,4 +103,28 @@ describe("Kanban order management", () => {
     expect(screen.queryByText("Cliente teste")).not.toBeInTheDocument();
     expect(screen.getAllByText("Nenhum pedido")).toHaveLength(4);
   });
+  it("alerts and plays sound only for new orders after activation", async () => {
+    const start = vi.fn();
+    class TestAudio {
+      state = "running";
+      currentTime = 0;
+      destination = {};
+      resume = async () => {};
+      close = async () => {};
+      createOscillator = () => ({ connect: vi.fn(), frequency: { value: 0 }, start, stop: vi.fn() });
+      createGain = () => ({ connect: vi.fn(), gain: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() } });
+    }
+    vi.stubGlobal("AudioContext", TestAudio);
+    mount();
+    await screen.findByText("Cliente teste");
+    expect(start).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Ativar som" }));
+    await screen.findByRole("button", { name: "Som ativo" });
+    expect(start).toHaveBeenCalledTimes(3);
+    mocks.list.mockImplementation(async () => [row, { ...row, id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", number: 43 }]);
+    fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
+    await screen.findByText("1 novo pedido recebido");
+    expect(start).toHaveBeenCalledTimes(6);
+    vi.unstubAllGlobals();
+  });
 });
