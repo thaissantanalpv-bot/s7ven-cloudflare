@@ -8,6 +8,7 @@ vi.mock("@tanstack/react-start", () => ({ useServerFn: () => mocks.save }));
 vi.mock("@/lib/catalog.functions", () => ({ saveCatalogProduct: vi.fn() }));
 vi.mock("@/lib/catalog.query", () => ({ catalogQuery: { queryKey: ["catalog-products"], queryFn: async () => [], staleTime: Infinity }, useCatalogUpdates: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { storage: { from: () => ({ upload: mocks.upload, createSignedUrl: mocks.signed }) } } }));
+vi.mock("@/components/ui/switch", () => ({ Switch: ({ checked, onCheckedChange, ...props }: { checked: boolean; onCheckedChange: (value: boolean) => void; "aria-label": string }) => <button type="button" role="switch" aria-checked={checked} onClick={() => onCheckedChange(!checked)} {...props} /> }));
 import { ProductManager } from "@/components/products/product-manager";
 
 function setup() {
