@@ -9,6 +9,7 @@ import { storeSettingsQuery } from "@/lib/store-settings.query";
 import { storeStatus, DAYS } from "@/lib/store-settings";
 import { QRCodeSVG } from "qrcode.react";
 import { useServerFn } from "@tanstack/react-start";
+import { PhoneField } from "@/components/orders/phone-field";
 import { customerSchema } from "@/lib/orders";
 import { submitOrder } from "@/lib/orders.functions";
 import {
@@ -49,6 +50,7 @@ const keyOf = (id: string, opt?: string) => (opt ? `${id}${SEP}${opt}` : id);
 function Catalog() {
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
   const registerOrder = useServerFn(submitOrder);
+  const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [receipt, setReceipt] = useState<{ number: number; url: string } | null>(null);
   const [attempt, setAttempt] = useState<{ signature: string; id: string } | null>(null);
@@ -132,7 +134,7 @@ function Catalog() {
     });
 
   const send = async () => {
-    setError("");
+    setError(""); setSubmitted(true);
     if (!items.length) return setError("Seu carrinho está vazio.");
     if (settings.delivery_enabled && !zone) return setError("Escolha o bairro ou região de entrega.");
     if (status.configured && !status.open) return setError("A loja está fechada. Confira os horários de atendimento.");
@@ -257,9 +259,7 @@ function Catalog() {
                 <Field label="Seu nome">
                   <input className="field" value={form.name} maxLength={80} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 </Field>
-                <Field label="Seu WhatsApp (com DDD)">
-                  <input className="field" type="tel" autoComplete="tel" placeholder="(18) 99999-9999" value={form.phone} maxLength={20} onChange={e => setForm({ ...form, phone: e.target.value })}/>
-                </Field>
+                <PhoneField value={form.phone} submitted={submitted} onChange={phone => setForm({ ...form, phone })}/>
                 <Field label="Endereço de entrega">
                   <textarea className="field" rows={3} maxLength={300} placeholder="Rua, número, bairro, cidade e referência" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                 </Field>

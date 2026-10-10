@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { brazilPhoneSchema, normalizePhone } from './phone';
+export { normalizePhone } from './phone';
 import { PRODUCTS, PAYMENT_METHODS, STORE_NAME } from './products';
 import type { StoreSettings } from './store-settings';
 export const ORDER_STAGES = [
@@ -9,13 +11,9 @@ export const ORDER_STAGES = [
 ] as const;
 export const statusSchema = z.enum(['received', 'preparing', 'out_for_delivery', 'delivered']);
 export type OrderStatus = z.infer<typeof statusSchema>;
-export function normalizePhone(input: string) {
-  const digits = input.replace(/\D/g, '');
-  return digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
-}
 export const customerSchema = z.object({
   name: z.string().trim().min(2, 'Informe seu nome').max(80),
-  phone: z.string().transform(normalizePhone).refine(v => /^55[1-9]\d\d{8,9}$/.test(v), 'Informe seu WhatsApp com DDD'),
+  phone: brazilPhoneSchema,
   address: z.string().trim().min(8, 'Informe o endereço completo').max(300),
   payment: z.string().refine(v => PAYMENT_METHODS.includes(v), 'Escolha a forma de pagamento'),
   change: z.string().max(30).default(''), notes: z.string().max(300).default(''), zone: z.string().max(80).default(''),
