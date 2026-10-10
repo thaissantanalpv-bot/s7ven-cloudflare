@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Search, ShoppingBag, Plus, Minus, ArrowUpRight, Truck, Clock, SlidersHorizontal, X, MessageCircle, ChevronRight, Wine, Flame, Leaf, Package } from "lucide-react";
@@ -447,10 +447,12 @@ function Qty({ qty, onMinus, onPlus }: { qty: number; onMinus: () => void; onPlu
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const id = useId();
+  const control = isValidElement<{ id?: string }>(children) && typeof children.type === "string" && ["input", "textarea", "select"].includes(children.type) ? children : null;
   return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-medium">{label}</span>
-      {children}
-    </label>
+    <div className="block">
+      {control ? <label htmlFor={id} className="mb-1 block text-sm font-medium">{label}</label> : <span className="mb-1 block text-sm font-medium">{label}</span>}
+      {control ? cloneElement(control, { id }) : children}
+    </div>
   );
 }
