@@ -17,7 +17,7 @@ describe("Counter checkout", () => {
   });
   it("rejects insufficient cash and stale prices", () => {
     expect(() => priceCounterSale({ ...input(), cashReceived: 0 }, products)).toThrow("menor");
-    const sale = input(); sale.items[0].expectedPrice += 1;
+    const sale = input(); const first = sale.items[0]; if (!first) throw new Error("Missing line"); first.expectedPrice += 1;
     expect(() => priceCounterSale(sale, products)).toThrow("preço alterado");
   });
   it("requires explicit cash and removes cash for other payments", () => {
