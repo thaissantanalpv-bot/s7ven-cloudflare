@@ -15,7 +15,7 @@ export function OrderBoard() {
   const client = useQueryClient();
   const orders = useQuery({ queryKey: ['store-orders'], queryFn: () => fetchOrders(), refetchInterval: 5000, refetchIntervalInBackground: true, retry: false });
   const [search, setSearch] = useState('');
-  const [period, setPeriod] = useState('active');
+  const [period, setPeriod] = useState('all');
   const [sound, setSound] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
