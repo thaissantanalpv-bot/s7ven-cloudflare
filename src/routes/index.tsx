@@ -28,9 +28,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { PhoneField } from "@/components/orders/phone-field";
 import { customerSchema } from "@/lib/orders";
 import { submitOrder } from "@/lib/orders.functions";
+import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
+import { available, type CatalogProduct } from "@/lib/catalog";
 import {
-  PRODUCTS,
-  CATEGORIES,
   PAYMENT_METHODS,
   WHATSAPP_NUMBER,
   STORE_NAME,
@@ -40,7 +40,7 @@ import {
 import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(storeSettingsQuery),
+  loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
   head: () => ({
     meta: [
       { title: `${STORE_NAME} — Catálogo Digital` },
@@ -66,6 +66,9 @@ const OTHER = "__outro__";
 const keyOf = (id: string, opt?: string) => (opt ? `${id}${SEP}${opt}` : id);
 
 function Catalog() {
+  const { data: products } = useSuspenseQuery(catalogQuery);
+  useCatalogUpdates();
+  const categories = ["Todos", ...new Set(products.map(p => p.category))];
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
   const registerOrder = useServerFn(submitOrder);
   const [submitted, setSubmitted] = useState(false);
@@ -120,7 +123,7 @@ function Catalog() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = PRODUCTS.filter(
+    const list = products.filter(
       (p) =>
         (cat === "Todos" || p.category === cat) &&
         (!q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)),
@@ -129,18 +132,18 @@ function Catalog() {
     if (sort === "high") list.sort((a, b) => b.price - a.price);
     if (sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
-  }, [query, cat, sort]);
+   }, [query, cat, sort, products]);
 
   const items: Line[] = useMemo(
     () =>
       Object.entries(cart)
         .map(([key, qty]) => {
           const [id, opt] = key.split(SEP);
-          const product = PRODUCTS.find((p) => p.id === id);
+          const product = products.find((p) => p.id === id);
           return product && qty > 0 ? { product, key, qty, option: opt ?? "" } : null;
         })
         .filter((l): l is Line => l !== null),
-    [cart],
+    [cart, products],
   );
   const count = items.reduce((s, i) => s + i.qty, 0);
   const subtotal = items.reduce((s, i) => s + i.qty * i.product.price, 0);
@@ -158,7 +161,10 @@ function Catalog() {
 
   const change = (key: string, d: number) =>
     setCart((c) => {
+      const [id, option = ""] = key.split(SEP);
+      const product = products.find(p => p.id === id);
       const n = Math.max(0, (c[key] || 0) + d);
+      if (d > 0 && (!product || !available(product, option, n) || (product.stock !== null && Object.entries(c).filter(([k]) => k.split(SEP)[0] === id).reduce((sum, [, q]) => sum + q, d) > product.stock))) return c;
       const next = { ...c };
       if (n === 0) delete next[key];
       else next[key] = n;
@@ -169,6 +175,7 @@ function Catalog() {
     setError("");
     setSubmitted(true);
     if (!items.length) return setError("Seu carrinho está vazio.");
+    if (items.some(i => !available(i.product, i.option, i.qty))) return setError("Há um item esgotado ou indisponível no carrinho. Remova ou ajuste a quantidade.");
     if (settings.delivery_enabled && !zone)
       return setError("Escolha o bairro ou região de entrega.");
     if (status.configured && !status.open)
@@ -379,7 +386,7 @@ function Catalog() {
           </select>
         </div>
         <nav aria-label="Categorias" className="no-scrollbar mb-6 flex gap-2 overflow-x-auto pb-2">
-          {CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <Button
               key={c}
               variant={cat === c ? "default" : "outline"}
@@ -667,7 +674,7 @@ function ProductCard({
   onTyped,
   onChange,
 }: {
-  p: Product;
+  p: CatalogProduct;
   cart: Cart;
   sel: Record<string, string>;
   typed: Record<string, string>;
@@ -682,7 +689,7 @@ function ProductCard({
   const option = hasOpts ? (isOther ? text : chosen) : "";
   const key = keyOf(p.id, option || undefined);
   const qty = cart[key] ?? 0;
-  const ready = !hasOpts || (isOther ? !!text : !!chosen);
+  const ready = (!hasOpts || (isOther ? !!text : !!chosen)) && available(p, option);
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-colors hover:border-primary/50">
@@ -701,6 +708,7 @@ function ProductCard({
       <div className="flex min-w-0 flex-1 flex-col p-4">
         <span className="text-[11px] uppercase text-muted-foreground">{p.category}</span>
         <h2 className="mt-1 font-display text-base font-semibold leading-snug">{p.name}</h2>
+        {!available(p) && <p className="mt-2 text-xs text-destructive">{p.active ? "Esgotado" : "Indisponível"}</p>}
         {hasOpts ? (
           <div className="mt-2">
             <p className="text-[11px] font-medium uppercase text-muted-foreground">
@@ -713,6 +721,7 @@ function ProductCard({
                   size="sm"
                   key={o}
                   type="button"
+                  disabled={!available(p, o)}
                   onClick={() => onSel(p.id, o)}
                   aria-pressed={chosen === o}
                   className={`h-auto min-h-7 whitespace-normal rounded-md border px-2.5 py-1 text-xs transition ${
@@ -724,7 +733,7 @@ function ProductCard({
                   {o}
                 </Button>
               ))}
-              <Button
+              {p.allowOther && <Button
                 variant="ghost"
                 size="sm"
                 type="button"
@@ -737,7 +746,7 @@ function ProductCard({
                 }`}
               >
                 Outro
-              </Button>
+              </Button>}
             </div>
             {isOther && (
               <input

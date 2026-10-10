@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { submitOrderSchema, priceOrder, statusSchema, type Order } from "./orders";
 import { EMPTY_SETTINGS, settingsSchema, storeStatus } from "./store-settings";
+import { mergeCatalog } from "./catalog";
 
 export const submitOrder = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => submitOrderSchema.parse(input))
@@ -31,7 +32,9 @@ export const submitOrder = createServerFn({ method: "POST" })
     if (settingsError) throw new Error("Não foi possível conferir a entrega. Tente novamente.");
     const settings = row ? settingsSchema.parse(row) : EMPTY_SETTINGS;
     if (!storeStatus(settings).open) throw new Error("A loja está fechada. Confira os horários.");
-    const priced = priceOrder(data, settings);
+    const { data: catalogRows, error: catalogError } = await supabaseAdmin.from("catalog_products").select("id,data,updated_at").in("id", data.items.map(i => i.productId));
+    if (catalogError) throw new Error("Não foi possível conferir o estoque.");
+    const priced = priceOrder(data, settings, mergeCatalog(catalogRows));
     const { data: saved, error } = await supabaseAdmin
       .from("orders")
       .insert({
@@ -47,6 +50,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       .select("number")
       .single();
     if (error || !saved) {
+      if (error?.code === "P0001") throw new Error("Estoque ou preço alterado. Atualize o catálogo e confira o carrinho.");
       if (error?.code === "23505") {
         const { data: duplicate } = await supabaseAdmin
           .from("orders")
