@@ -13,3 +13,10 @@
 - [x] Adicionar alerta sonoro ativável e atualização automática dos pedidos.
 - [x] Verificar envio real no catálogo, leitura do registro, privacidade e 18 testes de etapas, som e telefone.
 - [ ] Verificar quadro e salvamento completos com conta administrativa: aguarda criação e confirmação da conta autorizada.
+
+# Produtos e estoque
+- [x] Criar cadastro compartilhado preservando os 176 produtos e carrinhos existentes.
+- [x] Adicionar edição de preços, fotos, descrições, categorias e variações ao painel.
+- [x] Gerenciar quantidades e pausa de produtos/variações, refletindo no catálogo e pedidos.
+- [x] Verificar validação, catálogo, carrinho salvo, proteção do painel e testes.
+- [ ] Verificar criação/edição, envio de foto e baixa de estoque de ponta a ponta com conta administrativa: não há contas cadastradas; aguarda cadastro e confirmação do e-mail autorizado.

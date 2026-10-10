@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { brazilPhoneSchema, normalizePhone } from "./phone";
 export { normalizePhone } from "./phone";
-import { PRODUCTS, PAYMENT_METHODS, STORE_NAME } from "./products";
+import { PRODUCTS, PAYMENT_METHODS, STORE_NAME, type Product } from "./products";
+import { available, type CatalogProduct } from "./catalog";
 import type { StoreSettings } from "./store-settings";
 export const ORDER_STAGES = [
   {
@@ -49,6 +50,7 @@ export const submitOrderSchema = z.object({
         productId: z.string().max(30),
         option: z.string().trim().max(40),
         qty: z.number().int().min(1).max(99),
+        expectedPrice: z.number().min(0).optional(),
       }),
     )
     .min(1)
@@ -81,12 +83,17 @@ export type Order = {
   created_at: string;
   updated_at: string;
 };
-export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: StoreSettings) {
+export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: StoreSettings, products: (Product | CatalogProduct)[] = PRODUCTS) {
   const items = input.items.map((line) => {
-    const product = PRODUCTS.find((p) => p.id === line.productId);
+    const product = products.find((p) => p.id === line.productId);
     if (!product) throw new Error("Um produto não está mais disponível. Atualize o catálogo.");
+    if (line.expectedPrice !== undefined && Math.round(line.expectedPrice * 100) !== Math.round(product.price * 100)) throw new Error(`${product.name}: preço alterado. Atualize o catálogo antes de enviar.`);
     if (product.options?.length && !line.option)
       throw new Error(`Escolha ${product.optionLabel?.toLowerCase()} de ${product.name}.`);
+    const totalQty = input.items.filter(i => i.productId === product.id).reduce((sum, i) => sum + i.qty, 0);
+    const optionQty = input.items.filter(i => i.productId === product.id && i.option === line.option).reduce((sum, i) => sum + i.qty, 0);
+    if (!available(product, line.option, optionQty) || ("stock" in product && product.stock !== null && totalQty > product.stock))
+      throw new Error(`${product.name}: item esgotado ou quantidade indisponível. Atualize o carrinho.`);
     return {
       productId: product.id,
       name: product.name,
