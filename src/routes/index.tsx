@@ -205,6 +205,7 @@ function Catalog() {
       productId: i.product.id,
       option: i.option,
       qty: i.qty,
+      expectedPrice: i.product.price,
     }));
     const signature = JSON.stringify({ customer: d, items: inputItems });
     const requestId = attempt?.signature === signature ? attempt.id : crypto.randomUUID();

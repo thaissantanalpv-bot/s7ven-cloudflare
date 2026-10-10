@@ -50,6 +50,7 @@ export const submitOrderSchema = z.object({
         productId: z.string().max(30),
         option: z.string().trim().max(40),
         qty: z.number().int().min(1).max(99),
+        expectedPrice: z.number().min(0).optional(),
       }),
     )
     .min(1)
@@ -86,6 +87,7 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
   const items = input.items.map((line) => {
     const product = products.find((p) => p.id === line.productId);
     if (!product) throw new Error("Um produto não está mais disponível. Atualize o catálogo.");
+    if (line.expectedPrice !== undefined && Math.round(line.expectedPrice * 100) !== Math.round(product.price * 100)) throw new Error(`${product.name}: preço alterado. Atualize o catálogo antes de enviar.`);
     if (product.options?.length && !line.option)
       throw new Error(`Escolha ${product.optionLabel?.toLowerCase()} de ${product.name}.`);
     const totalQty = input.items.filter(i => i.productId === product.id).reduce((sum, i) => sum + i.qty, 0);
