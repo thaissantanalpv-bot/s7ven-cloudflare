@@ -84,6 +84,7 @@ export const listOrders = createServerFn({ method: "POST" })
       result.push(
         ...data.map((row) => ({
           ...row,
+          source: z.enum(["catalog", "counter"]).parse(row.source),
           status: statusSchema.parse(row.status),
           items: row.items as Order["items"],
           subtotal: Number(row.subtotal),
