@@ -20,3 +20,8 @@
 - [x] Gerenciar quantidades e pausa de produtos/variações, refletindo no catálogo e pedidos.
 - [x] Verificar validação, catálogo, carrinho salvo, proteção do painel e testes.
 - [ ] Verificar criação/edição, envio de foto e baixa de estoque de ponta a ponta com conta administrativa: não há contas cadastradas; aguarda cadastro e confirmação do e-mail autorizado.
+
+# Frente de caixa
+- [ ] Criar vendas presenciais protegidas com pagamento, troco e baixa atômica de estoque.
+- [ ] Adicionar seleção rápida de produtos e variações, recibo e histórico unificado ao painel.
+- [ ] Testar cálculo, validação, regressões e acesso ao caixa.
