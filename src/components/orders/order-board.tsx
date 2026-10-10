@@ -89,7 +89,7 @@ export function OrderBoard() {
   );
   useEffect(() => {
     if (!orders.data) return;
-    const newOrders = seen.current ? orders.data.filter((o) => !seen.current?.has(o.id)) : [];
+    const newOrders = seen.current ? orders.data.filter((o) => o.source !== "counter" && !seen.current?.has(o.id)) : [];
     if (newOrders.length) {
       setNotice(
         `${newOrders.length} ${newOrders.length === 1 ? "novo pedido recebido" : "novos pedidos recebidos"}`,
@@ -113,7 +113,7 @@ export function OrderBoard() {
       setDrag(null);
     }
   };
-  const all = orders.data ?? [];
+  const all = (orders.data ?? []).filter(o => o.source !== "counter");
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
     new Date(),
   );

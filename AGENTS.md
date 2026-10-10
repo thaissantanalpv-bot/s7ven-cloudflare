@@ -18,3 +18,4 @@
 - Keep the imported catalog as the immutable baseline and merge validated `catalog_products` overrides on public reads and checkout; this preserves existing product IDs and saved cart keys without reseeding.
 - Store product photos in private native storage with public read-only signed URLs and admin-only uploads; this respects workspace public-bucket restrictions.
 - Reserve tracked product and variation stock atomically on order insertion using row locks, and reject stale prices; this prevents overselling across concurrent customers.
+- Persist counter sales in orders with a source and cashier, using admin-verified server-calculated checkout and the existing reservation trigger; this unifies history without duplicate stock deductions. Keep counter sales out of delivery stages and new-order alerts.

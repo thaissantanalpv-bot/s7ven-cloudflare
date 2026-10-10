@@ -110,6 +110,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       .from("orders")
       .update({ status: data.status, updated_at: new Date().toISOString() })
       .eq("id", data.id)
+       .eq("source", "catalog")
       .eq("status", data.expected)
       .select("id")
       .maybeSingle();
