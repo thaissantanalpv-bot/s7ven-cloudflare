@@ -20,6 +20,8 @@ import { storeSettingsQuery } from "@/lib/store-settings.query";
 import { checkStoreAdmin, saveStoreSettings } from "@/lib/store-settings.functions";
 import { OrderBoard } from "@/components/orders/order-board";
 import { ProductManager } from "@/components/products/product-manager";
+import { PointOfSale } from "@/components/pos/point-of-sale";
+import { SalesHistory } from "@/components/pos/sales-history";
 import { catalogQuery } from "@/lib/catalog.query";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 
@@ -27,15 +29,15 @@ export const Route = createFileRoute("/_authenticated/painel")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
   head: () => ({
     meta: [
-      { title: "Produtos, pedidos e configurações — S7VEN" },
+      { title: "Caixa, vendas e operação — S7VEN" },
       {
         name: "description",
-        content: "Gestão de produtos, estoque, pedidos, entrega e atendimento da S7VEN Lounge e Tabacaria.",
+        content: "Frente de caixa, histórico de vendas, produtos, estoque e pedidos da S7VEN Lounge e Tabacaria.",
       },
-      { property: "og:title", content: "Produtos e operação da loja — S7VEN" },
+      { property: "og:title", content: "Caixa e operação da loja — S7VEN" },
       {
         property: "og:description",
-        content: "Administração de produtos, estoque, pedidos, taxas e horários da S7VEN.",
+        content: "Vendas de balcão e catálogo, estoque, pedidos, taxas e horários da S7VEN.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -73,7 +75,7 @@ function Admin() {
       <main className="mx-auto max-w-7xl px-5 py-10">
         <p className="mb-2 text-xs uppercase text-primary">Área da loja</p>
         <h1 className="font-display text-3xl font-semibold">
-          {view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
+          {view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">S7VEN Lounge e Tabacaria.</p>
         {permission.isPending ? (
@@ -96,6 +98,8 @@ function Admin() {
         ) : (
           <>
             <nav className="mt-7 flex flex-wrap gap-2 border-b pb-3" aria-label="Painel da loja">
+              <Button variant={view === "pos" ? "default" : "ghost"} onClick={() => setView("pos")}>Caixa / Balcão</Button>
+              <Button variant={view === "history" ? "default" : "ghost"} onClick={() => setView("history")}>Histórico de vendas</Button>
               <Button
                 variant={view === "orders" ? "default" : "ghost"}
                 onClick={() => setView("orders")}
@@ -110,7 +114,7 @@ function Admin() {
                 Taxas e horários
               </Button>
             </nav>
-            {view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager /> : <SettingsEditor initial={settings} />}
+            {view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager /> : <SettingsEditor initial={settings} />}
           </>
         )}
       </main>
