@@ -126,7 +126,7 @@ function RootComponent() {
       if (!["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) return;
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
-      else queryClient.removeQueries({ queryKey: ["store-admin"] });
+      else { queryClient.removeQueries({ queryKey: ["store-admin"] }); queryClient.removeQueries({ queryKey: ["store-orders"] }); }
     });
     return () => subscription.unsubscribe();
   }, [router, queryClient]);

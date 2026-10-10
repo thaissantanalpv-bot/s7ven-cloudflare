@@ -18,6 +18,8 @@
   --color-whatsapp: var(--whatsapp); --color-whatsapp-foreground: var(--primary-foreground);
   --color-photo: var(--photo); --color-photo-foreground: var(--photo-foreground);
   --color-overlay: var(--overlay);
+  --color-order-preparing: var(--order-preparing);
+  --color-order-delivery: var(--order-delivery);
   --shadow-soft: var(--shadow-soft-value);
 }
 :root, .dark {
@@ -36,6 +38,8 @@
   --whatsapp: oklch(0.78 0.18 150);
   --photo: oklch(0.99 0 0);
   --photo-foreground: oklch(0.12 0 0);
+  --order-preparing: oklch(0.8 0.13 75);
+  --order-delivery: oklch(0.76 0.12 230);
   --overlay: oklch(0.08 0 0 / 0.8);
   --shadow-soft-value: 0 8px 28px oklch(0.05 0 0 / 0.2);
 }

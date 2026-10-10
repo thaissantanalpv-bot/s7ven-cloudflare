@@ -8,7 +8,9 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/
 import { storeSettingsQuery } from "@/lib/store-settings.query";
 import { storeStatus, DAYS } from "@/lib/store-settings";
 import { QRCodeSVG } from "qrcode.react";
-import { z } from "zod";
+import { useServerFn } from "@tanstack/react-start";
+import { customerSchema } from "@/lib/orders";
+import { submitOrder } from "@/lib/orders.functions";
 import {
   PRODUCTS,
   CATEGORIES,
@@ -43,16 +45,13 @@ const SEP = "::";
 const OTHER = "__outro__";
 const keyOf = (id: string, opt?: string) => (opt ? `${id}${SEP}${opt}` : id);
 
-const orderSchema = z.object({
-  name: z.string().trim().min(2, "Informe seu nome").max(80),
-  address: z.string().trim().min(8, "Informe o endereço completo").max(300),
-  payment: z.string().min(1, "Escolha a forma de pagamento"),
-  change: z.string().max(30).optional(),
-  notes: z.string().max(300).optional(),
-});
 
 function Catalog() {
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
+  const registerOrder = useServerFn(submitOrder);
+  const [sending, setSending] = useState(false);
+  const [receipt, setReceipt] = useState<{ number: number; url: string } | null>(null);
+  const [attempt, setAttempt] = useState<{ signature: string; id: string } | null>(null);
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => { setNow(new Date()); const timer = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(timer); }, []);
   const status = now ? storeStatus(settings, now) : { open: true, configured: false, label: "Atendimento" };
@@ -63,7 +62,7 @@ function Catalog() {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("Todos");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", address: "", payment: "", change: "", notes: "", zone: "" });
+  const [form, setForm] = useState({ name: "", phone: "", address: "", payment: "", change: "", notes: "", zone: "" });
   const [error, setError] = useState("");
   const [sel, setSel] = useState<Record<string, string>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
@@ -132,12 +131,12 @@ function Catalog() {
       return next;
     });
 
-  const send = () => {
+  const send = async () => {
     setError("");
     if (!items.length) return setError("Seu carrinho está vazio.");
     if (settings.delivery_enabled && !zone) return setError("Escolha o bairro ou região de entrega.");
     if (status.configured && !status.open) return setError("A loja está fechada. Confira os horários de atendimento.");
-    const r = orderSchema.safeParse(form);
+    const r = customerSchema.safeParse(form);
     if (!r.success) return setError(r.error.issues[0]?.message ?? "Verifique os dados");
     const d = r.data;
     const lines = [
@@ -157,7 +156,21 @@ function Catalog() {
       `*Pagamento:* ${d.payment}${d.payment === "Dinheiro" && d.change ? ` (troco para ${d.change})` : ""}`,
       d.notes ? `*Obs.:* ${d.notes}` : "",
     ].filter((l, idx, arr) => l !== "" || arr[idx - 1] !== "");
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`, "_blank");
+    const inputItems = items.map(i => ({ productId: i.product.id, option: i.option, qty: i.qty }));
+    const signature = JSON.stringify({ customer: d, items: inputItems });
+    const requestId = attempt?.signature === signature ? attempt.id : crypto.randomUUID();
+    setAttempt({ signature, id: requestId }); setSending(true);
+    // Open synchronously to retain browser popup permission; navigate only after a successful save.
+    const popup = window.open("about:blank", "_blank");
+    if (popup) popup.opener = null;
+    try {
+      const saved = await registerOrder({ data: { requestId, customer: d, items: inputItems } });
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent([`*Pedido #${saved.number}*`, ...lines, `*WhatsApp do cliente:* ${d.phone}`].join("\n"))}`;
+      setReceipt({ number: saved.number, url });
+      setCart({}); setAttempt(null);
+      if (popup) popup.location.href = url;
+    } catch (e) { popup?.close(); setError(e instanceof Error ? e.message : "Não foi possível registrar seu pedido. Tente novamente."); }
+    finally { setSending(false); }
   };
 
   return (
@@ -244,6 +257,9 @@ function Catalog() {
                 <Field label="Seu nome">
                   <input className="field" value={form.name} maxLength={80} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 </Field>
+                <Field label="Seu WhatsApp (com DDD)">
+                  <input className="field" type="tel" autoComplete="tel" placeholder="(18) 99999-9999" value={form.phone} maxLength={20} onChange={e => setForm({ ...form, phone: e.target.value })}/>
+                </Field>
                 <Field label="Endereço de entrega">
                   <textarea className="field" rows={3} maxLength={300} placeholder="Rua, número, bairro, cidade e referência" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                 </Field>
@@ -323,9 +339,10 @@ function Catalog() {
                 <span className="font-display font-semibold">{brl(total)}</span>
               </div>
               {status.configured && !status.open && <p className="text-xs text-destructive">Loja fechada no momento. Confira os horários de atendimento.</p>}
+              {receipt && <div role="status" className="space-y-2 text-sm text-primary"><p>Pedido #{receipt.number} recebido pela loja.</p><Button asChild variant="outline" className="w-full"><a href={receipt.url} target="_blank" rel="noopener noreferrer"><MessageCircle/>Abrir pedido no WhatsApp</a></Button></div>}
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button disabled={status.configured && !status.open} onClick={send} className="h-12 w-full rounded-lg bg-whatsapp py-4 font-semibold text-whatsapp-foreground">
-                <MessageCircle/> Enviar pedido pelo WhatsApp
+              <Button disabled={sending || !items.length || (status.configured && !status.open)} onClick={send} className="h-12 w-full rounded-lg bg-whatsapp py-4 font-semibold text-whatsapp-foreground">
+                <MessageCircle/> {sending ? "Registrando pedido…" : "Enviar pedido pelo WhatsApp"}
               </Button>
             </div>
           </SheetContent>
