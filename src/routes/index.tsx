@@ -35,7 +35,6 @@ import {
   WHATSAPP_NUMBER,
   STORE_NAME,
   brl,
-  type Product,
 } from "@/lib/products";
 import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
 
@@ -58,7 +57,7 @@ export const Route = createFileRoute("/")({
 });
 
 type Cart = Record<string, number>;
-type Line = { product: Product; key: string; qty: number; option: string };
+type Line = { product: CatalogProduct; key: string; qty: number; option: string };
 
 const KEY = "catalogo-carrinho";
 const SEP = "::";
