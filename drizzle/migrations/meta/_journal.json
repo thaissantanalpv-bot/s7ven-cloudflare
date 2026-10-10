@@ -22,6 +22,20 @@
       "when": 1791604069871,
       "tag": "0002_harden_store_function_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791604395132,
+      "tag": "0003_create_store_orders",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791604577509,
+      "tag": "0004_restrict_order_direct_access",
+      "breakpoints": true
     }
   ]
 }

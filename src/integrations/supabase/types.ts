@@ -26,6 +26,69 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          address: string
+          change_for: string
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          delivery_confirmed: boolean
+          delivery_fee: number
+          delivery_zone: string
+          id: string
+          items: Json
+          notes: string
+          number: number
+          payment: string
+          request_id: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          change_for?: string
+          created_at?: string
+          customer_name: string
+          customer_phone: string
+          delivery_confirmed?: boolean
+          delivery_fee?: number
+          delivery_zone?: string
+          id?: string
+          items: Json
+          notes?: string
+          number?: never
+          payment: string
+          request_id: string
+          status?: string
+          subtotal: number
+          total: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          change_for?: string
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string
+          delivery_confirmed?: boolean
+          delivery_fee?: number
+          delivery_zone?: string
+          id?: string
+          items?: Json
+          notes?: string
+          number?: never
+          payment?: string
+          request_id?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       store_settings: {
         Row: {
           delivery_enabled: boolean
