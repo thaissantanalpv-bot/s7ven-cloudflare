@@ -1,5 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Search, ShoppingBag, Plus, Minus, ArrowUpRight, Truck, Clock, SlidersHorizontal, X, MessageCircle, ChevronRight, Wine, Flame, Leaf, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { storeSettingsQuery } from "@/lib/store-settings.query";
+import { storeStatus, DAYS } from "@/lib/store-settings";
 import { QRCodeSVG } from "qrcode.react";
 import { z } from "zod";
 import {
@@ -14,6 +21,7 @@ import {
 import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(storeSettingsQuery),
   head: () => ({
     meta: [
       { title: `${STORE_NAME} — Catálogo Digital` },
@@ -44,12 +52,18 @@ const orderSchema = z.object({
 });
 
 function Catalog() {
+  const { data: settings } = useSuspenseQuery(storeSettingsQuery);
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => { setNow(new Date()); const timer = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(timer); }, []);
+  const status = now ? storeStatus(settings, now) : { open: true, configured: false, label: "Atendimento" };
+  const [hoursOpen, setHoursOpen] = useState(false);
+  const [sort, setSort] = useState("catalog");
   const [cart, setCart] = useState<Cart>({});
   const [loaded, setLoaded] = useState(false);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("Todos");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", address: "", payment: "", change: "", notes: "" });
+  const [form, setForm] = useState({ name: "", address: "", payment: "", change: "", notes: "", zone: "" });
   const [error, setError] = useState("");
   const [sel, setSel] = useState<Record<string, string>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
@@ -73,12 +87,16 @@ function Catalog() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return PRODUCTS.filter(
+    const list = PRODUCTS.filter(
       (p) =>
         (cat === "Todos" || p.category === cat) &&
         (!q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)),
     );
-  }, [query, cat]);
+    if (sort === "low") list.sort((a,b) => a.price - b.price);
+    if (sort === "high") list.sort((a,b) => b.price - a.price);
+    if (sort === "name") list.sort((a,b) => a.name.localeCompare(b.name));
+    return list;
+  }, [query, cat, sort]);
 
   const items: Line[] = useMemo(
     () =>
@@ -92,7 +110,10 @@ function Catalog() {
     [cart],
   );
   const count = items.reduce((s, i) => s + i.qty, 0);
-  const total = items.reduce((s, i) => s + i.qty * i.product.price, 0);
+  const subtotal = items.reduce((s, i) => s + i.qty * i.product.price, 0);
+  const zone = settings.delivery_zones.find(z => z.id === form.zone);
+  const deliveryFee = settings.delivery_enabled ? (zone?.fee ?? 0) : 0;
+  const total = subtotal + deliveryFee;
 
   const pixPayload = useMemo(() => buildPixPayload(total), [total]);
   const copy = async (text: string, label: string) => {
@@ -114,6 +135,8 @@ function Catalog() {
   const send = () => {
     setError("");
     if (!items.length) return setError("Seu carrinho está vazio.");
+    if (settings.delivery_enabled && !zone) return setError("Escolha o bairro ou região de entrega.");
+    if (status.configured && !status.open) return setError("A loja está fechada. Confira os horários de atendimento.");
     const r = orderSchema.safeParse(form);
     if (!r.success) return setError(r.error.issues[0]?.message ?? "Verifique os dados");
     const d = r.data;
@@ -125,7 +148,9 @@ function Catalog() {
           `${i.qty}x ${i.product.name}${i.option ? ` (${i.product.optionLabel}: ${i.option})` : ""} — ${brl(i.qty * i.product.price)}`,
       ),
       "",
-      `*Total: ${brl(total)}*`,
+      `*Produtos: ${brl(subtotal)}*`,
+      settings.delivery_enabled ? `*Entrega (${zone?.name}): ${brl(deliveryFee)}*` : "*Entrega: valor a confirmar com a loja*",
+      `*Total${settings.delivery_enabled ? "" : " dos produtos"}: ${brl(total)}*`,
       "",
       `*Nome:* ${d.name}`,
       `*Endereço:* ${d.address}`,
@@ -137,84 +162,56 @@ function Catalog() {
 
   return (
     <div className="min-h-screen pb-28 lg:pb-10">
-      <header className="sticky top-0 z-20 border-b bg-background/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <div className="min-w-0">
-            <h1 className="truncate font-display text-2xl font-semibold text-foreground">{STORE_NAME}</h1>
-            <p className="text-xs text-muted-foreground">Catálogo digital · pedido pelo WhatsApp</p>
-          </div>
-          <button
-            onClick={() => setOpen(true)}
-            className="relative shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
-            🛒 Carrinho
-            {count > 0 && (
-              <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] font-bold text-accent-foreground">
-                {count}
-              </span>
-            )}
-          </button>
-        </div>
-        <div className="mx-auto max-w-6xl px-4 pb-3">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="🔎 Buscar produto..."
-            className="w-full rounded-xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c}
-                onClick={() => setCat(c)}
-                className={`shrink-0 rounded-full border px-4 py-1.5 text-sm transition ${
-                  cat === c ? "border-primary bg-primary text-primary-foreground" : "bg-card text-foreground"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
+      <div className="border-b bg-primary px-4 py-2 text-center text-[11px] font-semibold text-primary-foreground">S7VEN LOUNGE E TABACARIA <span className="mx-2">/</span> SEU PEDIDO, DO SEU JEITO.</div>
+      <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur-lg">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-8">
+          <Link to="/" className="flex items-center gap-3" aria-label="S7VEN Lounge e Tabacaria">
+            <span className="font-display text-3xl font-extrabold">S<span className="text-primary">7</span>VEN<span className="text-primary">.</span></span>
+            <span className="hidden border-l pl-3 text-[10px] font-medium uppercase leading-5 text-muted-foreground sm:block">Lounge &<br/>Tabacaria</span>
+          </Link>
+          <div className="relative hidden w-full max-w-md md:block"><Search className="absolute left-3 top-3 size-4 text-muted-foreground"/><input aria-label="Buscar produto" value={query} onChange={e => setQuery(e.target.value)} placeholder="O que você procura hoje?" className="field pl-10"/></div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button variant="ghost" size="icon" asChild title="Configurações da loja"><Link to="/painel" aria-label="Configurações da loja"><SlidersHorizontal/></Link></Button>
+            <Button onClick={() => setOpen(true)} className="h-10"><ShoppingBag/><span className="hidden sm:inline">Meu carrinho</span><span className="grid size-5 place-items-center rounded-full bg-primary-foreground/10 text-xs">{count}</span></Button>
           </div>
         </div>
+        <div className="relative mx-4 mb-4 md:hidden"><Search className="absolute left-3 top-3 size-4 text-muted-foreground"/><input aria-label="Buscar produto" value={query} onChange={e => setQuery(e.target.value)} placeholder="O que você procura hoje?" className="field pl-10"/></div>
       </header>
-
-      <main className="mx-auto grid max-w-6xl gap-4 px-4 py-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.length === 0 && (
-          <p className="col-span-full py-16 text-center text-muted-foreground">Nenhum produto encontrado.</p>
-        )}
-        {filtered.map((p) => (
-          <ProductCard
-            key={p.id}
-            p={p}
-            cart={cart}
-            sel={sel}
-            typed={typed}
-            onSel={(id, v) => setSel((s) => ({ ...s, [id]: v }))}
-            onTyped={(id, v) => setTyped((s) => ({ ...s, [id]: v }))}
-            onChange={change}
-          />
-        ))}
-      </main>
+      <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-8 sm:pt-10">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div><p className="mb-2 text-xs font-medium uppercase text-primary">Bebidas · Tabacaria · Acessórios</p><h1 className="font-display text-3xl font-bold sm:text-4xl">S7VEN Lounge e Tabacaria</h1><p className="mt-3 text-sm text-muted-foreground">Sua seleção para brindar, relaxar e aproveitar.</p></div>
+          <Button variant="outline" onClick={() => setHoursOpen(!hoursOpen)} className="h-10"><span className={`size-2 rounded-full ${status.open && status.configured ? "bg-whatsapp" : "bg-muted-foreground"}`}/>{status.label}<Clock className="ml-2"/></Button>
+        </div>
+        {hoursOpen && <div className="mt-5 border-y py-4"><h2 className="mb-3 text-sm font-semibold">Horários de atendimento · Brasília</h2>{settings.hours_enabled ? <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">{settings.opening_hours.map(h => <p key={h.day} className="flex justify-between gap-4 pr-4"><span className="text-muted-foreground">{DAYS[h.day]}</span><span>{h.enabled ? `${h.open} – ${h.close}${h.open > h.close ? " (+1 dia)" : ""}` : "Fechado"}</span></p>)}</div> : <p className="text-sm text-muted-foreground">Confirme os horários pelo WhatsApp.</p>}</div>}
+        <div className="no-scrollbar mt-8 flex gap-3 overflow-x-auto pb-2">
+          {[{ name: "Bebidas", image: "p1", label: "Para brindar", Icon: Wine }, { name: "Narguiles > Essências", image: "p141", label: "Essências", Icon: Flame }, { name: "Tabaco", image: "p88", label: "Tabacaria", Icon: Leaf }, { name: "Headshop", image: "p27", label: "Headshop", Icon: Package }].map(c => <Button key={c.name} variant="secondary" onClick={() => {setCat(c.name); setQuery("");}} className="h-28 min-w-48 flex-1 justify-start overflow-hidden border p-0 text-left sm:h-32"><img src={`/produtos/${c.image}.jpg`} alt="" className="h-full w-24 object-cover"/><span className="flex flex-1 flex-col gap-2 px-4"><c.Icon className="text-primary"/><span className="text-sm font-semibold">{c.label}</span><ArrowUpRight className="text-muted-foreground"/></span></Button>)}
+        </div>
+        <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 border-b pb-5 text-xs text-muted-foreground"><span className="flex items-center gap-2"><Truck className="size-4 text-primary"/>Entrega {settings.delivery_enabled ? "por região" : "a combinar"}</span><span className="flex items-center gap-2"><MessageCircle className="size-4 text-primary"/>Pedido pelo WhatsApp</span><span className="flex items-center gap-2"><ShoppingBag className="size-4 text-primary"/>Pix, cartão ou dinheiro</span></div>
+      </section>
+      <section className="mx-auto max-w-7xl px-4 py-7 sm:px-8">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div className="flex items-baseline gap-3"><h2 className="font-display text-xl font-semibold">{cat === "Todos" ? "Explore o catálogo" : cat.replace("Narguiles > ", "")}</h2><span className="text-xs text-muted-foreground">{filtered.length} produtos</span></div><select aria-label="Ordenar produtos" value={sort} onChange={e => setSort(e.target.value)} className="rounded-md border bg-card px-3 py-2 text-xs"><option value="catalog">Ordem do catálogo</option><option value="low">Menor preço</option><option value="high">Maior preço</option><option value="name">Nome: A–Z</option></select></div>
+        <nav aria-label="Categorias" className="no-scrollbar mb-6 flex gap-2 overflow-x-auto pb-2">{CATEGORIES.map(c => <Button key={c} variant={cat === c ? "default" : "outline"} onClick={() => setCat(c)} size="sm" className="shrink-0">{c.replace("Narguiles > ", "")}</Button>)}</nav>
+        <main className="grid grid-cols-1 gap-4 min-[440px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filtered.length === 0 && <div className="col-span-full py-16 text-center"><Search className="mx-auto mb-4 size-8 text-muted-foreground"/><p>Nenhum produto encontrado.</p><Button variant="link" onClick={() => {setQuery(""); setCat("Todos");}}>Limpar filtros</Button></div>}
+          {filtered.map(p => <ProductCard key={p.id} p={p} cart={cart} sel={sel} typed={typed} onSel={(id,v) => setSel(s => ({...s,[id]:v}))} onTyped={(id,v) => setTyped(s => ({...s,[id]:v}))} onChange={change}/>)}
+        </main>
+      </section>
+      <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t px-4 py-6 text-xs text-muted-foreground sm:px-8"><span>{STORE_NAME}</span><span>Venda de bebidas e produtos de tabacaria somente para maiores de 18 anos.</span><Button asChild variant="link" size="sm"><Link to="/painel">Área da loja <ArrowUpRight/></Link></Button></footer>
 
       {count > 0 && !open && (
-        <button
+        <Button
           onClick={() => setOpen(true)}
-          className="fixed inset-x-4 bottom-4 z-20 flex items-center justify-between rounded-2xl bg-primary px-5 py-4 text-primary-foreground shadow-soft lg:hidden"
+          className="fixed inset-x-4 bottom-4 z-20 h-14 flex items-center justify-between rounded-2xl bg-primary px-5 py-4 text-primary-foreground shadow-soft lg:hidden"
         >
           <span>{count} {count === 1 ? "item" : "itens"} · Ver carrinho</span>
           <span className="font-semibold">{brl(total)}</span>
-        </button>
+        </Button>
       )}
 
-      {open && (
-        <div className="fixed inset-0 z-30 flex justify-end bg-foreground/40" onClick={() => setOpen(false)}>
-          <aside
-            onClick={(e) => e.stopPropagation()}
-            className="flex h-full w-full max-w-md flex-col bg-background"
-          >
+      <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent className="flex h-full w-full flex-col gap-0 p-0 sm:max-w-md">
             <div className="flex items-center justify-between border-b px-5 py-4">
-              <h2 className="font-display text-xl font-semibold">Seu pedido</h2>
-              <button onClick={() => setOpen(false)} className="text-2xl text-muted-foreground" aria-label="Fechar">×</button>
+              <div><SheetTitle className="font-display text-xl font-semibold">Seu pedido</SheetTitle><SheetDescription>{count} {count === 1 ? "item" : "itens"} no carrinho</SheetDescription></div>
             </div>
             <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
               {items.length === 0 ? (
@@ -247,20 +244,21 @@ function Catalog() {
                 <Field label="Seu nome">
                   <input className="field" value={form.name} maxLength={80} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 </Field>
-                <Field label="📍 Endereço de entrega">
+                <Field label="Endereço de entrega">
                   <textarea className="field" rows={3} maxLength={300} placeholder="Rua, número, bairro, cidade e referência" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                 </Field>
-                <Field label="💳 Forma de pagamento">
+                {settings.delivery_enabled && <Field label="Bairro ou região"><select className="field" value={form.zone} onChange={e => setForm({...form,zone:e.target.value})}><option value="">Selecione sua região</option>{settings.delivery_zones.map(z => <option key={z.id} value={z.id}>{z.name} · {brl(z.fee)}</option>)}</select></Field>}
+                <Field label="Forma de pagamento">
                   <div className="grid grid-cols-2 gap-2">
                     {PAYMENT_METHODS.map((m) => (
-                      <button
+                      <Button
                         key={m}
                         type="button"
                         onClick={() => setForm({ ...form, payment: m })}
                         className={`rounded-xl border px-3 py-2 text-sm ${form.payment === m ? "border-primary bg-primary text-primary-foreground" : "bg-card"}`}
                       >
                         {m}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </Field>
@@ -273,27 +271,27 @@ function Catalog() {
                           valor no QR
                         </span>
                       </div>
-                      <div className="flex justify-center rounded-xl bg-white p-3">
+                      <div className="flex justify-center rounded-xl bg-photo text-photo-foreground p-3">
                         <QRCodeSVG value={pixPayload} size={172} level="M" marginSize={2} />
                       </div>
                       <p className="text-center text-xs text-muted-foreground">
                         Abra o app do seu banco, escaneie o código e confirme o pagamento.
                       </p>
                       <div className="grid grid-cols-2 gap-2">
-                        <button
+                        <Button
                           type="button"
                           onClick={() => copy(PIX_KEY, "chave")}
                           className="rounded-xl border border-primary/40 bg-card px-3 py-2 text-sm"
                         >
                           {copied === "chave" ? "Chave copiada!" : "Copiar chave"}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
                           onClick={() => copy(pixPayload, "codigo")}
                           className="rounded-xl border border-primary/40 bg-card px-3 py-2 text-sm"
                         >
                           {copied === "codigo" ? "Código copiado!" : "Pix copia e cola"}
-                        </button>
+                        </Button>
                       </div>
                       <p className="text-center text-xs text-muted-foreground">
                         Chave: <span className="font-medium text-foreground">{PIX_KEY}</span>
@@ -315,18 +313,20 @@ function Catalog() {
               </div>
             </div>
             <div className="space-y-3 border-t px-5 py-4">
+              <div className="flex justify-between text-sm text-muted-foreground"><span>Produtos</span><span>{brl(subtotal)}</span></div>
+              <div className="flex justify-between text-sm text-muted-foreground"><span>Entrega</span><span>{settings.delivery_enabled ? (zone ? brl(deliveryFee) : "Selecione a região") : "A confirmar"}</span></div>
               <div className="flex justify-between text-lg">
                 <span>Total</span>
                 <span className="font-display font-semibold">{brl(total)}</span>
               </div>
+              {status.configured && !status.open && <p className="text-xs text-destructive">Loja fechada no momento. Confira os horários de atendimento.</p>}
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <button onClick={send} className="w-full rounded-2xl bg-whatsapp py-4 font-semibold text-whatsapp-foreground">
-                📲 Enviar pedido pelo WhatsApp
-              </button>
+              <Button disabled={status.configured && !status.open} onClick={send} className="h-12 w-full rounded-lg bg-whatsapp py-4 font-semibold text-whatsapp-foreground">
+                <MessageCircle/> Enviar pedido pelo WhatsApp
+              </Button>
             </div>
-          </aside>
-        </div>
-      )}
+          </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -348,7 +348,7 @@ function ProductCard({
   onTyped: (id: string, v: string) => void;
   onChange: (key: string, d: number) => void;
 }) {
-  const hasOpts = !!p.options?.length;
+  const hasOpts = Boolean(p.options?.length);
   const chosen = sel[p.id] ?? "";
   const isOther = chosen === OTHER;
   const text = (typed[p.id] ?? "").trim();
@@ -358,44 +358,46 @@ function ProductCard({
   const ready = !hasOpts || (isOther ? !!text : !!chosen);
 
   return (
-    <article className="flex gap-4 rounded-2xl border bg-card p-4 shadow-soft sm:flex-col">
-      <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-card text-5xl sm:h-48 sm:w-full sm:text-6xl">
+    <article className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-colors hover:border-primary/50">
+      <div className="grid aspect-[4/3] w-full shrink-0 place-items-center overflow-hidden bg-photo text-5xl">
         {p.image ? (
-          <img src={p.image} alt={p.name} loading="lazy" className="h-full w-full object-contain" />
+          <img src={p.image} alt={p.name} loading="lazy" className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105" />
         ) : (
           p.emoji
         )}
       </div>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{p.category}</span>
-        <h2 className="font-display text-lg font-semibold leading-tight">{p.name}</h2>
+      <div className="flex min-w-0 flex-1 flex-col p-4">
+        <span className="text-[11px] uppercase text-muted-foreground">{p.category}</span>
+        <h2 className="mt-1 font-display text-base font-semibold leading-snug">{p.name}</h2>
         {hasOpts ? (
           <div className="mt-2">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{p.optionLabel}</p>
+            <p className="text-[11px] font-medium uppercase text-muted-foreground">{p.optionLabel}</p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {p.options!.map((o) => (
-                <button
+              {p.options?.map((o) => (
+                <Button
+                  variant="ghost" size="sm"
                   key={o}
                   type="button"
                   onClick={() => onSel(p.id, o)}
                   aria-pressed={chosen === o}
-                  className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                  className={`h-auto min-h-7 whitespace-normal rounded-md border px-2.5 py-1 text-xs transition ${
                     chosen === o ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:border-primary"
                   }`}
                 >
                   {o}
-                </button>
+                </Button>
               ))}
-              <button
+              <Button
+                variant="ghost" size="sm"
                 type="button"
                 onClick={() => onSel(p.id, OTHER)}
                 aria-pressed={isOther}
-                className={`rounded-full border border-dashed px-2.5 py-1 text-xs transition ${
+                className={`h-auto min-h-7 rounded-md border border-dashed px-2.5 py-1 text-xs transition ${
                   isOther ? "border-primary bg-primary text-primary-foreground" : "bg-background text-muted-foreground"
                 }`}
               >
                 Outro
-              </button>
+              </Button>
             </div>
             {isOther && (
               <input
@@ -411,17 +413,17 @@ function ProductCard({
           p.description && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
         )}
         <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-          <span className="font-semibold text-primary">{brl(p.price)}</span>
+          <span className="text-lg font-bold text-primary">{brl(p.price)}</span>
           {qty > 0 ? (
             <Qty qty={qty} onMinus={() => onChange(key, -1)} onPlus={() => onChange(key, 1)} />
           ) : (
-            <button
+            <Button
               onClick={() => onChange(key, 1)}
               disabled={!ready}
               className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Adicionar
-            </button>
+              <Plus/> Adicionar
+            </Button>
           )}
         </div>
         {hasOpts && !ready && (
@@ -437,9 +439,9 @@ function ProductCard({
 function Qty({ qty, onMinus, onPlus }: { qty: number; onMinus: () => void; onPlus: () => void }) {
   return (
     <div className="flex shrink-0 items-center rounded-full border bg-card">
-      <button onClick={onMinus} className="h-8 w-8 text-lg" aria-label="Diminuir">−</button>
+      <Button onClick={onMinus} variant="ghost" size="icon" className="h-8 w-8" aria-label="Diminuir"><Minus/></Button>
       <span className="w-6 text-center text-sm font-semibold">{qty}</span>
-      <button onClick={onPlus} className="h-8 w-8 text-lg" aria-label="Aumentar">+</button>
+      <Button onClick={onPlus} variant="ghost" size="icon" className="h-8 w-8" aria-label="Aumentar"><Plus/></Button>
     </div>
   );
 }
