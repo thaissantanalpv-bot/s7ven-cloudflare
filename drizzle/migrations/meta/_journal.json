@@ -36,6 +36,13 @@
       "when": 1791604577509,
       "tag": "0004_restrict_order_direct_access",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791604964688,
+      "tag": "0005_catalog_product_overrides",
+      "breakpoints": true
     }
   ]
 }

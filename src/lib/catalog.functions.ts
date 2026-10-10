@@ -22,7 +22,19 @@ export const getCatalog = createServerFn({ method: "GET" }).handler(async () => 
     rows.push(...data);
     if (data.length < 500) break;
   }
-  return mergeCatalog(rows);
+  const products = mergeCatalog(rows);
+  const paths = products.map(p => p.image).filter((p): p is string => Boolean(p?.startsWith("uploads/")));
+  if (paths.length) {
+    const { data: urls, error } = await client.storage.from("product-photos").createSignedUrls(paths, 3600);
+    if (error) throw new Error("Não foi possível carregar as fotos.");
+    for (const p of products) {
+      if (!p.image?.startsWith("uploads/")) continue;
+      p.imagePath = p.image;
+      const url = urls.find(u => u.path === p.image)?.signedUrl;
+      p.image = url ? url.replace(new URL(url).origin, new URL(import.meta.env.VITE_SUPABASE_URL).origin) : undefined;
+    }
+  }
+  return products;
 });
 
 export const saveCatalogProduct = createServerFn({ method: "POST" })
@@ -31,11 +43,6 @@ export const saveCatalogProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: admin, error: roleError } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (roleError || !admin) throw new Error("Acesso restrito à administração.");
-    if (data.product.image.startsWith("https://")) {
-      const url = new URL(data.product.image);
-      const origin = new URL(import.meta.env.VITE_SUPABASE_URL).origin;
-      if (url.origin !== origin || !url.pathname.startsWith("/storage/v1/object/public/product-photos/")) throw new Error("Envie a foto pelo painel.");
-    }
     const row = { id: data.product.id, data: data.product, updated_at: new Date().toISOString() };
     const query = data.expected === null
       ? context.supabase.from("catalog_products").insert(row)

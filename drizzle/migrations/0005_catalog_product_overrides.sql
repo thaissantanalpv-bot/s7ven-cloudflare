@@ -1,0 +1,11 @@
+CREATE TABLE public.catalog_products (id text PRIMARY KEY CHECK (id ~ '^[a-zA-Z0-9_-]{1,30}$'), data jsonb NOT NULL CHECK (jsonb_typeof(data) = 'object' AND data->>'id' = id), updated_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.catalog_products TO anon, authenticated;
+GRANT INSERT, UPDATE ON public.catalog_products TO authenticated;
+GRANT ALL ON public.catalog_products TO service_role;
+ALTER TABLE public.catalog_products ENABLE ROW LEVEL SECURITY;
+CREATE POLICY public_catalog_read ON public.catalog_products FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY admin_catalog_insert ON public.catalog_products FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY admin_catalog_update ON public.catalog_products FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY catalog_photo_read ON storage.objects FOR SELECT TO anon, authenticated USING (bucket_id = 'product-photos');
+CREATE POLICY catalog_photo_insert ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'product-photos' AND public.has_role(auth.uid(), 'admin') AND lower(storage.extension(name)) IN ('jpg','jpeg','png','webp'));
+DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN ALTER PUBLICATION supabase_realtime ADD TABLE public.catalog_products; END IF; END $$;

@@ -10,7 +10,7 @@ export const catalogProductSchema = z.object({
   price: z.number().min(0).max(1000000).multipleOf(0.01),
   category: z.string().trim().min(1, "Informe a categoria.").max(100),
   emoji: z.string().max(10).default("🛍️"),
-  image: z.string().max(1000).refine(v => !v || /^\/produtos\/p\d+\.jpg$/.test(v) || /^https:\/\//.test(v), "Foto inválida."),
+  image: z.string().max(1000).refine(v => !v || /^\/produtos\/p\d+\.jpg$/.test(v) || /^uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v), "Foto inválida."),
   active: z.boolean(),
   stock: quantity,
   optionLabel: z.enum(["Sabor", "Cor", "Variação"]),
@@ -23,6 +23,7 @@ export type CatalogProduct = Product & {
   allowOther: boolean;
   variations: z.infer<typeof variationSchema>[];
   updatedAt: string | null;
+  imagePath?: string;
 };
 export type ProductDraft = z.infer<typeof catalogProductSchema>;
 export function mergeCatalog(rows: { id: string; data: unknown; updated_at: string }[]): CatalogProduct[] {
@@ -43,5 +44,5 @@ export function available(p: Product | CatalogProduct, option = "", qty = 1) {
   return v ? v.active && (v.stock === null || v.stock >= qty) : p.allowOther;
 }
 export function toDraft(p: CatalogProduct): ProductDraft {
-  return { id: p.id, name: p.name, description: p.description, price: p.price, category: p.category, emoji: p.emoji, image: p.image ?? "", active: p.active, stock: p.stock, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations };
+  return { id: p.id, name: p.name, description: p.description, price: p.price, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", active: p.active, stock: p.stock, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations };
 }
