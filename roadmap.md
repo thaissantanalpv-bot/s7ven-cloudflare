@@ -7,6 +7,7 @@
 - [ ] Concluir acesso administrativo para thais.santana.lpv@gmail.com: autorização preparada; aguarda criação e confirmação da conta.
 
 # Fase 2
+- [ ] Validar WhatsApp no carrinho com máscara brasileira e erros claros.
 - [ ] Registrar pedidos do catálogo com telefone do cliente e valores verificados.
 - [ ] Criar quadro Kanban administrativo com as quatro etapas e mensagens WhatsApp.
 - [ ] Adicionar alerta sonoro ativável e atualização automática dos pedidos.
