@@ -2,7 +2,17 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { ArrowLeft, Check, Clock, LogOut, Plus, Save, ShieldCheck, Trash2, Truck } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Clock,
+  LogOut,
+  Plus,
+  Save,
+  ShieldCheck,
+  Trash2,
+  Truck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,16 +23,96 @@ import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   loader: ({ context }) => context.queryClient.ensureQueryData(storeSettingsQuery),
-  head: () => ({ meta: [
-    { title: "Pedidos e configurações — S7VEN" }, { name: "description", content: "Gestão de pedidos, entrega e atendimento da S7VEN Lounge e Tabacaria." }, { property: "og:title", content: "Configurações da loja — S7VEN" }, { property: "og:description", content: "Administração dos pedidos, taxas e horários da S7VEN." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
-  ] }), component: Admin,
+  head: () => ({
+    meta: [
+      { title: "Pedidos e configurações — S7VEN" },
+      {
+        name: "description",
+        content: "Gestão de pedidos, entrega e atendimento da S7VEN Lounge e Tabacaria.",
+      },
+      { property: "og:title", content: "Configurações da loja — S7VEN" },
+      {
+        property: "og:description",
+        content: "Administração dos pedidos, taxas e horários da S7VEN.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: Admin,
 });
 function Admin() {
   const [view, setView] = useState("orders");
   const check = useServerFn(checkStoreAdmin);
   const permission = useQuery({ queryKey: ["store-admin"], queryFn: () => check(), retry: false });
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
-  return <div className="min-h-screen"><header className="border-b"><div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5"><Link to="/" className="font-display text-2xl font-bold">S<span className="text-primary">7</span>VEN.</Link><div className="flex gap-2"><Button asChild variant="ghost"><Link to="/"><ArrowLeft/><span className="hidden sm:inline">Catálogo</span></Link></Button><Button variant="outline" onClick={() => supabase.auth.signOut()}><LogOut/>Sair</Button></div></div></header><main className="mx-auto max-w-7xl px-5 py-10"><p className="mb-2 text-xs uppercase text-primary">Área da loja</p><h1 className="font-display text-3xl font-semibold">{view === "orders" ? "Pedidos" : "Configurações"}</h1><p className="mt-3 text-sm text-muted-foreground">S7VEN Lounge e Tabacaria.</p>{permission.isPending ? <p className="py-12 text-muted-foreground">Conferindo seu acesso…</p> : permission.error ? <p role="alert" className="py-12 text-destructive">Não foi possível conferir o acesso. <Button variant="link" onClick={() => permission.refetch()}>Tentar novamente</Button></p> : !permission.data ? <div className="mt-12 border-t py-8"><ShieldCheck className="mb-4 text-primary"/><h2 className="text-xl font-semibold">Acesso não autorizado</h2><p className="mt-3 text-sm text-muted-foreground">Esta conta não tem permissão para alterar a loja. Entre com o e-mail autorizado.</p></div> : <><nav className="mt-7 flex gap-2 border-b pb-3" aria-label="Painel da loja"><Button variant={view === "orders" ? "default" : "ghost"} onClick={() => setView("orders")}>Pedidos</Button><Button variant={view === "settings" ? "default" : "ghost"} onClick={() => setView("settings")}>Taxas e horários</Button></nav>{view === "orders" ? <OrderBoard/> : <SettingsEditor initial={settings}/>}</>}</main></div>;
+  return (
+    <div className="min-h-screen">
+      <header className="border-b">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
+          <Link to="/" className="font-display text-2xl font-bold">
+            S<span className="text-primary">7</span>VEN.
+          </Link>
+          <div className="flex gap-2">
+            <Button asChild variant="ghost">
+              <Link to="/">
+                <ArrowLeft />
+                <span className="hidden sm:inline">Catálogo</span>
+              </Link>
+            </Button>
+            <Button variant="outline" onClick={() => supabase.auth.signOut()}>
+              <LogOut />
+              Sair
+            </Button>
+          </div>
+        </div>
+      </header>
+      <main className="mx-auto max-w-7xl px-5 py-10">
+        <p className="mb-2 text-xs uppercase text-primary">Área da loja</p>
+        <h1 className="font-display text-3xl font-semibold">
+          {view === "orders" ? "Pedidos" : "Configurações"}
+        </h1>
+        <p className="mt-3 text-sm text-muted-foreground">S7VEN Lounge e Tabacaria.</p>
+        {permission.isPending ? (
+          <p className="py-12 text-muted-foreground">Conferindo seu acesso…</p>
+        ) : permission.error ? (
+          <p role="alert" className="py-12 text-destructive">
+            Não foi possível conferir o acesso.{" "}
+            <Button variant="link" onClick={() => permission.refetch()}>
+              Tentar novamente
+            </Button>
+          </p>
+        ) : !permission.data ? (
+          <div className="mt-12 border-t py-8">
+            <ShieldCheck className="mb-4 text-primary" />
+            <h2 className="text-xl font-semibold">Acesso não autorizado</h2>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Esta conta não tem permissão para alterar a loja. Entre com o e-mail autorizado.
+            </p>
+          </div>
+        ) : (
+          <>
+            <nav className="mt-7 flex gap-2 border-b pb-3" aria-label="Painel da loja">
+              <Button
+                variant={view === "orders" ? "default" : "ghost"}
+                onClick={() => setView("orders")}
+              >
+                Pedidos
+              </Button>
+              <Button
+                variant={view === "settings" ? "default" : "ghost"}
+                onClick={() => setView("settings")}
+              >
+                Taxas e horários
+              </Button>
+            </nav>
+            {view === "orders" ? <OrderBoard /> : <SettingsEditor initial={settings} />}
+          </>
+        )}
+      </main>
+    </div>
+  );
 }
 function SettingsEditor({ initial }: { initial: StoreSettings }) {
   const [draft, setDraft] = useState<StoreSettings>(() => structuredClone(initial));
@@ -33,18 +123,259 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
   const save = useServerFn(saveStoreSettings);
   const client = useQueryClient();
   const dirty = JSON.stringify(initial) !== JSON.stringify(draft);
-  const update = (next: StoreSettings) => { setDraft(next); setMessage(""); setSuccess(false); };
+  const update = (next: StoreSettings) => {
+    setDraft(next);
+    setMessage("");
+    setSuccess(false);
+  };
   const submit = async () => {
     const parsed = settingsSchema.safeParse(draft);
-    if (!parsed.success) { setSuccess(false); setMessage(parsed.error.issues[0]?.message ?? "Confira as configurações."); return; }
-    setBusy(true); setMessage("");
-    try { await save({ data: parsed.data }); client.setQueryData(storeSettingsQuery.queryKey, parsed.data); setSuccess(true); setMessage("Configurações salvas."); }
-    catch (error) { setSuccess(false); setMessage(error instanceof Error ? error.message : "Não foi possível salvar."); }
-    finally { setBusy(false); }
+    if (!parsed.success) {
+      setSuccess(false);
+      setMessage(parsed.error.issues[0]?.message ?? "Confira as configurações.");
+      return;
+    }
+    setBusy(true);
+    setMessage("");
+    try {
+      await save({ data: parsed.data });
+      client.setQueryData(storeSettingsQuery.queryKey, parsed.data);
+      setSuccess(true);
+      setMessage("Configurações salvas.");
+    } catch (error) {
+      setSuccess(false);
+      setMessage(error instanceof Error ? error.message : "Não foi possível salvar.");
+    } finally {
+      setBusy(false);
+    }
   };
-  return <><div className="mt-8 flex gap-1 border-b" role="tablist"><Button role="tab" aria-selected={tab === "delivery"} variant="ghost" onClick={() => setTab("delivery")} className={tab === "delivery" ? "rounded-none border-b-2 border-primary text-primary" : "rounded-none"}><Truck/>Taxas de entrega</Button><Button role="tab" aria-selected={tab === "hours"} variant="ghost" onClick={() => setTab("hours")} className={tab === "hours" ? "rounded-none border-b-2 border-primary text-primary" : "rounded-none"}><Clock/>Horários</Button></div>
-    {tab === "delivery" ? <section className="py-8"><div className="flex items-center justify-between gap-4"><div><h2 className="text-xl font-semibold">Entrega por região</h2><p className="mt-2 text-sm text-muted-foreground">{draft.delivery_enabled ? "Taxas ativas no catálogo." : "Entrega a combinar com a loja."}</p></div><Switch aria-label="Ativar taxas de entrega" checked={draft.delivery_enabled} onCheckedChange={value => update({...draft,delivery_enabled:value})}/></div>
-      <div className="mt-7">{draft.delivery_zones.length === 0 && <p className="border-y py-10 text-sm text-muted-foreground">Nenhuma região cadastrada.</p>}{draft.delivery_zones.map((zone, index) => <div key={zone.id} className="grid grid-cols-[minmax(0,1fr)_100px_36px] items-end gap-3 border-b py-4 sm:grid-cols-[minmax(0,1fr)_160px_36px]"><label className="text-xs text-muted-foreground">Bairro ou região<input aria-label={`Região ${index+1}`} className="field mt-2" value={zone.name} maxLength={80} onChange={e => update({...draft,delivery_zones:draft.delivery_zones.map(z => z.id===zone.id ? {...z,name:e.target.value}:z)})}/></label><label className="text-xs text-muted-foreground">Taxa (R$)<input aria-label={`Taxa ${index+1}`} className="field mt-2" type="number" min="0" max="1000" step="0.01" value={zone.fee} onChange={e => update({...draft,delivery_zones:draft.delivery_zones.map(z => z.id===zone.id ? {...z,fee:Number(e.target.value)}:z)})}/></label><Button variant="ghost" size="icon" aria-label={`Excluir região ${index+1}`} title="Excluir região" onClick={() => update({...draft,delivery_zones:draft.delivery_zones.filter(z => z.id!==zone.id)})}><Trash2/></Button></div>)}</div><Button variant="outline" className="mt-5" onClick={() => update({...draft,delivery_zones:[...draft.delivery_zones,{id:crypto.randomUUID(),name:"",fee:0}]})}><Plus/>Adicionar região</Button></section>
-    : <section className="py-8"><div className="flex items-center justify-between gap-4"><div><h2 className="text-xl font-semibold">Horários de atendimento</h2><p className="mt-2 text-sm text-muted-foreground">Horário de Brasília · fechamento no dia seguinte quando anterior à abertura.</p></div><Switch aria-label="Ativar horários de atendimento" checked={draft.hours_enabled} onCheckedChange={value => update({...draft,hours_enabled:value})}/></div><div className="mt-7">{draft.opening_hours.map(h => <div key={h.day} className="flex flex-wrap items-center justify-between gap-3 border-b py-4"><div className="flex min-w-44 items-center gap-3"><Switch aria-label={`Atender ${DAYS[h.day]}`} checked={h.enabled} onCheckedChange={value => update({...draft,opening_hours:draft.opening_hours.map(row => row.day===h.day ? {...row,enabled:value}:row)})}/><span className="text-sm">{DAYS[h.day]}</span></div><div className="flex items-center gap-3">{h.enabled ? <><input aria-label={`Abertura ${DAYS[h.day]}`} type="time" className="field w-32" value={h.open} onChange={e => update({...draft,opening_hours:draft.opening_hours.map(row => row.day===h.day ? {...row,open:e.target.value}:row)})}/><span className="text-xs text-muted-foreground">até</span><input aria-label={`Fechamento ${DAYS[h.day]}`} type="time" className="field w-32" value={h.close} onChange={e => update({...draft,opening_hours:draft.opening_hours.map(row => row.day===h.day ? {...row,close:e.target.value}:row)})}/></> : <span className="text-sm text-muted-foreground">Fechado</span>}</div></div>)}</div></section>}
-    <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-4 border-t bg-background/95 py-5 backdrop-blur"><p role="status" className={`text-sm ${success ? "text-primary" : message ? "text-destructive" : "text-muted-foreground"}`}>{message || (dirty ? "Alterações não salvas" : "Nenhuma alteração pendente")}</p><div className="flex gap-2"><Button variant="outline" disabled={!dirty || busy} onClick={() => update(structuredClone(initial))}>Descartar</Button><Button disabled={busy || !dirty} onClick={submit}>{busy ? "Salvando…" : success ? <Check/> : <Save/>}Salvar alterações</Button></div></div></>;
+  return (
+    <>
+      <div className="mt-8 flex gap-1 border-b" role="tablist">
+        <Button
+          role="tab"
+          aria-selected={tab === "delivery"}
+          variant="ghost"
+          onClick={() => setTab("delivery")}
+          className={
+            tab === "delivery"
+              ? "rounded-none border-b-2 border-primary text-primary"
+              : "rounded-none"
+          }
+        >
+          <Truck />
+          Taxas de entrega
+        </Button>
+        <Button
+          role="tab"
+          aria-selected={tab === "hours"}
+          variant="ghost"
+          onClick={() => setTab("hours")}
+          className={
+            tab === "hours" ? "rounded-none border-b-2 border-primary text-primary" : "rounded-none"
+          }
+        >
+          <Clock />
+          Horários
+        </Button>
+      </div>
+      {tab === "delivery" ? (
+        <section className="py-8">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold">Entrega por região</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {draft.delivery_enabled
+                  ? "Taxas ativas no catálogo."
+                  : "Entrega a combinar com a loja."}
+              </p>
+            </div>
+            <Switch
+              aria-label="Ativar taxas de entrega"
+              checked={draft.delivery_enabled}
+              onCheckedChange={(value) => update({ ...draft, delivery_enabled: value })}
+            />
+          </div>
+          <div className="mt-7">
+            {draft.delivery_zones.length === 0 && (
+              <p className="border-y py-10 text-sm text-muted-foreground">
+                Nenhuma região cadastrada.
+              </p>
+            )}
+            {draft.delivery_zones.map((zone, index) => (
+              <div
+                key={zone.id}
+                className="grid grid-cols-[minmax(0,1fr)_100px_36px] items-end gap-3 border-b py-4 sm:grid-cols-[minmax(0,1fr)_160px_36px]"
+              >
+                <label className="text-xs text-muted-foreground">
+                  Bairro ou região
+                  <input
+                    aria-label={`Região ${index + 1}`}
+                    className="field mt-2"
+                    value={zone.name}
+                    maxLength={80}
+                    onChange={(e) =>
+                      update({
+                        ...draft,
+                        delivery_zones: draft.delivery_zones.map((z) =>
+                          z.id === zone.id ? { ...z, name: e.target.value } : z,
+                        ),
+                      })
+                    }
+                  />
+                </label>
+                <label className="text-xs text-muted-foreground">
+                  Taxa (R$)
+                  <input
+                    aria-label={`Taxa ${index + 1}`}
+                    className="field mt-2"
+                    type="number"
+                    min="0"
+                    max="1000"
+                    step="0.01"
+                    value={zone.fee}
+                    onChange={(e) =>
+                      update({
+                        ...draft,
+                        delivery_zones: draft.delivery_zones.map((z) =>
+                          z.id === zone.id ? { ...z, fee: Number(e.target.value) } : z,
+                        ),
+                      })
+                    }
+                  />
+                </label>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Excluir região ${index + 1}`}
+                  title="Excluir região"
+                  onClick={() =>
+                    update({
+                      ...draft,
+                      delivery_zones: draft.delivery_zones.filter((z) => z.id !== zone.id),
+                    })
+                  }
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <Button
+            variant="outline"
+            className="mt-5"
+            onClick={() =>
+              update({
+                ...draft,
+                delivery_zones: [
+                  ...draft.delivery_zones,
+                  { id: crypto.randomUUID(), name: "", fee: 0 },
+                ],
+              })
+            }
+          >
+            <Plus />
+            Adicionar região
+          </Button>
+        </section>
+      ) : (
+        <section className="py-8">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold">Horários de atendimento</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Horário de Brasília · fechamento no dia seguinte quando anterior à abertura.
+              </p>
+            </div>
+            <Switch
+              aria-label="Ativar horários de atendimento"
+              checked={draft.hours_enabled}
+              onCheckedChange={(value) => update({ ...draft, hours_enabled: value })}
+            />
+          </div>
+          <div className="mt-7">
+            {draft.opening_hours.map((h) => (
+              <div
+                key={h.day}
+                className="flex flex-wrap items-center justify-between gap-3 border-b py-4"
+              >
+                <div className="flex min-w-44 items-center gap-3">
+                  <Switch
+                    aria-label={`Atender ${DAYS[h.day]}`}
+                    checked={h.enabled}
+                    onCheckedChange={(value) =>
+                      update({
+                        ...draft,
+                        opening_hours: draft.opening_hours.map((row) =>
+                          row.day === h.day ? { ...row, enabled: value } : row,
+                        ),
+                      })
+                    }
+                  />
+                  <span className="text-sm">{DAYS[h.day]}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {h.enabled ? (
+                    <>
+                      <input
+                        aria-label={`Abertura ${DAYS[h.day]}`}
+                        type="time"
+                        className="field w-32"
+                        value={h.open}
+                        onChange={(e) =>
+                          update({
+                            ...draft,
+                            opening_hours: draft.opening_hours.map((row) =>
+                              row.day === h.day ? { ...row, open: e.target.value } : row,
+                            ),
+                          })
+                        }
+                      />
+                      <span className="text-xs text-muted-foreground">até</span>
+                      <input
+                        aria-label={`Fechamento ${DAYS[h.day]}`}
+                        type="time"
+                        className="field w-32"
+                        value={h.close}
+                        onChange={(e) =>
+                          update({
+                            ...draft,
+                            opening_hours: draft.opening_hours.map((row) =>
+                              row.day === h.day ? { ...row, close: e.target.value } : row,
+                            ),
+                          })
+                        }
+                      />
+                    </>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Fechado</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+      <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-4 border-t bg-background/95 py-5 backdrop-blur">
+        <p
+          role="status"
+          className={`text-sm ${success ? "text-primary" : message ? "text-destructive" : "text-muted-foreground"}`}
+        >
+          {message || (dirty ? "Alterações não salvas" : "Nenhuma alteração pendente")}
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            disabled={!dirty || busy}
+            onClick={() => update(structuredClone(initial))}
+          >
+            Descartar
+          </Button>
+          <Button disabled={busy || !dirty} onClick={submit}>
+            {busy ? "Salvando…" : success ? <Check /> : <Save />}Salvar alterações
+          </Button>
+        </div>
+      </div>
+    </>
+  );
 }

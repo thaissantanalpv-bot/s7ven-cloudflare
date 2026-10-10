@@ -80,10 +80,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "S7VEN Lounge e Tabacaria — Catálogo Digital" },
-      { name: "description", content: "Catálogo digital da S7VEN Lounge e Tabacaria: monte seu carrinho e envie o pedido pelo WhatsApp." },
+      {
+        name: "description",
+        content:
+          "Catálogo digital da S7VEN Lounge e Tabacaria: monte seu carrinho e envie o pedido pelo WhatsApp.",
+      },
       { name: "author", content: "S7VEN Lounge e Tabacaria" },
       { property: "og:title", content: "S7VEN Lounge e Tabacaria — Catálogo Digital" },
-      { property: "og:description", content: "Veja os produtos, monte seu carrinho e envie o pedido pelo WhatsApp." },
+      {
+        property: "og:description",
+        content: "Veja os produtos, monte seu carrinho e envie o pedido pelo WhatsApp.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
@@ -94,7 +101,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Geist:wght@400;500;600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Geist:wght@400;500;600;700;800&display=swap",
+      },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
@@ -122,11 +132,16 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(event => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
       if (!["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) return;
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
-      else { queryClient.removeQueries({ queryKey: ["store-admin"] }); queryClient.removeQueries({ queryKey: ["store-orders"] }); }
+      else {
+        queryClient.removeQueries({ queryKey: ["store-admin"] });
+        queryClient.removeQueries({ queryKey: ["store-orders"] });
+      }
     });
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
