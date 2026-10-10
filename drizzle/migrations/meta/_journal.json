@@ -15,6 +15,13 @@
       "when": 1791603754673,
       "tag": "0001_verified_store_admin_access",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791604069871,
+      "tag": "0002_harden_store_function_grants",
+      "breakpoints": true
     }
   ]
 }
