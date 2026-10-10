@@ -31,7 +31,8 @@ export const getCatalog = createServerFn({ method: "GET" }).handler(async () => 
       if (!p.image?.startsWith("uploads/")) continue;
       p.imagePath = p.image;
       const url = urls.find(u => u.path === p.image)?.signedUrl;
-      p.image = url ? url.replace(new URL(url).origin, new URL(import.meta.env.VITE_SUPABASE_URL).origin) : undefined;
+      if (url) p.image = url.replace(new URL(url).origin, new URL(import.meta.env['VITE_SUPABASE_URL']).origin);
+      else delete p.image;
     }
   }
   return products;
