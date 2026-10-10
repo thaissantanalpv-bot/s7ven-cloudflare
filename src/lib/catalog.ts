@@ -16,7 +16,7 @@ export const catalogProductSchema = z.object({
   optionLabel: z.enum(["Sabor", "Cor", "Variação"]),
   allowOther: z.boolean(),
   variations: z.array(variationSchema).max(100).refine(v => new Set(v.map(o => o.name.toLowerCase())).size === v.length, "Não repita variações."),
-}).refine(p => !(p.allowOther && p.stock !== null && p.variations.some(v => v.stock !== null)), "Desative Outro ao controlar estoque por variação.");
+}).refine(p => !(p.allowOther && p.variations.some(v => v.stock !== null)), "Desative Outro ao controlar estoque por variação.");
 export type CatalogProduct = Product & {
   active: boolean;
   stock: number | null;

@@ -17,7 +17,7 @@ function setup() {
   render(<QueryClientProvider client={client}><ProductManager /></QueryClientProvider>);
 }
 describe("Product manager", () => {
-  beforeEach(() => { vi.clearAllMocks(); mocks.save.mockResolvedValue({}); mocks.upload.mockResolvedValue({ error: null }); mocks.signed.mockResolvedValue({ data: { signedUrl: "https://example.test/photo.jpg" }, error: null }); });
+  beforeEach(() => { vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} }); vi.clearAllMocks(); mocks.save.mockResolvedValue({}); mocks.upload.mockResolvedValue({ error: null }); mocks.signed.mockResolvedValue({ data: { signedUrl: "https://example.test/photo.jpg" }, error: null }); });
   it("edits prices and variation stock while preserving the product ID", async () => {
     setup();
     fireEvent.click(screen.getByRole("button", { name: "Editar Gin Invictus" }));

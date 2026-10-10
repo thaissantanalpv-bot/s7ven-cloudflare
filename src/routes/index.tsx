@@ -485,6 +485,7 @@ function Catalog() {
                       <p className="text-xs text-muted-foreground">
                         {brl(i.product.price)} · subtotal {brl(i.product.price * i.qty)}
                       </p>
+                      {!available(i.product, i.option, i.qty) && <p className="mt-1 text-xs text-destructive">Indisponível: remova ou ajuste a quantidade.</p>}
                     </div>
                     <Qty
                       qty={i.qty}
