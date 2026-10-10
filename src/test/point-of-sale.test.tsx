@@ -12,7 +12,7 @@ function setup() {
   client.setQueryData(["catalog-products"], mergeCatalog([]));
   client.invalidateQueries = vi.fn().mockResolvedValue(undefined);
   render(<QueryClientProvider client={client}><PointOfSale /></QueryClientProvider>);
-  fireEvent.click(screen.getByRole("button", { name: "Selecionar Combo Gin Viagem", exact: true }));
+  fireEvent.click(screen.getByRole("button", { name: "Selecionar Combo Gin Viagem" }));
 }
 describe("Point of sale", () => {
   beforeEach(() => { vi.clearAllMocks(); mocks.save.mockResolvedValue({ number: 5, total: 45, cash_received: 100, cash_change: 55 }); });
