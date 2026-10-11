@@ -57,6 +57,13 @@
       "when": 1791605768945,
       "tag": "0007_counter_sales_unified_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791684944612,
+      "tag": "0008_restrict_catalog_reads_and_linked_photos",
+      "breakpoints": true
     }
   ]
 }
