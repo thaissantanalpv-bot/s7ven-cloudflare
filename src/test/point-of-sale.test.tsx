@@ -5,11 +5,11 @@ import { mergeCatalog } from "@/lib/catalog";
 const mocks = vi.hoisted(() => ({ save: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: () => mocks.save }));
 vi.mock("@/lib/pos.functions", () => ({ submitCounterSale: vi.fn() }));
-vi.mock("@/lib/catalog.query", () => ({ catalogQuery: { queryKey: ["catalog-products"], queryFn: async () => [], staleTime: Infinity }, useCatalogUpdates: vi.fn() }));
+vi.mock("@/lib/catalog.query", () => ({ adminCatalogQuery: { queryKey: ["admin-catalog-products"], queryFn: async () => [], staleTime: Infinity }, useCatalogUpdates: vi.fn() }));
 import { PointOfSale } from "@/components/pos/point-of-sale";
 function setup() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  client.setQueryData(["catalog-products"], mergeCatalog([]));
+  client.setQueryData(["admin-catalog-products"], mergeCatalog([]));
   client.invalidateQueries = vi.fn().mockResolvedValue(undefined);
   render(<QueryClientProvider client={client}><PointOfSale /></QueryClientProvider>);
   fireEvent.click(screen.getByRole("button", { name: "Selecionar Combo Gin Viagem" }));

@@ -22,11 +22,11 @@ import { OrderBoard } from "@/components/orders/order-board";
 import { ProductManager } from "@/components/products/product-manager";
 import { PointOfSale } from "@/components/pos/point-of-sale";
 import { SalesHistory } from "@/components/pos/sales-history";
-import { catalogQuery } from "@/lib/catalog.query";
+import { adminCatalogQuery } from "@/lib/catalog.query";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 
 export const Route = createFileRoute("/_authenticated/painel")({
-  loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
+  loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(adminCatalogQuery)]),
   head: () => ({
     meta: [
       { title: "Caixa, vendas e operação — S7VEN" },

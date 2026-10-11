@@ -176,6 +176,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_catalog_photo: { Args: { _path: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin"

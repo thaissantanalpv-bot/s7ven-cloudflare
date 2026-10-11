@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
+import { adminCatalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { saveCatalogProduct } from "@/lib/catalog.functions";
 import { available, catalogProductSchema, toDraft, type CatalogProduct, type ProductDraft } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 
 export function ProductManager() {
-  const { data: products } = useSuspenseQuery(catalogQuery);
+  const { data: products } = useSuspenseQuery(adminCatalogQuery);
   useCatalogUpdates();
   const client = useQueryClient();
   const save = useServerFn(saveCatalogProduct);
@@ -28,7 +28,7 @@ export function ProductManager() {
     setBusy(true); setMessage("");
     try {
       await save({ data: { product, expected } });
-      await client.invalidateQueries({ queryKey: catalogQuery.queryKey });
+      await client.invalidateQueries({ queryKey: adminCatalogQuery.queryKey });
       setEditing(null); setMessage("Produto salvo.");
     } catch (e) { setMessage(e instanceof Error ? e.message : "Não foi possível salvar."); }
     finally { setBusy(false); }
