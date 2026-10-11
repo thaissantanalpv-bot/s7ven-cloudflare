@@ -1,0 +1,11 @@
+import { Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { type CatalogProduct, type ProductDraft } from "@/lib/catalog";
+
+export function ComboGroupsEditor({ groups, products, onChange }: { groups: ProductDraft["comboGroups"]; products: CatalogProduct[]; onChange: (groups: ProductDraft["comboGroups"]) => void }) {
+  return <section className="border-t pt-4"><div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Grupos do combo</h3><Button type="button" variant="outline" disabled={groups.length >= 8} onClick={() => onChange([...groups, { id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }])}><Plus />Grupo</Button></div>
+    {groups.map((group, index) => <div key={group.id} className="space-y-3 border-b py-4"><div className="flex items-end gap-3"><label className="min-w-0 flex-1 text-sm">Nome do grupo<input className="field mt-1" aria-label={`Nome do grupo ${index + 1}`} required maxLength={80} placeholder="Ex.: Bebida" value={group.name} onChange={e => onChange(groups.map(g => g.id === group.id ? { ...g, name: e.target.value } : g))} /></label><label className="w-24 text-sm">Quantidade<input className="field mt-1" aria-label={`Quantidade do grupo ${index + 1}`} type="number" min={1} max={10} step={1} required value={group.quantity} onChange={e => onChange(groups.map(g => g.id === group.id ? { ...g, quantity: Number(e.target.value) } : g))} /></label><Button type="button" variant="ghost" size="icon" title="Remover grupo" aria-label={`Remover grupo ${index + 1}`} onClick={() => onChange(groups.filter(g => g.id !== group.id))}><Trash2 /></Button></div>
+      <p className="text-sm text-muted-foreground">Produtos permitidos · {group.productIds.length} selecionados</p><div className="max-h-52 space-y-2 overflow-y-auto border p-3">{products.filter(p => !p.comboGroups?.length).map(p => <label key={p.id} className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4 shrink-0 accent-primary" checked={group.productIds.includes(p.id)} onChange={e => onChange(groups.map(g => g.id === group.id ? { ...g, productIds: e.target.checked ? [...g.productIds, p.id] : g.productIds.filter(id => id !== p.id) } : g))} />{p.name}</label>)}</div>
+    </div>)}
+  </section>;
+}
