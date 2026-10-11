@@ -413,7 +413,7 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
           </div>
         </section>
       )}
-      <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-4 border-t bg-background/95 py-5 backdrop-blur">
+      <div className="admin-save-bar sticky flex flex-wrap items-center justify-between gap-4 border-t bg-background/95 py-5 backdrop-blur">
         <p
           role="status"
           className={`text-sm ${success ? "text-primary" : message ? "text-destructive" : "text-muted-foreground"}`}
