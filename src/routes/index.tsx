@@ -130,7 +130,10 @@ function Catalog() {
   }, []);
 
   useEffect(() => {
-    if (loaded) localStorage.setItem(KEY, JSON.stringify({ cart, form }));
+    if (!loaded) return;
+    try { localStorage.setItem(KEY, JSON.stringify({ cart, form })); } catch {
+      // Ordering remains available when the browser refuses persistent storage.
+    }
   }, [cart, form, loaded]);
 
   const filtered = useMemo(() => {
