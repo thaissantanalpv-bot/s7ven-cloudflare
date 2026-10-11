@@ -78,7 +78,7 @@ function Catalog() {
   const registerOrder = useServerFn(submitOrder);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
-  const [receipt, setReceipt] = useState<{ number: number; url: string } | null>(null);
+  const [receipt, setReceipt] = useState<{ number: number; url: string; subtotal: number; deliveryFee: number; total: number } | null>(null);
   const [attempt, setAttempt] = useState<{ signature: string; id: string } | null>(null);
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
@@ -165,7 +165,10 @@ function Catalog() {
   const deliveryFee = isDelivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
   const total = subtotal + deliveryFee;
 
-  const pixPayload = useMemo(() => buildPixPayload(total), [total]);
+  const displayedSubtotal = !items.length && receipt ? receipt.subtotal : subtotal;
+  const displayedDeliveryFee = !items.length && receipt ? receipt.deliveryFee : deliveryFee;
+  const displayedTotal = !items.length && receipt ? receipt.total : total;
+  const pixPayload = useMemo(() => buildPixPayload(displayedTotal), [displayedTotal]);
   const copy = async (text: string, label: string) => {
     if (await copyToClipboard(text)) {
       setCopied(label);
@@ -247,7 +250,7 @@ function Catalog() {
     try {
       const saved = await registerOrder({ data: validated.data });
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent([`*Pedido #${saved.number}*`, ...lines, `*WhatsApp do cliente:* ${d.phone}`].join("\n"))}`;
-      setReceipt({ number: saved.number, url });
+      setReceipt({ number: saved.number, url, subtotal, deliveryFee, total });
       setCart({});
       setAttempt(null);
       if (popup) popup.location.href = url;
@@ -607,7 +610,7 @@ function Catalog() {
               </Field>
               {fieldErrors.payment?.[0] && <p id="payment-error" className="text-xs text-destructive">{fieldErrors.payment[0]}</p>}
               {form.payment === "Pix" &&
-                (total > 0 ? (
+                (displayedTotal > 0 ? (
                   <div className="space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold">Pague com Pix — {brl(total)}</p>
