@@ -268,7 +268,7 @@ export function OrderBoard() {
                         {order.items.reduce((n, i) => n + i.qty, 0)} itens · {order.payment}
                       </p>
                       <p className="mt-3 line-clamp-2 break-words text-xs text-muted-foreground">
-                        {order.address}
+                        {order.fulfillment === "pickup" ? "Retirada na loja" : order.address}
                       </p>
                       <div className="my-4 flex items-center justify-between border-t pt-3">
                         <span className={`text-xs ${stage.tone}`}>{stage.label}</span>
@@ -341,7 +341,7 @@ export function OrderBoard() {
               <div className="space-y-4 text-sm">
                 <div className="flex items-center gap-2">
                   <MapPin className="size-4 shrink-0 text-primary" />
-                  <p className="break-words">{detail.address}</p>
+                  <p className="break-words">{detail.fulfillment === "pickup" ? "Retirada na loja" : detail.address}</p>
                 </div>
                 <p className="text-muted-foreground">WhatsApp: {detail.customer_phone}</p>
                 <ul className="divide-y">
@@ -365,9 +365,9 @@ export function OrderBoard() {
                     <span>{brl(detail.subtotal)}</span>
                   </p>
                   <p className="flex justify-between">
-                    <span>Entrega {detail.delivery_zone}</span>
+                    <span>{detail.fulfillment === "pickup" ? "Retirada na loja" : `Entrega ${detail.delivery_zone}`}</span>
                     <span>
-                      {detail.delivery_confirmed ? brl(detail.delivery_fee) : "A confirmar"}
+                      {detail.fulfillment === "pickup" ? "Sem taxa" : detail.delivery_confirmed ? brl(detail.delivery_fee) : "A confirmar"}
                     </span>
                   </p>
                   <p className="flex justify-between font-bold">
