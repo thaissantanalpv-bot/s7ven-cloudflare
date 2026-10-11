@@ -1,20 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Database } from "@/integrations/supabase/types";
 import { catalogProductSchema, mergeCatalog } from "./catalog";
 
-export const getCatalog = createServerFn({ method: "GET" }).handler(async () => {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) throw new Error("Não foi possível carregar os produtos.");
-  const client = createClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: (input, init) => {
-    const headers = new Headers(init?.headers);
-    if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization");
-    headers.set("apikey", key);
-    return fetch(input, { ...init, headers });
-  } } });
+// Imported products are already public assets; never read restricted overrides here.
+export const getCatalog = createServerFn({ method: "GET" }).handler(async () => mergeCatalog([]));
+
+export const getAdminCatalog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+  const { data: admin, error: roleError } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  if (roleError || !admin) throw new Error("Acesso restrito à administração.");
+  const client = context.supabase;
   const rows = [];
   for (let offset = 0; ; offset += 500) {
     const { data, error } = await client.from("catalog_products").select("id,data,updated_at").order("id").range(offset, offset + 499);

@@ -15,8 +15,9 @@
 - Use TanStack Query for shared settings and the pathless authenticated layout for the panel, keeping public catalog reads independent of login.
 - Persist customer orders through a validated public checkout server function with server-calculated catalog prices, random idempotency keys and bounded submission frequency; never expose private order reads publicly.
 - Keep order management in an admin-only panel module with authenticated status writes, conflict detection, paginated polling and user-activated audio; WhatsApp stage actions open prefilled messages rather than claiming automatic delivery.
-- Keep the imported catalog as the immutable baseline and merge validated `catalog_products` overrides on public reads and checkout; this preserves existing product IDs and saved cart keys without reseeding.
-- Store product photos in private native storage with public read-only signed URLs and admin-only uploads; this respects workspace public-bucket restrictions.
+- Keep the imported catalog as the immutable public baseline; merge validated `catalog_products` overrides only in admin reads and server checkout, because override reads are now admin-only.
+- Store product photos in private native storage with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads; this protects unpublished uploads without blocking admin previews.
+- Use separate public and admin catalog query keys so restricted override data cannot leak through a shared cache.
 - Keep the cover in image and additional photo paths in images within catalog overrides; resolve signed URLs separately from editable paths so galleries preserve legacy covers and admin saves never persist expiring URLs.
 - Reserve tracked product and variation stock atomically on order insertion using row locks, and reject stale prices; this prevents overselling across concurrent customers.
 - Persist counter sales in orders with a source and cashier, using admin-verified server-calculated checkout and the existing reservation trigger; this unifies history without duplicate stock deductions. Keep counter sales out of delivery stages and new-order alerts.
