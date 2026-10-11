@@ -177,6 +177,14 @@ export type Database = {
         Returns: boolean
       }
       is_catalog_photo: { Args: { _path: string }; Returns: boolean }
+      list_catalog_sales: {
+        Args: { _offset?: number }
+        Returns: {
+          data: Json
+          id: string
+          updated_at: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin"
