@@ -56,6 +56,6 @@
 - [x] Verificar cálculos, validação e finalização: 29 testes passaram; entrega sem endereço bloqueada, retirada persistida após recarregar e pedido real registrado sem endereço/taxa, com total de R$ 45 e mensagem WhatsApp correta.
 
 # Aplicativo da administração
-- [ ] Preparar ícones e acesso à tela inicial, abrindo diretamente o painel protegido.
-- [ ] Facilitar navegação pelo celular com início, pedidos, caixa, produtos e menu, preservando a operação atual.
-- [ ] Verificar acesso autenticado, navegação e metadados do aplicativo, sem adicionar funcionamento offline.
+- [x] Preparar ícones e acesso à tela inicial, abrindo diretamente o painel protegido.
+- [x] Facilitar navegação pelo celular com início, pedidos, caixa, produtos e menu, preservando a operação atual.
+- [x] Verificar acesso autenticado, navegação e metadados do aplicativo, sem adicionar funcionamento offline: painel autorizado, redirecionamento sem sessão, ícones, todas as abas e instruções no celular; 10 testes passaram, sem erros de execução ou rolagem horizontal. Instalação física depende da atualização publicada e confirmação no aparelho.
