@@ -23,6 +23,16 @@ const input = () =>
     items: [{ productId: "p4", qty: 2, option: "Melancia" }],
   });
 describe("Orders", () => {
+  it("charges the fixed fee without region, ignores old zones and keeps pickup free", () => {
+    const settings = { ...EMPTY_SETTINGS, delivery_enabled: true, fixed_delivery_fee: 9, pickup_address: "Rua Marechal Deodoro, nº 1696", delivery_zones: [{ id: "centro", name: "Centro", fee: 25 }] };
+    const delivery = priceOrder({ ...input(), customer: { ...input().customer, zone: "" } }, settings);
+    expect(delivery.delivery_fee).toBe(9);
+    expect(delivery.total).toBe(50.8);
+    expect(priceOrder(input(), settings).total).toBe(50.8);
+    const pickup = priceOrder({ ...input(), customer: { ...input().customer, fulfillment: "pickup", address: "" } }, settings);
+    expect(pickup.delivery_fee).toBe(0);
+    expect(pickup.total).toBe(41.8);
+  });
   it("allows pickup without address or region and never charges delivery", () => {
     const customer = customerSchema.parse({ ...input().customer, fulfillment: "pickup", address: "", zone: "invalid" });
     const priced = priceOrder({ ...input(), customer }, { ...EMPTY_SETTINGS, delivery_enabled: true, delivery_zones: [{ id: "centro", name: "Centro", fee: 5 }] });

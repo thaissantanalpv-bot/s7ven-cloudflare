@@ -9,6 +9,10 @@ describe("Store settings", () => {
   it("requires a region when delivery pricing is enabled", () => {
     expect(settingsSchema.safeParse({...EMPTY_SETTINGS,delivery_enabled:true}).success).toBe(false);
   });
+  it("supports fixed fees without regions and validates their limits", () => {
+    expect(settingsSchema.safeParse({ ...EMPTY_SETTINGS, delivery_enabled: true, fixed_delivery_fee: 9 }).success).toBe(true);
+    for (const fee of [-1, 1001]) expect(settingsSchema.safeParse({ ...EMPTY_SETTINGS, fixed_delivery_fee: fee }).success).toBe(false);
+  });
   it("rejects negative fees and duplicate regions", () => {
     expect(settingsSchema.safeParse({...EMPTY_SETTINGS,delivery_zones:[{id:"a",name:"Centro",fee:-1}]}).success).toBe(false);
     expect(settingsSchema.safeParse({...EMPTY_SETTINGS,delivery_zones:[{id:"a",name:"Centro",fee:1},{id:"b",name:"centro",fee:2}]}).success).toBe(false);

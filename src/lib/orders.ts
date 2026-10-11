@@ -165,15 +165,15 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
   });
   const zone = settings.delivery_zones.find((z) => z.id === input.customer.zone);
   const delivery = input.customer.fulfillment !== "pickup";
-  if (delivery && settings.delivery_enabled && !zone) throw new Error("Escolha o bairro ou região de entrega.");
+  if (delivery && settings.delivery_enabled && settings.fixed_delivery_fee === null && !zone) throw new Error("Escolha o bairro ou região de entrega.");
   const subtotal =
     Math.round(items.reduce((s, i) => s + Math.round(i.price * 100) * i.qty, 0)) / 100;
-  const delivery_fee = delivery && settings.delivery_enabled ? (zone?.fee ?? 0) : 0;
+  const delivery_fee = delivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
   return {
     items,
     subtotal,
     delivery_fee,
-    delivery_zone: delivery && settings.delivery_enabled ? (zone?.name ?? "") : "",
+    delivery_zone: delivery && settings.delivery_enabled && settings.fixed_delivery_fee === null ? (zone?.name ?? "") : "",
     delivery_confirmed: !delivery || settings.delivery_enabled,
     total: Math.round((subtotal + delivery_fee) * 100) / 100,
   };
