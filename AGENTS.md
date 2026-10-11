@@ -15,7 +15,7 @@
 - Use TanStack Query for shared settings and the pathless authenticated layout for the panel, keeping public catalog reads independent of login.
 - Persist customer orders through a validated public checkout server function with server-calculated catalog prices, random idempotency keys and bounded submission frequency; never expose private order reads publicly.
 - Keep order management in an admin-only panel module with authenticated status writes, conflict detection, paginated polling and user-activated audio; WhatsApp stage actions open prefilled messages rather than claiming automatic delivery.
-- Keep the imported catalog as the immutable public baseline; merge validated `catalog_products` overrides only in admin reads and server checkout, because override reads are now admin-only.
+- Keep the imported catalog as the immutable baseline; public reads merge only the read-only allowlisted sales projection, while raw overrides and all writes remain admin-only.
 - Store product photos in private native storage with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads; this protects unpublished uploads without blocking admin previews.
 - Use separate public and admin catalog query keys so restricted override data cannot leak through a shared cache.
 - Keep the cover in image and additional photo paths in images within catalog overrides; resolve signed URLs separately from editable paths so galleries preserve legacy covers and admin saves never persist expiring URLs.
