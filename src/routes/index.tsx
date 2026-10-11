@@ -9,6 +9,7 @@ import {
   Minus,
   ArrowUpRight,
   Truck,
+  Store,
   Clock,
   SlidersHorizontal,
   X,
@@ -101,6 +102,7 @@ function Catalog() {
     change: "",
     notes: "",
     zone: "",
+    fulfillment: "delivery" as "delivery" | "pickup",
   });
   const [error, setError] = useState("");
   const [sel, setSel] = useState<Record<string, string>>({});
@@ -156,7 +158,8 @@ function Catalog() {
   const count = items.reduce((s, i) => s + i.qty, 0);
   const subtotal = items.reduce((s, i) => s + i.qty * i.product.price, 0);
   const zone = settings.delivery_zones.find((z) => z.id === form.zone);
-  const deliveryFee = settings.delivery_enabled ? (zone?.fee ?? 0) : 0;
+  const isDelivery = form.fulfillment === "delivery";
+  const deliveryFee = isDelivery && settings.delivery_enabled ? (zone?.fee ?? 0) : 0;
   const total = subtotal + deliveryFee;
 
   const pixPayload = useMemo(() => buildPixPayload(total), [total]);
@@ -202,7 +205,7 @@ function Catalog() {
     } catch (e) {
       return setError(e instanceof Error ? e.message : "Confira os produtos do carrinho.");
     }
-    if (settings.delivery_enabled && !zone)
+    if (isDelivery && settings.delivery_enabled && !zone)
       return setError("Escolha o bairro ou região de entrega.");
     if (status.configured && !status.open)
       return setError("A loja está fechada. Confira os horários de atendimento.");
@@ -221,13 +224,13 @@ function Catalog() {
       ),
       "",
       `*Produtos: ${brl(subtotal)}*`,
-      settings.delivery_enabled
+      !isDelivery ? "*Retirada na loja · Sem taxa de entrega*" : settings.delivery_enabled
         ? `*Entrega (${zone?.name}): ${brl(deliveryFee)}*`
         : "*Entrega: valor a confirmar com a loja*",
-      `*Total${settings.delivery_enabled ? "" : " dos produtos"}: ${brl(total)}*`,
+      `*Total${!isDelivery || settings.delivery_enabled ? "" : " dos produtos"}: ${brl(total)}*`,
       "",
       `*Nome:* ${d.name}`,
-      `*Endereço:* ${d.address}`,
+      isDelivery ? `*Endereço:* ${d.address}` : "*Modalidade:* Retirada na loja",
       `*Pagamento:* ${d.payment}${d.payment === "Dinheiro" && d.change ? ` (troco para ${d.change})` : ""}`,
       d.notes ? `*Obs.:* ${d.notes}` : "",
     ].filter((l, idx, arr) => l !== "" || arr[idx - 1] !== "");
@@ -537,7 +540,11 @@ function Catalog() {
                 submitted={submitted}
                 onChange={(phone) => setForm({ ...form, phone })}
               />
-              <Field label="Endereço de entrega">
+              <div role="group" aria-label="Recebimento do pedido" className="grid grid-cols-2 gap-2">
+                <Button variant={isDelivery ? "default" : "outline"} aria-pressed={isDelivery} onClick={() => { setForm({ ...form, fulfillment: "delivery" }); setError(""); }}><Truck />Entrega</Button>
+                <Button variant={!isDelivery ? "default" : "outline"} aria-pressed={!isDelivery} onClick={() => { setForm({ ...form, fulfillment: "pickup" }); setError(""); }}><Store />Retirada na loja</Button>
+              </div>
+              {isDelivery && <Field label="Endereço de entrega">
                 <textarea
                   className="field"
                   rows={3}
@@ -549,9 +556,9 @@ function Catalog() {
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
-              </Field>
-              {fieldErrors.address?.[0] && <p id="address-error" className="text-xs text-destructive">{fieldErrors.address[0]}</p>}
-              {settings.delivery_enabled && (
+              </Field>}
+              {isDelivery && fieldErrors.address?.[0] && <p id="address-error" className="text-xs text-destructive">{fieldErrors.address[0]}</p>}
+              {isDelivery && settings.delivery_enabled && (
                 <Field label="Bairro ou região">
                   <select
                     className="field"
@@ -653,9 +660,9 @@ function Catalog() {
               <span>{brl(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Entrega</span>
+              <span>{isDelivery ? "Entrega" : "Retirada na loja"}</span>
               <span>
-                {settings.delivery_enabled
+                {!isDelivery ? "Sem taxa" : settings.delivery_enabled
                   ? zone
                     ? brl(deliveryFee)
                     : "Selecione a região"
