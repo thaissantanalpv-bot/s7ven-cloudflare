@@ -113,6 +113,13 @@
       "when": 1791702815222,
       "tag": "0015_reliable_catalog_checkout_conversion",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791754305540,
+      "tag": "0016_admin_ai_assistant",
+      "breakpoints": true
     }
   ]
 }
