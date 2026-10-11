@@ -32,7 +32,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     if (settingsError) throw new Error("Não foi possível conferir a entrega. Tente novamente.");
     const settings = row ? settingsSchema.parse(row) : EMPTY_SETTINGS;
     if (!storeStatus(settings).open) throw new Error("A loja está fechada. Confira os horários.");
-    const { data: catalogRows, error: catalogError } = await supabaseAdmin.from("catalog_products").select("id,data,updated_at").in("id", data.items.map(i => i.productId));
+    const { data: catalogRows, error: catalogError } = await supabaseAdmin.from("catalog_products").select("id,data,updated_at").in("id", [...new Set(data.items.flatMap(i => [i.productId, ...(i.components ?? []).map(c => c.productId)]))]);
     if (catalogError) throw new Error("Não foi possível conferir o estoque.");
     const priced = priceOrder(data, settings, mergeCatalog(catalogRows));
     const { data: saved, error } = await supabaseAdmin

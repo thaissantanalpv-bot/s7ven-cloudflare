@@ -73,6 +73,14 @@ export const saveCatalogProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: admin, error: roleError } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (roleError || !admin) throw new Error("Acesso restrito à administração.");
+    const componentIds = [...new Set(data.product.comboGroups.flatMap(g => g.productIds))];
+    if (componentIds.length) {
+      const { data: components, error: componentError } = await context.supabase.from("catalog_products").select("id,data,updated_at").in("id", componentIds);
+      if (componentError) throw new Error("Não foi possível conferir os itens do combo.");
+      const catalog = mergeCatalog(components);
+      if (componentIds.some(id => { const p = catalog.find(p => p.id === id); return !p || p.comboGroups?.length; }))
+        throw new Error("Escolha apenas produtos existentes, sem outros combos.");
+    }
     const row = { id: data.product.id, data: data.product, updated_at: new Date().toISOString() };
     const query = data.expected === null
       ? context.supabase.from("catalog_products").insert(row)

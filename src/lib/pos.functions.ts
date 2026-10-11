@@ -16,7 +16,7 @@ export const submitCounterSale = createServerFn({ method: "POST" })
     };
     const existing = await findExisting();
     if (existing) return existing;
-    const { data: rows, error: catalogError } = await context.supabase.from("catalog_products").select("id,data,updated_at").in("id", data.items.map(i => i.productId));
+    const { data: rows, error: catalogError } = await context.supabase.from("catalog_products").select("id,data,updated_at").in("id", [...new Set(data.items.flatMap(i => [i.productId, ...(i.components ?? []).map(c => c.productId)]))]);
     if (catalogError) throw new Error("Não foi possível conferir o estoque.");
     const priced = priceCounterSale(data, mergeCatalog(rows));
     // Only the verified store admin can reach this privileged insertion; the stock trigger owns reservation.

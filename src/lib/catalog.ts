@@ -4,6 +4,12 @@ import { PRODUCTS, type Product } from "./products";
 const quantity = z.number().int().min(0).max(1000000).nullable();
 const photoPath = z.string().max(1000).refine(v => /^\/produtos\/p\d+\.jpg$/.test(v) || /^uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v), "Foto inválida.");
 export const variationSchema = z.object({ name: z.string().trim().min(1).max(40), active: z.boolean(), stock: quantity });
+export const comboGroupSchema = z.object({
+  id: z.string().regex(/^[a-zA-Z0-9_-]{1,40}$/),
+  name: z.string().trim().min(1, "Informe o nome do grupo.").max(80),
+  quantity: z.number().int().min(1).max(10),
+  productIds: z.array(z.string().regex(/^[a-zA-Z0-9_-]{1,30}$/)).min(1, "Escolha os produtos do grupo.").max(176).refine(ids => new Set(ids).size === ids.length),
+});
 export const catalogProductSchema = z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]{1,30}$/),
   name: z.string().trim().min(2, "Informe o nome do produto.").max(150),
@@ -17,8 +23,12 @@ export const catalogProductSchema = z.object({
   stock: quantity,
   optionLabel: z.enum(["Sabor", "Cor", "Variação"]),
   allowOther: z.boolean(),
+  comboGroups: z.array(comboGroupSchema).max(8).default([]),
   variations: z.array(variationSchema).max(100).refine(v => new Set(v.map(o => o.name.toLowerCase())).size === v.length, "Não repita variações."),
-}).refine(p => !(p.allowOther && p.variations.some(v => v.stock !== null)), "Desative Outro ao controlar estoque por variação.");
+}).refine(p => !(p.allowOther && p.variations.some(v => v.stock !== null)), "Desative Outro ao controlar estoque por variação.")
+  .refine(p => !p.comboGroups.length || (!p.variations.length && !p.allowOther), "Combos usam os sabores dos itens, não variações próprias.")
+  .refine(p => new Set(p.comboGroups.map(g => g.id)).size === p.comboGroups.length, "Não repita grupos.")
+  .refine(p => !p.comboGroups.some(g => g.productIds.includes(p.id)), "Um combo não pode conter a si mesmo.");
 export type CatalogProduct = Product & {
   active: boolean;
   stock: number | null;
@@ -28,6 +38,7 @@ export type CatalogProduct = Product & {
   imagePath?: string;
   images?: string[];
   imagePaths?: string[];
+  comboGroups?: z.infer<typeof comboGroupSchema>[];
 };
 export type ProductDraft = z.infer<typeof catalogProductSchema>;
 export function mergeCatalog(rows: { id: string; data: unknown; updated_at: string }[]): CatalogProduct[] {
@@ -48,7 +59,7 @@ export function available(p: Product | CatalogProduct, option = "", qty = 1) {
   return v ? v.active && (v.stock === null || v.stock >= qty) : p.allowOther;
 }
 export function toDraft(p: CatalogProduct): ProductDraft {
-  return { id: p.id, name: p.name, description: p.description, price: p.price, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], active: p.active, stock: p.stock, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations };
+  return { id: p.id, name: p.name, description: p.description, price: p.price, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], active: p.active, stock: p.stock, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations, comboGroups: p.comboGroups ?? [] };
 }
 export function productPhotos(p: Pick<CatalogProduct, "image" | "images">) {
   return [...new Set([p.image, ...(p.images ?? [])].filter((v): v is string => Boolean(v)))];
