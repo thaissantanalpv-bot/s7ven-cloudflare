@@ -9,8 +9,11 @@ import { available, type CatalogProduct } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { COUNTER_PAYMENTS, cashChange, type CounterSaleInput } from "@/lib/pos";
 import { submitCounterSale } from "@/lib/pos.functions";
+import { ComboBuilder } from "@/components/products/combo-builder";
+import { comboSummary, type ComboSelection } from "@/lib/combos";
+import { validateCartAvailability } from "@/lib/orders";
 
-type Line = { productId: string; option: string; qty: number; expectedPrice: number };
+type Line = { productId: string; option: string; qty: number; expectedPrice: number; components?: ComboSelection[] };
 export function PointOfSale() {
   const { data: products } = useSuspenseQuery(adminCatalogQuery);
   useCatalogUpdates();
@@ -20,6 +23,7 @@ export function PointOfSale() {
   const [category, setCategory] = useState("all");
   const [lines, setLines] = useState<Line[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [building, setBuilding] = useState<CatalogProduct | null>(null);
   const [other, setOther] = useState("");
   const [payment, setPayment] = useState<CounterSaleInput["payment"]>("Dinheiro");
   const [received, setReceived] = useState("");
@@ -36,13 +40,15 @@ export function PointOfSale() {
   const change = cash === null || !Number.isFinite(cash) ? null : cashChange(total, cash);
   const chosen = products.find(p => p.id === selected);
   const visible = products.filter(p => (category === "all" || p.category === category) && `${p.name} ${p.description}`.toLowerCase().includes(search.toLowerCase()));
-  const add = (p: CatalogProduct, option = "") => {
+  const add = (p: CatalogProduct, option = "", components?: ComboSelection[]) => {
     if (busyRef.current) return;
-    const existing = lines.find(l => l.productId === p.id && l.option === option);
+    const existing = lines.find(l => l.productId === p.id && l.option === option && JSON.stringify(l.components) === JSON.stringify(components));
     const count = (existing?.qty ?? 0) + 1;
     const allQty = lines.filter(l => l.productId === p.id).reduce((s, l) => s + l.qty, 0) + 1;
     if (count > 99 || !available(p, option, count) || (p.stock !== null && allQty > p.stock)) { setError("Quantidade indisponível em estoque."); return; }
-    setLines(prev => existing ? prev.map(l => l === existing ? { ...l, qty: count } : l) : [...prev, { productId: p.id, option, qty: 1, expectedPrice: p.price }]);
+    const next = existing ? lines.map(l => l === existing ? { ...l, qty: count } : l) : [...lines, { productId: p.id, option, qty: 1, expectedPrice: p.price, components }];
+    try { validateCartAvailability(next, products); } catch (e) { setError(e instanceof Error ? e.message : "Confira o estoque."); return; }
+    setLines(next); setBuilding(null);
     setError(""); setConfirmed(false); setSelected(null); setOther("");
   };
   const invalid = lines.some(l => { const p = products.find(p => p.id === l.productId); return !p || p.price !== l.expectedPrice || !available(p, l.option, l.qty) || (p.stock !== null && lines.filter(i => i.productId === p.id).reduce((s, i) => s + i.qty, 0) > p.stock); });

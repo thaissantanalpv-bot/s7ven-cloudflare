@@ -21,4 +21,5 @@
 - Use separate public and admin catalog query keys so restricted override data cannot leak through a shared cache.
 - Keep the cover in image and additional photo paths in images within catalog overrides; resolve signed URLs separately from editable paths so galleries preserve legacy covers and admin saves never persist expiring URLs.
 - Reserve tracked product and variation stock atomically on order insertion using row locks, and reject stale prices; this prevents overselling across concurrent customers.
+- Represent grouped fixed-price combos as catalog products with comboGroups and structured order components; encode combo choices in separate option keys to preserve legacy carts, validate group membership server-side, and reserve all main/component quantities together in sorted row-lock order.
 - Persist counter sales in orders with a source and cashier, using admin-verified server-calculated checkout and the existing reservation trigger; this unifies history without duplicate stock deductions. Keep counter sales out of delivery stages and new-order alerts.
