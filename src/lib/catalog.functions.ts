@@ -23,16 +23,22 @@ export const getCatalog = createServerFn({ method: "GET" }).handler(async () => 
     if (data.length < 500) break;
   }
   const products = mergeCatalog(rows);
-  const paths = products.map(p => p.image).filter((p): p is string => Boolean(p?.startsWith("uploads/")));
+  const paths = [...new Set(products.flatMap(p => [p.image, ...(p.images ?? [])]).filter((p): p is string => Boolean(p?.startsWith("uploads/"))))];
   if (paths.length) {
     const { data: urls, error } = await client.storage.from("product-photos").createSignedUrls(paths, 3600);
     if (error) throw new Error("Não foi possível carregar as fotos.");
+    const resolvePhoto = (path: string) => {
+      if (!path.startsWith("uploads/")) return path;
+      const signed = urls.find(u => u.path === path)?.signedUrl;
+      return signed ? signed.replace(new URL(signed).origin, new URL(import.meta.env['VITE_SUPABASE_URL']).origin) : "";
+    };
     for (const p of products) {
-      if (!p.image?.startsWith("uploads/")) continue;
-      p.imagePath = p.image;
-      const url = urls.find(u => u.path === p.image)?.signedUrl;
-      if (url) p.image = url.replace(new URL(url).origin, new URL(import.meta.env['VITE_SUPABASE_URL']).origin);
-      else delete p.image;
+      p.imagePaths = p.images ?? [];
+      p.images = p.imagePaths.map(resolvePhoto).filter(Boolean);
+      if (p.image?.startsWith("uploads/")) {
+        p.imagePath = p.image;
+        p.image = resolvePhoto(p.image);
+      }
     }
   }
   return products;
