@@ -39,6 +39,8 @@ export const submitOrder = createServerFn({ method: "POST" })
       .from("orders")
       .insert({
         request_id: data.requestId,
+        analytics_session_id: data.analytics?.sessionId ?? null,
+        analytics_visitor_id: data.analytics?.visitorId ?? null,
         customer_name: data.customer.name,
         customer_phone: data.customer.phone,
         address: data.customer.fulfillment === "pickup" ? "" : data.customer.address,

@@ -44,9 +44,41 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_sessions: {
+        Row: {
+          cart_started_at: string | null
+          checkout_at: string | null
+          id: string
+          last_seen_at: string
+          rate_key: string
+          started_at: string
+          visitor_id: string
+        }
+        Insert: {
+          cart_started_at?: string | null
+          checkout_at?: string | null
+          id: string
+          last_seen_at?: string
+          rate_key: string
+          started_at?: string
+          visitor_id: string
+        }
+        Update: {
+          cart_started_at?: string | null
+          checkout_at?: string | null
+          id?: string
+          last_seen_at?: string
+          rate_key?: string
+          started_at?: string
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           address: string
+          analytics_session_id: string | null
+          analytics_visitor_id: string | null
           cash_change: number | null
           cash_received: number | null
           cashier_id: string | null
@@ -72,6 +104,8 @@ export type Database = {
         }
         Insert: {
           address: string
+          analytics_session_id?: string | null
+          analytics_visitor_id?: string | null
           cash_change?: number | null
           cash_received?: number | null
           cashier_id?: string | null
@@ -97,6 +131,8 @@ export type Database = {
         }
         Update: {
           address?: string
+          analytics_session_id?: string | null
+          analytics_visitor_id?: string | null
           cash_change?: number | null
           cash_received?: number | null
           cashier_id?: string | null
@@ -178,6 +214,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      catalog_funnel_stats: { Args: { _period?: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -193,6 +230,15 @@ export type Database = {
           id: string
           updated_at: string
         }[]
+      }
+      track_catalog_session: {
+        Args: {
+          _cart: boolean
+          _id: string
+          _rate_key: string
+          _visitor: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

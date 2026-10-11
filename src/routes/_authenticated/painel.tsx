@@ -22,6 +22,7 @@ import { OrderBoard } from "@/components/orders/order-board";
 import { ProductManager } from "@/components/products/product-manager";
 import { PointOfSale } from "@/components/pos/point-of-sale";
 import { SalesHistory } from "@/components/pos/sales-history";
+import { CatalogAnalytics } from "@/components/catalog-analytics";
 import { adminCatalogQuery } from "@/lib/catalog.query";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 
@@ -75,7 +76,7 @@ function Admin() {
       <main className="mx-auto max-w-7xl px-5 py-10">
         <p className="mb-2 text-xs uppercase text-primary">Área da loja</p>
         <h1 className="font-display text-3xl font-semibold">
-          {view === "combos" ? "Combos" : view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
+          {view === "analytics" ? "Movimento do catálogo" : view === "combos" ? "Combos" : view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">S7VEN Lounge e Tabacaria.</p>
         {permission.isPending ? (
@@ -98,6 +99,7 @@ function Admin() {
         ) : (
           <>
             <nav className="mt-7 flex flex-wrap gap-2 border-b pb-3" aria-label="Painel da loja">
+              <Button variant={view === "analytics" ? "default" : "ghost"} onClick={() => setView("analytics")}>Movimento do catálogo</Button>
               <Button variant={view === "pos" ? "default" : "ghost"} onClick={() => setView("pos")}>Caixa / Balcão</Button>
               <Button variant={view === "history" ? "default" : "ghost"} onClick={() => setView("history")}>Histórico de vendas</Button>
               <Button
@@ -115,7 +117,7 @@ function Admin() {
                 Taxas e horários
               </Button>
             </nav>
-            {view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : <SettingsEditor initial={settings} />}
+            {view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : <SettingsEditor initial={settings} />}
           </>
         )}
       </main>

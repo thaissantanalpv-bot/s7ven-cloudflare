@@ -5,6 +5,7 @@ import { PRODUCTS, PAYMENT_METHODS, STORE_NAME, type Product } from "./products"
 import { available, type CatalogProduct } from "./catalog";
 import type { StoreSettings } from "./store-settings";
 import { comboSelectionsSchema, type ComboSelection } from "./combos";
+import { analyticsIdentitySchema } from "./catalog-analytics";
 export const ORDER_STAGES = [
   {
     id: "received",
@@ -47,6 +48,7 @@ export const customerSchema = z.object({
     ctx.addIssue({ code: "custom", path: ["address"], message: "Informe o endereço completo" });
 });
 export const submitOrderSchema = z.object({
+  analytics: analyticsIdentitySchema.optional(),
   requestId: z.string().uuid(),
   customer: customerSchema,
   items: z

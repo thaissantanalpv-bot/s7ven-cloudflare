@@ -27,6 +27,9 @@ import { storeStatus, DAYS } from "@/lib/store-settings";
 import { QRCodeSVG } from "qrcode.react";
 import { useServerFn } from "@tanstack/react-start";
 import { PhoneField } from "@/components/orders/phone-field";
+import { useCatalogAnalytics } from "@/lib/use-catalog-analytics";
+import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
+import { trackCatalogVisit } from "@/lib/catalog-analytics.functions";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder } from "@/lib/orders.functions";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
@@ -74,6 +77,7 @@ function Catalog() {
   const categories = ["Todos", ...new Set(products.map(p => p.category))];
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
   const registerOrder = useServerFn(submitOrder);
+  const trackVisit = useServerFn(trackCatalogVisit);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [receipt, setReceipt] = useState<{ number: number; url: string } | null>(null);
@@ -91,6 +95,7 @@ function Catalog() {
   const [sort, setSort] = useState("catalog");
   const [cart, setCart] = useState<Cart>({});
   const [loaded, setLoaded] = useState(false);
+  useCatalogAnalytics(loaded, Object.values(cart).some(qty => qty > 0));
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("Todos");
   const [open, setOpen] = useState(false);
@@ -213,7 +218,8 @@ function Catalog() {
     if (!r.success) return setError(r.error.issues[0]?.message ?? "Verifique os dados");
     const d = r.data;
     const requestId = attempt?.signature === JSON.stringify({ customer: d, items: inputItems }) ? attempt.id : crypto.randomUUID();
-    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems });
+    const analytics = readAnalyticsIdentity();
+    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems, analytics });
     if (!validated.success) return setError("Confira os produtos e as quantidades do carrinho antes de enviar.");
     const lines = [
       `*Novo pedido — ${STORE_NAME}*`,
@@ -241,6 +247,7 @@ function Catalog() {
     const popup = window.open("about:blank", "_blank");
     if (popup) popup.opener = null;
     try {
+      if (analytics) await trackVisit({ data: { ...analytics, hasCart: true } }).catch(() => {});
       const saved = await registerOrder({ data: validated.data });
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent([`*Pedido #${saved.number}*`, ...lines, `*WhatsApp do cliente:* ${d.phone}`].join("\n"))}`;
       setReceipt({ number: saved.number, url });
