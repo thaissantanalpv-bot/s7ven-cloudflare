@@ -48,6 +48,7 @@
 - [x] Verificar cadastro, compra e regressões: cadastro administrativo, montagem por grupos, carrinho após recarregar, pedido real com preço fixo e WhatsApp correto, estoque de produto/sabor de 5 para 3; 38 testes passaram e build OK.
 
 # Entrega ou retirada
+- [ ] Verificar finalização completa e conversão no painel, corrigir falhas e remover apenas dados de teste.
 - [x] Implementar indicadores privados de visitas, carrinhos e desistências: painel autenticado recebeu visita e carrinho automaticamente; inatividade de teste mostrou desistência; 21 testes passaram e build OK. Finalização de pedido nesta verificação bloqueada pelo horário real da loja; horários preservados e visitas artificiais removidas.
 - [x] Mostrar endereço de retirada e configurar taxa fixa compartilhada: 22 testes passaram; catálogo mostrou retirada sem taxa e entrega de R$ 9 totalizando R$ 54; pedido real registrado e WhatsApp conferido, pedido de teste removido.
 - [x] Adicionar escolha salva no carrinho, endereço e taxa somente para entrega.
