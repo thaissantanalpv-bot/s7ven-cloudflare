@@ -33,5 +33,5 @@
 - [x] Verificar galeria, salvamento e regressões: envio de duas fotos com conta administrativa, capa alterada, fotos lidas no painel e catálogo; testes passaram e produto temporário removido.
 
 # Vitrine atualizada
-- [ ] Exibir informações de venda atualizadas sem liberar acesso aos cadastros completos ou edição.
-- [ ] Validar catálogo público, fotos, carrinho e acesso administrativo.
+- [x] Exibir informações de venda atualizadas sem liberar acesso aos cadastros completos ou edição.
+- [x] Validar catálogo público, fotos, carrinho e acesso administrativo: projeção pública real, fotos vinculadas acessíveis, envios soltos bloqueados, painel autorizado e carrinho preservado; 16 testes passaram.
