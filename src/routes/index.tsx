@@ -527,14 +527,19 @@ function Catalog() {
             )}
 
             <div className="space-y-3 border-t pt-4">
-              <Field label="Seu nome">
+              <Field label="Seu nome *">
                 <input
                   className="field"
+                  required
+                  autoComplete="name"
+                  aria-invalid={Boolean(fieldErrors.name?.length)}
+                  aria-describedby={fieldErrors.name?.length ? "name-error" : undefined}
                   value={form.name}
                   maxLength={80}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </Field>
+              {fieldErrors.name?.[0] && <p id="name-error" role="alert" className="text-xs text-destructive">{fieldErrors.name[0]}</p>}
               <PhoneField
                 value={form.phone}
                 submitted={submitted}
@@ -544,7 +549,7 @@ function Catalog() {
                 <Button variant={isDelivery ? "default" : "outline"} aria-pressed={isDelivery} onClick={() => { setForm({ ...form, fulfillment: "delivery" }); setError(""); }}><Truck />Entrega</Button>
                 <Button variant={!isDelivery ? "default" : "outline"} aria-pressed={!isDelivery} onClick={() => { setForm({ ...form, fulfillment: "pickup" }); setError(""); }}><Store />Retirada na loja</Button>
               </div>
-              {isDelivery && <Field label="Endereço de entrega">
+              {isDelivery && <Field label="Endereço de entrega *">
                 <textarea
                   className="field"
                   rows={3}

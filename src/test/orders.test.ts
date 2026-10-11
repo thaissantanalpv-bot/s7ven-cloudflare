@@ -23,6 +23,15 @@ const input = () =>
     items: [{ productId: "p4", qty: 2, option: "Melancia" }],
   });
 describe("Orders", () => {
+  it("always requires name and WhatsApp for delivery and pickup", () => {
+    for (const fulfillment of ["delivery", "pickup"] as const) {
+      for (const patch of [{ name: "" }, { name: "   " }, { phone: "" }, { phone: "18999" }]) {
+        const customer = { ...input().customer, fulfillment, ...patch };
+        expect(customerSchema.safeParse(customer).success).toBe(false);
+        expect(submitOrderSchema.safeParse({ ...input(), customer }).success).toBe(false);
+      }
+    }
+  });
   it("charges the fixed fee without region, ignores old zones and keeps pickup free", () => {
     const settings = { ...EMPTY_SETTINGS, delivery_enabled: true, fixed_delivery_fee: 9, pickup_address: "Rua Marechal Deodoro, nº 1696", delivery_zones: [{ id: "centro", name: "Centro", fee: 25 }] };
     const delivery = priceOrder({ ...input(), customer: { ...input().customer, zone: "" } }, settings);
