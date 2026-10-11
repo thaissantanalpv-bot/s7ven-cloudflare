@@ -31,4 +31,12 @@ describe("Catalog analytics", () => {
     expect(screen.getByText(/30 minutos/)).toBeInTheDocument();
     client.clear();
   });
+  it("retains an in-memory identity when browser storage is blocked", () => {
+    const blocked = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("Blocked storage"); });
+    try {
+      const identity = readAnalyticsIdentity();
+      expect(trackingSchema.safeParse({ ...identity, hasCart: true }).success).toBe(true);
+      expect(readAnalyticsIdentity()).toEqual(identity);
+    } finally { blocked.mockRestore(); }
+  });
 });
