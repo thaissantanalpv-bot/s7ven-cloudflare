@@ -126,25 +126,31 @@ export type Database = {
         Row: {
           delivery_enabled: boolean
           delivery_zones: Json
+          fixed_delivery_fee: number | null
           hours_enabled: boolean
           id: string
           opening_hours: Json
+          pickup_address: string
           updated_at: string
         }
         Insert: {
           delivery_enabled?: boolean
           delivery_zones?: Json
+          fixed_delivery_fee?: number | null
           hours_enabled?: boolean
           id?: string
           opening_hours?: Json
+          pickup_address?: string
           updated_at?: string
         }
         Update: {
           delivery_enabled?: boolean
           delivery_zones?: Json
+          fixed_delivery_fee?: number | null
           hours_enabled?: boolean
           id?: string
           opening_hours?: Json
+          pickup_address?: string
           updated_at?: string
         }
         Relationships: []
