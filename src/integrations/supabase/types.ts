@@ -77,6 +77,8 @@ export type Database = {
       orders: {
         Row: {
           address: string
+          analytics_session_id: string | null
+          analytics_visitor_id: string | null
           cash_change: number | null
           cash_received: number | null
           cashier_id: string | null
@@ -102,6 +104,8 @@ export type Database = {
         }
         Insert: {
           address: string
+          analytics_session_id?: string | null
+          analytics_visitor_id?: string | null
           cash_change?: number | null
           cash_received?: number | null
           cashier_id?: string | null
@@ -127,6 +131,8 @@ export type Database = {
         }
         Update: {
           address?: string
+          analytics_session_id?: string | null
+          analytics_visitor_id?: string | null
           cash_change?: number | null
           cash_received?: number | null
           cashier_id?: string | null
