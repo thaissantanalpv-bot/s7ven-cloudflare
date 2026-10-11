@@ -21,7 +21,7 @@ export const EMPTY_SETTINGS: StoreSettings = {
   delivery_enabled: false, fixed_delivery_fee: null, pickup_address: "", delivery_zones: [], hours_enabled: false,
   opening_hours: DAYS.map((_, day) => ({ day, enabled: false, open: "18:00", close: "23:00" })),
 };
-export function storeStatus(settings: StoreSettings, now = new Date(import.meta.env.DEV ? "2026-10-11T06:30:00Z" : Date.now())) {
+export function storeStatus(settings: StoreSettings, now = new Date()) {
   if (!settings.hours_enabled) return { open: true, configured: false, label: "Horários a confirmar" };
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
   const part = (name: string) => parts.find(p => p.type === name)?.value ?? "";
