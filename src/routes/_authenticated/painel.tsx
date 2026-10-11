@@ -191,7 +191,7 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
         <section className="py-8">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold">Entrega por região</h2>
+              <h2 className="text-xl font-semibold">Entrega e retirada</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 {draft.delivery_enabled
                   ? "Taxas ativas no catálogo."
@@ -204,6 +204,22 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
               onCheckedChange={(value) => update({ ...draft, delivery_enabled: value })}
             />
           </div>
+          <label className="mt-6 block text-sm">
+            Endereço para retirada
+            <input className="field mt-2" value={draft.pickup_address} maxLength={300} onChange={(e) => update({ ...draft, pickup_address: e.target.value })} />
+          </label>
+          <label className="mt-5 block text-sm">
+            Tipo de taxa
+            <select className="field mt-2" value={draft.fixed_delivery_fee === null ? "region" : "fixed"} onChange={(e) => update({ ...draft, fixed_delivery_fee: e.target.value === "fixed" ? 0 : null })}>
+              <option value="fixed">Taxa fixa</option>
+              <option value="region">Por região</option>
+            </select>
+          </label>
+          {draft.fixed_delivery_fee !== null && <label className="mt-5 block text-sm">
+            Taxa fixa (R$)
+            <input className="field mt-2" type="number" min="0" max="1000" step="0.01" value={draft.fixed_delivery_fee} onChange={(e) => update({ ...draft, fixed_delivery_fee: Number(e.target.value) })} />
+          </label>}
+          {draft.fixed_delivery_fee === null && <>
           <div className="mt-7">
             {draft.delivery_zones.length === 0 && (
               <p className="border-y py-10 text-sm text-muted-foreground">
@@ -285,6 +301,7 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
             <Plus />
             Adicionar região
           </Button>
+          </>}
         </section>
       ) : (
         <section className="py-8">

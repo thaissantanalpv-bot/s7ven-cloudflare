@@ -159,7 +159,7 @@ function Catalog() {
   const subtotal = items.reduce((s, i) => s + i.qty * i.product.price, 0);
   const zone = settings.delivery_zones.find((z) => z.id === form.zone);
   const isDelivery = form.fulfillment === "delivery";
-  const deliveryFee = isDelivery && settings.delivery_enabled ? (zone?.fee ?? 0) : 0;
+  const deliveryFee = isDelivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
   const total = subtotal + deliveryFee;
 
   const pixPayload = useMemo(() => buildPixPayload(total), [total]);
@@ -205,7 +205,7 @@ function Catalog() {
     } catch (e) {
       return setError(e instanceof Error ? e.message : "Confira os produtos do carrinho.");
     }
-    if (isDelivery && settings.delivery_enabled && !zone)
+    if (isDelivery && settings.delivery_enabled && settings.fixed_delivery_fee === null && !zone)
       return setError("Escolha o bairro ou região de entrega.");
     if (status.configured && !status.open)
       return setError("A loja está fechada. Confira os horários de atendimento.");
@@ -225,12 +225,12 @@ function Catalog() {
       "",
       `*Produtos: ${brl(subtotal)}*`,
       !isDelivery ? "*Retirada na loja · Sem taxa de entrega*" : settings.delivery_enabled
-        ? `*Entrega (${zone?.name}): ${brl(deliveryFee)}*`
+        ? `*Entrega${settings.fixed_delivery_fee === null ? ` (${zone?.name})` : ""}: ${brl(deliveryFee)}*`
         : "*Entrega: valor a confirmar com a loja*",
       `*Total${!isDelivery || settings.delivery_enabled ? "" : " dos produtos"}: ${brl(total)}*`,
       "",
       `*Nome:* ${d.name}`,
-      isDelivery ? `*Endereço:* ${d.address}` : "*Modalidade:* Retirada na loja",
+      isDelivery ? `*Endereço:* ${d.address}` : `*Modalidade:* Retirada na loja${settings.pickup_address ? `\n*Endereço de retirada:* ${settings.pickup_address}` : ""}`,
       `*Pagamento:* ${d.payment}${d.payment === "Dinheiro" && d.change ? ` (troco para ${d.change})` : ""}`,
       d.notes ? `*Obs.:* ${d.notes}` : "",
     ].filter((l, idx, arr) => l !== "" || arr[idx - 1] !== "");
@@ -379,7 +379,7 @@ function Catalog() {
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-2 border-b pb-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
             <Truck className="size-4 text-primary" />
-            Entrega {settings.delivery_enabled ? "por região" : "a combinar"}
+            Entrega {settings.delivery_enabled ? settings.fixed_delivery_fee !== null ? brl(settings.fixed_delivery_fee) : "por região" : "a combinar"}
           </span>
           <span className="flex items-center gap-2">
             <MessageCircle className="size-4 text-primary" />
@@ -557,8 +557,14 @@ function Catalog() {
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
               </Field>}
+              {!isDelivery && settings.pickup_address && (
+                <div className="border-l-2 border-primary py-2 pl-3 text-sm" role="status">
+                  <p className="font-semibold">Endereço para retirada</p>
+                  <p className="mt-1 text-muted-foreground">{settings.pickup_address}</p>
+                </div>
+              )}
               {isDelivery && fieldErrors.address?.[0] && <p id="address-error" className="text-xs text-destructive">{fieldErrors.address[0]}</p>}
-              {isDelivery && settings.delivery_enabled && (
+              {isDelivery && settings.delivery_enabled && settings.fixed_delivery_fee === null && (
                 <Field label="Bairro ou região">
                   <select
                     className="field"
@@ -663,7 +669,7 @@ function Catalog() {
               <span>{isDelivery ? "Entrega" : "Retirada na loja"}</span>
               <span>
                 {!isDelivery ? "Sem taxa" : settings.delivery_enabled
-                  ? zone
+                  ? settings.fixed_delivery_fee !== null || zone
                     ? brl(deliveryFee)
                     : "Selecione a região"
                   : "A confirmar"}

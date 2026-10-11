@@ -1,0 +1,1 @@
+ALTER TABLE public.store_settings ADD COLUMN fixed_delivery_fee numeric(12,2) DEFAULT NULL CHECK (fixed_delivery_fee >= 0 AND fixed_delivery_fee <= 1000), ADD COLUMN pickup_address text NOT NULL DEFAULT '' CHECK (char_length(pickup_address) <= 300);
