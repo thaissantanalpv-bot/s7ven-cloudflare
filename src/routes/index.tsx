@@ -613,7 +613,7 @@ function Catalog() {
                 (displayedTotal > 0 ? (
                   <div className="space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold">Pague com Pix — {brl(total)}</p>
+                      <p className="text-sm font-semibold">Pague com Pix — {brl(displayedTotal)}</p>
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
                         valor no QR
                       </span>
@@ -675,21 +675,21 @@ function Catalog() {
           <div className="space-y-3 border-t px-5 py-4">
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Produtos</span>
-              <span>{brl(subtotal)}</span>
+              <span>{brl(displayedSubtotal)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>{isDelivery ? "Entrega" : "Retirada na loja"}</span>
               <span>
                 {!isDelivery ? "Sem taxa" : settings.delivery_enabled
                   ? settings.fixed_delivery_fee !== null || zone
-                    ? brl(deliveryFee)
+                    ? brl(displayedDeliveryFee)
                     : "Selecione a região"
                   : "A confirmar"}
               </span>
             </div>
             <div className="flex justify-between text-lg">
               <span>Total</span>
-              <span className="font-display font-semibold">{brl(total)}</span>
+              <span className="font-display font-semibold">{brl(displayedTotal)}</span>
             </div>
             {status.configured && !status.open && (
               <p className="text-xs text-destructive">
