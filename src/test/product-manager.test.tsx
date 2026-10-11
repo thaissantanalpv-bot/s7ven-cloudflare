@@ -24,7 +24,9 @@ describe("Product manager", () => {
     const dialog = screen.getByRole("dialog");
     fireEvent.change(within(dialog).getByLabelText("Enviar foto do produto"), { target: { files: [new File(["1"], "one.jpg", { type: "image/jpeg" }), new File(["2"], "two.jpg", { type: "image/jpeg" })] } });
     await waitFor(() => expect(within(dialog).getAllByRole("button", { name: "Usar capa" })).toHaveLength(2));
-    fireEvent.click(within(dialog).getAllByRole("button", { name: "Usar capa" })[0]);
+    const coverButton = within(dialog).getAllByRole("button", { name: "Usar capa" })[0];
+    if (!coverButton) throw new Error("Missing cover button");
+    fireEvent.click(coverButton);
     fireEvent.click(within(dialog).getByRole("button", { name: "Remover foto 3" }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Salvar produto" }));
     await waitFor(() => expect(mocks.save).toHaveBeenCalled());
