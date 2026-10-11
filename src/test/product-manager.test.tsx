@@ -18,6 +18,20 @@ function setup() {
   render(<QueryClientProvider client={client}><ProductManager /></QueryClientProvider>);
 }
 describe("Product manager", () => {
+  it("uploads multiple photos, changes cover and removes a photo", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Editar Combo Gin Viagem" }));
+    const dialog = screen.getByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText("Enviar foto do produto"), { target: { files: [new File(["1"], "one.jpg", { type: "image/jpeg" }), new File(["2"], "two.jpg", { type: "image/jpeg" })] } });
+    await waitFor(() => expect(within(dialog).getAllByRole("button", { name: "Usar capa" })).toHaveLength(2));
+    fireEvent.click(within(dialog).getAllByRole("button", { name: "Usar capa" })[0]);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remover foto 3" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Salvar produto" }));
+    await waitFor(() => expect(mocks.save).toHaveBeenCalled());
+    const draft = mocks.save.mock.calls[0]?.[0].data.product;
+    expect(draft.image).toMatch(/^uploads\//);
+    expect(draft.images).toEqual(["/produtos/p1.jpg"]);
+  });
   beforeEach(() => { vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} }); vi.clearAllMocks(); mocks.save.mockResolvedValue({}); mocks.upload.mockResolvedValue({ error: null }); mocks.signed.mockResolvedValue({ data: { signedUrl: "https://example.test/photo.jpg" }, error: null }); });
   it("edits prices and variation stock while preserving the product ID", async () => {
     setup();
