@@ -1,10 +1,33 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { catalogProductSchema, mergeCatalog } from "./catalog";
+import { catalogProductSchema, mergeCatalog, type CatalogProduct } from "./catalog";
 
-// Imported products are already public assets; never read restricted overrides here.
-export const getCatalog = createServerFn({ method: "GET" }).handler(async () => mergeCatalog([]));
+// Only the allowlisted, read-only sales projection is available to visitors.
+export const getCatalog = createServerFn({ method: "GET" }).handler(async () => {
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!url || !key) throw new Error("Não foi possível carregar os produtos.");
+  const client = createClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: (input, init) => {
+      const headers = new Headers(init?.headers);
+      if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization");
+      headers.set("apikey", key);
+      return fetch(input, { ...init, headers });
+    } },
+  });
+  const rows = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await client.rpc("list_catalog_sales", { _offset: offset });
+    if (error) throw new Error("Não foi possível carregar os produtos.");
+    rows.push(...data);
+    if (data.length < 500) break;
+  }
+  return resolveCatalogPhotos(mergeCatalog(rows), client);
+});
 
 export const getAdminCatalog = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -19,7 +42,10 @@ export const getAdminCatalog = createServerFn({ method: "POST" })
     rows.push(...data);
     if (data.length < 500) break;
   }
-  const products = mergeCatalog(rows);
+  return resolveCatalogPhotos(mergeCatalog(rows), client);
+});
+
+async function resolveCatalogPhotos(products: CatalogProduct[], client: SupabaseClient<Database>) {
   const paths = [...new Set(products.flatMap(p => [p.image, ...(p.images ?? [])]).filter((p): p is string => Boolean(p?.startsWith("uploads/"))))];
   if (paths.length) {
     const { data: urls, error } = await client.storage.from("product-photos").createSignedUrls(paths, 3600);
@@ -39,7 +65,7 @@ export const getAdminCatalog = createServerFn({ method: "POST" })
     }
   }
   return products;
-});
+}
 
 export const saveCatalogProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

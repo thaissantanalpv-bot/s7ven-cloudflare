@@ -64,6 +64,13 @@
       "when": 1791684944612,
       "tag": "0008_restrict_catalog_reads_and_linked_photos",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791685185121,
+      "tag": "0009_public_catalog_sales_projection",
+      "breakpoints": true
     }
   ]
 }

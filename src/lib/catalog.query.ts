@@ -8,7 +8,10 @@ export const adminCatalogQuery = queryOptions({ queryKey: ["admin-catalog-produc
 export function useCatalogUpdates() {
   const client = useQueryClient();
   useEffect(() => {
-    const channel = supabase.channel("catalog-updates").on("postgres_changes", { event: "*", schema: "public", table: "catalog_products" }, () => { void client.invalidateQueries({ queryKey: adminCatalogQuery.queryKey }); }).subscribe();
+    const channel = supabase.channel("catalog-updates").on("postgres_changes", { event: "*", schema: "public", table: "catalog_products" }, () => {
+      void client.invalidateQueries({ queryKey: adminCatalogQuery.queryKey });
+      void client.invalidateQueries({ queryKey: catalogQuery.queryKey });
+    }).subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [client]);
 }

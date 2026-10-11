@@ -31,3 +31,7 @@
 - [x] Ampliar fotos no catálogo com galeria navegável.
 - [x] Permitir adicionar várias fotos, escolher capa e remover fotos no painel.
 - [x] Verificar galeria, salvamento e regressões: envio de duas fotos com conta administrativa, capa alterada, fotos lidas no painel e catálogo; testes passaram e produto temporário removido.
+
+# Vitrine atualizada
+- [ ] Exibir informações de venda atualizadas sem liberar acesso aos cadastros completos ou edição.
+- [ ] Validar catálogo público, fotos, carrinho e acesso administrativo.
