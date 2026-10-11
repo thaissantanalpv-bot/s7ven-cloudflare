@@ -23,6 +23,15 @@ const input = () =>
     items: [{ productId: "p4", qty: 2, option: "Melancia" }],
   });
 describe("Orders", () => {
+  it("allows pickup without address or region and never charges delivery", () => {
+    const customer = customerSchema.parse({ ...input().customer, fulfillment: "pickup", address: "", zone: "invalid" });
+    const priced = priceOrder({ ...input(), customer }, { ...EMPTY_SETTINGS, delivery_enabled: true, delivery_zones: [{ id: "centro", name: "Centro", fee: 5 }] });
+    expect(priced.delivery_fee).toBe(0);
+    expect(priced.delivery_zone).toBe("");
+    expect(priced.total).toBe(priced.subtotal);
+    expect(customerSchema.safeParse({ ...customer, payment: "" }).success).toBe(false);
+    expect(customerSchema.safeParse({ ...customer, fulfillment: "delivery" }).success).toBe(false);
+  });
   it("uses the updated order completion WhatsApp", () => {
     expect(WHATSAPP_NUMBER).toBe("5518991511004");
   });

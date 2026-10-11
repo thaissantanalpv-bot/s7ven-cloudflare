@@ -57,6 +57,7 @@ export type Database = {
           delivery_confirmed: boolean
           delivery_fee: number
           delivery_zone: string
+          fulfillment: string
           id: string
           items: Json
           notes: string
@@ -81,6 +82,7 @@ export type Database = {
           delivery_confirmed?: boolean
           delivery_fee?: number
           delivery_zone?: string
+          fulfillment?: string
           id?: string
           items: Json
           notes?: string
@@ -105,6 +107,7 @@ export type Database = {
           delivery_confirmed?: boolean
           delivery_fee?: number
           delivery_zone?: string
+          fulfillment?: string
           id?: string
           items?: Json
           notes?: string

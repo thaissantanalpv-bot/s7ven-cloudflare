@@ -46,3 +46,8 @@
 - [x] Permitir montagem no catálogo e preservar escolhas no carrinho e no pedido.
 - [x] Validar grupos, sabores e estoque no servidor e reservar os itens escolhidos atomicamente.
 - [x] Verificar cadastro, compra e regressões: cadastro administrativo, montagem por grupos, carrinho após recarregar, pedido real com preço fixo e WhatsApp correto, estoque de produto/sabor de 5 para 3; 38 testes passaram e build OK.
+
+# Entrega ou retirada
+- [x] Adicionar escolha salva no carrinho, endereço e taxa somente para entrega.
+- [x] Registrar modalidade e exibir no WhatsApp e painel, mantendo validação no servidor.
+- [x] Verificar cálculos, validação e finalização: 29 testes passaram; entrega sem endereço bloqueada, retirada persistida após recarregar e pedido real registrado sem endereço/taxa, com total de R$ 45 e mensagem WhatsApp correta.

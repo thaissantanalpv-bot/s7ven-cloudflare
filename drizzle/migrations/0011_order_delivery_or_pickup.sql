@@ -1,0 +1,2 @@
+ALTER TABLE public.orders ADD COLUMN fulfillment text NOT NULL DEFAULT 'delivery' CONSTRAINT orders_fulfillment_valid CHECK (fulfillment IN ('delivery', 'pickup'));
+COMMENT ON COLUMN public.orders.fulfillment IS 'Catalog fulfillment choice; legacy orders default to delivery.';

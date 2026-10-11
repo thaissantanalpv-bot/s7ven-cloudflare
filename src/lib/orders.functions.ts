@@ -41,7 +41,8 @@ export const submitOrder = createServerFn({ method: "POST" })
         request_id: data.requestId,
         customer_name: data.customer.name,
         customer_phone: data.customer.phone,
-        address: data.customer.address,
+        address: data.customer.fulfillment === "pickup" ? "" : data.customer.address,
+        fulfillment: data.customer.fulfillment,
         payment: data.customer.payment,
         change_for: data.customer.change,
         notes: data.customer.notes,
@@ -85,6 +86,7 @@ export const listOrders = createServerFn({ method: "POST" })
         ...data.map((row) => ({
           ...row,
           source: z.enum(["catalog", "counter"]).parse(row.source),
+          fulfillment: z.enum(["delivery", "pickup"]).parse(row.fulfillment),
           status: statusSchema.parse(row.status),
           items: row.items as Order["items"],
           subtotal: Number(row.subtotal),

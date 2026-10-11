@@ -20,7 +20,7 @@ export function cashChange(total: number, received: number) {
   return (Math.round(received * 100) - Math.round(total * 100)) / 100;
 }
 export function priceCounterSale(input: CounterSaleInput, products: CatalogProduct[]) {
-  const priced = priceOrder({ requestId: input.requestId, items: input.items, customer: { name: input.name || "Cliente balcão", phone: "", address: "Balcão", payment: input.payment, change: "", notes: input.notes, zone: "" } }, EMPTY_SETTINGS, products);
+  const priced = priceOrder({ requestId: input.requestId, items: input.items, customer: { name: input.name || "Cliente balcão", phone: "", address: "Balcão", fulfillment: "pickup", payment: input.payment, change: "", notes: input.notes, zone: "" } }, EMPTY_SETTINGS, products);
   const change = input.payment === "Dinheiro" && input.cashReceived !== null ? cashChange(priced.total, input.cashReceived) : null;
   if (change !== null && change < 0) throw new Error("O valor recebido é menor que o total da venda.");
   return { ...priced, cash_received: input.cashReceived, cash_change: change };

@@ -36,11 +36,15 @@ export type OrderStatus = z.infer<typeof statusSchema>;
 export const customerSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome").max(80),
   phone: brazilPhoneSchema,
-  address: z.string().trim().min(8, "Informe o endereço completo").max(300),
+  address: z.string().trim().max(300).default(""),
+  fulfillment: z.enum(["delivery", "pickup"]).default("delivery"),
   payment: z.string().trim().max(40).refine((v) => PAYMENT_METHODS.includes(v), "Escolha a forma de pagamento"),
   change: z.string().max(30).default(""),
   notes: z.string().max(300).default(""),
   zone: z.string().max(80).default(""),
+}).superRefine((customer, ctx) => {
+  if (customer.fulfillment === "delivery" && customer.address.length < 8)
+    ctx.addIssue({ code: "custom", path: ["address"], message: "Informe o endereço completo" });
 });
 export const submitOrderSchema = z.object({
   requestId: z.string().uuid(),
@@ -69,6 +73,7 @@ export type OrderItem = {
   comboGroups?: CatalogProduct["comboGroups"];
 };
 export type Order = {
+  fulfillment?: "delivery" | "pickup";
   source?: "catalog" | "counter";
   cash_received?: number | null;
   cash_change?: number | null;
@@ -159,16 +164,17 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
     };
   });
   const zone = settings.delivery_zones.find((z) => z.id === input.customer.zone);
-  if (settings.delivery_enabled && !zone) throw new Error("Escolha o bairro ou região de entrega.");
+  const delivery = input.customer.fulfillment !== "pickup";
+  if (delivery && settings.delivery_enabled && !zone) throw new Error("Escolha o bairro ou região de entrega.");
   const subtotal =
     Math.round(items.reduce((s, i) => s + Math.round(i.price * 100) * i.qty, 0)) / 100;
-  const delivery_fee = settings.delivery_enabled ? (zone?.fee ?? 0) : 0;
+  const delivery_fee = delivery && settings.delivery_enabled ? (zone?.fee ?? 0) : 0;
   return {
     items,
     subtotal,
     delivery_fee,
-    delivery_zone: settings.delivery_enabled ? (zone?.name ?? "") : "",
-    delivery_confirmed: settings.delivery_enabled,
+    delivery_zone: delivery && settings.delivery_enabled ? (zone?.name ?? "") : "",
+    delivery_confirmed: !delivery || settings.delivery_enabled,
     total: Math.round((subtotal + delivery_fee) * 100) / 100,
   };
 }
