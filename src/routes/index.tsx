@@ -26,7 +26,7 @@ import { storeStatus, DAYS } from "@/lib/store-settings";
 import { QRCodeSVG } from "qrcode.react";
 import { useServerFn } from "@tanstack/react-start";
 import { PhoneField } from "@/components/orders/phone-field";
-import { customerSchema } from "@/lib/orders";
+import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder } from "@/lib/orders.functions";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
@@ -104,6 +104,10 @@ function Catalog() {
   const [sel, setSel] = useState<Record<string, string>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState("");
+  const customerValidation = customerSchema.safeParse(form);
+  const fieldErrors = submitted && !customerValidation.success
+    ? customerValidation.error.flatten().fieldErrors
+    : {};
 
   useEffect(() => {
     try {
@@ -172,10 +176,19 @@ function Catalog() {
     });
 
   const send = async () => {
+    if (sending) return;
     setError("");
     setSubmitted(true);
-    if (!items.length) return setError("Seu carrinho está vazio.");
-    if (items.some(i => !available(i.product, i.option, i.qty))) return setError("Há um item esgotado ou indisponível no carrinho. Remova ou ajuste a quantidade.");
+    // Validate saved cart entries too: missing products must not be silently omitted.
+    const inputItems = Object.entries(cart).map(([key, qty]) => {
+      const [productId, option = ""] = key.split(SEP);
+      return { productId: productId ?? "", option, qty, expectedPrice: products.find(p => p.id === productId)?.price };
+    });
+    try {
+      validateCartAvailability(inputItems, products);
+    } catch (e) {
+      return setError(e instanceof Error ? e.message : "Confira os produtos do carrinho.");
+    }
     if (settings.delivery_enabled && !zone)
       return setError("Escolha o bairro ou região de entrega.");
     if (status.configured && !status.open)
@@ -183,6 +196,9 @@ function Catalog() {
     const r = customerSchema.safeParse(form);
     if (!r.success) return setError(r.error.issues[0]?.message ?? "Verifique os dados");
     const d = r.data;
+    const requestId = attempt?.signature === JSON.stringify({ customer: d, items: inputItems }) ? attempt.id : crypto.randomUUID();
+    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems });
+    if (!validated.success) return setError("Confira os produtos e as quantidades do carrinho antes de enviar.");
     const lines = [
       `*Novo pedido — ${STORE_NAME}*`,
       "",
@@ -202,21 +218,14 @@ function Catalog() {
       `*Pagamento:* ${d.payment}${d.payment === "Dinheiro" && d.change ? ` (troco para ${d.change})` : ""}`,
       d.notes ? `*Obs.:* ${d.notes}` : "",
     ].filter((l, idx, arr) => l !== "" || arr[idx - 1] !== "");
-    const inputItems = items.map((i) => ({
-      productId: i.product.id,
-      option: i.option,
-      qty: i.qty,
-      expectedPrice: i.product.price,
-    }));
     const signature = JSON.stringify({ customer: d, items: inputItems });
-    const requestId = attempt?.signature === signature ? attempt.id : crypto.randomUUID();
     setAttempt({ signature, id: requestId });
     setSending(true);
     // Open synchronously to retain browser popup permission; navigate only after a successful save.
     const popup = window.open("about:blank", "_blank");
     if (popup) popup.opener = null;
     try {
-      const saved = await registerOrder({ data: { requestId, customer: d, items: inputItems } });
+      const saved = await registerOrder({ data: validated.data });
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent([`*Pedido #${saved.number}*`, ...lines, `*WhatsApp do cliente:* ${d.phone}`].join("\n"))}`;
       setReceipt({ number: saved.number, url });
       setCart({});
@@ -518,11 +527,15 @@ function Catalog() {
                   className="field"
                   rows={3}
                   maxLength={300}
+                  required
+                  aria-invalid={Boolean(fieldErrors.address?.length)}
+                  aria-describedby={fieldErrors.address?.length ? "address-error" : undefined}
                   placeholder="Rua, número, bairro, cidade e referência"
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
               </Field>
+              {fieldErrors.address?.[0] && <p id="address-error" className="text-xs text-destructive">{fieldErrors.address[0]}</p>}
               {settings.delivery_enabled && (
                 <Field label="Bairro ou região">
                   <select
@@ -540,12 +553,13 @@ function Catalog() {
                 </Field>
               )}
               <Field label="Forma de pagamento">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2" role="group" aria-label="Forma de pagamento" aria-describedby={fieldErrors.payment?.length ? "payment-error" : undefined}>
                   {PAYMENT_METHODS.map((m) => (
                     <Button
                       variant="outline"
                       key={m}
                       type="button"
+                      aria-pressed={form.payment === m}
                       onClick={() => setForm({ ...form, payment: m })}
                       className={`rounded-xl border px-3 py-2 text-sm ${form.payment === m ? "border-primary bg-primary text-primary-foreground" : "bg-card"}`}
                     >
@@ -554,6 +568,7 @@ function Catalog() {
                   ))}
                 </div>
               </Field>
+              {fieldErrors.payment?.[0] && <p id="payment-error" className="text-xs text-destructive">{fieldErrors.payment[0]}</p>}
               {form.payment === "Pix" &&
                 (total > 0 ? (
                   <div className="space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
@@ -652,7 +667,7 @@ function Catalog() {
                 </Button>
               </div>
             )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button
               disabled={sending || !items.length || (status.configured && !status.open)}
               onClick={send}

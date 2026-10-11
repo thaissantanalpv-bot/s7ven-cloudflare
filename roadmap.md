@@ -35,3 +35,8 @@
 # Vitrine atualizada
 - [x] Exibir informações de venda atualizadas sem liberar acesso aos cadastros completos ou edição.
 - [x] Validar catálogo público, fotos, carrinho e acesso administrativo: projeção pública real, fotos vinculadas acessíveis, envios soltos bloqueados, painel autorizado e carrinho preservado; 16 testes passaram.
+
+# Validação da finalização
+- [ ] Validar produtos e quantidades totais por sabor e produto, inclusive itens de carrinhos salvos.
+- [ ] Mostrar erros de endereço e pagamento antes de enviar e atualizar o WhatsApp de finalização.
+- [ ] Verificar testes e fluxo do carrinho no catálogo.

@@ -5,8 +5,11 @@ import {
   priceOrder,
   orderWhatsApp,
   ORDER_STAGES,
+  validateCartAvailability,
 } from "@/lib/orders";
 import { EMPTY_SETTINGS } from "@/lib/store-settings";
+import { mergeCatalog } from "@/lib/catalog";
+import { WHATSAPP_NUMBER } from "@/lib/products";
 const input = () =>
   submitOrderSchema.parse({
     requestId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -20,6 +23,41 @@ const input = () =>
     items: [{ productId: "p4", qty: 2, option: "Melancia" }],
   });
 describe("Orders", () => {
+  it("uses the updated order completion WhatsApp", () => {
+    expect(WHATSAPP_NUMBER).toBe("5518991511004");
+  });
+  it("requires a complete address and selected supported payment on both checkout schemas", () => {
+    for (const patch of [{ address: "" }, { address: "        " }, { address: "Rua" }, { payment: "" }, { payment: "   " }, { payment: "não existe" }]) {
+      const customer = { ...input().customer, ...patch };
+      expect(customerSchema.safeParse(customer).success).toBe(false);
+      expect(submitOrderSchema.safeParse({ ...input(), customer }).success).toBe(false);
+    }
+  });
+  it("rejects missing products, invalid quantities and empty carts", () => {
+    const products = mergeCatalog([]);
+    expect(() => validateCartAvailability([], products)).toThrow("vazio");
+    expect(() => validateCartAvailability([{ productId: "missing", option: "", qty: 1 }], products)).toThrow("não está mais disponível");
+    for (const qty of [0, -1, 1.5, 100, NaN]) {
+      expect(() => validateCartAvailability([{ productId: "p1", option: "", qty }], products)).toThrow("quantidade");
+    }
+  });
+  it("checks paused products, flavors and aggregate stock across cart lines", () => {
+    const original = mergeCatalog([]).find(p => p.id === "p4");
+    if (!original) throw new Error("Missing fixture");
+    const product = { ...original, stock: 3, allowOther: false, variations: [
+      { name: "Melancia", active: true, stock: 2 },
+      { name: "Morango", active: true, stock: 2 },
+    ] };
+    const lines = [{ productId: "p4", option: "Melancia", qty: 2 }, { productId: "p4", option: "Morango", qty: 2 }];
+    expect(() => validateCartAvailability(lines, [product])).toThrow("quantidade indisponível");
+    expect(() => priceOrder({ ...input(), items: lines }, EMPTY_SETTINGS, [product])).toThrow("quantidade indisponível");
+    expect(() => validateCartAvailability([lines[0], { ...lines[0], qty: 1 }], [product])).toThrow();
+    expect(() => validateCartAvailability([lines[0]], [{ ...product, active: false }])).toThrow();
+    expect(() => validateCartAvailability([{ ...lines[0], option: "" }], [product])).toThrow("Escolha");
+    expect(() => validateCartAvailability([{ ...lines[0], option: "Inexistente" }], [product])).toThrow();
+    expect(() => validateCartAvailability([lines[0]], [{ ...product, variations: product.variations.map(v => ({ ...v, active: false })) }])).toThrow();
+    expect(() => validateCartAvailability([lines[0]], [product])).not.toThrow();
+  });
   it("requires phone with DDD and normalizes it", () => {
     expect(input().customer.phone).toBe("5518999999999");
     expect(customerSchema.safeParse({ ...input().customer, phone: "99999" }).success).toBe(false);
