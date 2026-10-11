@@ -15,13 +15,14 @@ export function PhoneField({
   return (
     <div>
       <label htmlFor={id} className="mb-1 block text-sm font-medium">
-        Seu WhatsApp (com DDD)
+        Seu WhatsApp (com DDD) *
       </label>
       <input
         id={id}
         type="tel"
         inputMode="tel"
         autoComplete="tel"
+        required
         className={`field ${error ? "border-destructive" : ""}`}
         placeholder="(18) 99999-9999"
         value={formatBrazilPhone(value)}
