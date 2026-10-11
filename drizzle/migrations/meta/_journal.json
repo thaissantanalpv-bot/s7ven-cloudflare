@@ -92,6 +92,13 @@
       "when": 1791701329384,
       "tag": "0012_store_fixed_delivery_and_pickup_address",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791702057550,
+      "tag": "0013_catalog_visitor_funnel",
+      "breakpoints": true
     }
   ]
 }
