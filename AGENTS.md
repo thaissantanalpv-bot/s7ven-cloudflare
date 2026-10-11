@@ -14,6 +14,7 @@
 - Grant store administration through protected `user_roles` and a server-managed invitation checked against confirmed auth email; never grant privileges from browser state or editable metadata.
 - Use TanStack Query for shared settings and the pathless authenticated layout for the panel, keeping public catalog reads independent of login.
 - Persist customer orders through a validated public checkout server function with server-calculated catalog prices, random idempotency keys and bounded submission frequency; never expose private order reads publicly.
+- Share cart availability checks between catalog submission and server pricing, including aggregate product/variation quantities and missing saved-cart products; only navigate to WhatsApp after server validation and stock reservation succeed.
 - Keep order management in an admin-only panel module with authenticated status writes, conflict detection, paginated polling and user-activated audio; WhatsApp stage actions open prefilled messages rather than claiming automatic delivery.
 - Keep the imported catalog as the immutable baseline; public reads merge only the read-only allowlisted sales projection, while raw overrides and all writes remain admin-only.
 - Store product photos in private native storage with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads; this protects unpublished uploads without blocking admin previews.

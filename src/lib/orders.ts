@@ -36,7 +36,7 @@ export const customerSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome").max(80),
   phone: brazilPhoneSchema,
   address: z.string().trim().min(8, "Informe o endereço completo").max(300),
-  payment: z.string().refine((v) => PAYMENT_METHODS.includes(v), "Escolha a forma de pagamento"),
+  payment: z.string().trim().max(40).refine((v) => PAYMENT_METHODS.includes(v), "Escolha a forma de pagamento"),
   change: z.string().max(30).default(""),
   notes: z.string().max(300).default(""),
   zone: z.string().max(80).default(""),
@@ -87,17 +87,33 @@ export type Order = {
   created_at: string;
   updated_at: string;
 };
+export function validateCartAvailability(
+  lines: { productId: string; option: string; qty: number }[],
+  products: (Product | CatalogProduct)[],
+) {
+  if (!lines.length) throw new Error("Seu carrinho está vazio.");
+  for (const line of lines) {
+    const product = products.find((p) => p.id === line.productId);
+    if (!product) throw new Error("Um produto não está mais disponível. Atualize o catálogo.");
+    if (!Number.isInteger(line.qty) || line.qty < 1 || line.qty > 99)
+      throw new Error(`${product.name}: ajuste a quantidade de 1 a 99 unidades.`);
+    if (product.options?.length && !line.option)
+      throw new Error(`Escolha ${product.optionLabel?.toLowerCase()} de ${product.name}.`);
+    if ((!product.options?.length && line.option) ||
+        (!("active" in product) && line.option && !product.options?.includes(line.option)))
+      throw new Error(`${product.name}: variação indisponível. Atualize o carrinho.`);
+    const totalQty = lines.filter(i => i.productId === product.id).reduce((sum, i) => sum + i.qty, 0);
+    const optionQty = lines.filter(i => i.productId === product.id && i.option === line.option).reduce((sum, i) => sum + i.qty, 0);
+    if (!available(product, line.option, optionQty) || ("stock" in product && product.stock !== null && totalQty > product.stock))
+      throw new Error(`${product.name}: item esgotado ou quantidade indisponível. Remova ou ajuste a quantidade no carrinho.`);
+  }
+}
 export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: StoreSettings, products: (Product | CatalogProduct)[] = PRODUCTS) {
+  validateCartAvailability(input.items, products);
   const items = input.items.map((line) => {
     const product = products.find((p) => p.id === line.productId);
     if (!product) throw new Error("Um produto não está mais disponível. Atualize o catálogo.");
     if (line.expectedPrice !== undefined && Math.round(line.expectedPrice * 100) !== Math.round(product.price * 100)) throw new Error(`${product.name}: preço alterado. Atualize o catálogo antes de enviar.`);
-    if (product.options?.length && !line.option)
-      throw new Error(`Escolha ${product.optionLabel?.toLowerCase()} de ${product.name}.`);
-    const totalQty = input.items.filter(i => i.productId === product.id).reduce((sum, i) => sum + i.qty, 0);
-    const optionQty = input.items.filter(i => i.productId === product.id && i.option === line.option).reduce((sum, i) => sum + i.qty, 0);
-    if (!available(product, line.option, optionQty) || ("stock" in product && product.stock !== null && totalQty > product.stock))
-      throw new Error(`${product.name}: item esgotado ou quantidade indisponível. Atualize o carrinho.`);
     return {
       productId: product.id,
       name: product.name,
