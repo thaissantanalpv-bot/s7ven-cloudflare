@@ -71,6 +71,13 @@
       "when": 1791685185121,
       "tag": "0009_public_catalog_sales_projection",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791699434629,
+      "tag": "0010_grouped_fixed_price_combos",
+      "breakpoints": true
     }
   ]
 }

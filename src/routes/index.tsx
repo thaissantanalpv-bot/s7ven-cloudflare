@@ -31,6 +31,8 @@ import { submitOrder } from "@/lib/orders.functions";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
+import { ComboBuilder } from "@/components/products/combo-builder";
+import { comboOption, parseComboOption, comboSummary, type ComboSelection } from "@/lib/combos";
 import {
   PAYMENT_METHODS,
   WHATSAPP_NUMBER,
@@ -58,7 +60,7 @@ export const Route = createFileRoute("/")({
 });
 
 type Cart = Record<string, number>;
-type Line = { product: CatalogProduct; key: string; qty: number; option: string };
+type Line = { product: CatalogProduct; key: string; qty: number; option: string; components: ComboSelection[] | undefined };
 
 const KEY = "catalogo-carrinho";
 const SEP = "::";
@@ -104,6 +106,7 @@ function Catalog() {
   const [sel, setSel] = useState<Record<string, string>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState("");
+  const [building, setBuilding] = useState<CatalogProduct | null>(null);
   const customerValidation = customerSchema.safeParse(form);
   const fieldErrors = submitted && !customerValidation.success
     ? customerValidation.error.flatten().fieldErrors
@@ -144,7 +147,8 @@ function Catalog() {
         .map(([key, qty]) => {
           const [id, opt] = key.split(SEP);
           const product = products.find((p) => p.id === id);
-          return product && qty > 0 ? { product, key, qty, option: opt ?? "" } : null;
+          const components = parseComboOption(opt ?? "");
+          return product && qty > 0 ? { product, key, qty, option: components ? "" : opt ?? "", components } : null;
         })
         .filter((l): l is Line => l !== null),
     [cart, products],
@@ -165,25 +169,34 @@ function Catalog() {
 
   const change = (key: string, d: number) =>
     setCart((c) => {
-      const [id, option = ""] = key.split(SEP);
+      const [id, encoded = ""] = key.split(SEP);
+      const components = parseComboOption(encoded);
+      const option = components ? "" : encoded;
       const product = products.find(p => p.id === id);
       const n = Math.max(0, (c[key] || 0) + d);
       if (d > 0 && (!product || !available(product, option, n) || (product.stock !== null && Object.entries(c).filter(([k]) => k.split(SEP)[0] === id).reduce((sum, [, q]) => sum + q, d) > product.stock))) return c;
       const next = { ...c };
       if (n === 0) delete next[key];
       else next[key] = n;
+      if (d > 0 && components) {
+        try { validateCartAvailability(cartInputs(next), products); }
+        catch (e) { setError(e instanceof Error ? e.message : "Confira o combo."); return c; }
+      }
       return next;
     });
+
+  const cartInputs = (value: Cart) => Object.entries(value).map(([key, qty]) => {
+    const [productId, encoded = ""] = key.split(SEP);
+    const components = parseComboOption(encoded);
+    return { productId: productId ?? "", option: components ? "" : encoded, components, qty, expectedPrice: products.find(p => p.id === productId)?.price };
+  });
 
   const send = async () => {
     if (sending) return;
     setError("");
     setSubmitted(true);
     // Validate saved cart entries too: missing products must not be silently omitted.
-    const inputItems = Object.entries(cart).map(([key, qty]) => {
-      const [productId, option = ""] = key.split(SEP);
-      return { productId: productId ?? "", option, qty, expectedPrice: products.find(p => p.id === productId)?.price };
-    });
+    const inputItems = cartInputs(cart);
     try {
       validateCartAvailability(inputItems, products);
     } catch (e) {
@@ -204,7 +217,7 @@ function Catalog() {
       "",
       ...items.map(
         (i) =>
-          `${i.qty}x ${i.product.name}${i.option ? ` (${i.product.optionLabel}: ${i.option})` : ""} — ${brl(i.qty * i.product.price)}`,
+          `${i.qty}x ${i.product.name}${i.option ? ` (${i.product.optionLabel}: ${i.option})` : ""} — ${brl(i.qty * i.product.price)}${i.components ? `\n  ${comboSummary(i.components, products, i.product)}` : ""}`,
       ),
       "",
       `*Produtos: ${brl(subtotal)}*`,
@@ -434,6 +447,7 @@ function Catalog() {
               onSel={(id, v) => setSel((s) => ({ ...s, [id]: v }))}
               onTyped={(id, v) => setTyped((s) => ({ ...s, [id]: v }))}
               onChange={change}
+              onBuild={() => setBuilding(p)}
             />
           ))}
         </main>
@@ -493,6 +507,7 @@ function Catalog() {
                           {i.product.optionLabel}: {i.option}
                         </p>
                       )}
+                      {i.components && <p className="mt-1 break-words text-xs text-primary">{comboSummary(i.components, products, i.product)}</p>}
                       <p className="text-xs text-muted-foreground">
                         {brl(i.product.price)} · subtotal {brl(i.product.price * i.qty)}
                       </p>
@@ -678,6 +693,7 @@ function Catalog() {
           </div>
         </SheetContent>
       </Sheet>
+      {building && <ComboBuilder key={building.id} product={building} products={products} open onOpenChange={value => { if (!value) setBuilding(null); }} onAdd={selections => { const key = keyOf(building.id, comboOption(selections)); const next = { ...cart, [key]: (cart[key] ?? 0) + 1 }; validateCartAvailability(cartInputs(next), products); setCart(next); setBuilding(null); }} />}
     </div>
   );
 }
@@ -690,6 +706,7 @@ function ProductCard({
   onSel,
   onTyped,
   onChange,
+  onBuild,
 }: {
   p: CatalogProduct;
   cart: Cart;
@@ -698,6 +715,7 @@ function ProductCard({
   onSel: (id: string, v: string) => void;
   onTyped: (id: string, v: string) => void;
   onChange: (key: string, d: number) => void;
+  onBuild: () => void;
 }) {
   const hasOpts = Boolean(p.options?.length);
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -783,7 +801,7 @@ function ProductCard({
         )}
         <div className="mt-auto flex items-center justify-between gap-2 pt-3">
           <span className="text-lg font-bold text-primary">{brl(p.price)}</span>
-          {qty > 0 ? (
+          {p.comboGroups?.length ? <Button disabled={!available(p)} onClick={onBuild}><Plus />Montar combo</Button> : qty > 0 ? (
             <Qty qty={qty} onMinus={() => onChange(key, -1)} onPlus={() => onChange(key, 1)} />
           ) : (
             <Button

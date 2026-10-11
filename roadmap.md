@@ -40,3 +40,9 @@
 - [x] Validar produtos e quantidades totais por sabor e produto, inclusive itens de carrinhos salvos.
 - [x] Mostrar erros de endereço e pagamento antes de enviar e atualizar o WhatsApp de finalização.
 - [x] Verificar testes e fluxo do carrinho no catálogo: campos obrigatórios e produto ausente bloquearam envio; pedido real exibiu recibo e novo destino WhatsApp; pedido temporário removido; 23 testes passaram e build OK.
+
+# Combos
+- [x] Criar aba de cadastro com preço fixo, grupos, quantidades e produtos permitidos.
+- [x] Permitir montagem no catálogo e preservar escolhas no carrinho e no pedido.
+- [x] Validar grupos, sabores e estoque no servidor e reservar os itens escolhidos atomicamente.
+- [x] Verificar cadastro, compra e regressões: cadastro administrativo, montagem por grupos, carrinho após recarregar, pedido real com preço fixo e WhatsApp correto, estoque de produto/sabor de 5 para 3; 38 testes passaram e build OK.

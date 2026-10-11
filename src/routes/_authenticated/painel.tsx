@@ -75,7 +75,7 @@ function Admin() {
       <main className="mx-auto max-w-7xl px-5 py-10">
         <p className="mb-2 text-xs uppercase text-primary">Área da loja</p>
         <h1 className="font-display text-3xl font-semibold">
-          {view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
+          {view === "combos" ? "Combos" : view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">S7VEN Lounge e Tabacaria.</p>
         {permission.isPending ? (
@@ -107,6 +107,7 @@ function Admin() {
                 Pedidos
               </Button>
               <Button variant={view === "products" ? "default" : "ghost"} onClick={() => setView("products")}>Produtos e estoque</Button>
+              <Button variant={view === "combos" ? "default" : "ghost"} onClick={() => setView("combos")}>Combos</Button>
               <Button
                 variant={view === "settings" ? "default" : "ghost"}
                 onClick={() => setView("settings")}
@@ -114,7 +115,7 @@ function Admin() {
                 Taxas e horários
               </Button>
             </nav>
-            {view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager /> : <SettingsEditor initial={settings} />}
+            {view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : <SettingsEditor initial={settings} />}
           </>
         )}
       </main>
