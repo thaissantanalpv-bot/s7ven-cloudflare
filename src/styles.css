@@ -106,3 +106,12 @@
     transition-duration: 0.01ms !important;
   }
 }
+.admin-bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.admin-save-bar {
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  .admin-save-bar { bottom: 0; }
+}

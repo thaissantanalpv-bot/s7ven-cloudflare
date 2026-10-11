@@ -30,8 +30,8 @@ export function CatalogAnalytics() {
       </div>
     </div>
     {stats.error && <p role="alert" className="py-4 text-sm text-destructive">Não foi possível atualizar os indicadores. <Button variant="link" onClick={() => stats.refetch()}>Tentar novamente</Button></p>}
-    <div className="grid gap-4 py-6 sm:grid-cols-2 xl:grid-cols-4">
-      {cards.map(({ label, value, Icon }) => <article key={label} className="rounded-lg border bg-card p-5">
+    <div className="grid grid-cols-2 gap-3 py-6 sm:gap-4 xl:grid-cols-4">
+      {cards.map(({ label, value, Icon }) => <article key={label} className="rounded-lg border bg-card p-4 sm:p-5">
         <Icon className="mb-5 size-5 text-primary" /><p className="min-h-10 text-sm text-muted-foreground">{label}</p>
         <p className="mt-2 font-display text-4xl font-semibold">{value === undefined ? "—" : value.toLocaleString("pt-BR")}</p>
       </article>)}

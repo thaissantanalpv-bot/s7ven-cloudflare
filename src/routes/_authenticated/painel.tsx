@@ -12,9 +12,19 @@ import {
   ShieldCheck,
   Trash2,
   Truck,
+  Home,
+  ShoppingBag,
+  Package,
+  Receipt,
+  Menu,
+  Layers,
+  History,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { AdminAppAccess } from "@/components/admin-app-access";
 import { supabase } from "@/integrations/supabase/client";
 import { storeSettingsQuery } from "@/lib/store-settings.query";
 import { checkStoreAdmin, saveStoreSettings } from "@/lib/store-settings.functions";
@@ -48,18 +58,20 @@ export const Route = createFileRoute("/_authenticated/painel")({
   component: Admin,
 });
 function Admin() {
-  const [view, setView] = useState("orders");
+  const [view, setView] = useState("analytics");
+  const [menuOpen, setMenuOpen] = useState(false);
   const check = useServerFn(checkStoreAdmin);
   const permission = useQuery({ queryKey: ["store-admin"], queryFn: () => check(), retry: false });
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
   return (
     <div className="min-h-screen">
-      <header className="border-b">
+      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
           <Link to="/" className="font-display text-2xl font-bold">
             S<span className="text-primary">7</span>VEN.
           </Link>
           <div className="flex gap-2">
+            <AdminAppAccess />
             <Button asChild variant="ghost">
               <Link to="/">
                 <ArrowLeft />
@@ -73,7 +85,7 @@ function Admin() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-5 py-10">
+      <main className="mx-auto max-w-7xl px-4 py-7 pb-28 sm:px-5 sm:py-10 sm:pb-28 md:pb-10">
         <p className="mb-2 text-xs uppercase text-primary">Área da loja</p>
         <h1 className="font-display text-3xl font-semibold">
           {view === "analytics" ? "Movimento do catálogo" : view === "combos" ? "Combos" : view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
@@ -98,7 +110,7 @@ function Admin() {
           </div>
         ) : (
           <>
-            <nav className="mt-7 flex flex-wrap gap-2 border-b pb-3" aria-label="Painel da loja">
+            <nav className="mt-7 hidden flex-wrap gap-2 border-b pb-3 md:flex" aria-label="Painel da loja">
               <Button variant={view === "analytics" ? "default" : "ghost"} onClick={() => setView("analytics")}>Movimento do catálogo</Button>
               <Button variant={view === "pos" ? "default" : "ghost"} onClick={() => setView("pos")}>Caixa / Balcão</Button>
               <Button variant={view === "history" ? "default" : "ghost"} onClick={() => setView("history")}>Histórico de vendas</Button>
@@ -118,6 +130,24 @@ function Admin() {
               </Button>
             </nav>
             {view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : <SettingsEditor initial={settings} />}
+            <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background md:hidden" aria-label="Navegação do aplicativo">
+              {[
+                { id: "analytics", label: "Início", Icon: Home },
+                { id: "orders", label: "Pedidos", Icon: ShoppingBag },
+                { id: "pos", label: "Caixa", Icon: Receipt },
+                { id: "products", label: "Produtos", Icon: Package },
+              ].map(({ id, label, Icon }) => <Button key={id} variant="ghost" aria-current={view === id ? "page" : undefined} className={`h-16 min-w-0 flex-col gap-1 rounded-none px-1 text-[11px] ${view === id ? "text-primary" : "text-muted-foreground"}`} onClick={() => setView(id)}><Icon className="size-5" />{label}</Button>)}
+              <Button variant="ghost" className={`h-16 flex-col gap-1 rounded-none px-1 text-[11px] ${["combos", "history", "settings"].includes(view) ? "text-primary" : "text-muted-foreground"}`} onClick={() => setMenuOpen(true)}><Menu className="size-5" />Menu</Button>
+            </nav>
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetContent side="bottom" className="mx-auto max-w-lg pb-8">
+                <SheetTitle>Minha loja</SheetTitle>
+                <SheetDescription className="mt-2">S7VEN Lounge e Tabacaria</SheetDescription>
+                <div className="mt-6 grid gap-2">
+                  {[{ id: "combos", label: "Combos", Icon: Layers }, { id: "history", label: "Histórico de vendas", Icon: History }, { id: "settings", label: "Taxas e horários", Icon: Clock }].map(({ id, label, Icon }) => <Button key={id} variant="ghost" className="h-14 justify-start border-b" onClick={() => { setView(id); setMenuOpen(false); }}><Icon className="text-primary" />{label}<ChevronRight className="ml-auto" /></Button>)}
+                </div>
+              </SheetContent>
+            </Sheet>
           </>
         )}
       </main>
@@ -383,7 +413,7 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
           </div>
         </section>
       )}
-      <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-4 border-t bg-background/95 py-5 backdrop-blur">
+      <div className="admin-save-bar sticky flex flex-wrap items-center justify-between gap-4 border-t bg-background/95 py-5 backdrop-blur">
         <p
           role="status"
           className={`text-sm ${success ? "text-primary" : message ? "text-destructive" : "text-muted-foreground"}`}
