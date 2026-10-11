@@ -48,15 +48,16 @@ describe("Orders", () => {
       { name: "Melancia", active: true, stock: 2 },
       { name: "Morango", active: true, stock: 2 },
     ] };
-    const lines = [{ productId: "p4", option: "Melancia", qty: 2 }, { productId: "p4", option: "Morango", qty: 2 }];
+    const first = { productId: "p4", option: "Melancia", qty: 2 };
+    const lines = [first, { productId: "p4", option: "Morango", qty: 2 }];
     expect(() => validateCartAvailability(lines, [product])).toThrow("quantidade indisponível");
     expect(() => priceOrder({ ...input(), items: lines }, EMPTY_SETTINGS, [product])).toThrow("quantidade indisponível");
-    expect(() => validateCartAvailability([lines[0], { ...lines[0], qty: 1 }], [product])).toThrow();
-    expect(() => validateCartAvailability([lines[0]], [{ ...product, active: false }])).toThrow();
-    expect(() => validateCartAvailability([{ ...lines[0], option: "" }], [product])).toThrow("Escolha");
-    expect(() => validateCartAvailability([{ ...lines[0], option: "Inexistente" }], [product])).toThrow();
-    expect(() => validateCartAvailability([lines[0]], [{ ...product, variations: product.variations.map(v => ({ ...v, active: false })) }])).toThrow();
-    expect(() => validateCartAvailability([lines[0]], [product])).not.toThrow();
+    expect(() => validateCartAvailability([first, { ...first, qty: 1 }], [product])).toThrow();
+    expect(() => validateCartAvailability([first], [{ ...product, active: false }])).toThrow();
+    expect(() => validateCartAvailability([{ ...first, option: "" }], [product])).toThrow("Escolha");
+    expect(() => validateCartAvailability([{ ...first, option: "Inexistente" }], [product])).toThrow();
+    expect(() => validateCartAvailability([first], [{ ...product, variations: product.variations.map(v => ({ ...v, active: false })) }])).toThrow();
+    expect(() => validateCartAvailability([first], [product])).not.toThrow();
   });
   it("requires phone with DDD and normalizes it", () => {
     expect(input().customer.phone).toBe("5518999999999");
