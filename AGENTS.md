@@ -17,5 +17,6 @@
 - Keep order management in an admin-only panel module with authenticated status writes, conflict detection, paginated polling and user-activated audio; WhatsApp stage actions open prefilled messages rather than claiming automatic delivery.
 - Keep the imported catalog as the immutable baseline and merge validated `catalog_products` overrides on public reads and checkout; this preserves existing product IDs and saved cart keys without reseeding.
 - Store product photos in private native storage with public read-only signed URLs and admin-only uploads; this respects workspace public-bucket restrictions.
+- Keep the cover in image and additional photo paths in images within catalog overrides; resolve signed URLs separately from editable paths so galleries preserve legacy covers and admin saves never persist expiring URLs.
 - Reserve tracked product and variation stock atomically on order insertion using row locks, and reject stale prices; this prevents overselling across concurrent customers.
 - Persist counter sales in orders with a source and cashier, using admin-verified server-calculated checkout and the existing reservation trigger; this unifies history without duplicate stock deductions. Keep counter sales out of delivery stages and new-order alerts.

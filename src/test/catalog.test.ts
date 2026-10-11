@@ -1,9 +1,20 @@
 import { describe, it, expect } from "vitest";
-import { mergeCatalog, toDraft, catalogProductSchema, available } from "@/lib/catalog";
+import { mergeCatalog, toDraft, catalogProductSchema, available, productPhotos } from "@/lib/catalog";
 import { priceOrder, submitOrderSchema } from "@/lib/orders";
 import { EMPTY_SETTINGS } from "@/lib/store-settings";
 
 describe("Shared catalog", () => {
+  it("preserves gallery paths separately from signed photos", () => {
+    const original = mergeCatalog([])[0];
+    if (!original) throw new Error("Missing baseline");
+    const draft = { ...toDraft(original), images: ["uploads/photo1.jpg"] };
+    const merged = mergeCatalog([{ id: draft.id, data: draft, updated_at: "2026-10-11" }])[0];
+    if (!merged) throw new Error("Missing gallery");
+    expect(productPhotos(merged)).toEqual([original.image, "uploads/photo1.jpg"]);
+    expect(toDraft({ ...merged, images: ["https://signed.example/photo"], imagePaths: draft.images }).images).toEqual(draft.images);
+    expect(catalogProductSchema.safeParse({ ...draft, images: ["https://external.example/photo.jpg"] }).success).toBe(false);
+    expect(catalogProductSchema.safeParse({ ...draft, images: Array(10).fill("uploads/photo1.jpg") }).success).toBe(false);
+  });
   it("preserves all imported product IDs, photos and option names", () => {
     const products = mergeCatalog([]);
     expect(products).toHaveLength(176);

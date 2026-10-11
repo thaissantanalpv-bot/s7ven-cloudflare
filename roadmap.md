@@ -26,3 +26,8 @@
 - [x] Criar vendas presenciais protegidas com pagamento, troco e baixa atômica de estoque.
 - [x] Adicionar seleção rápida de produtos e variações, recibo e histórico unificado ao painel.
 - [x] Testar cálculo, validação, regressões e acesso ao caixa: 34 testes; venda administrativa registrada, lida no histórico e estoques do produto/variação reduzidos. Dados de teste removidos.
+
+# Fotos dos produtos
+- [x] Ampliar fotos no catálogo com galeria navegável.
+- [x] Permitir adicionar várias fotos, escolher capa e remover fotos no painel.
+- [x] Verificar galeria, salvamento e regressões: envio de duas fotos com conta administrativa, capa alterada, fotos lidas no painel e catálogo; testes passaram e produto temporário removido.

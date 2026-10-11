@@ -30,6 +30,7 @@ import { customerSchema } from "@/lib/orders";
 import { submitOrder } from "@/lib/orders.functions";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
+import { ProductGallery } from "@/components/products/product-gallery";
 import {
   PAYMENT_METHODS,
   WHATSAPP_NUMBER,
@@ -684,6 +685,7 @@ function ProductCard({
   onChange: (key: string, d: number) => void;
 }) {
   const hasOpts = Boolean(p.options?.length);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const chosen = sel[p.id] ?? "";
   const isOther = chosen === OTHER;
   const text = (typed[p.id] ?? "").trim();
@@ -694,7 +696,7 @@ function ProductCard({
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-colors hover:border-primary/50">
-      <div className="grid aspect-[4/3] w-full shrink-0 place-items-center overflow-hidden bg-photo text-5xl">
+      <Button variant="ghost" aria-label={`Ver fotos de ${p.name}`} onClick={() => setGalleryOpen(true)} className="grid aspect-[4/3] h-auto w-full shrink-0 place-items-center overflow-hidden rounded-none bg-photo p-0 text-5xl">
         {p.image ? (
           <img
             src={p.image}
@@ -705,10 +707,10 @@ function ProductCard({
         ) : (
           p.emoji
         )}
-      </div>
+      </Button>
       <div className="flex min-w-0 flex-1 flex-col p-4">
         <span className="text-[11px] uppercase text-muted-foreground">{p.category}</span>
-        <h2 className="mt-1 font-display text-base font-semibold leading-snug">{p.name}</h2>
+        <h2 className="mt-1 font-display text-base font-semibold leading-snug"><Button variant="link" onClick={() => setGalleryOpen(true)} className="h-auto w-full justify-start whitespace-normal p-0 text-left text-base text-foreground">{p.name}</Button></h2>
         {!available(p) && <p className="mt-2 text-xs text-destructive">{p.active ? "Esgotado" : "Indisponível"}</p>}
         {hasOpts ? (
           <div className="mt-2">
@@ -784,6 +786,7 @@ function ProductCard({
           </p>
         )}
       </div>
+      <ProductGallery product={p} open={galleryOpen} onOpenChange={setGalleryOpen} />
     </article>
   );
 }
