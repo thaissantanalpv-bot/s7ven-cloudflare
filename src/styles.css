@@ -106,3 +106,6 @@
     transition-duration: 0.01ms !important;
   }
 }
+.admin-bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
