@@ -10,6 +10,7 @@ export const funnelStatsSchema = z.object({
   updatedAt: z.string(), trackingSince: z.string().nullable(),
 });
 export type AnalyticsIdentity = z.infer<typeof analyticsIdentitySchema>;
+let fallbackIdentity: AnalyticsIdentity | undefined;
 
 export function readAnalyticsIdentity(): AnalyticsIdentity | undefined {
   try {
@@ -26,5 +27,9 @@ export function readAnalyticsIdentity(): AnalyticsIdentity | undefined {
     }
     sessionStorage.setItem("s7ven-session-seen", String(Date.now()));
     return analyticsIdentitySchema.parse({ sessionId, visitorId });
-  } catch { return undefined; }
+  } catch {
+    // Storage restrictions must not lose successful checkout conversion.
+    fallbackIdentity ??= { sessionId: crypto.randomUUID(), visitorId: crypto.randomUUID() };
+    return fallbackIdentity;
+  }
 }

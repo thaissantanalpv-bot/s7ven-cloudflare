@@ -29,7 +29,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { PhoneField } from "@/components/orders/phone-field";
 import { useCatalogAnalytics } from "@/lib/use-catalog-analytics";
 import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
-import { trackCatalogVisit } from "@/lib/catalog-analytics.functions";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder } from "@/lib/orders.functions";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
@@ -77,10 +76,9 @@ function Catalog() {
   const categories = ["Todos", ...new Set(products.map(p => p.category))];
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
   const registerOrder = useServerFn(submitOrder);
-  const trackVisit = useServerFn(trackCatalogVisit);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
-  const [receipt, setReceipt] = useState<{ number: number; url: string } | null>(null);
+  const [receipt, setReceipt] = useState<{ number: number; url: string; subtotal: number; deliveryFee: number; total: number } | null>(null);
   const [attempt, setAttempt] = useState<{ signature: string; id: string } | null>(null);
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
@@ -132,7 +130,10 @@ function Catalog() {
   }, []);
 
   useEffect(() => {
-    if (loaded) localStorage.setItem(KEY, JSON.stringify({ cart, form }));
+    if (!loaded) return;
+    try { localStorage.setItem(KEY, JSON.stringify({ cart, form })); } catch {
+      // Ordering remains available when the browser refuses persistent storage.
+    }
   }, [cart, form, loaded]);
 
   const filtered = useMemo(() => {
@@ -167,7 +168,10 @@ function Catalog() {
   const deliveryFee = isDelivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
   const total = subtotal + deliveryFee;
 
-  const pixPayload = useMemo(() => buildPixPayload(total), [total]);
+  const displayedSubtotal = !items.length && receipt ? receipt.subtotal : subtotal;
+  const displayedDeliveryFee = !items.length && receipt ? receipt.deliveryFee : deliveryFee;
+  const displayedTotal = !items.length && receipt ? receipt.total : total;
+  const pixPayload = useMemo(() => buildPixPayload(displayedTotal), [displayedTotal]);
   const copy = async (text: string, label: string) => {
     if (await copyToClipboard(text)) {
       setCopied(label);
@@ -247,10 +251,9 @@ function Catalog() {
     const popup = window.open("about:blank", "_blank");
     if (popup) popup.opener = null;
     try {
-      if (analytics) await trackVisit({ data: { ...analytics, hasCart: true } }).catch(() => {});
       const saved = await registerOrder({ data: validated.data });
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent([`*Pedido #${saved.number}*`, ...lines, `*WhatsApp do cliente:* ${d.phone}`].join("\n"))}`;
-      setReceipt({ number: saved.number, url });
+      setReceipt({ number: saved.number, url, subtotal, deliveryFee, total });
       setCart({});
       setAttempt(null);
       if (popup) popup.location.href = url;
@@ -610,10 +613,10 @@ function Catalog() {
               </Field>
               {fieldErrors.payment?.[0] && <p id="payment-error" className="text-xs text-destructive">{fieldErrors.payment[0]}</p>}
               {form.payment === "Pix" &&
-                (total > 0 ? (
+                (displayedTotal > 0 ? (
                   <div className="space-y-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold">Pague com Pix — {brl(total)}</p>
+                      <p className="text-sm font-semibold">Pague com Pix — {brl(displayedTotal)}</p>
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
                         valor no QR
                       </span>
@@ -675,21 +678,21 @@ function Catalog() {
           <div className="space-y-3 border-t px-5 py-4">
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Produtos</span>
-              <span>{brl(subtotal)}</span>
+              <span>{brl(displayedSubtotal)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>{isDelivery ? "Entrega" : "Retirada na loja"}</span>
               <span>
                 {!isDelivery ? "Sem taxa" : settings.delivery_enabled
                   ? settings.fixed_delivery_fee !== null || zone
-                    ? brl(deliveryFee)
+                    ? brl(displayedDeliveryFee)
                     : "Selecione a região"
                   : "A confirmar"}
               </span>
             </div>
             <div className="flex justify-between text-lg">
               <span>Total</span>
-              <span className="font-display font-semibold">{brl(total)}</span>
+              <span className="font-display font-semibold">{brl(displayedTotal)}</span>
             </div>
             {status.configured && !status.open && (
               <p className="text-xs text-destructive">
