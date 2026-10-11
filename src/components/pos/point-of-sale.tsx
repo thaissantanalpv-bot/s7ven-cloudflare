@@ -13,7 +13,7 @@ import { ComboBuilder } from "@/components/products/combo-builder";
 import { comboSummary, type ComboSelection } from "@/lib/combos";
 import { validateCartAvailability } from "@/lib/orders";
 
-type Line = { productId: string; option: string; qty: number; expectedPrice: number; components?: ComboSelection[] };
+type Line = { productId: string; option: string; qty: number; expectedPrice: number; components?: ComboSelection[] | undefined };
 export function PointOfSale() {
   const { data: products } = useSuspenseQuery(adminCatalogQuery);
   useCatalogUpdates();

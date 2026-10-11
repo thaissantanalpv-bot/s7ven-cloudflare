@@ -60,7 +60,7 @@ export const Route = createFileRoute("/")({
 });
 
 type Cart = Record<string, number>;
-type Line = { product: CatalogProduct; key: string; qty: number; option: string; components?: ComboSelection[] };
+type Line = { product: CatalogProduct; key: string; qty: number; option: string; components: ComboSelection[] | undefined };
 
 const KEY = "catalogo-carrinho";
 const SEP = "::";

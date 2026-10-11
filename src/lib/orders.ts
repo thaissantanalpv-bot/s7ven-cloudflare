@@ -92,7 +92,7 @@ export type Order = {
   updated_at: string;
 };
 export function validateCartAvailability(
-  lines: { productId: string; option: string; qty: number; components?: ComboSelection[] }[],
+  lines: { productId: string; option: string; qty: number; components?: ComboSelection[] | undefined }[],
   products: (Product | CatalogProduct)[],
 ) {
   if (!lines.length) throw new Error("Seu carrinho está vazio.");
