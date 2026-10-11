@@ -37,7 +37,7 @@ export function ProductManager() {
   return <section className="py-7">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div className="flex gap-6 text-sm"><span><strong>{products.length}</strong> produtos</span><span className="text-muted-foreground">{products.filter(p => !available(p)).length} indisponíveis</span></div>
-      <Button onClick={() => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, category: "", emoji: "🛍️", image: "", active: true, stock: null, optionLabel: "Sabor", allowOther: false, variations: [] }, expected: null, preview: "" }); }}><Plus /> Novo produto</Button>
+      <Button onClick={() => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, category: "", emoji: "🛍️", image: "", images: [], active: true, stock: null, optionLabel: "Sabor", allowOther: false, variations: [] }, expected: null, preview: "" }); }}><Plus /> Novo produto</Button>
     </div>
     <div className="mb-5 flex flex-wrap gap-3">
       <div className="relative min-w-48 flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><input className="field pl-10" aria-label="Buscar produtos no painel" placeholder="Buscar produtos" value={query} onChange={e => setQuery(e.target.value)} /></div>
@@ -57,36 +57,42 @@ export function ProductManager() {
     <Dialog open={Boolean(editing)} onOpenChange={open => { if (!open && !busy) setEditing(null); }}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
         <DialogTitle>{editing?.draft.name || "Novo produto"}</DialogTitle><DialogDescription>S7VEN · Produtos e estoque</DialogDescription>
-        {editing && <ProductEditor initial={editing.draft} preview={editing.preview} categories={categories} busy={busy} message={message} onSave={p => persist(p, editing.expected)} />}
+        {editing && <ProductEditor initial={editing.draft} preview={editing.preview} galleryPreview={products.find(p => p.id === editing.draft.id)?.images ?? []} categories={categories} busy={busy} message={message} onSave={p => persist(p, editing.expected)} />}
       </DialogContent>
     </Dialog>
   </section>;
 }
 
-function ProductEditor({ initial, preview, categories, busy, message, onSave }: { initial: ProductDraft; preview: string; categories: string[]; busy: boolean; message: string; onSave: (p: ProductDraft) => void }) {
+function ProductEditor({ initial, preview, galleryPreview, categories, busy, message, onSave }: { initial: ProductDraft; preview: string; galleryPreview: string[]; categories: string[]; busy: boolean; message: string; onSave: (p: ProductDraft) => void }) {
   const [draft, setDraft] = useState(initial);
   const [photo, setPhoto] = useState(preview);
+  const [extraPreviews, setExtraPreviews] = useState(galleryPreview);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const categoryId = useId();
-  const upload = async (file?: File) => {
-    if (!file) return;
-    const ext = ({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" } as Record<string, string>)[file.type];
-    if (!ext || file.size > 5 * 1024 * 1024) { setError("Escolha uma foto JPG, PNG ou WebP de até 5 MB."); return; }
+  const upload = async (files: File[]) => {
+    if (!files.length) return;
+    if (files.length + draft.images.length + (draft.image ? 1 : 0) > 10) { setError("Use até 10 fotos por produto."); return; }
+    const extensions: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+    if (files.some(file => !extensions[file.type] || file.size > 5 * 1024 * 1024)) { setError("Escolha fotos JPG, PNG ou WebP de até 5 MB cada."); return; }
     setUploading(true); setError("");
     try {
-      const path = `uploads/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("product-photos").upload(path, file, { contentType: file.type, upsert: false });
-      if (error) throw new Error("Não foi possível enviar a foto. Tente novamente.");
-      const { data, error: signedError } = await supabase.storage.from("product-photos").createSignedUrl(path, 3600);
-      if (signedError) throw new Error("Não foi possível conferir a foto.");
-      setDraft(d => ({ ...d, image: path })); setPhoto(data.signedUrl);
+      let hasCover = Boolean(draft.image);
+      for (const file of files) {
+        const path = `uploads/${crypto.randomUUID()}.${extensions[file.type]}`;
+        const { error } = await supabase.storage.from("product-photos").upload(path, file, { contentType: file.type, upsert: false });
+        if (error) throw new Error("Não foi possível enviar uma foto. As fotos já enviadas foram mantidas.");
+        const { data, error: signedError } = await supabase.storage.from("product-photos").createSignedUrl(path, 3600);
+        if (signedError || !data) throw new Error("Não foi possível conferir a foto.");
+        if (!hasCover) { setDraft(d => ({ ...d, image: path })); setPhoto(data.signedUrl); hasCover = true; }
+        else { setDraft(d => ({ ...d, images: [...d.images, path] })); setExtraPreviews(prev => [...prev, data.signedUrl]); }
+      }
     } catch (e) { setError(e instanceof Error ? e.message : "Erro ao enviar foto."); }
     finally { setUploading(false); }
   };
   return <form className="space-y-5" onSubmit={e => { e.preventDefault(); const parsed = catalogProductSchema.safeParse(draft); if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Confira os campos."); return; } setError(""); onSave(parsed.data); }}>
     <fieldset disabled={busy || uploading} className="space-y-5">
-      <div className="flex items-center gap-4"><div className="grid size-24 shrink-0 place-items-center overflow-hidden rounded border bg-photo">{photo ? <img src={photo} alt="Foto do produto" className="size-full object-contain" /> : <Package className="text-photo-foreground" />}</div><div><label className="inline-flex cursor-pointer items-center gap-2 text-sm text-primary"><Upload className="size-4" />{uploading ? "Enviando…" : "Enviar foto"}<input aria-label="Enviar foto do produto" type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={e => upload(e.target.files?.[0])} /></label><p className="mt-2 text-xs text-muted-foreground">JPG, PNG ou WebP · até 5 MB</p>{photo && <Button type="button" size="sm" variant="ghost" onClick={() => { setPhoto(""); setDraft(d => ({ ...d, image: "" })); }}>Remover foto</Button>}</div></div>
+      <div><div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Fotos do produto</h3><label className="inline-flex cursor-pointer items-center gap-2 text-sm text-primary"><Upload className="size-4" />{uploading ? "Enviando…" : "Adicionar fotos"}<input aria-label="Enviar foto do produto" type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={e => { const files = Array.from(e.target.files ?? []); e.target.value = ""; void upload(files); }} /></label></div><p className="mt-2 text-xs text-muted-foreground">Até 10 fotos · JPG, PNG ou WebP · 5 MB por foto</p><div className="mt-3 flex flex-wrap gap-3">{[...(draft.image ? [{ path: draft.image, preview: photo }] : []), ...draft.images.map((path, i) => ({ path, preview: extraPreviews[i] ?? "" }))].map((item, index) => <div key={item.path} className="w-24"><div className="grid size-24 place-items-center overflow-hidden rounded border bg-photo">{item.preview ? <img src={item.preview} alt={`Foto ${index + 1} do produto`} className="size-full object-contain" /> : <Package className="text-photo-foreground" />}</div><div className="mt-1 flex items-center justify-between"><Button type="button" variant={index === 0 ? "secondary" : "ghost"} size="sm" className="h-7 px-1 text-xs" disabled={index === 0} onClick={() => { const extra = index - 1; const next = draft.images[extra]; if (!next) return; setDraft(d => ({ ...d, image: next, images: d.images.map((path, i) => i === extra ? d.image : path) })); setPhoto(item.preview); setExtraPreviews(prev => prev.map((url, i) => i === extra ? photo : url)); }}>{index === 0 ? "Capa" : "Usar capa"}</Button><Button type="button" variant="ghost" size="icon" className="size-7" title="Remover foto" aria-label={`Remover foto ${index + 1}`} onClick={() => { if (index === 0) { setDraft(d => ({ ...d, image: d.images[0] ?? "", images: d.images.slice(1) })); setPhoto(extraPreviews[0] ?? ""); setExtraPreviews(prev => prev.slice(1)); } else { setDraft(d => ({ ...d, images: d.images.filter((_, i) => i !== index - 1) })); setExtraPreviews(prev => prev.filter((_, i) => i !== index - 1)); } }}><Trash2 /></Button></div></div>)}</div></div>
       <label className="block text-sm">Nome<input className="field mt-1" required maxLength={150} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} /></label>
       <div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm">Preço (R$)<input className="field mt-1" type="number" step="0.01" min="0" max="1000000" required value={draft.price} onChange={e => setDraft({ ...draft, price: Number(e.target.value) })} /></label><label className="block text-sm">Categoria<input className="field mt-1" list={categoryId} required maxLength={100} value={draft.category} onChange={e => setDraft({ ...draft, category: e.target.value })} /><datalist id={categoryId}>{categories.map(c => <option key={c} value={c} />)}</datalist></label></div>
       <label className="block text-sm">Descrição<textarea className="field mt-1 min-h-20" maxLength={2000} value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} /></label>
