@@ -59,3 +59,8 @@
 - [x] Preparar ícones e acesso à tela inicial, abrindo diretamente o painel protegido.
 - [x] Facilitar navegação pelo celular com início, pedidos, caixa, produtos e menu, preservando a operação atual.
 - [x] Verificar acesso autenticado, navegação e metadados do aplicativo, sem adicionar funcionamento offline: painel autorizado, redirecionamento sem sessão, ícones, todas as abas e instruções no celular; 10 testes passaram, sem erros de execução ou rolagem horizontal. Instalação física depende da atualização publicada e confirmação no aparelho.
+
+# Assistente da loja
+- [ ] Criar conversa privada única por conta e leitura agregada dos indicadores, sem dados pessoais de clientes.
+- [ ] Adicionar perguntas em texto, respostas em tempo real e sugestões fundamentadas nos dados pelo AI Gateway.
+- [ ] Verificar pergunta real, continuação, histórico após recarregar e acesso protegido.

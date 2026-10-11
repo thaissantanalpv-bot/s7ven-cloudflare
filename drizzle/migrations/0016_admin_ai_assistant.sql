@@ -1,0 +1,21 @@
+CREATE TABLE public.admin_ai_conversations (user_id uuid PRIMARY KEY, id uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE, messages jsonb NOT NULL DEFAULT '[]'::jsonb, active_request uuid, busy_until timestamptz, blocked_reason text, updated_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.admin_ai_conversations TO authenticated;
+GRANT ALL ON public.admin_ai_conversations TO service_role;
+ALTER TABLE public.admin_ai_conversations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY admin_own_conversation ON public.admin_ai_conversations FOR SELECT TO authenticated USING (user_id = auth.uid() AND public.has_role(auth.uid(), 'admin'));
+CREATE FUNCTION public.ensure_admin_ai_conversation() RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$ DECLARE result jsonb; BEGIN
+IF auth.uid() IS NULL OR NOT public.has_role(auth.uid(), 'admin') THEN RAISE EXCEPTION 'Forbidden'; END IF;
+INSERT INTO public.admin_ai_conversations(user_id) VALUES(auth.uid()) ON CONFLICT(user_id) DO NOTHING;
+SELECT jsonb_build_object('id',id,'messages',messages,'blockedReason',blocked_reason) INTO result FROM public.admin_ai_conversations WHERE user_id = auth.uid(); RETURN result; END; $$;
+REVOKE ALL ON FUNCTION public.ensure_admin_ai_conversation() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.ensure_admin_ai_conversation() TO authenticated;
+CREATE FUNCTION public.admin_ai_dashboard_snapshot() RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$ DECLARE result jsonb; BEGIN
+IF auth.uid() IS NULL OR NOT public.has_role(auth.uid(), 'admin') THEN RAISE EXCEPTION 'Forbidden'; END IF;
+WITH dates AS (SELECT generate_series((now() AT TIME ZONE 'America/Sao_Paulo')::date - 29,(now() AT TIME ZONE 'America/Sao_Paulo')::date,interval '1 day')::date AS date_key),
+people AS (SELECT (started_at AT TIME ZONE 'America/Sao_Paulo')::date AS date_key, visitor_id, bool_or(cart_started_at IS NOT NULL) AS cart, bool_or(checkout_at IS NOT NULL) AS completed, max(last_seen_at) FILTER (WHERE cart_started_at IS NOT NULL) AS cart_seen FROM public.catalog_sessions WHERE started_at >= (((now() AT TIME ZONE 'America/Sao_Paulo')::date - 29)::timestamp AT TIME ZONE 'America/Sao_Paulo') GROUP BY 1,2),
+funnel AS (SELECT date_key,count(*) AS visitors,count(*) FILTER(WHERE cart) AS carts,count(*) FILTER(WHERE completed) AS converted,count(*) FILTER(WHERE cart AND NOT completed AND cart_seen < now() - interval '30 minutes') AS abandoned FROM people GROUP BY date_key),
+sales AS (SELECT (created_at AT TIME ZONE 'America/Sao_Paulo')::date AS date_key,count(*) FILTER(WHERE source='catalog') AS catalog_orders,count(*) FILTER(WHERE source='counter') AS counter_sales,coalesce(sum(total) FILTER(WHERE source='catalog'),0) AS catalog_order_value,count(*) FILTER(WHERE source='catalog' AND status='delivered') AS delivered,count(*) FILTER(WHERE source='catalog' AND fulfillment='pickup') AS pickup FROM public.orders WHERE created_at >= (((now() AT TIME ZONE 'America/Sao_Paulo')::date - 29)::timestamp AT TIME ZONE 'America/Sao_Paulo') GROUP BY 1)
+SELECT jsonb_build_object('capturedAt',now(),'timezone','America/Sao_Paulo','trackingSince',(SELECT min(started_at) FROM public.catalog_sessions),'periods',jsonb_build_object('today',public.catalog_funnel_stats('today'),'7d',public.catalog_funnel_stats('7d'),'30d',public.catalog_funnel_stats('30d'),'all',public.catalog_funnel_stats('all')),'daily',jsonb_agg(jsonb_build_object('date',d.date_key,'visitors',coalesce(f.visitors,0),'carts',coalesce(f.carts,0),'convertedVisitors',coalesce(f.converted,0),'abandoned',coalesce(f.abandoned,0),'catalogOrders',coalesce(s.catalog_orders,0),'counterSales',coalesce(s.counter_sales,0),'catalogOrderValue',coalesce(s.catalog_order_value,0),'delivered',coalesce(s.delivered,0),'pickup',coalesce(s.pickup,0)) ORDER BY d.date_key)) INTO result FROM dates d LEFT JOIN funnel f USING(date_key) LEFT JOIN sales s USING(date_key); RETURN result; END; $$;
+REVOKE ALL ON FUNCTION public.admin_ai_dashboard_snapshot() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_ai_dashboard_snapshot() TO authenticated;
+COMMENT ON FUNCTION public.admin_ai_dashboard_snapshot() IS 'Admin-only aggregate context for AI; excludes customer names, phones, addresses and anonymous identifiers.';

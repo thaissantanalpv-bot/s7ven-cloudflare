@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_ai_conversations: {
+        Row: {
+          active_request: string | null
+          blocked_reason: string | null
+          busy_until: string | null
+          id: string
+          messages: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_request?: string | null
+          blocked_reason?: string | null
+          busy_until?: string | null
+          id?: string
+          messages?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_request?: string | null
+          blocked_reason?: string | null
+          busy_until?: string | null
+          id?: string
+          messages?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_invites: {
         Row: {
           email: string
@@ -214,7 +244,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_ai_dashboard_snapshot: { Args: never; Returns: Json }
       catalog_funnel_stats: { Args: { _period?: string }; Returns: Json }
+      ensure_admin_ai_conversation: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
