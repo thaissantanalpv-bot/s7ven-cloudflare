@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Plus, Minus, Trash2, Search, Banknote, CreditCard, QrCode, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
+import { adminCatalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { COUNTER_PAYMENTS, cashChange, type CounterSaleInput } from "@/lib/pos";
@@ -12,7 +12,7 @@ import { submitCounterSale } from "@/lib/pos.functions";
 
 type Line = { productId: string; option: string; qty: number; expectedPrice: number };
 export function PointOfSale() {
-  const { data: products } = useSuspenseQuery(catalogQuery);
+  const { data: products } = useSuspenseQuery(adminCatalogQuery);
   useCatalogUpdates();
   const client = useQueryClient();
   const save = useServerFn(submitCounterSale);
@@ -57,9 +57,9 @@ export function PointOfSale() {
     try {
       const saved = await save({ data: { ...input, requestId: id } });
       setReceipt(saved); setLines([]); setReceived(""); setName(""); setNotes(""); setConfirmed(false); request.current = null;
-      void client.invalidateQueries({ queryKey: catalogQuery.queryKey });
+      void client.invalidateQueries({ queryKey: adminCatalogQuery.queryKey });
       void client.invalidateQueries({ queryKey: ["store-orders"] });
-    } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível concluir a venda."); void client.invalidateQueries({ queryKey: catalogQuery.queryKey }); }
+    } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível concluir a venda."); void client.invalidateQueries({ queryKey: adminCatalogQuery.queryKey }); }
     finally { busyRef.current = false; setBusy(false); }
   };
   return <section className="grid gap-8 py-7 lg:grid-cols-[minmax(0,1fr)_360px]">

@@ -6,14 +6,14 @@ import { mergeCatalog } from "@/lib/catalog";
 const mocks = vi.hoisted(() => ({ save: vi.fn(), upload: vi.fn(), signed: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: () => mocks.save }));
 vi.mock("@/lib/catalog.functions", () => ({ saveCatalogProduct: vi.fn() }));
-vi.mock("@/lib/catalog.query", () => ({ catalogQuery: { queryKey: ["catalog-products"], queryFn: async () => [], staleTime: Infinity }, useCatalogUpdates: vi.fn() }));
+vi.mock("@/lib/catalog.query", () => ({ adminCatalogQuery: { queryKey: ["admin-catalog-products"], queryFn: async () => [], staleTime: Infinity }, useCatalogUpdates: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { storage: { from: () => ({ upload: mocks.upload, createSignedUrl: mocks.signed }) } } }));
 vi.mock("@/components/ui/switch", () => ({ Switch: ({ checked, onCheckedChange, ...props }: { checked: boolean; onCheckedChange: (value: boolean) => void; "aria-label": string }) => <button type="button" role="switch" aria-checked={checked} onClick={() => onCheckedChange(!checked)} {...props} /> }));
 import { ProductManager } from "@/components/products/product-manager";
 
 function setup() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  client.setQueryData(["catalog-products"], mergeCatalog([]));
+  client.setQueryData(["admin-catalog-products"], mergeCatalog([]));
   client.invalidateQueries = vi.fn().mockResolvedValue(undefined);
   render(<QueryClientProvider client={client}><ProductManager /></QueryClientProvider>);
 }
