@@ -15,6 +15,11 @@ describe("administrative assistant history", () => {
   it("drops empty interrupted assistant turns", () => {
     expect(textHistory([{ id: "empty", role: "assistant", parts: [{ type: "reasoning", text: "Thinking" }] }])).toEqual([]);
   });
+  it("supplies stable persisted IDs when an SDK stream has no ID", () => {
+    const saved = textHistory([{ id: "", role: "assistant", parts: [{ type: "text", text: "Resposta" }] }]);
+    expect(saved[0]?.id).toBeTruthy();
+    expect(conversationSchema.safeParse({ id: crypto.randomUUID(), blockedReason: null, messages: saved }).success).toBe(true);
+  });
   it("rejects non-text saved records", () => {
     expect(conversationSchema.safeParse({ id: crypto.randomUUID(), blockedReason: null, messages: [{ id: "msg", role: "assistant", parts: [{ type: "reasoning", text: "not stored" }] }] }).success).toBe(false);
   });

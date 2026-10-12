@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { convertToModelMessages, validateUIMessages, type UIMessage } from "ai";
 import type { Database, Json } from "@/integrations/supabase/types";
-import { conversationSchema, storedMessageSchema, textHistory } from "@/lib/assistant";
+import { conversationSchema, textHistory } from "@/lib/assistant";
 import { createResponsesCall } from "./responses.server.ts";
 import { createLovableAiGatewayRunIdFetch, withLovableAiGatewayRunIdHeader } from "./run-id.server.ts";
 import { z } from "zod";
@@ -86,7 +86,7 @@ export async function handleAssistant(request: Request): Promise<Response> {
   try {
     const { result } = createResponsesCall(request, { baseURL: "https://ai.gateway.lovable.dev/v1", apiKey, model: "openai/gpt-6-astra", fetch: guardedFetch }, await convertToModelMessages(messages), instructions + JSON.stringify(snapshot));
     const stream = result.toUIMessageStreamResponse({
-      originalMessages: messages, sendReasoning: true,
+      originalMessages: messages, sendReasoning: true, generateMessageId: () => crypto.randomUUID(),
       onError: () => failureMessage,
       onFinish: async ({ messages: complete, isAborted, finishReason }) => {
         if (finishReason === "content-filter") failureMessage = "A IA não pode responder a esta solicitação.";
