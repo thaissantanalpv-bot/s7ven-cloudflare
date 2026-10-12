@@ -16,6 +16,6 @@ export function textHistory(messages: UIMessage[]) {
   return messages.flatMap(message => {
     if (message.role !== "user" && message.role !== "assistant") return [];
     const text = message.parts.filter(part => part.type === "text").map(part => part.text).join("\n");
-    return text.trim() ? [{ id: message.id, role: message.role, parts: [{ type: "text" as const, text }] }] : [];
+    return text.trim() ? [{ id: message.id || crypto.randomUUID(), role: message.role, parts: [{ type: "text" as const, text }] }] : [];
   });
 }
