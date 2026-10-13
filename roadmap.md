@@ -64,3 +64,8 @@
 - [x] Criar conversa privada única por conta e leitura agregada dos indicadores, sem dados pessoais de clientes.
 - [x] Adicionar perguntas em texto, respostas em tempo real e sugestões fundamentadas nos dados pelo AI Gateway.
 - [x] Verificar pergunta real, continuação, histórico após recarregar e acesso protegido: respostas reais, cálculos, parada antes da resposta, histórico restaurado, 401 sem sessão, sem rolagem horizontal no celular; 9 testes passaram e build OK. Corrigido ID ausente da resposta salva. Lint dos novos módulos passou; lint global tem falhas de formatação preexistentes. Permissão de conta não administrativa verificada no código, sem criar conta adicional de teste.
+
+# Atualização do PDF de 13/10/2026
+- [ ] Conferir produtos novos, fotos e opções disponíveis no PDF.
+- [ ] Importar preservando identidades, estoque e configurações de combos existentes.
+- [ ] Verificar catálogo, galerias e opções após atualização.
