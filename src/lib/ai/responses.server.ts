@@ -18,7 +18,9 @@ export function createResponsesCall(
     baseURL: `${config.baseURL.replace(/\/+$/, "").replace(/\/v1$/, "")}/v1`,
     apiKey: config.apiKey,
     headers: { "Lovable-API-Key": config.apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-    fetch: config.fetch ? (input, init) => config.fetch?.(input, init) ?? runIdFetch.fetch(input, init) : runIdFetch.fetch,
+    fetch: config.fetch
+      ? (input, init) => config.fetch?.(input, init) ?? runIdFetch.fetch(input, init)
+      : runIdFetch.fetch,
   });
   const reasoning = config.model !== "openai/chat-latest";
   const result = streamText({
@@ -46,6 +48,9 @@ export function createResponsesCall(
     result,
     runIdFetch,
     response: () =>
-      withLovableAiGatewayRunIdHeader(result.toUIMessageStreamResponse({ sendReasoning: true }), runIdFetch),
+      withLovableAiGatewayRunIdHeader(
+        result.toUIMessageStreamResponse({ sendReasoning: true }),
+        runIdFetch,
+      ),
   };
 }

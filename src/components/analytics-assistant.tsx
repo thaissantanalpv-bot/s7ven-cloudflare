@@ -8,17 +8,43 @@ import { supabase } from "@/integrations/supabase/client";
 import { loadAssistantConversation } from "@/lib/assistant.functions";
 import type { AssistantConversation } from "@/lib/assistant";
 import { Button } from "@/components/ui/button";
-import { Conversation, ConversationContent, ConversationEmptyState, ConversationScrollButton } from "@/components/ai-elements/conversation";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
-import { PromptInput, PromptInputTextarea, PromptInputFooter, PromptInputSubmit } from "@/components/ai-elements/prompt-input";
+import {
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputFooter,
+  PromptInputSubmit,
+} from "@/components/ai-elements/prompt-input";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 
 export function AnalyticsAssistant() {
   const load = useServerFn(loadAssistantConversation);
-  const conversation = useQuery({ queryKey: ["admin-assistant"], queryFn: () => load(), staleTime: 0, gcTime: 0, retry: false });
-  if (conversation.isPending) return <p className="py-12 text-muted-foreground">Carregando sua conversa…</p>;
-  if (conversation.error || !conversation.data) return <div className="py-10" role="alert"><p className="text-destructive">Não foi possível carregar sua conversa.</p><Button variant="outline" className="mt-4" onClick={() => conversation.refetch()}><RefreshCw />Tentar novamente</Button></div>;
+  const conversation = useQuery({
+    queryKey: ["admin-assistant"],
+    queryFn: () => load(),
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
+  if (conversation.isPending)
+    return <p className="py-12 text-muted-foreground">Carregando sua conversa…</p>;
+  if (conversation.error || !conversation.data)
+    return (
+      <div className="py-10" role="alert">
+        <p className="text-destructive">Não foi possível carregar sua conversa.</p>
+        <Button variant="outline" className="mt-4" onClick={() => conversation.refetch()}>
+          <RefreshCw />
+          Tentar novamente
+        </Button>
+      </div>
+    );
   return <AssistantChat key={conversation.data.id} initial={conversation.data} />;
 }
 
@@ -27,59 +53,180 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
   const [draft, setDraft] = useState("");
   const [stopped, setStopped] = useState(false);
   const [blocked, setBlocked] = useState(initial.blockedReason);
-  const transport = useMemo(() => new DefaultChatTransport({
-    api: "/api/assistant",
-    headers: async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) throw new Error("Sua sessão expirou. Entre novamente.");
-      return { Authorization: `Bearer ${data.session.access_token}` };
-    },
-    fetch: async (url, init) => {
-      const response = await fetch(url, init);
-      if (response.status === 402 || response.status === 403) setBlocked(await response.clone().text());
-      return response;
-    },
-  }), []);
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/assistant",
+        headers: async () => {
+          const { data } = await supabase.auth.getSession();
+          if (!data.session) throw new Error("Sua sessão expirou. Entre novamente.");
+          return { Authorization: `Bearer ${data.session.access_token}` };
+        },
+        fetch: async (url, init) => {
+          const response = await fetch(url, init);
+          if (response.status === 402 || response.status === 403)
+            setBlocked(await response.clone().text());
+          return response;
+        },
+      }),
+    [],
+  );
   const { messages, sendMessage, status, error, stop, clearError } = useChat({
-    id: initial.id, messages: initial.messages as UIMessage[], transport,
+    id: initial.id,
+    messages: initial.messages as UIMessage[],
+    transport,
   });
   const busy = status === "submitted" || status === "streaming";
   useEffect(() => {
-    if (!busy && !blocked && (document.activeElement === document.body || document.activeElement?.closest("[data-assistant]"))) input.current?.focus();
+    if (
+      !busy &&
+      !blocked &&
+      (document.activeElement === document.body ||
+        document.activeElement?.closest("[data-assistant]"))
+    )
+      input.current?.focus();
   }, [busy, blocked]);
-  useEffect(() => { input.current?.focus(); }, []);
+  useEffect(() => {
+    input.current?.focus();
+  }, []);
   const send = async (text: string) => {
     if (busy || blocked || !text.trim()) return;
-    clearError(); setStopped(false); setDraft("");
+    clearError();
+    setStopped(false);
+    setDraft("");
     input.current?.focus();
     await sendMessage({ text: text.trim() });
   };
-  const suggestions = ["Como estão as visitas e os pedidos hoje?", "Onde estamos perdendo compras?", "Quais tendências aparecem nos últimos dias?"];
-  return <section data-assistant className="mx-auto mt-6 flex h-[min(720px,calc(100dvh-270px))] min-h-96 max-w-3xl flex-col">
-    <div className="flex items-center gap-3 border-b pb-4">
-      <MessageCircle className="size-5 text-primary" />
-      <span className="font-display font-semibold">Assistente S7VEN</span>
-      <span className="ml-auto text-xs text-muted-foreground">Minha loja</span>
-    </div>
-    <Conversation className="min-h-0" aria-label="Conversa com a assistente">
-      <ConversationContent className="gap-6 px-0 py-6 sm:px-2">
-        {!messages.length && <ConversationEmptyState><ChartNoAxesCombined className="size-9 text-primary" /><h2 className="font-display text-xl font-semibold">O movimento da sua loja</h2><div className="mt-4 flex w-full max-w-lg flex-col gap-2">{suggestions.map(text => <Button key={text} variant="outline" disabled={!!blocked || busy} className="h-auto min-h-11 justify-between whitespace-normal text-left" onClick={() => send(text)}>{text}<ArrowUp className="shrink-0" /></Button>)}</div></ConversationEmptyState>}
-        {messages.map((message, index) => <Message key={message.id} from={message.role} data-message-role={message.role}>
-          {message.role === "assistant" && <span className="text-xs font-medium text-primary">S7VEN</span>}
-          <MessageContent className={message.role === "user" ? "group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground" : "w-full"}>
-            {message.parts.map((part, i) => part.type === "text" ? message.role === "assistant" ? <MessageResponse key={i} isAnimating={busy && index === messages.length - 1}>{part.text}</MessageResponse> : <p key={i} className="whitespace-pre-wrap break-words">{part.text}</p> : part.type === "reasoning" && part.text ? <Reasoning key={i} defaultOpen={false} isStreaming={busy && index === messages.length - 1}><ReasoningTrigger><span className="text-xs">Análise dos indicadores</span></ReasoningTrigger><ReasoningContent>{part.text}</ReasoningContent></Reasoning> : null)}
-          </MessageContent>
-        </Message>)}
-        {busy && !messages.at(-1)?.parts.some(p => p.type === "text" && messages.at(-1)?.role === "assistant" && p.text.trim()) && <div role="status"><Shimmer>Consultando os indicadores…</Shimmer></div>}
-      </ConversationContent>
-      <ConversationScrollButton aria-label="Ir para a última resposta" />
-    </Conversation>
-    {(error || blocked) && <p role="alert" className="mb-3 text-sm text-destructive">{blocked || error?.message}</p>}
-    {stopped && !busy && <p role="status" className="mb-3 text-xs text-muted-foreground">Análise interrompida.</p>}
-    <PromptInput onSubmit={({ text }) => send(text)} className="shrink-0">
-      <PromptInputTextarea ref={input} aria-label="Pergunta para a assistente" placeholder="Pergunte sobre visitas, carrinhos ou pedidos…" value={draft} onChange={e => setDraft(e.target.value)} maxLength={4000} disabled={!!blocked} className="min-h-16" />
-      <PromptInputFooter><span className="text-xs text-muted-foreground">S7VEN · IA</span><PromptInputSubmit status={status} aria-label={busy ? "Parar análise" : "Enviar pergunta"} title={busy ? "Parar análise" : "Enviar pergunta"} disabled={!!blocked || (!busy && !draft.trim())} className="size-9" onStop={() => { stop(); setStopped(true); }}>{busy ? <Square /> : <ArrowUp />}</PromptInputSubmit></PromptInputFooter>
-    </PromptInput>
-    <p className="py-2 text-center text-[11px] text-muted-foreground">Sugestões por IA podem conter erros. Confira os números no painel.</p>
-  </section>;
+  const suggestions = [
+    "Como estão as visitas e os pedidos hoje?",
+    "Onde estamos perdendo compras?",
+    "Quais tendências aparecem nos últimos dias?",
+  ];
+  return (
+    <section
+      data-assistant
+      className="mx-auto mt-6 flex h-[min(720px,calc(100dvh-270px))] min-h-96 max-w-3xl flex-col"
+    >
+      <div className="flex items-center gap-3 border-b pb-4">
+        <MessageCircle className="size-5 text-primary" />
+        <span className="font-display font-semibold">Assistente S7VEN</span>
+        <span className="ml-auto text-xs text-muted-foreground">Minha loja</span>
+      </div>
+      <Conversation className="min-h-0" aria-label="Conversa com a assistente">
+        <ConversationContent className="gap-6 px-0 py-6 sm:px-2">
+          {!messages.length && (
+            <ConversationEmptyState>
+              <ChartNoAxesCombined className="size-9 text-primary" />
+              <h2 className="font-display text-xl font-semibold">O movimento da sua loja</h2>
+              <div className="mt-4 flex w-full max-w-lg flex-col gap-2">
+                {suggestions.map((text) => (
+                  <Button
+                    key={text}
+                    variant="outline"
+                    disabled={!!blocked || busy}
+                    className="h-auto min-h-11 justify-between whitespace-normal text-left"
+                    onClick={() => send(text)}
+                  >
+                    {text}
+                    <ArrowUp className="shrink-0" />
+                  </Button>
+                ))}
+              </div>
+            </ConversationEmptyState>
+          )}
+          {messages.map((message, index) => (
+            <Message key={message.id} from={message.role} data-message-role={message.role}>
+              {message.role === "assistant" && (
+                <span className="text-xs font-medium text-primary">S7VEN</span>
+              )}
+              <MessageContent
+                className={
+                  message.role === "user"
+                    ? "group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground"
+                    : "w-full"
+                }
+              >
+                {message.parts.map((part, i) =>
+                  part.type === "text" ? (
+                    message.role === "assistant" ? (
+                      <MessageResponse key={i} isAnimating={busy && index === messages.length - 1}>
+                        {part.text}
+                      </MessageResponse>
+                    ) : (
+                      <p key={i} className="whitespace-pre-wrap break-words">
+                        {part.text}
+                      </p>
+                    )
+                  ) : part.type === "reasoning" && part.text ? (
+                    <Reasoning
+                      key={i}
+                      defaultOpen={false}
+                      isStreaming={busy && index === messages.length - 1}
+                    >
+                      <ReasoningTrigger>
+                        <span className="text-xs">Análise dos indicadores</span>
+                      </ReasoningTrigger>
+                      <ReasoningContent>{part.text}</ReasoningContent>
+                    </Reasoning>
+                  ) : null,
+                )}
+              </MessageContent>
+            </Message>
+          ))}
+          {busy &&
+            !messages
+              .at(-1)
+              ?.parts.some(
+                (p) => p.type === "text" && messages.at(-1)?.role === "assistant" && p.text.trim(),
+              ) && (
+              <div role="status">
+                <Shimmer>Consultando os indicadores…</Shimmer>
+              </div>
+            )}
+        </ConversationContent>
+        <ConversationScrollButton aria-label="Ir para a última resposta" />
+      </Conversation>
+      {(error || blocked) && (
+        <p role="alert" className="mb-3 text-sm text-destructive">
+          {blocked || error?.message}
+        </p>
+      )}
+      {stopped && !busy && (
+        <p role="status" className="mb-3 text-xs text-muted-foreground">
+          Análise interrompida.
+        </p>
+      )}
+      <PromptInput onSubmit={({ text }) => send(text)} className="shrink-0">
+        <PromptInputTextarea
+          ref={input}
+          aria-label="Pergunta para a assistente"
+          placeholder="Pergunte sobre visitas, carrinhos ou pedidos…"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          maxLength={4000}
+          disabled={!!blocked}
+          className="min-h-16"
+        />
+        <PromptInputFooter>
+          <span className="text-xs text-muted-foreground">S7VEN · IA</span>
+          <PromptInputSubmit
+            status={status}
+            aria-label={busy ? "Parar análise" : "Enviar pergunta"}
+            title={busy ? "Parar análise" : "Enviar pergunta"}
+            disabled={!!blocked || (!busy && !draft.trim())}
+            className="size-9"
+            onStop={() => {
+              stop();
+              setStopped(true);
+            }}
+          >
+            {busy ? <Square /> : <ArrowUp />}
+          </PromptInputSubmit>
+        </PromptInputFooter>
+      </PromptInput>
+      <p className="py-2 text-center text-[11px] text-muted-foreground">
+        Sugestões por IA podem conter erros. Confira os números no painel.
+      </p>
+    </section>
+  );
 }

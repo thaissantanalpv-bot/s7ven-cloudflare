@@ -8,14 +8,26 @@ export const storedMessageSchema = z.object({
   parts: z.array(z.object({ type: z.literal("text"), text: z.string().max(60000) })).max(1),
 });
 export const conversationSchema = z.object({
-  id: z.string().uuid(), messages: z.array(storedMessageSchema),
+  id: z.string().uuid(),
+  messages: z.array(storedMessageSchema),
   blockedReason: z.string().nullable(),
 });
 export type AssistantConversation = z.infer<typeof conversationSchema>;
 export function textHistory(messages: UIMessage[]) {
-  return messages.flatMap(message => {
+  return messages.flatMap((message) => {
     if (message.role !== "user" && message.role !== "assistant") return [];
-    const text = message.parts.filter(part => part.type === "text").map(part => part.text).join("\n");
-    return text.trim() ? [{ id: message.id || crypto.randomUUID(), role: message.role, parts: [{ type: "text" as const, text }] }] : [];
+    const text = message.parts
+      .filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("\n");
+    return text.trim()
+      ? [
+          {
+            id: message.id || crypto.randomUUID(),
+            role: message.role,
+            parts: [{ type: "text" as const, text }],
+          },
+        ]
+      : [];
   });
 }
