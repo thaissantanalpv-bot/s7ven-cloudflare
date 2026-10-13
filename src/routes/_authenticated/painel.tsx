@@ -90,7 +90,7 @@ function Admin() {
       <main className="mx-auto max-w-7xl px-4 py-7 pb-28 sm:px-5 sm:py-10 sm:pb-28 md:pb-10">
         <p className="mb-2 text-xs uppercase text-primary">Área da loja</p>
         <h1 className="font-display text-3xl font-semibold">
-          {view === "assistant" ? "Assistente da loja" : view === "analytics" ? "Movimento do catálogo" : view === "combos" ? "Combos" : view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
+          {view === "home" ? "Minha loja" : view === "assistant" ? "Assistente da loja" : view === "analytics" ? "Movimento do catálogo" : view === "combos" ? "Combos" : view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">S7VEN Lounge e Tabacaria.</p>
         {permission.isPending ? (
@@ -135,7 +135,7 @@ function Admin() {
             {view === "assistant" ? <AnalyticsAssistant /> : view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : <SettingsEditor initial={settings} />}
             <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background md:hidden" aria-label="Navegação do aplicativo">
               {[
-                { id: "analytics", label: "Início", Icon: Home },
+                { id: "home", label: "Início", Icon: Home },
                 { id: "orders", label: "Pedidos", Icon: ShoppingBag },
                 { id: "pos", label: "Caixa", Icon: Receipt },
                 { id: "products", label: "Produtos", Icon: Package },
