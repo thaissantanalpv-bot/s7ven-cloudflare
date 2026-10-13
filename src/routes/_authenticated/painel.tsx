@@ -60,7 +60,7 @@ export const Route = createFileRoute("/_authenticated/painel")({
   component: Admin,
 });
 function Admin() {
-  const [view, setView] = useState("analytics");
+  const [view, setView] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const check = useServerFn(checkStoreAdmin);
   const permission = useQuery({ queryKey: ["store-admin"], queryFn: () => check(), retry: false });
