@@ -21,6 +21,9 @@ import {
   History,
   ChevronRight,
   MessageCircle,
+  Activity,
+  Users,
+  ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -36,6 +39,7 @@ import { SalesHistory } from "@/components/pos/sales-history";
 import { CatalogAnalytics } from "@/components/catalog-analytics";
 import { AnalyticsAssistant } from "@/components/analytics-assistant";
 import { adminCatalogQuery } from "@/lib/catalog.query";
+import { getCatalogFunnel } from "@/lib/catalog-analytics.functions";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 
 export const Route = createFileRoute("/_authenticated/painel")({
@@ -60,7 +64,7 @@ export const Route = createFileRoute("/_authenticated/painel")({
   component: Admin,
 });
 function Admin() {
-  const [view, setView] = useState("analytics");
+  const [view, setView] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const check = useServerFn(checkStoreAdmin);
   const permission = useQuery({ queryKey: ["store-admin"], queryFn: () => check(), retry: false });
@@ -90,7 +94,7 @@ function Admin() {
       <main className="mx-auto max-w-7xl px-4 py-7 pb-28 sm:px-5 sm:py-10 sm:pb-28 md:pb-10">
         <p className="mb-2 text-xs uppercase text-primary">Área da loja</p>
         <h1 className="font-display text-3xl font-semibold">
-          {view === "assistant" ? "Assistente da loja" : view === "analytics" ? "Movimento do catálogo" : view === "combos" ? "Combos" : view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
+          {view === "home" ? "Minha loja" : view === "assistant" ? "Assistente da loja" : view === "analytics" ? "Movimento do catálogo" : view === "combos" ? "Combos" : view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">S7VEN Lounge e Tabacaria.</p>
         {permission.isPending ? (
@@ -132,10 +136,15 @@ function Admin() {
                 Taxas e horários
               </Button>
             </nav>
-            {view === "assistant" ? <AnalyticsAssistant /> : view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : <SettingsEditor initial={settings} />}
+            {view === "home" ? (
+              <>
+                <div className="md:hidden"><AdminHome onOpen={setView} /></div>
+                <div className="hidden md:block"><CatalogAnalytics /></div>
+              </>
+            ) : view === "assistant" ? <AnalyticsAssistant /> : view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : <SettingsEditor initial={settings} />}
             <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background md:hidden" aria-label="Navegação do aplicativo">
               {[
-                { id: "analytics", label: "Início", Icon: Home },
+                { id: "home", label: "Início", Icon: Home },
                 { id: "orders", label: "Pedidos", Icon: ShoppingBag },
                 { id: "pos", label: "Caixa", Icon: Receipt },
                 { id: "products", label: "Produtos", Icon: Package },
@@ -155,6 +164,35 @@ function Admin() {
         )}
       </main>
     </div>
+  );
+}
+function AdminHome({ onOpen }: { onOpen: (view: string) => void }) {
+  const getStats = useServerFn(getCatalogFunnel);
+  const stats = useQuery({ queryKey: ["admin-catalog-funnel", "today"], queryFn: () => getStats({ data: "today" }), refetchInterval: 5000, retry: 1 });
+  const data = stats.data;
+  const cards = [
+    { label: "Visitas", hint: "pessoas que abriram o catálogo hoje", value: data?.visitors, Icon: Users, target: "analytics" },
+    { label: "Carrinhos", hint: "clientes montando pedido agora", value: data?.pending, Icon: ShoppingCart, target: "analytics" },
+    { label: "Pedidos", hint: "pedidos enviados hoje", value: data?.completed, Icon: ShoppingBag, target: "orders" },
+  ];
+  return (
+    <section className="py-6" aria-label="Resumo da loja">
+      <p className="mb-4 flex items-center gap-2 text-sm text-primary"><Activity className="size-4" />{data ? `${data.online} online agora` : "Conectando…"}</p>
+      <div className="grid gap-4">
+        {cards.map(({ label, hint, value, Icon, target }) => (
+          <button key={label} type="button" onClick={() => onOpen(target)} className="flex min-h-28 items-center gap-5 rounded-2xl border bg-card p-6 text-left active:scale-[0.98]">
+            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-primary/10"><Icon className="size-8 text-primary" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-display text-4xl font-semibold">{value === undefined ? "—" : value.toLocaleString("pt-BR")}</span>
+              <span className="mt-1 block text-base font-medium">{label}</span>
+              <span className="block text-xs text-muted-foreground">{hint}</span>
+            </span>
+            <ChevronRight className="size-6 shrink-0 text-muted-foreground" />
+          </button>
+        ))}
+      </div>
+      {stats.error && <p role="alert" className="mt-4 text-sm text-destructive">Não foi possível atualizar os números. <Button variant="link" onClick={() => stats.refetch()}>Tentar novamente</Button></p>}
+    </section>
   );
 }
 function SettingsEditor({ initial }: { initial: StoreSettings }) {
