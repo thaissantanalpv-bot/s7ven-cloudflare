@@ -21,6 +21,9 @@ import {
   History,
   ChevronRight,
   MessageCircle,
+  Activity,
+  Users,
+  ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -36,6 +39,7 @@ import { SalesHistory } from "@/components/pos/sales-history";
 import { CatalogAnalytics } from "@/components/catalog-analytics";
 import { AnalyticsAssistant } from "@/components/analytics-assistant";
 import { adminCatalogQuery } from "@/lib/catalog.query";
+import { getCatalogFunnel } from "@/lib/catalog-analytics.functions";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 
 export const Route = createFileRoute("/_authenticated/painel")({
@@ -160,6 +164,35 @@ function Admin() {
         )}
       </main>
     </div>
+  );
+}
+function AdminHome({ onOpen }: { onOpen: (view: string) => void }) {
+  const getStats = useServerFn(getCatalogFunnel);
+  const stats = useQuery({ queryKey: ["admin-catalog-funnel", "today"], queryFn: () => getStats({ data: "today" }), refetchInterval: 5000, retry: 1 });
+  const data = stats.data;
+  const cards = [
+    { label: "Visitas", hint: "pessoas que abriram o catálogo hoje", value: data?.visitors, Icon: Users, target: "analytics" },
+    { label: "Carrinhos", hint: "clientes montando pedido agora", value: data?.pending, Icon: ShoppingCart, target: "analytics" },
+    { label: "Pedidos", hint: "pedidos enviados hoje", value: data?.completed, Icon: ShoppingBag, target: "orders" },
+  ];
+  return (
+    <section className="py-6" aria-label="Resumo da loja">
+      <p className="mb-4 flex items-center gap-2 text-sm text-primary"><Activity className="size-4" />{data ? `${data.online} online agora` : "Conectando…"}</p>
+      <div className="grid gap-4">
+        {cards.map(({ label, hint, value, Icon, target }) => (
+          <button key={label} type="button" onClick={() => onOpen(target)} className="flex min-h-28 items-center gap-5 rounded-2xl border bg-card p-6 text-left active:scale-[0.98]">
+            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-primary/10"><Icon className="size-8 text-primary" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-display text-4xl font-semibold">{value === undefined ? "—" : value.toLocaleString("pt-BR")}</span>
+              <span className="mt-1 block text-base font-medium">{label}</span>
+              <span className="block text-xs text-muted-foreground">{hint}</span>
+            </span>
+            <ChevronRight className="size-6 shrink-0 text-muted-foreground" />
+          </button>
+        ))}
+      </div>
+      {stats.error && <p role="alert" className="mt-4 text-sm text-destructive">Não foi possível atualizar os números. <Button variant="link" onClick={() => stats.refetch()}>Tentar novamente</Button></p>}
+    </section>
   );
 }
 function SettingsEditor({ initial }: { initial: StoreSettings }) {
