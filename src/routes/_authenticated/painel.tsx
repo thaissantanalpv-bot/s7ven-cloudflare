@@ -132,7 +132,12 @@ function Admin() {
                 Taxas e horários
               </Button>
             </nav>
-            {view === "assistant" ? <AnalyticsAssistant /> : view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : <SettingsEditor initial={settings} />}
+            {view === "home" ? (
+              <>
+                <div className="md:hidden"><AdminHome onOpen={setView} /></div>
+                <div className="hidden md:block"><CatalogAnalytics /></div>
+              </>
+            ) : view === "assistant" ? <AnalyticsAssistant /> : view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : <SettingsEditor initial={settings} />}
             <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background md:hidden" aria-label="Navegação do aplicativo">
               {[
                 { id: "home", label: "Início", Icon: Home },
