@@ -34,6 +34,7 @@ import { submitOrder } from "@/lib/orders.functions";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
+import { ProductCardPhotos } from "@/components/products/product-card-photos";
 import { ComboBuilder } from "@/components/products/combo-builder";
 import { comboOption, parseComboOption, comboSummary, type ComboSelection } from "@/lib/combos";
 import {
@@ -757,18 +758,7 @@ function ProductCard({
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-colors hover:border-primary/50">
-      <Button variant="ghost" aria-label={`Ver fotos de ${p.name}`} onClick={() => setGalleryOpen(true)} className="grid aspect-[4/3] h-auto w-full shrink-0 place-items-center overflow-hidden rounded-none bg-photo p-0 text-5xl">
-        {p.image ? (
-          <img
-            src={p.image}
-            alt={p.name}
-            loading="lazy"
-            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          p.emoji
-        )}
-      </Button>
+      <ProductCardPhotos product={p} onEnlarge={() => setGalleryOpen(true)} />
       <div className="flex min-w-0 flex-1 flex-col p-4">
         <span className="text-[11px] uppercase text-muted-foreground">{p.category}</span>
         <h2 className="mt-1 font-display text-base font-semibold leading-snug"><Button variant="link" onClick={() => setGalleryOpen(true)} className="h-auto w-full justify-start whitespace-normal p-0 text-left text-base text-foreground">{p.name}</Button></h2>
