@@ -69,3 +69,4 @@
 - [ ] Conferir produtos novos, fotos e opções disponíveis no PDF.
 - [ ] Importar preservando identidades, estoque e configurações de combos existentes.
 - [ ] Verificar catálogo, galerias e opções após atualização.
+- [ ] Exibir fotos inteiras e permitir navegar pelas fotos extras diretamente na vitrine.
