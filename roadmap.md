@@ -78,6 +78,7 @@
 # Combos
 - [x] Criar aba de cadastro com preço fixo, grupos, quantidades e produtos permitidos.
 - [x] Permitir montagem no catálogo e preservar escolhas no carrinho e no pedido.
+- [x] Ampliar a quantidade de cada grupo do combo de 10 para 100 unidades e permitir digitar a quantidade na montagem.
 - [x] Validar grupos, sabores e estoque no servidor e reservar os itens escolhidos atomicamente.
 - [x] Verificar cadastro, compra e regressões: cadastro administrativo, montagem por grupos, carrinho após recarregar, pedido real com preço fixo e WhatsApp correto, estoque de produto/sabor de 5 para 3; 38 testes passaram e build OK.
 
