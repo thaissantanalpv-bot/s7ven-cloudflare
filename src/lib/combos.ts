@@ -5,7 +5,7 @@ export const comboSelectionSchema = z.object({
   groupId: z.string().regex(/^[a-zA-Z0-9_-]{1,40}$/),
   productId: z.string().regex(/^[a-zA-Z0-9_-]{1,30}$/),
   option: z.string().trim().max(40),
-  qty: z.number().int().min(1).max(10),
+  qty: z.number().int().min(1).max(100),
 });
 export const comboSelectionsSchema = z.array(comboSelectionSchema).max(80);
 export type ComboSelection = z.infer<typeof comboSelectionSchema>;
