@@ -35,10 +35,11 @@ describe("Combo quantities up to 100 units", () => {
   });
   it("lets the store write a group quantity of 100 in the panel", () => {
     const groups = [{ id: "drink", name: "Bebida", quantity: 1, productIds: [item.id] }];
-    render(<ComboGroupsEditor groups={groups} products={base} onChange={() => {}} />);
+    const onChange = vi.fn();
+    render(<ComboGroupsEditor groups={groups} products={base} onChange={onChange} />);
     const input = screen.getByLabelText("Quantidade do grupo 1") as HTMLInputElement;
     expect(input.max).toBe("100");
     fireEvent.change(input, { target: { value: "100" } });
-    expect(input.value).toBe("100");
+    expect(onChange.mock.calls[0]?.[0]?.[0]?.quantity).toBe(100);
   });
 });
