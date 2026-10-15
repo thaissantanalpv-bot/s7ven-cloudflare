@@ -15,6 +15,7 @@ import {
   X,
   MessageCircle,
   ChevronRight,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -42,6 +43,7 @@ import {
   brl,
 } from "@/lib/products";
 import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
+import { checkoutWhatsApp, productMessage } from "@/lib/order-message";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
@@ -155,6 +157,12 @@ function Catalog() {
   const [typed, setTyped] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState("");
   const [building, setBuilding] = useState<CatalogProduct | null>(null);
+  const [sharedProduct, setSharedProduct] = useState<CatalogProduct | null>(null);
+  useEffect(() => {
+    const id = new URL(window.location.href).searchParams.get("produto");
+    if (id) setSharedProduct(products.find(p => p.id === id) ?? null);
+  }, [products]);
+  const featured = products.filter(p => p.featured && available(p));
   const customerValidation = customerSchema.safeParse(form);
   const fieldErrors = submitted && !customerValidation.success
     ? customerValidation.error.flatten().fieldErrors
@@ -287,7 +295,7 @@ function Catalog() {
       "",
       ...items.map(
         (i) =>
-          `${i.qty}x ${i.product.name}${i.option ? ` (${i.product.optionLabel}: ${i.option})` : ""} — ${brl(i.qty * i.product.price)}${i.components ? `\n  ${comboSummary(i.components, products, i.product)}` : ""}`,
+          productMessage({ id: i.product.id, name: i.product.name, qty: i.qty, price: i.product.price, option: i.option, optionLabel: i.product.optionLabel, hasPhoto: Boolean(i.product.image || i.product.images?.length), combo: i.components ? comboSummary(i.components, products, i.product) : undefined }, window.location.origin) + "\n",
       ),
       "",
       `*Produtos: ${brl(subtotal)}*`,
@@ -309,7 +317,7 @@ function Catalog() {
     if (popup) popup.opener = null;
     try {
       const saved = await registerOrder({ data: validated.data });
-      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent([`*Pedido #${saved.number}*`, ...lines, `*WhatsApp do cliente:* ${d.phone}`].join("\n"))}`;
+      const url = checkoutWhatsApp(saved.number, lines, d.phone);
       setReceipt({ number: saved.number, url, subtotal, deliveryFee, total });
       setCart({});
       setAttempt(null);
@@ -424,6 +432,12 @@ function Catalog() {
           </span>
         </div>
       </section>
+      {cat === "Todos" && !query.trim() && featured.length > 0 && <section aria-label="Produtos em destaque" className="mx-auto max-w-7xl border-b px-4 py-5 sm:px-8">
+        <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-semibold"><Star className="size-5 text-primary" />Destaques</h2>
+        <div className="grid grid-cols-2 items-start gap-x-3 gap-y-6 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
+          {featured.map(p => <ProductCard key={p.id} p={p} cart={cart} sel={sel} typed={typed} onSel={(id, v) => setSel(s => ({ ...s, [id]: v }))} onTyped={(id, v) => setTyped(s => ({ ...s, [id]: v }))} onChange={change} onBuild={() => setBuilding(p)} />)}
+        </div>
+      </section>}
       <section className="mx-auto max-w-7xl px-4 py-5 sm:px-8 sm:py-7">
         <nav aria-label="Categorias" className="no-scrollbar mb-5 flex gap-2 overflow-x-auto pb-2">
           {categories.map((c) => (
@@ -482,6 +496,7 @@ function Catalog() {
           ))}
         </main>
       </section>
+      {sharedProduct && <ProductGallery product={sharedProduct} open onOpenChange={value => { if (!value) { setSharedProduct(null); const url = new URL(window.location.href); url.searchParams.delete("produto"); window.history.replaceState(null, "", url.href); } }} />}
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t px-4 py-6 text-xs text-muted-foreground sm:px-8">
         <span>{STORE_NAME}</span>
         <span>Venda de bebidas e produtos de tabacaria somente para maiores de 18 anos.</span>

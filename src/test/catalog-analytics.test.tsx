@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trackingSchema, readAnalyticsIdentity } from "@/lib/catalog-analytics";
 import { CatalogAnalytics } from "@/components/catalog-analytics";
+import { AbandonedCartNotice } from "@/components/abandoned-cart-notice";
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/catalog-analytics.functions", () => ({ getCatalogFunnel: mocks.get }));
@@ -28,8 +29,13 @@ describe("Catalog analytics", () => {
     expect(await screen.findByText("2 online agora")).toBeInTheDocument();
     expect(screen.getByText("20%")).toBeInTheDocument();
     expect(screen.getByText("Desistências estimadas")).toBeInTheDocument();
-    expect(screen.getByText(/30 minutos/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Aviso de carrinhos abandonados")).toHaveTextContent("3 carrinhos sem pedido enviado");
+    expect(screen.getAllByText(/30 minutos/).length).toBeGreaterThan(0);
     client.clear();
+  });
+  it("does not show an abandonment notice for zero carts", () => {
+    const { container } = render(<AbandonedCartNotice count={0} />);
+    expect(container).toBeEmptyDOMElement();
   });
   it("retains an in-memory identity when browser storage is blocked", () => {
     const blocked = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("Blocked storage"); });

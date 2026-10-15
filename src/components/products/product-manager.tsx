@@ -1,7 +1,7 @@
 import { useState, useId, type ReactNode } from "react";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Pencil, Pause, Play, Search, Save, Upload, Trash2, Package } from "lucide-react";
+import { Plus, Pencil, Pause, Play, Search, Save, Upload, Trash2, Package, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -40,7 +40,7 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   return <section className="py-7">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div className="flex gap-6 text-sm"><span><strong>{managed.length}</strong> {combos ? "combos" : "produtos"}</span><span className="text-muted-foreground">{managed.filter(p => !available(p)).length} indisponíveis</span></div>
-      <Button onClick={() => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, category: combos ? "Combos" : "", emoji: "🛍️", image: "", images: [], active: true, stock: null, optionLabel: "Sabor", allowOther: false, variations: [], comboGroups: combos ? [{ id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }] : [] }, expected: null, preview: "" }); }}><Plus /> {combos ? "Novo combo" : "Novo produto"}</Button>
+      <Button onClick={() => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, category: combos ? "Combos" : "", emoji: "🛍️", image: "", images: [], active: true, featured: false, stock: null, optionLabel: "Sabor", allowOther: false, variations: [], comboGroups: combos ? [{ id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }] : [] }, expected: null, preview: "" }); }}><Plus /> {combos ? "Novo combo" : "Novo produto"}</Button>
     </div>
     <div className="mb-5 flex flex-wrap gap-3">
       <div className="relative min-w-48 flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><input className="field pl-10" aria-label="Buscar produtos no painel" placeholder="Buscar produtos" value={query} onChange={e => setQuery(e.target.value)} /></div>
@@ -52,6 +52,7 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
       {visible.map(p => <div key={p.id} className="flex flex-wrap items-center gap-4 py-4">
         <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded bg-photo">{p.image ? <img src={p.image} alt={p.name} className="size-full object-contain" /> : <Package className="text-photo-foreground" />}</div>
         <div className="min-w-0 flex-1"><h2 className="font-semibold">{p.name}</h2><p className="mt-1 text-xs text-muted-foreground">{p.category} · {p.variations.length ? `${p.variations.length} variações` : "Sem variações"}</p><p className={`mt-1 text-xs ${available(p) ? "text-whatsapp" : "text-destructive"}`}>{!p.active ? "Pausado" : !available(p) ? "Esgotado" : "Disponível"} · {p.stock === null ? "Sem limite de estoque" : `${p.stock} unidades`}</p></div>
+        {p.featured && <span className="flex items-center gap-1 text-xs text-primary"><Star className="size-3" />Destaque</span>}
         <span className="font-mono text-sm">{brl(p.price)}</span>
         <div className="flex gap-1"><Button variant="outline" size="icon" title="Editar produto" aria-label={`Editar ${p.name}`} onClick={() => edit(p)}><Pencil /></Button><Button variant="ghost" size="icon" disabled={busy} title={p.active ? "Pausar produto" : "Reativar produto"} aria-label={`${p.active ? "Pausar" : "Reativar"} ${p.name}`} onClick={() => persist({ ...toDraft(p), active: !p.active }, p.updatedAt)}>{p.active ? <Pause /> : <Play />}</Button></div>
       </div>)}
@@ -116,6 +117,7 @@ function ProductEditor({ initial, preview, galleryPreview, categories, busy, mes
       <div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm">Preço (R$)<input className="field mt-1" type="number" step="0.01" min="0" max="1000000" required value={draft.price} onChange={e => setDraft({ ...draft, price: Number(e.target.value) })} /></label><label className="block text-sm">Categoria<input className="field mt-1" list={categoryId} required maxLength={100} value={draft.category} onChange={e => setDraft({ ...draft, category: e.target.value })} /><datalist id={categoryId}>{categories.map(c => <option key={c} value={c} />)}</datalist></label></div>
       <label className="block text-sm">Descrição<textarea className="field mt-1 min-h-20" maxLength={2000} value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} /></label>
       <div className="flex items-center justify-between border-y py-4"><span className="text-sm">Ativo no catálogo</span><Switch aria-label="Ativo no catálogo" checked={draft.active} onCheckedChange={active => setDraft({ ...draft, active })} /></div>
+      <div className="flex items-center justify-between gap-4 border-b pb-4"><span className="flex items-center gap-2 text-sm"><Star className="size-4 text-primary" />Destaque no início do catálogo</span><Switch aria-label="Destaque no início do catálogo" checked={draft.featured} onCheckedChange={featured => setDraft({ ...draft, featured })} /></div>
       <StockField label="Estoque do produto" stock={draft.stock} onChange={stock => setDraft({ ...draft, stock })} />
       {combos ? <ComboGroupsEditor groups={draft.comboGroups} products={products} onChange={comboGroups => setDraft({ ...draft, comboGroups })} /> : <div className="border-t pt-4"><div className="mb-4 flex items-center justify-between"><h3 className="font-semibold">Sabores e variações</h3><Button type="button" variant="outline" size="sm" onClick={() => setDraft({ ...draft, variations: [...draft.variations, { name: "", active: true, stock: null }] })}><Plus /> Variação</Button></div>
         {draft.variations.length > 0 && <><label className="block text-sm">Tipo<select className="field mt-1" value={draft.optionLabel} onChange={e => setDraft({ ...draft, optionLabel: e.target.value as ProductDraft["optionLabel"] })}><option>Sabor</option><option>Cor</option><option>Variação</option></select></label><div className="my-4 flex items-center justify-between"><span className="text-sm">Permitir “Outro”</span><Switch aria-label="Permitir Outro" checked={draft.allowOther} onCheckedChange={allowOther => setDraft({ ...draft, allowOther })} /></div></>}

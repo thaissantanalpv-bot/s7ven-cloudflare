@@ -4,6 +4,14 @@ import { priceOrder, submitOrderSchema } from "@/lib/orders";
 import { EMPTY_SETTINGS } from "@/lib/store-settings";
 
 describe("Shared catalog", () => {
+  it("preserves admin-selected highlights and defaults old rows to not featured", () => {
+    const original = mergeCatalog([])[0];
+    if (!original) throw new Error("Missing product");
+    const draft = { ...toDraft(original), featured: true };
+    expect(mergeCatalog([{ id: draft.id, data: draft, updated_at: "2026-10-15" }])[0]?.featured).toBe(true);
+    expect(catalogProductSchema.parse({ ...draft, featured: undefined }).featured).toBe(false);
+    expect(toDraft(original).featured).toBe(false);
+  });
   it("preserves gallery paths separately from signed photos", () => {
     const original = mergeCatalog([])[0];
     if (!original) throw new Error("Missing baseline");
