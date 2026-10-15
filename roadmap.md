@@ -1,7 +1,7 @@
 # Atualização completa do catálogo de 15/10/2026
 - [x] Conferir PDF: preços e fotos presentes; listas de sabores/cores truncadas e quantidades de estoque ausentes.
-- [ ] Atualizar preços, informações, sabores, fotos e estoques preservando identidades e combos; aguarda exportação completa com sabores e quantidades ou autorização para atualização parcial preservando estoque atual.
-- [ ] Verificar dados importados no painel e catálogo após receber a fonte completa.
+- [x] Atualizar 198 produtos/capas do PDF, incluindo 4 novos; preços existentes já coincidem. Estoques nulos e somente opções completas legíveis; identidades, galerias adicionais e combos preservados.
+- [x] Gerar lista CSV/Markdown de 198 estoques ausentes, 22 listas cortadas e 158 descrições ausentes; readback dos 198 registros, catálogo/painel autenticado com foto nova e 7 testes passaram, sem erros de execução.
 
 # Catálogo branco inspirado na referência
 - [x] Aplicar fundo branco e abas pretas apenas no catálogo, preservando o painel.
