@@ -19,6 +19,15 @@ export function ComboBuilder({ product, products, open, onOpenChange, onAdd }: {
     setChoices(prev => [...prev.filter(s => s !== existing), ...(qty > 0 ? [{ groupId, productId, option, qty }] : [])]);
     setError("");
   };
+  const setQty = (groupId: string, productId: string, option: string, next: number) => {
+    const existing = choices.find(s => s.groupId === groupId && s.productId === productId && s.option === option);
+    if (!existing) return;
+    const group = product.comboGroups?.find(g => g.id === groupId);
+    const others = choices.filter(s => s.groupId === groupId && s !== existing).reduce((n, s) => n + s.qty, 0);
+    const qty = Math.min(Math.max(1, Math.floor(Number.isFinite(next) ? next : 1)), Math.max(1, (group?.quantity ?? 1) - others));
+    setChoices(prev => prev.map(s => s === existing ? { ...s, qty } : s));
+    setError("");
+  };
   const complete = product.comboGroups?.every(g => choices.filter(s => s.groupId === g.id).reduce((n, s) => n + s.qty, 0) === g.quantity);
   return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl"><DialogTitle>{product.name}</DialogTitle><DialogDescription>Combo · {brl(product.price)}</DialogDescription>
     {product.comboGroups?.map(group => <section key={group.id} className="border-t pt-4"><h3 className="font-semibold">{group.name} <span className="text-sm text-muted-foreground">{choices.filter(s => s.groupId === group.id).reduce((n, s) => n + s.qty, 0)}/{group.quantity}</span></h3><div className="mt-3 divide-y">{group.productIds.map(id => {
@@ -30,7 +39,7 @@ export function ComboBuilder({ product, products, open, onOpenChange, onAdd }: {
       return <div key={id} className="py-3"><div className="flex items-center gap-3">{p.image && <img src={p.image} alt={p.name} className="size-12 shrink-0 rounded object-contain bg-photo" />}<span className="min-w-0 flex-1 text-sm">{p.name}</span><Button size="icon" variant="outline" title="Adicionar item" aria-label={`Adicionar ${p.name} em ${group.name}`} disabled={!ready || !available(p, option.trim()) || choices.filter(s => s.groupId === group.id).reduce((n, s) => n + s.qty, 0) >= group.quantity} onClick={() => change(group.id, id, option.trim(), 1)}><Plus /></Button></div>
         {p.variations.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{p.variations.map(v => <Button key={v.name} size="sm" variant={option === v.name ? "default" : "outline"} aria-pressed={option === v.name} disabled={!available(p, v.name)} onClick={() => setOptions(prev => ({ ...prev, [k]: v.name }))}>{v.name}</Button>)}{p.allowOther && <input className="field" aria-label={`Outro sabor de ${p.name}`} maxLength={40} placeholder="Outro sabor" value={p.variations.some(v => v.name === option) ? "" : option} onChange={e => setOptions(prev => ({ ...prev, [k]: e.target.value }))} />}</div>}
         {!available(p) && <p className="text-xs text-destructive">Indisponível</p>}
-        {choices.filter(s => s.groupId === group.id && s.productId === id).map(s => <div key={s.option} className="mt-2 flex items-center gap-2 text-sm text-primary"><Button variant="ghost" size="icon" title="Remover item" aria-label={`Remover ${p.name} ${s.option}`} onClick={() => change(group.id, id, s.option, -1)}><Minus /></Button>{s.qty}× {p.name} {s.option && `(${s.option})`}</div>)}
+        {choices.filter(s => s.groupId === group.id && s.productId === id).map(s => <div key={s.option} className="mt-2 flex items-center gap-2 text-sm text-primary"><Button variant="ghost" size="icon" title="Remover item" aria-label={`Remover ${p.name} ${s.option}`} onClick={() => change(group.id, id, s.option, -1)}><Minus /></Button><input className="field w-20 px-2 text-center" type="number" min={1} max={group.quantity} step={1} inputMode="numeric" aria-label={`Quantidade de ${p.name} em ${group.name}`} value={s.qty} onChange={e => setQty(group.id, id, s.option, Number(e.target.value))} />× {p.name} {s.option && `(${s.option})`}</div>)}
       </div>;
     })}</div></section>)}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
