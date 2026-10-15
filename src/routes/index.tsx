@@ -128,6 +128,14 @@ function Catalog() {
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
+  const trackOrder = useServerFn(orderTracking);
+  const tracking = useQuery({
+    queryKey: ["order-tracking", receipt?.id],
+    queryFn: () => trackOrder({ data: { id: receipt!.id } }),
+    enabled: Boolean(receipt?.delivery),
+    refetchInterval: (q) => (q.state.data?.status === "delivered" ? false : 30000),
+    retry: false,
+  });
   const [attempt, setAttempt] = useState<{ signature: string; id: string } | null>(null);
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
@@ -808,6 +816,17 @@ function Catalog() {
                     Abrir pedido no WhatsApp
                   </a>
                 </Button>
+                {receipt.delivery && tracking.data?.trackingUrl && (
+                  <Button asChild className="w-full">
+                    <a href={tracking.data.trackingUrl} target="_blank" rel="noopener noreferrer">
+                      <Navigation />
+                      Acompanhar entrega em tempo real
+                    </a>
+                  </Button>
+                )}
+                {receipt.delivery && tracking.data && !tracking.data.trackingUrl && tracking.data.status === "out_for_delivery" && (
+                  <p className="text-muted-foreground">Seu pedido saiu para entrega!</p>
+                )}
               </div>
             )}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
