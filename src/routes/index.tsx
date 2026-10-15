@@ -767,6 +767,7 @@ function ProductCard({
 }) {
   const hasOpts = Boolean(p.options?.length);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [addQty, setAddQty] = useState(1);
   const chosen = sel[p.id] ?? "";
   const isOther = chosen === OTHER;
   const text = (typed[p.id] ?? "").trim();
@@ -840,18 +841,43 @@ function ProductCard({
           <span className="text-base font-bold text-primary sm:text-lg">{brl(p.price)}</span>
           {p.comboGroups?.length ? <Button disabled={!available(p)} onClick={onBuild} className="h-9 px-2 text-xs"><Plus />Montar combo</Button> : qty > 0 ? (
             <Qty qty={qty} onMinus={() => onChange(key, -1)} onPlus={() => onChange(key, 1)} />
-          ) : (
-            <Button
-              onClick={() => onChange(key, 1)}
-              disabled={!ready}
-              aria-label={`Adicionar ${p.name}`}
-              title={`Adicionar ${p.name}`}
-              className="size-10 shrink-0 rounded-full bg-primary p-0 text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Plus />
-            </Button>
-          )}
+          ) : null}
         </div>
+        {!p.comboGroups?.length && (
+          <div className="flex items-center gap-2 pt-2">
+            <div className="flex shrink-0 items-center rounded-full border bg-card">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                aria-label="Diminuir quantidade"
+                disabled={addQty <= 1}
+                onClick={() => setAddQty(q => Math.max(1, q - 1))}
+              >
+                <Minus />
+              </Button>
+              <span className="w-6 text-center text-sm font-semibold" aria-label="Quantidade a adicionar">{addQty}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                aria-label="Aumentar quantidade"
+                onClick={() => setAddQty(q => Math.min(99, q + 1))}
+              >
+                <Plus />
+              </Button>
+            </div>
+            <Button
+              onClick={() => onChange(key, addQty)}
+              disabled={!ready}
+              aria-label={`Adicionar ${addQty} ${addQty > 1 ? "unidades" : "unidade"} de ${p.name}`}
+              title={`Adicionar ${p.name}`}
+              className="h-9 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Adicionar
+            </Button>
+          </div>
+        )}
         {hasOpts && !ready && (
           <p className="pt-1 text-right text-[11px] text-muted-foreground">
             Escolha {p.optionLabel === "Cor" ? "uma cor" : "um sabor"} para adicionar
