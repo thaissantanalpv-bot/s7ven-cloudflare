@@ -924,7 +924,15 @@ function ProductCard({
         </div>
         {!p.comboGroups?.length && (
           <div className="flex flex-col items-stretch gap-2 pt-3">
-            {qty > 0 ? (
+            {outOfStock ? (
+              <Button
+                disabled
+                aria-label={`${p.name} esgotado`}
+                className="h-11 w-full rounded-full text-base font-bold tracking-wide"
+              >
+                Esgotado
+              </Button>
+            ) : qty > 0 ? (
               <div className="mx-auto flex shrink-0 items-center rounded-full border bg-card">
                 <Button
                   variant="ghost"
@@ -941,6 +949,7 @@ function ProductCard({
                   size="icon"
                   className="h-10 w-10"
                   aria-label="Aumentar quantidade"
+                  disabled={p.stock !== null && qty >= p.stock}
                   onClick={() => onChange(key, 1)}
                 >
                   <Plus />
@@ -983,9 +992,9 @@ function ProductCard({
             )}
           </div>
         )}
-        {hasOpts && !ready && (
-          <p className="pt-1 text-right text-[11px] text-muted-foreground">
-            Escolha {p.optionLabel === "Cor" ? "uma cor" : "um sabor"} para adicionar
+        {hasOpts && !ready && !outOfStock && (
+          <p className={`pt-1 text-right text-[11px] ${optionOut ? "font-semibold text-destructive" : "text-muted-foreground"}`}>
+            {optionOut ? "Esgotado" : `Escolha ${p.optionLabel === "Cor" ? "uma cor" : "um sabor"} para adicionar`}
           </p>
         )}
       </div>
