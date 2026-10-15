@@ -37,6 +37,9 @@ describe("Grouped combos", () => {
   it("validates group quantities and excludes own products and own flavors", () => {
     expect(catalogProductSchema.safeParse(toDraft(combo)).success).toBe(true);
     expect(catalogProductSchema.safeParse({ ...toDraft(combo), comboGroups: [{ ...combo.comboGroups[0], quantity: 0 }] }).success).toBe(false);
+    expect(catalogProductSchema.safeParse({ ...toDraft(combo), comboGroups: [{ ...combo.comboGroups[0], quantity: 100 }] }).success).toBe(true);
+    expect(catalogProductSchema.safeParse({ ...toDraft(combo), comboGroups: [{ ...combo.comboGroups[0], quantity: 101 }] }).success).toBe(false);
+    expect(() => validateCartAvailability([{ ...line, components: [{ groupId: "drink", productId: "p1", qty: 100, option: "" }] }], products)).toThrow("quantidade indisponível");
     expect(catalogProductSchema.safeParse({ ...toDraft(combo), comboGroups: [{ id: "self", name: "Self", quantity: 1, productIds: [combo.id] }] }).success).toBe(false);
   });
 });
