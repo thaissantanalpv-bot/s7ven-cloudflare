@@ -7,7 +7,7 @@ export const variationSchema = z.object({ name: z.string().trim().min(1).max(40)
 export const comboGroupSchema = z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]{1,40}$/),
   name: z.string().trim().min(1, "Informe o nome do grupo.").max(80),
-  quantity: z.number().int().min(1).max(10),
+  quantity: z.number().int().min(1).max(100),
   productIds: z.array(z.string().regex(/^[a-zA-Z0-9_-]{1,30}$/)).min(1, "Escolha os produtos do grupo.").max(176).refine(ids => new Set(ids).size === ids.length),
 });
 export const catalogProductSchema = z.object({
