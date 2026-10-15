@@ -2,11 +2,12 @@ import { fireEvent, render, screen, waitFor, within, cleanup } from "@testing-li
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Order } from "@/lib/orders";
-const mocks = vi.hoisted(() => ({ list: vi.fn(), update: vi.fn() }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), update: vi.fn(), track: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/orders.functions", () => ({
   listOrders: mocks.list,
   updateOrderStatus: mocks.update,
+  updateOrderTracking: mocks.track,
 }));
 import { OrderBoard } from "@/components/orders/order-board";
 let row: Order;
@@ -42,6 +43,10 @@ beforeEach(() => {
   mocks.list.mockReset().mockImplementation(async () => [{ ...row }]);
   mocks.update.mockReset().mockImplementation(async ({ data }) => {
     row.status = data.status;
+    return { saved: true };
+  });
+  mocks.track.mockReset().mockImplementation(async ({ data }) => {
+    row.tracking_url = data.trackingUrl || null;
     return { saved: true };
   });
 });
@@ -154,3 +159,23 @@ describe("Kanban order management", () => {
     vi.unstubAllGlobals();
   });
 });
+
+  it("saves the courier tracking link on delivery orders only", async () => {
+    mount();
+    await screen.findByText("Cliente teste");
+    fireEvent.click(screen.getByRole("button", { name: "Detalhes" }));
+    const input = await screen.findByLabelText("Link de rastreio do pedido 42");
+    fireEvent.change(input, { target: { value: "https://entrega.app/r/abc123" } });
+    fireEvent.blur(input);
+    await waitFor(() => expect(mocks.track).toHaveBeenCalledWith({ data: { id: row.id, trackingUrl: "https://entrega.app/r/abc123" } }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }).catch?.(() => null) ?? screen.getByRole("button", { name: /fechar|close/i }));
+  });
+
+  it("hides the tracking field for pickup orders", async () => {
+    row.fulfillment = "pickup";
+    mount();
+    await screen.findByText("Cliente teste");
+    fireEvent.click(screen.getByRole("button", { name: "Detalhes" }));
+    await screen.findByText(/Retirada na loja/);
+    expect(screen.queryByLabelText("Link de rastreio do pedido 42")).toBeNull();
+  });
