@@ -1,3 +1,8 @@
+# Correção do cálculo de entrega por endereço
+- [ ] Completar endereço de saída com a cidade conhecida, preservando as nove faixas reais e valores.
+- [ ] Calcular ao sair do campo de endereço, descartar respostas antigas e exibir taxa/erros junto do endereço sem indicar entrega gratuita antes da cotação.
+- [ ] Executar testes e conferir carrinho sem chamadas Google Maps; validação real da rota depende do site autorizado.
+
 # Melhorias de venda solicitadas em 15/10/2026
 - [x] Organizar mensagem WhatsApp com nomes, quantidades, valores e links permanentes para visualizar fotos dos produtos; verificação automatizada do destino e mensagem.
 - [x] Exibir destaques no início e permitir seleção pela administração; Energético Bally 2 Litros e Gelo de Sabor selecionados inicialmente e conferidos na vitrine.
