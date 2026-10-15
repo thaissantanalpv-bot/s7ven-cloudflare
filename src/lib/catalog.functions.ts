@@ -62,6 +62,14 @@ async function resolveCatalogPhotos(products: CatalogProduct[], client: Supabase
         p.imagePath = p.image;
         p.image = resolvePhoto(p.image);
       }
+      if (p.variationPhotos) {
+        const resolvedVariationPhotos: Record<string, string> = {};
+        for (const [name, path] of Object.entries(p.variationPhotos)) {
+          const resolved = resolvePhoto(path);
+          if (resolved) resolvedVariationPhotos[name] = resolved;
+        }
+        p.variationPhotos = resolvedVariationPhotos;
+      }
     }
   }
   return products;

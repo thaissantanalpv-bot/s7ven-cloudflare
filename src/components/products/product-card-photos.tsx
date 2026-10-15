@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { productPhotos, type CatalogProduct } from "@/lib/catalog";
+import { productPhotos, variationPhoto, type CatalogProduct } from "@/lib/catalog";
 
-export function ProductCardPhotos({ product, onEnlarge }: { product: CatalogProduct; onEnlarge: () => void }) {
+export function ProductCardPhotos({ product, option, onEnlarge }: { product: CatalogProduct; option?: string; onEnlarge: () => void }) {
   const photos = productPhotos(product);
   const [index, setIndex] = useState(0);
-  const current = Math.min(index, Math.max(0, photos.length - 1));
+  // A variation linked to a photo takes over the displayed photo while selected.
+  const linked = variationPhoto(product, option ?? "");
+  const linkedIndex = linked ? photos.indexOf(linked) : -1;
+  const current = linkedIndex >= 0 ? linkedIndex : Math.min(index, Math.max(0, photos.length - 1));
   const move = (direction: number) => setIndex((current + direction + photos.length) % photos.length);
   return <div className="shrink-0 bg-photo">
     <div className="relative aspect-square overflow-hidden">

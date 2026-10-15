@@ -148,13 +148,16 @@ function Catalog() {
   const [form, setForm] = useState({
     name: "",
     phone: "",
-    address: "",
+    street: "",
+    number: "",
+    neighborhood: "",
     payment: "",
     change: "",
     notes: "",
     zone: "",
     fulfillment: "delivery" as "delivery" | "pickup",
   });
+  const fullAddress = [form.street.trim(), form.number.trim(), form.neighborhood.trim()].filter(Boolean).join(", ");
   const [error, setError] = useState("");
   const [sel, setSel] = useState<Record<string, string>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
@@ -166,7 +169,7 @@ function Catalog() {
     if (id) setSharedProduct(products.find(p => p.id === id) ?? null);
   }, [products]);
   const featured = products.filter(p => p.featured && available(p));
-  const customerValidation = customerSchema.safeParse(form);
+  const customerValidation = customerSchema.safeParse({ ...form, address: fullAddress });
   const fieldErrors = submitted && !customerValidation.success
     ? customerValidation.error.flatten().fieldErrors
     : {};
@@ -177,7 +180,14 @@ function Catalog() {
       if (raw) {
         const saved = JSON.parse(raw);
         if (saved.cart) setCart(saved.cart);
-        if (saved.form) setForm((f) => ({ ...f, ...saved.form }));
+        if (saved.form) setForm((f) => {
+          // Saved carts from the previous single-field address keep working.
+          const { address: savedAddress = "", street, ...savedRest } = saved.form;
+          const migrated = typeof savedAddress === "string" && savedAddress.trim() && !street
+            ? { ...savedRest, street: savedAddress.trim() }
+            : savedRest;
+          return { ...f, ...migrated };
+        });
       }
     } catch {}
     setLoaded(true);
@@ -221,7 +231,7 @@ function Catalog() {
   const isDelivery = form.fulfillment === "delivery";
   const distanceMode = settings.delivery_enabled && settings.delivery_distance_enabled;
   const distanceConfig = JSON.stringify([settings.delivery_origin, settings.delivery_distance_tiers]);
-  const validQuote = deliveryQuote?.address === deliveryAddress(form.address) && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
+  const validQuote = deliveryQuote?.address === deliveryAddress(fullAddress) && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
   const deliveryFee = isDelivery && settings.delivery_enabled ? (distanceMode ? validQuote?.fee ?? 0 : settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
   useEffect(() => {
     quoteRequest.current += 1;
@@ -229,9 +239,9 @@ function Catalog() {
     setQuoting(false);
     setDeliveryError("");
     setDeliveryQuote(null);
-  }, [form.address, form.fulfillment, distanceConfig]);
+  }, [fullAddress, form.fulfillment, distanceConfig]);
   const calculateDelivery = async () => {
-    const address = form.address.trim();
+    const address = fullAddress;
     if (!isDelivery || !distanceMode || address.length < 8 || validQuote || pendingQuote.current === address) return;
     if (!navigator.onLine) return setDeliveryError("Conecte-se à internet para calcular a taxa de entrega.");
     const request = ++quoteRequest.current;
@@ -299,7 +309,7 @@ function Catalog() {
       return setError("Escolha o bairro ou região de entrega.");
     if (status.configured && !status.open)
       return setError("A loja está fechada. Confira os horários de atendimento.");
-    const r = customerSchema.safeParse(form);
+    const r = customerSchema.safeParse({ ...form, address: fullAddress });
     if (!r.success) return setError(r.error.issues[0]?.message ?? "Verifique os dados");
     const d = r.data;
     const requestId = attempt?.signature === JSON.stringify({ customer: d, items: inputItems }) ? attempt.id : crypto.randomUUID();
@@ -450,7 +460,7 @@ function Catalog() {
       </section>
       {cat === "Todos" && !query.trim() && featured.length > 0 && <section aria-label="Produtos em destaque" className="mx-auto max-w-7xl border-b px-4 py-5 sm:px-8">
         <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-semibold"><Star className="size-5 text-primary" />Destaques</h2>
-        <div className="grid grid-cols-2 items-start gap-x-3 gap-y-6 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-2 items-stretch gap-x-3 gap-y-6 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
           {featured.map(p => <ProductCard key={p.id} p={p} cart={cart} sel={sel} typed={typed} onSel={(id, v) => setSel(s => ({ ...s, [id]: v }))} onTyped={(id, v) => setTyped(s => ({ ...s, [id]: v }))} onChange={change} onBuild={() => setBuilding(p)} />)}
         </div>
       </section>}
@@ -481,7 +491,7 @@ function Catalog() {
             <option value="name">Nome: A–Z</option>
           </select>
         </div>
-        <main className="grid grid-cols-2 items-start gap-x-3 gap-y-6 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
+        <main className="grid grid-cols-2 items-stretch gap-x-3 gap-y-6 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
           {filtered.length === 0 && (
             <div className="col-span-full py-16 text-center">
               <Search className="mx-auto mb-4 size-8 text-muted-foreground" />
@@ -609,20 +619,46 @@ function Catalog() {
                 <Button variant={isDelivery ? "default" : "outline"} aria-pressed={isDelivery} onClick={() => { setForm({ ...form, fulfillment: "delivery" }); setError(""); }}><Truck />Entrega</Button>
                 <Button variant={!isDelivery ? "default" : "outline"} aria-pressed={!isDelivery} onClick={() => { setForm({ ...form, fulfillment: "pickup" }); setError(""); }}><Store />Retirada na loja</Button>
               </div>
-              {isDelivery && <Field label="Endereço de entrega *">
-                <textarea
-                  className="field"
-                  rows={3}
-                  maxLength={300}
-                  required
-                  aria-invalid={Boolean(fieldErrors.address?.length)}
-                  aria-describedby={fieldErrors.address?.length ? "address-error" : undefined}
-                  placeholder="Rua, número, bairro e CEP"
-                  value={form.address}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  onBlur={() => { void calculateDelivery(); }}
-                />
-              </Field>}
+              {isDelivery && (
+                <fieldset className="space-y-2" aria-label="Endereço de entrega">
+                  <legend className="text-sm">Endereço de entrega *</legend>
+                  <div role="group" aria-label="Rua e número" className="grid grid-cols-[1fr_88px] gap-2">
+                    <label className="block text-sm">Rua
+                      <input
+                        className="field mt-1"
+                        required
+                        maxLength={120}
+                        aria-invalid={Boolean(fieldErrors.address?.length)}
+                        placeholder="Rua ou Avenida"
+                        value={form.street}
+                        onChange={(e) => setForm({ ...form, street: e.target.value })}
+                      />
+                    </label>
+                    <label className="block text-sm">Número
+                      <input
+                        className="field mt-1 text-center"
+                        required
+                        inputMode="numeric"
+                        maxLength={10}
+                        aria-invalid={Boolean(fieldErrors.address?.length)}
+                        placeholder="Nº"
+                        value={form.number}
+                        onChange={(e) => setForm({ ...form, number: e.target.value })}
+                      />
+                    </label>
+                  </div>
+                  <label className="block text-sm">Bairro
+                    <input
+                      className="field mt-1"
+                      maxLength={80}
+                      placeholder="Bairro"
+                      value={form.neighborhood}
+                      onChange={(e) => setForm({ ...form, neighborhood: e.target.value })}
+                      onBlur={() => { void calculateDelivery(); }}
+                    />
+                  </label>
+                </fieldset>
+              )}
               {isDelivery && <label className="block text-sm">Cidade<input className="field mt-2" value={DELIVERY_CITY} readOnly /></label>}
               {!isDelivery && settings.pickup_address && (
                 <div className="border-l-2 border-primary py-2 pl-3 text-sm" role="status">
@@ -631,7 +667,7 @@ function Catalog() {
                 </div>
               )}
               {isDelivery && fieldErrors.address?.[0] && <p id="address-error" className="text-xs text-destructive">{fieldErrors.address[0]}</p>}
-              {isDelivery && distanceMode && <div className="space-y-2"><Button variant="outline" disabled={quoting || form.address.trim().length < 8 || Boolean(validQuote)} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : validQuote ? "Entrega calculada" : "Calcular entrega"}</Button>{validQuote && <p role="status" className="text-sm font-semibold text-primary">Taxa de entrega: {brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km pela rota</p>}{deliveryError && <p role="alert" className="text-sm text-destructive">{deliveryError}</p>}</div>}
+              {isDelivery && distanceMode && <div className="space-y-2"><Button variant="outline" disabled={quoting || fullAddress.trim().length < 8 || Boolean(validQuote)} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : validQuote ? "Entrega calculada" : "Calcular entrega"}</Button>{validQuote && <p role="status" className="text-sm font-semibold text-primary">Taxa de entrega: {brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km pela rota</p>}{deliveryError && <p role="alert" className="text-sm text-destructive">{deliveryError}</p>}</div>}
               {isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && (
                 <Field label="Bairro ou região">
                   <select
@@ -810,8 +846,8 @@ function ProductCard({
   const ready = (!hasOpts || (isOther ? !!text : !!chosen)) && available(p, option);
 
   return (
-    <article className="group flex min-w-0 flex-col overflow-hidden rounded-lg bg-card">
-      <ProductCardPhotos product={p} onEnlarge={() => setGalleryOpen(true)} />
+    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-lg bg-card">
+      <ProductCardPhotos product={p} option={option} onEnlarge={() => setGalleryOpen(true)} />
       <div className="flex min-w-0 flex-1 flex-col px-1 py-3 sm:px-2">
         <span className="truncate text-[10px] uppercase text-muted-foreground">{p.category}</span>
         <h2 className="mt-1 font-display text-sm font-semibold leading-snug sm:text-base"><Button variant="link" onClick={() => setGalleryOpen(true)} className="h-auto w-full justify-start whitespace-normal break-words p-0 text-left text-sm text-foreground sm:text-base">{p.name}</Button></h2>

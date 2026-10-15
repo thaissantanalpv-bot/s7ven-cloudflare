@@ -134,6 +134,13 @@
       "when": 1792087894917,
       "tag": "0018_catalog_featured_sales_projection",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792093795083,
+      "tag": "0019_0019_variation_photos_projection",
+      "breakpoints": true
     }
   ]
 }

@@ -23,6 +23,7 @@
 - Share cart availability checks between catalog submission and server pricing, including aggregate product/variation quantities and missing saved-cart products; only navigate to WhatsApp after server validation and stock reservation succeed.
 - Keep order management in an admin-only panel module with authenticated status writes, conflict detection, paginated polling and user-activated audio; WhatsApp stage actions open prefilled messages rather than claiming automatic delivery.
 - Preserve the imported baseline; expose only allowlisted sales fields, including admin-selected highlights. Raw overrides/writes stay admin-only.
+- Keep variation-photo links (variationPhotos) validated as allowlisted photo paths and project them publicly only when the target photo is already exposed via image/images; the catalog swaps the displayed photo while the matching variation is selected.
 - Store product photos in private native storage with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads; this protects unpublished uploads without blocking admin previews.
 - Use separate public and admin catalog query keys so restricted override data cannot leak through a shared cache.
 - Keep cover/additional paths in image/images and resolve signed URLs separately; admin saves must never persist expiring URLs.
