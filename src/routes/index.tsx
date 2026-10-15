@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cloneElement, isValidElement, useEffect, useId, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Search,
   ShoppingBag,
@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { publicStoreSettingsQuery as storeSettingsQuery } from "@/lib/store-settings.query";
-import { savePublicSnapshot, cacheViewedCatalogPhotos, offlinePhotoUrls } from "@/lib/offline-catalog";
+import { savePublicSnapshot, readPublicSnapshot, cacheViewedCatalogPhotos, offlinePhotoUrls } from "@/lib/offline-catalog";
 import { storeStatus, DAYS } from "@/lib/store-settings";
 import { QRCodeSVG } from "qrcode.react";
 import { useServerFn } from "@tanstack/react-start";
@@ -76,6 +76,7 @@ const OTHER = "__outro__";
 const keyOf = (id: string, opt?: string) => (opt ? `${id}${SEP}${opt}` : id);
 
 function Catalog() {
+  const queryClient = useQueryClient();
   const { data: catalogProducts } = useSuspenseQuery(catalogQuery);
   const [online, setOnline] = useState(true);
   const [photoUrls, setPhotoUrls] = useState<Map<string, string>>(new Map());
@@ -84,15 +85,28 @@ function Catalog() {
   const categories = ["Todos", ...new Set(products.map(p => p.category))];
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
   useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
+    const update = () => {
+      setOnline(navigator.onLine);
+      if (navigator.onLine) {
+        void queryClient.invalidateQueries({ queryKey: catalogQuery.queryKey });
+        void queryClient.invalidateQueries({ queryKey: storeSettingsQuery.queryKey });
+      } else {
+        const savedProducts = readPublicSnapshot<CatalogProduct[]>("products");
+        const savedSettings = readPublicSnapshot<typeof settings>("settings");
+        if (savedProducts) queryClient.setQueryData(catalogQuery.queryKey, savedProducts);
+        if (savedSettings) queryClient.setQueryData(storeSettingsQuery.queryKey, savedSettings);
+      }
+    };
     update();
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
     return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
-  }, []);
+  }, [queryClient]);
   useEffect(() => {
-    savePublicSnapshot("products", catalogProducts);
-    savePublicSnapshot("settings", settings);
+    if (navigator.onLine) {
+      savePublicSnapshot("products", catalogProducts);
+      savePublicSnapshot("settings", settings);
+    }
     const urls = [...new Set(catalogProducts.flatMap(product => [product.image, ...(product.images ?? [])]).filter((url): url is string => Boolean(url)))];
     if (online) return cacheViewedCatalogPhotos(urls);
     let disposed = false;

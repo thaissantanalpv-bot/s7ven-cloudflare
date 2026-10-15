@@ -10,6 +10,15 @@ export async function registerCatalogOffline() {
     return;
   }
   const registration = await navigator.serviceWorker.register('/sw.js');
+  // Cache the first public navigation once the generated worker controls it.
+  if (location.pathname === '/') {
+    void navigator.serviceWorker.ready.then(async () => {
+      if (!navigator.serviceWorker.controller) {
+        await new Promise<void>(resolve => navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), { once: true }));
+      }
+      if (navigator.onLine) await fetch('/', { credentials: 'omit' });
+    }).catch(() => {});
+  }
   const update = () => { if (navigator.onLine) void registration.update().catch(() => {}); };
   window.addEventListener('online', update);
   update();

@@ -11,12 +11,14 @@ export default defineConfig({
   plugins: [VitePWA({
     strategies: "generateSW",
     filename: "sw.js",
+    outDir: "dist/client",
     registerType: "autoUpdate",
     injectRegister: null,
     manifest: false,
     devOptions: { enabled: false },
     workbox: {
       globPatterns: ["assets/**/*.{js,css,woff,woff2}"],
+      maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
       navigateFallback: null,
       cleanupOutdatedCaches: true,
       runtimeCaching: [{
