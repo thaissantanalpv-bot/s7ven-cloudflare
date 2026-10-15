@@ -11,6 +11,7 @@ import { saveCatalogProduct } from "@/lib/catalog.functions";
 import { available, catalogProductSchema, toDraft, type CatalogProduct, type ProductDraft } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { ComboGroupsEditor } from "./combo-groups-editor";
+import { AiPhotoEditor } from "./ai-photo-editor";
 
 export function ProductManager({ combos = false }: { combos?: boolean }) {
   const { data: products } = useSuspenseQuery(adminCatalogQuery);
@@ -70,8 +71,24 @@ function ProductEditor({ initial, preview, galleryPreview, categories, busy, mes
   const [photo, setPhoto] = useState(preview);
   const [extraPreviews, setExtraPreviews] = useState(galleryPreview);
   const [uploading, setUploading] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiPhoto, setAiPhoto] = useState(-1);
   const [error, setError] = useState("");
   const categoryId = useId();
+  const photos = [...(draft.image ? [{ path: draft.image, preview: photo }] : []), ...draft.images.map((path, i) => ({ path, preview: extraPreviews[i] ?? "" }))];
+  const applyAiPhoto = async (file: File) => {
+    const selected = photos[aiPhoto];
+    if (!selected) throw new Error("Selecione uma foto.");
+    if (file.size > 5*1024*1024) throw new Error("A foto editada excede 5 MB.");
+    const path = `uploads/${crypto.randomUUID()}.png`;
+    const { error: uploadError } = await supabase.storage.from("product-photos").upload(path, file, { contentType: file.type, upsert: false });
+    if (uploadError) throw new Error("Não foi possível guardar a foto editada.");
+    const { data, error: signedError } = await supabase.storage.from("product-photos").createSignedUrl(path,3600);
+    if (signedError || !data) throw new Error("Não foi possível conferir a foto editada.");
+    if (aiPhoto === 0) { setDraft(d => ({ ...d, image: path })); setPhoto(data.signedUrl); }
+    else { setDraft(d => ({ ...d, images: d.images.map((p,i) => i === aiPhoto-1 ? path : p) })); setExtraPreviews(p => p.map((url,i) => i === aiPhoto-1 ? data.signedUrl : url)); }
+    setAiPhoto(-1);
+  };
   const upload = async (files: File[]) => {
     if (!files.length) return;
     if (files.length + draft.images.length + (draft.image ? 1 : 0) > 10) { setError("Use até 10 fotos por produto."); return; }
@@ -93,7 +110,7 @@ function ProductEditor({ initial, preview, galleryPreview, categories, busy, mes
     finally { setUploading(false); }
   };
   return <form className="space-y-5" onSubmit={e => { e.preventDefault(); if (combos && !draft.comboGroups.length) { setError("Cadastre pelo menos um grupo."); return; } const parsed = catalogProductSchema.safeParse(draft); if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Confira os campos."); return; } setError(""); onSave(parsed.data); }}>
-    <fieldset disabled={busy || uploading} className="space-y-5">
+    <fieldset disabled={busy || uploading || aiBusy} className="space-y-5">
       <div><div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Fotos do produto</h3><label className="inline-flex cursor-pointer items-center gap-2 text-sm text-primary"><Upload className="size-4" />{uploading ? "Enviando…" : "Adicionar fotos"}<input aria-label="Enviar foto do produto" type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={e => { const files = Array.from(e.target.files ?? []); e.target.value = ""; void upload(files); }} /></label></div><p className="mt-2 text-xs text-muted-foreground">Até 10 fotos · JPG, PNG ou WebP · 5 MB por foto</p><div className="mt-3 flex flex-wrap gap-3">{[...(draft.image ? [{ path: draft.image, preview: photo }] : []), ...draft.images.map((path, i) => ({ path, preview: extraPreviews[i] ?? "" }))].map((item, index) => <div key={item.path} className="w-24"><div className="grid size-24 place-items-center overflow-hidden rounded border bg-photo">{item.preview ? <img src={item.preview} alt={`Foto ${index + 1} do produto`} className="size-full object-contain" /> : <Package className="text-photo-foreground" />}</div><div className="mt-1 flex items-center justify-between"><Button type="button" variant={index === 0 ? "secondary" : "ghost"} size="sm" className="h-7 px-1 text-xs" disabled={index === 0} onClick={() => { const extra = index - 1; const next = draft.images[extra]; if (!next) return; setDraft(d => ({ ...d, image: next, images: d.images.map((path, i) => i === extra ? d.image : path) })); setPhoto(item.preview); setExtraPreviews(prev => prev.map((url, i) => i === extra ? photo : url)); }}>{index === 0 ? "Capa" : "Usar capa"}</Button><Button type="button" variant="ghost" size="icon" className="size-7" title="Remover foto" aria-label={`Remover foto ${index + 1}`} onClick={() => { if (index === 0) { setDraft(d => ({ ...d, image: d.images[0] ?? "", images: d.images.slice(1) })); setPhoto(extraPreviews[0] ?? ""); setExtraPreviews(prev => prev.slice(1)); } else { setDraft(d => ({ ...d, images: d.images.filter((_, i) => i !== index - 1) })); setExtraPreviews(prev => prev.filter((_, i) => i !== index - 1)); } }}><Trash2 /></Button></div></div>)}</div></div>
       <label className="block text-sm">Nome<input className="field mt-1" required maxLength={150} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} /></label>
       <div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm">Preço (R$)<input className="field mt-1" type="number" step="0.01" min="0" max="1000000" required value={draft.price} onChange={e => setDraft({ ...draft, price: Number(e.target.value) })} /></label><label className="block text-sm">Categoria<input className="field mt-1" list={categoryId} required maxLength={100} value={draft.category} onChange={e => setDraft({ ...draft, category: e.target.value })} /><datalist id={categoryId}>{categories.map(c => <option key={c} value={c} />)}</datalist></label></div>
@@ -105,8 +122,9 @@ function ProductEditor({ initial, preview, galleryPreview, categories, busy, mes
         {draft.variations.map((v, index) => <div key={index} className="space-y-3 border-t py-4"><div className="flex items-center gap-3"><input className="field flex-1" aria-label={`Nome da variação ${index + 1}`} maxLength={40} value={v.name} onChange={e => setDraft({ ...draft, variations: draft.variations.map((o, i) => i === index ? { ...o, name: e.target.value } : o) })} placeholder="Nome da variação" required /><Switch aria-label={`Ativar variação ${index + 1}`} checked={v.active} onCheckedChange={active => setDraft({ ...draft, variations: draft.variations.map((o, i) => i === index ? { ...o, active } : o) })} /><Button type="button" variant="ghost" size="icon" aria-label={`Remover variação ${index + 1}`} title="Remover variação" onClick={() => { const variations = draft.variations.filter((_, i) => i !== index); setDraft({ ...draft, variations, allowOther: variations.length ? draft.allowOther : false }); }}><Trash2 /></Button></div><StockField label={`Estoque da variação ${index + 1}`} stock={v.stock} onChange={stock => setDraft({ ...draft, allowOther: stock !== null ? false : draft.allowOther, variations: draft.variations.map((o, i) => i === index ? { ...o, stock } : o) })} /></div>)}
       </div>}
     </fieldset>
+    {photos.length > 0 && <div className="space-y-3"><label className="block text-sm">Foto para editar com IA<select className="field mt-1" aria-label="Foto para editar com IA" value={aiPhoto} disabled={aiBusy || busy || uploading} onChange={e => setAiPhoto(Number(e.target.value))}><option value={-1}>Selecione uma foto</option>{photos.map((p,i) => <option key={p.path} value={i}>Foto {i+1}{i === 0 ? " · Capa" : ""}</option>)}</select></label>{photos[aiPhoto]?.preview && <AiPhotoEditor key={photos[aiPhoto]?.path} source={photos[aiPhoto]?.preview ?? ""} productName={draft.name} onApply={applyAiPhoto} onBusy={setAiBusy} />}</div>}
     {(error || message) && <p role="alert" className="text-sm text-destructive">{error || message}</p>}
-    <div className="flex justify-end border-t pt-4"><Button type="submit" disabled={busy || uploading}><Save />{busy ? "Salvando…" : combos ? "Salvar combo" : "Salvar produto"}</Button></div>
+    <div className="flex justify-end border-t pt-4"><Button type="submit" disabled={busy || uploading || aiBusy}><Save />{busy ? "Salvando…" : combos ? "Salvar combo" : "Salvar produto"}</Button></div>
   </form>;
 }
 function StockField({ label, stock, onChange }: { label: string; stock: number | null; onChange: (n: number | null) => void }) {

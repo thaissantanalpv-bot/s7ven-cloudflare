@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as ApiAssistantRouteImport } from './routes/api/assistant'
+import { Route as ApiEditPhotoRouteImport } from './routes/api/edit-photo'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -39,18 +40,25 @@ const ApiAssistantRoute = ApiAssistantRouteImport.update({
   path: '/api/assistant',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiEditPhotoRoute = ApiEditPhotoRouteImport.update({
+  id: '/api/edit-photo',
+  path: '/api/edit-photo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/api/assistant': typeof ApiAssistantRoute
+  '/api/edit-photo': typeof ApiEditPhotoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/api/assistant': typeof ApiAssistantRoute
+  '/api/edit-photo': typeof ApiEditPhotoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,12 +67,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/api/assistant': typeof ApiAssistantRoute
+  '/api/edit-photo': typeof ApiEditPhotoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/painel' | '/api/assistant'
+  fullPaths: '/' | '/auth' | '/painel' | '/api/assistant' | '/api/edit-photo'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/painel' | '/api/assistant'
+  to: '/' | '/auth' | '/painel' | '/api/assistant' | '/api/edit-photo'
   id:
     | '__root__'
     | '/'
@@ -72,6 +81,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/painel'
     | '/api/assistant'
+    | '/api/edit-photo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -79,6 +89,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiAssistantRoute: typeof ApiAssistantRoute
+  ApiEditPhotoRoute: typeof ApiEditPhotoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -118,6 +129,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/edit-photo': {
+      id: '/api/edit-photo'
+      path: '/api/edit-photo'
+      fullPath: '/api/edit-photo'
+      preLoaderRoute: typeof ApiEditPhotoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -137,6 +155,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiAssistantRoute: ApiAssistantRoute,
+  ApiEditPhotoRoute: ApiEditPhotoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
