@@ -119,7 +119,10 @@
 - [ ] Validar Google Maps no site publicado após cadastrar endereço completo de saída e faixas reais; chamadas de Maps não são verificáveis no ambiente de teste.
 - [ ] Confirmar o aviso de loja fechada na versão publicada fora do horário (aberta durante a verificação) e o selo "Esgotado" com um produto de estoque zerado.
 ## Novo pedido (Thais, 15/10/2026 19:44 UTC)
-- [ ] Linkar foto do produto às variações (foto muda conforme a variação selecionada) para o cliente entender qual é a variação.
-- [ ] Alinhar os produtos do catálogo na mesma altura/grade (cards uniformes).
 - [x] Implementado (15/10/2026): migration 0019 (variationPhotos na projeção, filtrada às fotos já públicas), photoForOption/variationPhoto em catalog.ts, ProductCardPhotos com prop option, seletor "Vincular à variação" por foto no painel (remoção/edição IA remapeiam ou desligam o vínculo), grids items-stretch + cards h-full. 84 testes passando.
 - [x] Bloquear pedido de produto com estoque zerado e mostrar "Esgotado" no card (botão desabilitado, selo no card, sabor esgotado sinalizado, "+" limitado ao estoque)
+
+## Divulgação do endereço publicado (Thais, 15/10/2026 20:24 UTC)
+- [x] Manter s7venlounge.lovable.app sem alterar o link e orientar a divulgação.
+- [x] Gerar QR de balcão (100×150mm) e de cartão (90×50mm) em PDF vetorial e PNG 300dpi com a logo no centro; leitura conferida em tamanho cheio e reduzido a 1/4.
+- [x] Escrever mensagens prontas para status, lista de transmissão, resposta automática, reposição e reativação.
