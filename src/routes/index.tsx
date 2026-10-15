@@ -872,7 +872,7 @@ function ProductCard({
               disabled={!ready}
               aria-label={`Adicionar ${addQty} ${addQty > 1 ? "unidades" : "unidade"} de ${p.name}`}
               title={`Adicionar ${p.name}`}
-              className="h-9 w-full rounded-full bg-primary text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+              className="h-11 w-full rounded-full bg-primary text-base font-bold tracking-wide text-primary-foreground shadow-md transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Adicionar
             </Button>
