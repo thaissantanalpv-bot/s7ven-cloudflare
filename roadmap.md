@@ -1,3 +1,9 @@
+# Catálogo offline
+- [x] Preparar abertura offline somente do catálogo público, sem cache de dados administrativos.
+- [x] Salvar produtos/configurações públicas e atualizar ao reconectar; manter pedidos online.
+- [x] Verificar consulta offline e reconexão no navegador com 195 produtos e 32 testes; registro corretamente desativado no preview.
+- [ ] Confirmar reabertura sem internet na versão publicada; publicação não solicitada e service worker proibido no preview.
+
 # Fase 1
 - [x] Reformular o catálogo premium com referência visual TabaDega, preservando produtos, sabores, Pix e WhatsApp.
 - [x] Criar painel protegido para taxas por região e horários semanais, com salvamento compartilhado.
