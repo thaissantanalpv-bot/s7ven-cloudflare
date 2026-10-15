@@ -1,5 +1,5 @@
 # Correção do cálculo de entrega por endereço
-- [ ] Mostrar aviso de loja fechada antes dos produtos, usando os horários cadastrados; verificar aviso e acesso à grade de horários.
+- [x] Mostrar aviso de loja fechada antes dos produtos, usando os horários cadastrados; aviso e grade real verificados em 384/1280px, seis testes passaram e build OK, sem alterar horários.
 - [x] Completar endereço de saída com Araçatuba via painel autenticado; readback confirmou preservação das nove faixas reais e valores.
 - [x] Preencher Araçatuba automaticamente e validar cidade/estado/país e endereço completo antes da rota; endereço normalizado também no pedido e WhatsApp.
 - [x] Calcular ao sair do campo de endereço, descartar respostas antigas e exibir taxa/erros junto do endereço sem indicar entrega gratuita antes da cotação.
