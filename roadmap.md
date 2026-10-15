@@ -1,3 +1,8 @@
+# Atualização completa do catálogo de 15/10/2026
+- [x] Conferir PDF: preços e fotos presentes; listas de sabores/cores truncadas e quantidades de estoque ausentes.
+- [ ] Atualizar preços, informações, sabores, fotos e estoques preservando identidades e combos; aguarda exportação completa com sabores e quantidades ou autorização para atualização parcial preservando estoque atual.
+- [ ] Verificar dados importados no painel e catálogo após receber a fonte completa.
+
 # Catálogo branco inspirado na referência
 - [x] Aplicar fundo branco e abas pretas apenas no catálogo, preservando o painel.
 - [x] Mostrar dois produtos por linha no celular e ícone existente S7VEN no início.
