@@ -872,43 +872,67 @@ function ProductCard({
         )}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
           <span className="text-base font-bold text-primary sm:text-lg">{brl(p.price)}</span>
-          {p.comboGroups?.length ? <Button disabled={!available(p)} onClick={onBuild} className="h-9 px-2 text-xs"><Plus />Montar combo</Button> : qty > 0 ? (
-            <Qty qty={qty} onMinus={() => onChange(key, -1)} onPlus={() => onChange(key, 1)} />
-          ) : null}
+          {p.comboGroups?.length ? <Button disabled={!available(p)} onClick={onBuild} className="h-9 px-2 text-xs"><Plus />Montar combo</Button> : null}
         </div>
         {!p.comboGroups?.length && (
           <div className="flex flex-col items-stretch gap-2 pt-3">
-            <div className="mx-auto flex shrink-0 items-center rounded-full border bg-card">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                aria-label="Diminuir quantidade"
-                disabled={addQty <= 1}
-                onClick={() => setAddQty(q => Math.max(1, q - 1))}
-              >
-                <Minus />
-              </Button>
-              <span className="w-6 text-center text-sm font-semibold" aria-label="Quantidade a adicionar">{addQty}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                aria-label="Aumentar quantidade"
-                onClick={() => setAddQty(q => Math.min(99, q + 1))}
-              >
-                <Plus />
-              </Button>
-            </div>
-            <Button
-              onClick={() => onChange(key, addQty)}
-              disabled={!ready}
-              aria-label={`Adicionar ${addQty} ${addQty > 1 ? "unidades" : "unidade"} de ${p.name}`}
-              title={`Adicionar ${p.name}`}
-              className="h-11 w-full rounded-full bg-primary text-base font-bold tracking-wide text-primary-foreground shadow-md transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Adicionar
-            </Button>
+            {qty > 0 ? (
+              <div className="mx-auto flex shrink-0 items-center rounded-full border bg-card">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10"
+                  aria-label="Diminuir quantidade"
+                  onClick={() => onChange(key, -1)}
+                >
+                  <Minus />
+                </Button>
+                <span className="w-8 text-center text-base font-semibold" aria-label="Quantidade no carrinho">{qty}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10"
+                  aria-label="Aumentar quantidade"
+                  onClick={() => onChange(key, 1)}
+                >
+                  <Plus />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="mx-auto flex shrink-0 items-center rounded-full border bg-card">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label="Diminuir quantidade"
+                    disabled={addQty <= 1}
+                    onClick={() => setAddQty(q => Math.max(1, q - 1))}
+                  >
+                    <Minus />
+                  </Button>
+                  <span className="w-6 text-center text-sm font-semibold" aria-label="Quantidade a adicionar">{addQty}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label="Aumentar quantidade"
+                    onClick={() => setAddQty(q => Math.min(99, q + 1))}
+                  >
+                    <Plus />
+                  </Button>
+                </div>
+                <Button
+                  onClick={() => onChange(key, addQty)}
+                  disabled={!ready}
+                  aria-label={`Adicionar ${addQty} ${addQty > 1 ? "unidades" : "unidade"} de ${p.name}`}
+                  title={`Adicionar ${p.name}`}
+                  className="h-11 w-full rounded-full bg-primary text-base font-bold tracking-wide text-primary-foreground shadow-md transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Adicionar
+                </Button>
+              </>
+            )}
           </div>
         )}
         {hasOpts && !ready && (
