@@ -1,6 +1,6 @@
 # Impressão térmica de pedidos
-- [ ] Adicionar ícone de impressão nos pedidos e configuração local de nome/papel 58 ou 80 mm.
-- [ ] Verificar via do entregador com endereço, itens, pagamento e totais em pedido real do painel, sem alterar pedidos.
+- [x] Adicionar ícone de impressão nos pedidos e configuração local de nome/papel 58 ou 80 mm.
+- [x] Verificar via do entregador com endereço, itens, pagamento e totais em pedido real do painel, sem alterar pedidos; pedido #7 conferido em 58 mm no celular e impressão nativa acionada.
 - [ ] Conectar e testar a impressora física: depende do modelo/conexão e do aparelho da loja.
 
 # Publicação de 15/10/2026
