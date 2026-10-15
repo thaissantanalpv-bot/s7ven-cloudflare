@@ -1,3 +1,7 @@
+# Publicação de 15/10/2026
+- [x] Publicar as correções pendentes (contagem por aparelho, entrega por endereço, combos até 100, loja fechada, esgotados, foto por variação, cards alinhados); a versão publicada mostrou 202 produtos, Destaques e Rua/Número/Bairro separados sem CEP.
+- [ ] Conferir no aparelho a reabertura sem internet e o envio real de pedido; a taxa por quilômetro só se confirma com endereço real.
+
 # Correção do cálculo de entrega por endereço
 - [x] Mostrar aviso de loja fechada antes dos produtos, usando os horários cadastrados; aviso e grade real verificados em 384/1280px, seis testes passaram e build OK, sem alterar horários.
 - [x] Completar endereço de saída com Araçatuba via painel autenticado; readback confirmou preservação das nove faixas reais e valores.
@@ -31,7 +35,7 @@
 - [x] Preparar abertura offline somente do catálogo público, sem cache de dados administrativos.
 - [x] Salvar produtos/configurações públicas e atualizar ao reconectar; manter pedidos online.
 - [x] Verificar consulta offline e reconexão no navegador com 195 produtos e 32 testes; registro corretamente desativado no preview.
-- [ ] Confirmar reabertura sem internet na versão publicada; publicação não solicitada e service worker proibido no preview.
+- [ ] Confirmar reabertura sem internet na versão publicada; já publicada em 15/10/2026, falta testar no aparelho.
 
 # Fase 1
 - [x] Reformular o catálogo premium com referência visual TabaDega, preservando produtos, sabores, Pix e WhatsApp.
@@ -113,6 +117,7 @@
 - [x] Adicionar edição de fotos com IA, comparação e aplicação mediante confirmação.
 - [x] Verificar telas administrativas no celular, edição real com IA e 26 testes; build OK. Taxa real preservada, nenhum produto alterado durante a verificação.
 - [ ] Validar Google Maps no site publicado após cadastrar endereço completo de saída e faixas reais; chamadas de Maps não são verificáveis no ambiente de teste.
+- [ ] Confirmar o aviso de loja fechada na versão publicada fora do horário (aberta durante a verificação) e o selo "Esgotado" com um produto de estoque zerado.
 ## Novo pedido (Thais, 15/10/2026 19:44 UTC)
 - [ ] Linkar foto do produto às variações (foto muda conforme a variação selecionada) para o cliente entender qual é a variação.
 - [ ] Alinhar os produtos do catálogo na mesma altura/grade (cards uniformes).
