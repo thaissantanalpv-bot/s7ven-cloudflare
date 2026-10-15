@@ -7,6 +7,6 @@ export async function deliverySession() {
   return useSession<{ ready: boolean }>({ password, name: "s7ven-delivery", maxAge: 86400, cookie: { httpOnly: true, sameSite: "lax", secure: process.env["NODE_ENV"] === "production" } });
 }
 export async function deliverySettingsHash(settings: StoreSettings) {
-  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify([settings.delivery_origin, settings.delivery_distance_tiers, settings.delivery_enabled, settings.delivery_distance_enabled])));
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(["aracatuba-v1", settings.delivery_origin, settings.delivery_distance_tiers, settings.delivery_enabled, settings.delivery_distance_enabled])));
   return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, "0")).join("");
 }

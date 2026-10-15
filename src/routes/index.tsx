@@ -30,6 +30,7 @@ import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder } from "@/lib/orders.functions";
 import { startDeliverySession, quoteDelivery } from "@/lib/delivery.functions";
+import { DELIVERY_CITY, deliveryAddress } from "@/lib/delivery-address";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
@@ -220,7 +221,7 @@ function Catalog() {
   const isDelivery = form.fulfillment === "delivery";
   const distanceMode = settings.delivery_enabled && settings.delivery_distance_enabled;
   const distanceConfig = JSON.stringify([settings.delivery_origin, settings.delivery_distance_tiers]);
-  const validQuote = deliveryQuote?.address === form.address.trim() && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
+  const validQuote = deliveryQuote?.address === deliveryAddress(form.address) && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
   const deliveryFee = isDelivery && settings.delivery_enabled ? (distanceMode ? validQuote?.fee ?? 0 : settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
   useEffect(() => {
     quoteRequest.current += 1;
@@ -320,7 +321,7 @@ function Catalog() {
       `*Total${!isDelivery || settings.delivery_enabled ? "" : " dos produtos"}: ${brl(total)}*`,
       "",
       `*Nome:* ${d.name}`,
-      isDelivery ? `*Endereço:* ${d.address}` : `*Modalidade:* Retirada na loja${settings.pickup_address ? `\n*Endereço de retirada:* ${settings.pickup_address}` : ""}`,
+      isDelivery ? `*Endereço:* ${deliveryAddress(d.address)}` : `*Modalidade:* Retirada na loja${settings.pickup_address ? `\n*Endereço de retirada:* ${settings.pickup_address}` : ""}`,
       `*Pagamento:* ${d.payment}${d.payment === "Dinheiro" && d.change ? ` (troco para ${d.change})` : ""}`,
       d.notes ? `*Obs.:* ${d.notes}` : "",
     ].filter((l, idx, arr) => l !== "" || arr[idx - 1] !== "");
@@ -616,12 +617,13 @@ function Catalog() {
                   required
                   aria-invalid={Boolean(fieldErrors.address?.length)}
                   aria-describedby={fieldErrors.address?.length ? "address-error" : undefined}
-                  placeholder="Rua, número, bairro, cidade, estado e CEP"
+                  placeholder="Rua, número, bairro e CEP"
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                   onBlur={() => { void calculateDelivery(); }}
                 />
               </Field>}
+              {isDelivery && <label className="block text-sm">Cidade<input className="field mt-2" value={DELIVERY_CITY} readOnly /></label>}
               {!isDelivery && settings.pickup_address && (
                 <div className="border-l-2 border-primary py-2 pl-3 text-sm" role="status">
                   <p className="font-semibold">Endereço para retirada</p>
