@@ -117,3 +117,4 @@
 - [ ] Linkar foto do produto às variações (foto muda conforme a variação selecionada) para o cliente entender qual é a variação.
 - [ ] Alinhar os produtos do catálogo na mesma altura/grade (cards uniformes).
 - [x] Implementado (15/10/2026): migration 0019 (variationPhotos na projeção, filtrada às fotos já públicas), photoForOption/variationPhoto em catalog.ts, ProductCardPhotos com prop option, seletor "Vincular à variação" por foto no painel (remoção/edição IA remapeiam ou desligam o vínculo), grids items-stretch + cards h-full. 84 testes passando.
+- [x] Bloquear pedido de produto com estoque zerado e mostrar "Esgotado" no card (botão desabilitado, selo no card, sabor esgotado sinalizado, "+" limitado ao estoque)

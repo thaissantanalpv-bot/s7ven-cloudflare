@@ -854,6 +854,8 @@ function ProductCard({
   const key = keyOf(p.id, option || undefined);
   const qty = cart[key] ?? 0;
   const ready = (!hasOpts || (isOther ? !!text : !!chosen)) && available(p, option);
+  const outOfStock = p.active && p.stock === 0;
+  const optionOut = hasOpts && !!option && !available(p, option);
 
   return (
     <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-lg bg-card">
@@ -861,7 +863,7 @@ function ProductCard({
       <div className="flex min-w-0 flex-1 flex-col px-1 py-3 sm:px-2">
         <span className="truncate text-[10px] uppercase text-muted-foreground">{p.category}</span>
         <h2 className="mt-1 font-display text-sm font-semibold leading-snug sm:text-base"><Button variant="link" onClick={() => setGalleryOpen(true)} className="h-auto w-full justify-start whitespace-normal break-words p-0 text-left text-sm text-foreground sm:text-base">{p.name}</Button></h2>
-        {!available(p) && <p className="mt-2 text-xs text-destructive">{p.active ? "Esgotado" : "Indisponível"}</p>}
+        {!available(p) && <p className="mt-2 inline-flex w-fit rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">{p.active ? "Esgotado" : "Indisponível"}</p>}
         {hasOpts ? (
           <div className="mt-2">
             <p className="text-[11px] font-medium uppercase text-muted-foreground">
@@ -922,7 +924,15 @@ function ProductCard({
         </div>
         {!p.comboGroups?.length && (
           <div className="flex flex-col items-stretch gap-2 pt-3">
-            {qty > 0 ? (
+            {outOfStock ? (
+              <Button
+                disabled
+                aria-label={`${p.name} esgotado`}
+                className="h-11 w-full rounded-full text-base font-bold tracking-wide"
+              >
+                Esgotado
+              </Button>
+            ) : qty > 0 ? (
               <div className="mx-auto flex shrink-0 items-center rounded-full border bg-card">
                 <Button
                   variant="ghost"
@@ -939,6 +949,7 @@ function ProductCard({
                   size="icon"
                   className="h-10 w-10"
                   aria-label="Aumentar quantidade"
+                  disabled={p.stock !== null && qty >= p.stock}
                   onClick={() => onChange(key, 1)}
                 >
                   <Plus />
@@ -981,9 +992,9 @@ function ProductCard({
             )}
           </div>
         )}
-        {hasOpts && !ready && (
-          <p className="pt-1 text-right text-[11px] text-muted-foreground">
-            Escolha {p.optionLabel === "Cor" ? "uma cor" : "um sabor"} para adicionar
+        {hasOpts && !ready && !outOfStock && (
+          <p className={`pt-1 text-right text-[11px] ${optionOut ? "font-semibold text-destructive" : "text-muted-foreground"}`}>
+            {optionOut ? "Esgotado" : `Escolha ${p.optionLabel === "Cor" ? "uma cor" : "um sabor"} para adicionar`}
           </p>
         )}
       </div>
