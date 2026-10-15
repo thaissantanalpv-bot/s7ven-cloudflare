@@ -13,7 +13,9 @@
 - Track the catalog funnel with anonymous browser/session UUIDs and bounded server writes; admin-only SQL aggregates count unique browsers, infer inactivity-based abandonment, and mark conversion only from successful order insertion. Poll aggregates so inactivity thresholds update without event broadcasts.
 - Record checkout conversion atomically with a session upsert on successful order insertion; checkout must never wait for optional visit telemetry, and blocked browser storage uses an in-memory identity.
 - Store shared delivery and weekly hours in `store_settings`; validate writes through authenticated server functions and admin-only RLS so customers cannot change store operations.
-- Store pickup address and nullable fixed delivery fee in shared settings; fixed pricing takes precedence over legacy regions on client and server to keep totals consistent.
+- Store pickup address and selectable distance tiers in shared settings; distance mode takes precedence when enabled, otherwise fixed pricing precedes regions, keeping totals consistent.
+- Calculate road-distance quotes through Google Maps in sealed browser-session flows; bind private short-lived quotes to address and settings and validate them during checkout so customers cannot choose their own fee.
+- Keep product photo AI editing admin-authenticated and stream original-image edits; applying a result replaces only the selected draft photo through private native storage and requires the usual product save.
 - Grant store administration through protected `user_roles` and a server-managed invitation checked against confirmed auth email; never grant privileges from browser state or editable metadata.
 - Use TanStack Query for shared settings and the pathless authenticated layout for the panel, keeping public catalog reads independent of login.
 - Persist customer orders through a validated public checkout server function with server-calculated catalog prices, random idempotency keys and bounded submission frequency; never expose private order reads publicly.
