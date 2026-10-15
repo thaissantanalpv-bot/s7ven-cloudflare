@@ -16,7 +16,7 @@ const VISITOR_COOKIE = "s7ven-visitor";
 
 function readVisitorCookie(): string | null {
   const match = document.cookie.match(new RegExp(`(?:^|; )${VISITOR_COOKIE}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
 
 function writeVisitorCookie(visitorId: string) {
