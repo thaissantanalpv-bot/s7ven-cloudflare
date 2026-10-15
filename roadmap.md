@@ -1,6 +1,6 @@
 # Correção das 22 listas cortadas
-- [ ] Conferir novamente as opções legíveis no PDF, remover trechos incompletos das descrições e deixar vazias as opções não informadas, sem alterar preços, fotos ou estoque.
-- [ ] Conferir os 22 registros salvos e as opções apresentadas no catálogo e painel.
+- [x] Conferir novamente as opções legíveis no PDF e limpar 22 descrições, removendo trechos incompletos sem alterar preços, fotos, estoques ou opções completas. Kit De Mangueira Com Piteira ficou com descrição/opções vazias por apresentar somente uma opção cortada.
+- [x] Conferir readback dos 22 registros e preservação dos demais produtos; catálogo com seleção de sabor e editor administrativo autenticado mostraram listas limpas, sem erros de execução.
 
 # Atualização completa do catálogo de 15/10/2026
 - [x] Conferir PDF: preços e fotos presentes; listas de sabores/cores truncadas e quantidades de estoque ausentes.
