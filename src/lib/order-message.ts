@@ -10,7 +10,7 @@ export function checkoutWhatsApp(number: number, lines: string[], phone: string)
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent([`*Pedido #${number} — ${STORE_NAME}*`, ...lines, `*WhatsApp do cliente:* ${phone}`].join("\n"))}`;
 }
 
-export function productMessage(item: { id: string; name: string; qty: number; price: number; option: string; optionLabel?: string; hasPhoto: boolean; combo?: string }, origin: string) {
+export function productMessage(item: { id: string; name: string; qty: number; price: number; option: string; optionLabel?: string | undefined; hasPhoto: boolean; combo?: string | undefined }, origin: string) {
   return [
     `*${item.qty}x ${item.name}*`,
     item.option ? `${item.optionLabel ?? "Variação"}: ${item.option}` : "",
