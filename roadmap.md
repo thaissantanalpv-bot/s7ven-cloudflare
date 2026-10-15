@@ -66,13 +66,14 @@
 - [x] Verificar pergunta real, continuação, histórico após recarregar e acesso protegido: respostas reais, cálculos, parada antes da resposta, histórico restaurado, 401 sem sessão, sem rolagem horizontal no celular; 9 testes passaram e build OK. Corrigido ID ausente da resposta salva. Lint dos novos módulos passou; lint global tem falhas de formatação preexistentes. Permissão de conta não administrativa verificada no código, sem criar conta adicional de teste.
 
 # Atualização do PDF de 13/10/2026
-- [ ] Conferir produtos novos, fotos e opções disponíveis no PDF.
-- [ ] Importar preservando identidades, estoque e configurações de combos existentes.
-- [ ] Verificar catálogo, galerias e opções após atualização.
-- [ ] Exibir fotos inteiras e permitir navegar pelas fotos extras diretamente na vitrine.
+- [x] Conferir produtos novos, fotos e opções disponíveis no PDF.
+- [x] Importar preservando identidades, estoque e configurações de combos existentes.
+- [x] Verificar catálogo, galerias e opções após atualização: readback e testes de catálogo/galerias concluídos.
+- [x] Exibir fotos inteiras e permitir navegar pelas fotos extras diretamente na vitrine.
 
 # Entrega por quilometragem e fotos com IA
-- [ ] Configurar faixas de distância com valores editáveis e cálculo pelo endereço.
-- [ ] Integrar taxa calculada ao carrinho e à validação do pedido.
-- [ ] Adicionar edição de fotos com IA, comparação e aplicação mediante confirmação.
-- [ ] Verificar os fluxos e informar custos e limitações dos serviços.
+- [x] Configurar faixas de distância com valores editáveis e cálculo pelo endereço.
+- [x] Integrar taxa calculada ao carrinho e à validação do pedido.
+- [x] Adicionar edição de fotos com IA, comparação e aplicação mediante confirmação.
+- [x] Verificar telas administrativas no celular, edição real com IA e 26 testes; build OK. Taxa real preservada, nenhum produto alterado durante a verificação.
+- [ ] Validar Google Maps no site publicado após cadastrar endereço completo de saída e faixas reais; chamadas de Maps não são verificáveis no ambiente de teste.

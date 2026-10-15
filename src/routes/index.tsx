@@ -31,6 +31,7 @@ import { useCatalogAnalytics } from "@/lib/use-catalog-analytics";
 import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder } from "@/lib/orders.functions";
+import { startDeliverySession, quoteDelivery } from "@/lib/delivery.functions";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
@@ -77,6 +78,10 @@ function Catalog() {
   const categories = ["Todos", ...new Set(products.map(p => p.category))];
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
   const registerOrder = useServerFn(submitOrder);
+  const startDistanceSession = useServerFn(startDeliverySession);
+  const calculateDistance = useServerFn(quoteDelivery);
+  const [deliveryQuote, setDeliveryQuote] = useState<{ id: string; address: string; km: number; fee: number; expires: number; config: string } | null>(null);
+  const [quoting, setQuoting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [receipt, setReceipt] = useState<{ number: number; url: string; subtotal: number; deliveryFee: number; total: number } | null>(null);
@@ -166,7 +171,19 @@ function Catalog() {
   const subtotal = items.reduce((s, i) => s + i.qty * i.product.price, 0);
   const zone = settings.delivery_zones.find((z) => z.id === form.zone);
   const isDelivery = form.fulfillment === "delivery";
-  const deliveryFee = isDelivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
+  const distanceMode = settings.delivery_enabled && settings.delivery_distance_enabled;
+  const distanceConfig = JSON.stringify([settings.delivery_origin, settings.delivery_distance_tiers]);
+  const validQuote = deliveryQuote?.address === form.address.trim() && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
+  const deliveryFee = isDelivery && settings.delivery_enabled ? (distanceMode ? validQuote?.fee ?? 0 : settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
+  const calculateDelivery = async () => {
+    setQuoting(true); setError(""); setDeliveryQuote(null);
+    try {
+      await startDistanceSession();
+      const quote = await calculateDistance({ data: { address: form.address.trim() } });
+      setDeliveryQuote({ ...quote, expires: Date.now()+14*60000, config: distanceConfig });
+    } catch(e) { setError(e instanceof Error ? e.message : "Não foi possível calcular a entrega."); }
+    finally { setQuoting(false); }
+  };
   const total = subtotal + deliveryFee;
 
   const displayedSubtotal = !items.length && receipt ? receipt.subtotal : subtotal;
@@ -215,7 +232,8 @@ function Catalog() {
     } catch (e) {
       return setError(e instanceof Error ? e.message : "Confira os produtos do carrinho.");
     }
-    if (isDelivery && settings.delivery_enabled && settings.fixed_delivery_fee === null && !zone)
+    if (isDelivery && distanceMode && !validQuote) return setError("Calcule a entrega pelo endereço antes de enviar.");
+    if (isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && !zone)
       return setError("Escolha o bairro ou região de entrega.");
     if (status.configured && !status.open)
       return setError("A loja está fechada. Confira os horários de atendimento.");
@@ -224,7 +242,7 @@ function Catalog() {
     const d = r.data;
     const requestId = attempt?.signature === JSON.stringify({ customer: d, items: inputItems }) ? attempt.id : crypto.randomUUID();
     const analytics = readAnalyticsIdentity();
-    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems, analytics });
+    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems, analytics, deliveryQuoteId: isDelivery && distanceMode ? validQuote?.id : undefined });
     if (!validated.success) return setError("Confira os produtos e as quantidades do carrinho antes de enviar.");
     const lines = [
       `*Novo pedido — ${STORE_NAME}*`,
@@ -236,7 +254,7 @@ function Catalog() {
       "",
       `*Produtos: ${brl(subtotal)}*`,
       !isDelivery ? "*Retirada na loja · Sem taxa de entrega*" : settings.delivery_enabled
-        ? `*Entrega${settings.fixed_delivery_fee === null ? ` (${zone?.name})` : ""}: ${brl(deliveryFee)}*`
+        ? `*Entrega${distanceMode ? ` (${validQuote?.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km)` : settings.fixed_delivery_fee === null ? ` (${zone?.name})` : ""}: ${brl(deliveryFee)}*`
         : "*Entrega: valor a confirmar com a loja*",
       `*Total${!isDelivery || settings.delivery_enabled ? "" : " dos produtos"}: ${brl(total)}*`,
       "",
@@ -390,7 +408,7 @@ function Catalog() {
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-2 border-b pb-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
             <Truck className="size-4 text-primary" />
-            Entrega {settings.delivery_enabled ? settings.fixed_delivery_fee !== null ? brl(settings.fixed_delivery_fee) : "por região" : "a combinar"}
+            Entrega {settings.delivery_enabled ? settings.delivery_distance_enabled ? "por km" : settings.fixed_delivery_fee !== null ? brl(settings.fixed_delivery_fee) : "por região" : "a combinar"}
           </span>
           <span className="flex items-center gap-2">
             <MessageCircle className="size-4 text-primary" />
@@ -580,7 +598,8 @@ function Catalog() {
                 </div>
               )}
               {isDelivery && fieldErrors.address?.[0] && <p id="address-error" className="text-xs text-destructive">{fieldErrors.address[0]}</p>}
-              {isDelivery && settings.delivery_enabled && settings.fixed_delivery_fee === null && (
+              {isDelivery && distanceMode && <div className="space-y-2"><Button variant="outline" disabled={quoting || form.address.trim().length < 8} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : "Calcular entrega"}</Button>{validQuote && <p role="status" className="text-sm text-primary">{validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km · {brl(validQuote.fee)} · Google Maps</p>}</div>}
+              {isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && (
                 <Field label="Bairro ou região">
                   <select
                     className="field"
@@ -685,7 +704,7 @@ function Catalog() {
               <span>{isDelivery ? "Entrega" : "Retirada na loja"}</span>
               <span>
                 {!isDelivery ? "Sem taxa" : settings.delivery_enabled
-                  ? settings.fixed_delivery_fee !== null || zone
+                  ? distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : "Calcule a entrega" : settings.fixed_delivery_fee !== null || zone
                     ? brl(displayedDeliveryFee)
                     : "Selecione a região"
                   : "A confirmar"}

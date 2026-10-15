@@ -48,6 +48,7 @@ export const customerSchema = z.object({
     ctx.addIssue({ code: "custom", path: ["address"], message: "Informe o endereço completo" });
 });
 export const submitOrderSchema = z.object({
+  deliveryQuoteId: z.string().uuid().optional(),
   analytics: analyticsIdentitySchema.optional(),
   requestId: z.string().uuid(),
   customer: customerSchema,
@@ -142,7 +143,7 @@ export function validateCartAvailability(
       throw new Error(`${product.name}: item esgotado ou quantidade indisponível. Remova ou ajuste a quantidade no carrinho.`);
   }
 }
-export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: StoreSettings, products: (Product | CatalogProduct)[] = PRODUCTS) {
+export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: StoreSettings, products: (Product | CatalogProduct)[] = PRODUCTS, verifiedDelivery?: { fee: number; km: number }) {
   validateCartAvailability(input.items, products);
   const items = input.items.map((line) => {
     const product = products.find((p) => p.id === line.productId);
@@ -167,15 +168,17 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
   });
   const zone = settings.delivery_zones.find((z) => z.id === input.customer.zone);
   const delivery = input.customer.fulfillment !== "pickup";
-  if (delivery && settings.delivery_enabled && settings.fixed_delivery_fee === null && !zone) throw new Error("Escolha o bairro ou região de entrega.");
+  const byDistance = delivery && settings.delivery_enabled && settings.delivery_distance_enabled;
+  if (byDistance && !verifiedDelivery) throw new Error("Calcule a entrega pelo endereço antes de enviar.");
+  if (delivery && settings.delivery_enabled && !byDistance && settings.fixed_delivery_fee === null && !zone) throw new Error("Escolha o bairro ou região de entrega.");
   const subtotal =
     Math.round(items.reduce((s, i) => s + Math.round(i.price * 100) * i.qty, 0)) / 100;
-  const delivery_fee = delivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
+  const delivery_fee = byDistance ? verifiedDelivery?.fee ?? 0 : delivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
   return {
     items,
     subtotal,
     delivery_fee,
-    delivery_zone: delivery && settings.delivery_enabled && settings.fixed_delivery_fee === null ? (zone?.name ?? "") : "",
+    delivery_zone: byDistance ? `${verifiedDelivery?.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km` : delivery && settings.delivery_enabled && settings.fixed_delivery_fee === null ? (zone?.name ?? "") : "",
     delivery_confirmed: !delivery || settings.delivery_enabled,
     total: Math.round((subtotal + delivery_fee) * 100) / 100,
   };

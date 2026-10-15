@@ -120,6 +120,13 @@
       "when": 1791754305540,
       "tag": "0016_admin_ai_assistant",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792037023084,
+      "tag": "0017_delivery_distance_and_photo_edits",
+      "breakpoints": true
     }
   ]
 }

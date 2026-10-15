@@ -1,0 +1,10 @@
+ALTER TABLE public.store_settings ADD COLUMN delivery_distance_enabled boolean NOT NULL DEFAULT false, ADD COLUMN delivery_origin text NOT NULL DEFAULT '', ADD COLUMN delivery_distance_tiers jsonb NOT NULL DEFAULT '[]'::jsonb;
+CREATE TABLE public.delivery_quotes (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id text NOT NULL, address text NOT NULL, settings_hash text NOT NULL, distance_km numeric NOT NULL, fee numeric NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.delivery_quotes TO service_role;
+ALTER TABLE public.delivery_quotes ENABLE ROW LEVEL SECURITY;
+CREATE INDEX delivery_quotes_session_date ON public.delivery_quotes(session_id, created_at);
+CREATE TABLE public.admin_photo_ai_state (user_id uuid PRIMARY KEY, blocked_reason text, updated_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.admin_photo_ai_state TO authenticated;
+GRANT ALL ON public.admin_photo_ai_state TO service_role;
+ALTER TABLE public.admin_photo_ai_state ENABLE ROW LEVEL SECURITY;
+CREATE POLICY admin_own_photo_ai_state ON public.admin_photo_ai_state FOR SELECT TO authenticated USING (user_id = auth.uid() AND public.has_role(auth.uid(),'admin'));
