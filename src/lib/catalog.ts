@@ -20,6 +20,7 @@ export const catalogProductSchema = z.object({
   image: z.string().max(1000).refine(v => !v || /^\/produtos\/p\d+\.jpg$/.test(v) || /^uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v), "Foto inválida."),
   images: z.array(photoPath).max(9, "Use até 10 fotos por produto.").default([]),
   active: z.boolean(),
+  featured: z.boolean().default(false),
   stock: quantity,
   optionLabel: z.enum(["Sabor", "Cor", "Variação"]),
   allowOther: z.boolean(),
@@ -30,6 +31,7 @@ export const catalogProductSchema = z.object({
   .refine(p => new Set(p.comboGroups.map(g => g.id)).size === p.comboGroups.length, "Não repita grupos.")
   .refine(p => !p.comboGroups.some(g => g.productIds.includes(p.id)), "Um combo não pode conter a si mesmo.");
 export type CatalogProduct = Product & {
+  featured?: boolean;
   active: boolean;
   stock: number | null;
   allowOther: boolean;
@@ -59,7 +61,7 @@ export function available(p: Product | CatalogProduct, option = "", qty = 1) {
   return v ? v.active && (v.stock === null || v.stock >= qty) : p.allowOther;
 }
 export function toDraft(p: CatalogProduct): ProductDraft {
-  return { id: p.id, name: p.name, description: p.description, price: p.price, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], active: p.active, stock: p.stock, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations, comboGroups: p.comboGroups ?? [] };
+  return { id: p.id, name: p.name, description: p.description, price: p.price, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], active: p.active, featured: p.featured ?? false, stock: p.stock, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations, comboGroups: p.comboGroups ?? [] };
 }
 export function productPhotos(p: Pick<CatalogProduct, "image" | "images">) {
   return [...new Set([p.image, ...(p.images ?? [])].filter((v): v is string => Boolean(v)))];

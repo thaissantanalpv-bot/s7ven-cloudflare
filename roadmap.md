@@ -1,3 +1,10 @@
+# Melhorias de venda solicitadas em 15/10/2026
+- [x] Organizar mensagem WhatsApp com nomes, quantidades, valores e links permanentes para visualizar fotos dos produtos; verificação automatizada do destino e mensagem.
+- [x] Exibir destaques no início e permitir seleção pela administração; Energético Bally 2 Litros e Gelo de Sabor selecionados inicialmente e conferidos na vitrine.
+- [x] Mostrar aviso de carrinhos abandonados no início e indicadores do painel, sem identificar visitantes anônimos; painel autenticado mostrou 8 carrinhos sem pedido.
+- [x] Verificar salvamento administrativo, duas unidades adicionadas, galeria compartilhada com foto carregada e layouts 384/1280px sem cortes; 25 testes passaram e build OK.
+- [ ] Confirmar envio real de pedido com a nova mensagem: loja fechada durante a verificação; horários reais preservados.
+
 # Correção das 22 listas cortadas
 - [x] Conferir novamente as opções legíveis no PDF e limpar 22 descrições, removendo trechos incompletos sem alterar preços, fotos, estoques ou opções completas. Kit De Mangueira Com Piteira ficou com descrição/opções vazias por apresentar somente uma opção cortada.
 - [x] Conferir readback dos 22 registros e preservação dos demais produtos; catálogo com seleção de sabor e editor administrativo autenticado mostraram listas limpas, sem erros de execução.
