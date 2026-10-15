@@ -12,13 +12,25 @@ export const funnelStatsSchema = z.object({
 export type AnalyticsIdentity = z.infer<typeof analyticsIdentitySchema>;
 let fallbackIdentity: AnalyticsIdentity | undefined;
 
+const VISITOR_COOKIE = "s7ven-visitor";
+
+function readVisitorCookie(): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${VISITOR_COOKIE}=([^;]*)`));
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
+}
+
+function writeVisitorCookie(visitorId: string) {
+  // Um ano, mesmo site: reforça a identidade do aparelho se o armazenamento local for limpo.
+  document.cookie = `${VISITOR_COOKIE}=${encodeURIComponent(visitorId)}; max-age=31536000; path=/; samesite=lax`;
+}
+
 export function readAnalyticsIdentity(): AnalyticsIdentity | undefined {
   try {
-    let visitorId = localStorage.getItem("s7ven-visitor");
-    if (!z.string().uuid().safeParse(visitorId).success) {
-      visitorId = crypto.randomUUID();
-      localStorage.setItem("s7ven-visitor", visitorId);
-    }
+    const stored = [localStorage.getItem("s7ven-visitor"), readVisitorCookie()]
+      .find((candidate): candidate is string => z.string().uuid().safeParse(candidate).success);
+    const visitorId = stored ?? crypto.randomUUID();
+    localStorage.setItem("s7ven-visitor", visitorId);
+    writeVisitorCookie(visitorId);
     let sessionId = sessionStorage.getItem("s7ven-session");
     const last = Number(sessionStorage.getItem("s7ven-session-seen") ?? 0);
     if (!z.string().uuid().safeParse(sessionId).success || Date.now() - last > 30 * 60 * 1000) {
