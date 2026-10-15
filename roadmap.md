@@ -1,6 +1,7 @@
 # Falha intermitente no cálculo de entrega
-- [ ] Corrigir restauração da rua no carrinho salvo e impedir cálculo sem rua/número.
-- [ ] Verificar regressões e endereço restaurado sem chamar Google Maps; rota real depende de teste no site autorizado.
+- [x] Corrigir restauração da rua no carrinho salvo e impedir cálculo sem rua/número.
+- [x] Verificar endereço Joaquim Candido, 2282 restaurado no navegador, bloqueio sem número e 22 testes; build OK, sem chamadas Maps.
+- [ ] Confirmar cálculo real após publicar: Google Maps não é verificável no ambiente de teste; falta mensagem exata da falha relatada para confirmar outras causas.
 
 # Impressão térmica de pedidos
 - [x] Adicionar ícone de impressão nos pedidos e configuração local de nome/papel 58 ou 80 mm.
