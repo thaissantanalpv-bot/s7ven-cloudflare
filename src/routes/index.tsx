@@ -396,7 +396,7 @@ function Catalog() {
               }}
               className="h-28 min-w-48 flex-1 justify-start overflow-hidden border p-0 text-left sm:h-32"
             >
-              <img src={`/produtos/${c.image}.jpg`} alt="" className="h-full w-24 object-cover" />
+              <img src={`/produtos/${c.image}.jpg`} alt="" loading="lazy" decoding="async" className="h-full w-24 object-cover" />
               <span className="flex flex-1 flex-col gap-2 px-4">
                 <c.Icon className="text-primary" />
                 <span className="text-sm font-semibold">{c.label}</span>
@@ -527,6 +527,8 @@ function Catalog() {
                       <img
                         src={i.product.image}
                         alt={i.product.name}
+                        loading="lazy"
+                        decoding="async"
                         className="h-12 w-12 shrink-0 rounded-lg object-contain"
                       />
                     ) : (

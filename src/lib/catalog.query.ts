@@ -3,7 +3,9 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCatalog, getAdminCatalog } from "./catalog.functions";
 
-export const catalogQuery = queryOptions({ queryKey: ["catalog-products"], queryFn: () => getCatalog(), staleTime: 0, refetchInterval: 5000 });
+// Public catalog: realtime invalidation below already pushes product changes,
+// so poll lightly instead of refetching the full catalog every 5s.
+export const catalogQuery = queryOptions({ queryKey: ["catalog-products"], queryFn: () => getCatalog(), staleTime: 60000, refetchInterval: 60000 });
 export const adminCatalogQuery = queryOptions({ queryKey: ["admin-catalog-products"], queryFn: () => getAdminCatalog(), staleTime: 0, refetchInterval: 5000 });
 export function useCatalogUpdates() {
   const client = useQueryClient();
