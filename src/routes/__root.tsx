@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { registerCatalogOffline } from "@/lib/offline-registration";
 
 function NotFoundComponent() {
   return (
@@ -139,6 +140,7 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  useEffect(() => { void registerCatalogOffline().catch(() => {}); }, []);
   useEffect(() => {
     const {
       data: { subscription },

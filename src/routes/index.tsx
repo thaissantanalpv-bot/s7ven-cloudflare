@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { storeSettingsQuery } from "@/lib/store-settings.query";
+import { publicStoreSettingsQuery as storeSettingsQuery } from "@/lib/store-settings.query";
+import { savePublicSnapshot, cacheViewedCatalogPhotos, offlinePhotoUrls } from "@/lib/offline-catalog";
 import { storeStatus, DAYS } from "@/lib/store-settings";
 import { QRCodeSVG } from "qrcode.react";
 import { useServerFn } from "@tanstack/react-start";
@@ -62,6 +63,8 @@ export const Route = createFileRoute("/")({
     ],
   }),
   component: Catalog,
+  errorComponent: ({ error }) => <div role="alert" className="p-8 text-center">{error.message}<Button asChild variant="outline" className="mt-4"><a href="/">Tentar novamente</a></Button></div>,
+  notFoundComponent: () => <div className="p-8 text-center">Catálogo não encontrado.</div>,
 });
 
 type Cart = Record<string, number>;
@@ -73,10 +76,34 @@ const OTHER = "__outro__";
 const keyOf = (id: string, opt?: string) => (opt ? `${id}${SEP}${opt}` : id);
 
 function Catalog() {
-  const { data: products } = useSuspenseQuery(catalogQuery);
+  const { data: catalogProducts } = useSuspenseQuery(catalogQuery);
+  const [online, setOnline] = useState(true);
+  const [photoUrls, setPhotoUrls] = useState<Map<string, string>>(new Map());
+  const products = useMemo(() => online ? catalogProducts : catalogProducts.map(product => ({ ...product, image: photoUrls.get(product.image ?? "") ?? product.image, images: product.images?.map(url => photoUrls.get(url) ?? url) })), [catalogProducts, online, photoUrls]);
   useCatalogUpdates();
   const categories = ["Todos", ...new Set(products.map(p => p.category))];
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
+  }, []);
+  useEffect(() => {
+    savePublicSnapshot("products", catalogProducts);
+    savePublicSnapshot("settings", settings);
+    const urls = [...new Set(catalogProducts.flatMap(product => [product.image, ...(product.images ?? [])]).filter((url): url is string => Boolean(url)))];
+    if (online) return cacheViewedCatalogPhotos(urls);
+    let disposed = false;
+    let resolved = new Map<string, string>();
+    void offlinePhotoUrls(urls).then(result => {
+      resolved = result;
+      if (disposed) result.forEach(url => URL.revokeObjectURL(url));
+      else setPhotoUrls(result);
+    }).catch(() => {});
+    return () => { disposed = true; resolved.forEach(url => URL.revokeObjectURL(url)); };
+  }, [catalogProducts, settings, online]);
   const registerOrder = useServerFn(submitOrder);
   const startDistanceSession = useServerFn(startDeliverySession);
   const calculateDistance = useServerFn(quoteDelivery);
@@ -223,6 +250,7 @@ function Catalog() {
 
   const send = async () => {
     if (sending) return;
+    if (!navigator.onLine) return setError("Conecte-se à internet para confirmar os valores e enviar seu pedido.");
     setError("");
     setSubmitted(true);
     // Validate saved cart entries too: missing products must not be silently omitted.
@@ -288,6 +316,7 @@ function Catalog() {
 
   return (
     <div className="min-h-screen pb-28 lg:pb-10">
+      {!online && <div role="status" className="border-b bg-muted px-4 py-2 text-center text-sm text-muted-foreground">Sem conexão · Exibindo o último catálogo salvo. Pedidos disponíveis ao reconectar.</div>}
       <div className="border-b bg-primary px-4 py-2 text-center text-[11px] font-semibold text-primary-foreground">
         S7VEN LOUNGE E TABACARIA <span className="mx-2">/</span> SEU PEDIDO, DO SEU JEITO.
       </div>
@@ -734,11 +763,11 @@ function Catalog() {
             )}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button
-              disabled={sending || !items.length || (status.configured && !status.open)}
+              disabled={!online || sending || !items.length || (status.configured && !status.open)}
               onClick={send}
               className="h-12 w-full rounded-lg bg-whatsapp py-4 font-semibold text-whatsapp-foreground"
             >
-              <MessageCircle /> {sending ? "Registrando pedido…" : "Enviar pedido pelo WhatsApp"}
+              <MessageCircle /> {!online ? "Conecte-se para enviar" : sending ? "Registrando pedido…" : "Enviar pedido pelo WhatsApp"}
             </Button>
           </div>
         </SheetContent>
