@@ -131,3 +131,9 @@
 - [x] Manter s7venlounge.lovable.app sem alterar o link e orientar a divulgação.
 - [x] Gerar QR de balcão (100×150mm) e de cartão (90×50mm) em PDF vetorial e PNG 300dpi com a logo no centro; leitura conferida em tamanho cheio e reduzido a 1/4.
 - [x] Escrever mensagens prontas para status, lista de transmissão, resposta automática, reposição e reativação.
+
+## Rastreio do entregador (Thais, 15/10/2026 20:44 UTC)
+- [x] Campo de link de rastreio por pedido no painel (somente entregas do catálogo)
+- [x] Botão "Acompanhar entrega em tempo real" no comprovante do cliente, atualizado sozinho
+- [x] Link incluído na mensagem de WhatsApp "Saiu para entrega"
+- [x] Confirmado no painel com pedido real: link salva, persiste e remove; consulta pública expõe só etapa e link

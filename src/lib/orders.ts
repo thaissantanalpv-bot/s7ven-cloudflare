@@ -96,9 +96,15 @@ export type Order = {
   delivery_confirmed: boolean;
   total: number;
   status: OrderStatus;
+  tracking_url?: string | null;
   created_at: string;
   updated_at: string;
 };
+export const trackingUrlSchema = z
+  .string()
+  .trim()
+  .max(300, "Link muito longo")
+  .refine((v) => v === "" || /^https:\/\/\S+$/i.test(v), "Cole um link completo começando com https://");
 export function validateCartAvailability(
   lines: { productId: string; option: string; qty: number; components?: ComboSelection[] | undefined }[],
   products: (Product | CatalogProduct)[],
@@ -184,8 +190,12 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
   };
 }
 export function orderWhatsApp(
-  order: Pick<Order, "number" | "customer_name" | "customer_phone" | "status">,
+  order: Pick<Order, "number" | "customer_name" | "customer_phone" | "status" | "tracking_url">,
 ) {
   const stage = ORDER_STAGES.find((s) => s.id === order.status);
-  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${stage?.message ?? ""}\nPedido #${order.number} — ${STORE_NAME}`)}`;
+  const tracking =
+    order.status === "out_for_delivery" && order.tracking_url
+      ? `\nAcompanhe a entrega em tempo real: ${order.tracking_url}`
+      : "";
+  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${stage?.message ?? ""}\nPedido #${order.number} — ${STORE_NAME}${tracking}`)}`;
 }

@@ -4,6 +4,7 @@ import {
   submitOrderSchema,
   priceOrder,
   orderWhatsApp,
+  trackingUrlSchema,
   ORDER_STAGES,
   validateCartAvailability,
 } from "@/lib/orders";
@@ -136,5 +137,25 @@ describe("Orders", () => {
       expect(url.searchParams.get("text")).toContain(stage.message);
       expect(url.searchParams.get("text")).toContain("#42");
     }
+  });
+});
+describe("tracking link", () => {
+  it("accepts only full https links or empty", () => {
+    expect(trackingUrlSchema.safeParse("https://entrega.app/r/abc123").success).toBe(true);
+    expect(trackingUrlSchema.safeParse("").success).toBe(true);
+    expect(trackingUrlSchema.safeParse("http://inseguro.app/r/1").success).toBe(false);
+    expect(trackingUrlSchema.safeParse("entrega.app/r/1").success).toBe(false);
+    expect(trackingUrlSchema.safeParse(`https://e.co/${"a".repeat(300)}`).success).toBe(false);
+  });
+  it("adds the tracking link only when the order is out for delivery", () => {
+    const base = { number: 7, customer_name: "Cliente", customer_phone: "18999999999", tracking_url: "https://entrega.app/r/abc" };
+    const out = new URL(orderWhatsApp({ ...base, status: "out_for_delivery" }));
+    expect(out.searchParams.get("text")).toContain("Acompanhe a entrega em tempo real: https://entrega.app/r/abc");
+    for (const status of ["received", "preparing", "delivered"] as const) {
+      const url = new URL(orderWhatsApp({ ...base, status }));
+      expect(url.searchParams.get("text")).not.toContain("entrega.app");
+    }
+    const noLink = new URL(orderWhatsApp({ number: 7, customer_name: "Cliente", customer_phone: "18999999999", status: "out_for_delivery", tracking_url: null }));
+    expect(noLink.searchParams.get("text")).not.toContain("Acompanhe");
   });
 });

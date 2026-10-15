@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { submitOrderSchema, priceOrder, statusSchema, type Order } from "./orders";
+import { submitOrderSchema, priceOrder, statusSchema, trackingUrlSchema, type Order } from "./orders";
 import { EMPTY_SETTINGS, settingsSchema, storeStatus } from "./store-settings";
 import { mergeCatalog } from "./catalog";
 import { deliveryAddress } from "./delivery-address";
@@ -13,11 +13,11 @@ export const submitOrder = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existing, error: existingError } = await supabaseAdmin
       .from("orders")
-      .select("number")
+      .select("id,number")
       .eq("request_id", data.requestId)
       .maybeSingle();
     if (existingError) throw new Error("Não foi possível registrar o pedido. Tente novamente.");
-    if (existing) return { number: existing.number };
+    if (existing) return { id: existing.id, number: existing.number };
     const { count, error: rateError } = await supabaseAdmin
       .from("orders")
       .select("id", { count: "exact", head: true })
@@ -60,21 +60,21 @@ export const submitOrder = createServerFn({ method: "POST" })
         notes: data.customer.notes,
         ...priced,
       })
-      .select("number")
+      .select("id,number")
       .single();
     if (error || !saved) {
       if (error?.code === "P0001") throw new Error("Estoque ou preço alterado. Atualize o catálogo e confira o carrinho.");
       if (error?.code === "23505") {
         const { data: duplicate } = await supabaseAdmin
           .from("orders")
-          .select("number")
+          .select("id,number")
           .eq("request_id", data.requestId)
           .maybeSingle();
-        if (duplicate) return { number: duplicate.number };
+        if (duplicate) return { id: duplicate.id, number: duplicate.number };
       }
       throw new Error("Não foi possível registrar o pedido. Seu carrinho foi mantido.");
     }
-    return { number: saved.number };
+    return { id: saved.id, number: saved.number };
   });
 export const listOrders = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -132,4 +132,40 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     if (error || !saved)
       throw new Error("O pedido mudou ou não foi salvo. Atualize o quadro e tente novamente.");
     return { saved: true };
+  });
+export const updateOrderTracking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid(), trackingUrl: trackingUrlSchema }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: admin, error: roleError } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (roleError || !admin) throw new Error("Acesso restrito à administração.");
+    const { data: saved, error } = await context.supabase
+      .from("orders")
+      .update({ tracking_url: data.trackingUrl || null, updated_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .eq("source", "catalog")
+      .eq("fulfillment", "delivery")
+      .select("id")
+      .maybeSingle();
+    if (error || !saved)
+      throw new Error("Não foi possível salvar o link de rastreio. Atualize o quadro e tente novamente.");
+    return { saved: true };
+  });
+// Public, narrowly scoped read: the customer sees only the stage and the tracking link of their own order id.
+export const orderTracking = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin.rpc("order_tracking", { _id: data.id });
+    if (error) throw new Error("Não foi possível consultar a entrega.");
+    if (!row) throw new Error("Pedido não encontrado.");
+    const parsed = z
+      .object({ status: statusSchema, trackingUrl: z.string().nullable() })
+      .parse(row);
+    return { status: parsed.status, trackingUrl: parsed.trackingUrl };
   });

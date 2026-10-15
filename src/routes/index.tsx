@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cloneElement, isValidElement, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Search,
   ShoppingBag,
@@ -16,6 +16,7 @@ import {
   MessageCircle,
   ChevronRight,
   Star,
+  Navigation,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -28,7 +29,7 @@ import { PhoneField } from "@/components/orders/phone-field";
 import { useCatalogAnalytics } from "@/lib/use-catalog-analytics";
 import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
-import { submitOrder } from "@/lib/orders.functions";
+import { submitOrder, orderTracking } from "@/lib/orders.functions";
 import { startDeliverySession, quoteDelivery } from "@/lib/delivery.functions";
 import { DELIVERY_CITY, deliveryAddress } from "@/lib/delivery-address";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
@@ -126,7 +127,15 @@ function Catalog() {
   const pendingQuote = useRef("");
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
-  const [receipt, setReceipt] = useState<{ number: number; url: string; subtotal: number; deliveryFee: number; total: number } | null>(null);
+  const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
+  const trackOrder = useServerFn(orderTracking);
+  const tracking = useQuery({
+    queryKey: ["order-tracking", receipt?.id],
+    queryFn: () => trackOrder({ data: { id: receipt!.id } }),
+    enabled: Boolean(receipt?.delivery),
+    refetchInterval: (q) => (q.state.data?.status === "delivered" ? false : 30000),
+    retry: false,
+  });
   const [attempt, setAttempt] = useState<{ signature: string; id: string } | null>(null);
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
@@ -344,7 +353,7 @@ function Catalog() {
     try {
       const saved = await registerOrder({ data: validated.data });
       const url = checkoutWhatsApp(saved.number, lines, d.phone);
-      setReceipt({ number: saved.number, url, subtotal, deliveryFee, total });
+      setReceipt({ id: saved.id, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery });
       setCart({});
       setAttempt(null);
       if (popup) popup.location.href = url;
@@ -807,6 +816,17 @@ function Catalog() {
                     Abrir pedido no WhatsApp
                   </a>
                 </Button>
+                {receipt.delivery && tracking.data?.trackingUrl && (
+                  <Button asChild className="w-full">
+                    <a href={tracking.data.trackingUrl} target="_blank" rel="noopener noreferrer">
+                      <Navigation />
+                      Acompanhar entrega em tempo real
+                    </a>
+                  </Button>
+                )}
+                {receipt.delivery && tracking.data && !tracking.data.trackingUrl && tracking.data.status === "out_for_delivery" && (
+                  <p className="text-muted-foreground">Seu pedido saiu para entrega!</p>
+                )}
               </div>
             )}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
