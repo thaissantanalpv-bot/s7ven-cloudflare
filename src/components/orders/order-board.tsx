@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { listOrders, updateOrderStatus } from "@/lib/orders.functions";
+import { listOrders, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
 import { ORDER_STAGES, orderWhatsApp, type Order, type OrderStatus } from "@/lib/orders";
 import { brl } from "@/lib/products";
 import { OrderPrinting } from "./order-printing";
@@ -34,6 +34,7 @@ const time = (value: string) =>
 export function OrderBoard() {
   const fetchOrders = useServerFn(listOrders);
   const update = useServerFn(updateOrderStatus);
+  const saveTrackingFn = useServerFn(updateOrderTracking);
   const client = useQueryClient();
   const orders = useQuery({
     queryKey: ["store-orders"],
@@ -114,6 +115,20 @@ export function OrderBoard() {
     } finally {
       setBusy("");
       setDrag(null);
+    }
+  };
+  const saveTracking = async (order: Order, trackingUrl: string) => {
+    if (busy || (order.tracking_url ?? "") === trackingUrl.trim()) return;
+    setBusy(order.id);
+    setError("");
+    try {
+      await saveTrackingFn({ data: { id: order.id, trackingUrl } });
+      await client.invalidateQueries({ queryKey: ["store-orders"] });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível salvar o link de rastreio.");
+      await orders.refetch();
+    } finally {
+      setBusy("");
     }
   };
   const all = (orders.data ?? []).filter(o => o.source !== "counter");
@@ -387,7 +402,26 @@ export function OrderBoard() {
                 {detail.notes && (
                   <p className="break-words text-muted-foreground">Observações: {detail.notes}</p>
                 )}
-                <label className="block">
+                {detail.fulfillment === "delivery" && (
+                  <label className="block">
+                    Link de rastreio do entregador
+                    <input
+                      key={detail.id}
+                      className="field mt-2"
+                      type="url"
+                      inputMode="url"
+                      placeholder="https://… (cole o link do aplicativo de entrega)"
+                      defaultValue={detail.tracking_url ?? ""}
+                      disabled={!!busy}
+                      onBlur={(e) => void saveTracking(detail, e.target.value)}
+                      aria-label={`Link de rastreio do pedido ${detail.number}`}
+                    />
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      O cliente acompanha a entrega por esse link. Deixe em branco para remover.
+                    </span>
+                  </label>
+                )}
+                 <label className="block">
                   Etapa
                   <select
                     aria-label="Etapa do pedido"
