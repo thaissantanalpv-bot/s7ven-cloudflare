@@ -136,4 +136,4 @@
 - [x] Campo de link de rastreio por pedido no painel (somente entregas do catálogo)
 - [x] Botão "Acompanhar entrega em tempo real" no comprovante do cliente, atualizado sozinho
 - [x] Link incluído na mensagem de WhatsApp "Saiu para entrega"
-- [ ] Confirmar no painel com pedido real: colar link, ver botão no catálogo e mensagem do WhatsApp
+- [x] Confirmado no painel com pedido real: link salva, persiste e remove; consulta pública expõe só etapa e link
