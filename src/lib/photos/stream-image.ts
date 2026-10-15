@@ -31,7 +31,10 @@ export async function streamImage(
   };
   const res = await send(true);
   if (!res.ok || !res.body) {
-    throw new Error(`Image generation failed: ${res.status} ${await res.text().catch(() => "")}`);
+    const text = await res.text().catch(() => "");
+    let message = text;
+    try { const data = JSON.parse(text); message = data.message ?? data.error?.message ?? text; } catch { /* plain safe app error */ }
+    throw new Error(message || `Não foi possível editar a foto (${res.status}).`);
   }
 
   let sawCompleted = false;
@@ -47,7 +50,7 @@ export async function streamImage(
       }
       if (event.event === "error" || payload?.type === "error") {
         sawAnyEvent = true;
-        streamError = payload?.error?.message ?? "Image generation failed";
+        streamError = payload?.error?.message ?? "Não foi possível editar a foto.";
         return;
       }
       const type = event.event || payload?.type;
@@ -60,7 +63,7 @@ export async function streamImage(
         return;
       sawAnyEvent = true;
       if (!payload?.b64_json) {
-        streamError = "Image event contained no image";
+        streamError = "A IA não retornou uma foto válida.";
         return;
       }
       const b64 = payload.b64_json;
@@ -91,13 +94,16 @@ export async function streamImage(
   if (!sawAnyEvent) {
     const replay = await send(false);
     if (!replay.ok) {
-      throw new Error(`Image generation failed: ${replay.status} ${await replay.text().catch(() => "")}`);
+      const text = await replay.text().catch(() => "");
+      let message = text;
+      try { const data = JSON.parse(text); message = data.message ?? data.error?.message ?? text; } catch { /* plain safe app error */ }
+      throw new Error(message || `Não foi possível editar a foto (${replay.status}).`);
     }
     const json = (await replay.json()) as { data?: { b64_json?: string }[] };
     const b64 = json.data?.[0]?.b64_json;
-    if (!b64) throw new Error("Image generation returned no image");
+    if (!b64) throw new Error("A IA não retornou uma foto.");
     onFrame(`data:image/png;base64,${b64}`, true);
     return;
   }
-  if (!sawCompleted) throw new Error("Image stream ended without a completed event");
+  if (!sawCompleted) throw new Error("A edição da foto não foi concluída. A prévia não pode ser aplicada.");
 }

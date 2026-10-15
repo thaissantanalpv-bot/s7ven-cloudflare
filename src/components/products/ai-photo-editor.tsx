@@ -11,11 +11,12 @@ export function AiPhotoEditor({ source, productName, onApply, onBusy }: { source
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const generate = async () => {
+    const inputSource = final && result ? result : source;
     setBusy(true); onBusy(true); setError(""); setFinal(false);
     try {
       const { data } = await supabase.auth.getSession();
       if (!data.session) throw new Error("Entre novamente para editar fotos.");
-      const photo = await fetch(result || source);
+      const photo = await fetch(inputSource);
       if (!photo.ok) throw new Error("Não foi possível carregar a foto.");
       const blob = await photo.blob();
       const form = new FormData();
