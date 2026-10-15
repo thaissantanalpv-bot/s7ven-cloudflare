@@ -411,8 +411,9 @@ function Catalog() {
         <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 border-b pb-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
             <Truck className="size-4 text-primary" />
-            Entrega {settings.delivery_enabled ? settings.delivery_distance_enabled ? "por km" : settings.fixed_delivery_fee !== null ? brl(settings.fixed_delivery_fee) : "por região" : "a combinar"}
+            Consultar taxa de entrega para o seu bairro
           </span>
+
           <span className="flex items-center gap-2">
             <MessageCircle className="size-4 text-primary" />
             Pedido pelo WhatsApp
