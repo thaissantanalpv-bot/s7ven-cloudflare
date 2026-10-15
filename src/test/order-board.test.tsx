@@ -55,6 +55,23 @@ const mount = () =>
     </QueryClientProvider>,
   );
 describe("Kanban order management", () => {
+  it("opens a printable receipt and saves only local printer settings", async () => {
+    mount();
+    await screen.findByText("Cliente teste");
+    fireEvent.click(screen.getByRole("button", { name: "Configurar impressora" }));
+    fireEvent.change(screen.getByLabelText("Nome da impressora (identificação)"), { target: { value: "Balcão" } });
+    fireEvent.change(screen.getByLabelText("Largura da bobina"), { target: { value: "58" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar preferências" }));
+    expect(localStorage.getItem("s7ven-order-printer")).toBe('{"name":"Balcão","paper":"58"}');
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Imprimir pedido 42" }));
+    const receipt = await screen.findByTitle("Via impressa do pedido");
+    expect(receipt.getAttribute("srcdoc")).toContain(row.address);
+    expect(receipt.getAttribute("srcdoc")).toContain("Sabor: Melancia");
+    expect(receipt.getAttribute("srcdoc")).toContain("54mm");
+    expect(mocks.update).not.toHaveBeenCalled();
+    localStorage.removeItem("s7ven-order-printer");
+  });
   it("excludes counter sales from delivery columns and new order alerts", async () => {
     mount();
     await screen.findByText("Cliente teste");
