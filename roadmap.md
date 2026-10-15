@@ -1,4 +1,9 @@
 # Fase 1
+# Catálogo offline
+- [ ] Preparar abertura offline somente do catálogo público, sem cache de dados administrativos.
+- [ ] Salvar produtos/configurações públicas e atualizar ao reconectar; manter pedidos online.
+- [ ] Verificar consulta offline, retorno da conexão e regressões.
+
 - [x] Reformular o catálogo premium com referência visual TabaDega, preservando produtos, sabores, Pix e WhatsApp.
 - [x] Criar painel protegido para taxas por região e horários semanais, com salvamento compartilhado.
 - [x] Integrar entrega ao total/Pix/WhatsApp e mostrar horários no catálogo.
