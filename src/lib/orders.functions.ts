@@ -17,7 +17,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       .eq("request_id", data.requestId)
       .maybeSingle();
     if (existingError) throw new Error("Não foi possível registrar o pedido. Tente novamente.");
-    if (existing) return { number: existing.number };
+    if (existing) return { id: existing.id, number: existing.number };
     const { count, error: rateError } = await supabaseAdmin
       .from("orders")
       .select("id", { count: "exact", head: true })
@@ -60,7 +60,7 @@ export const submitOrder = createServerFn({ method: "POST" })
         notes: data.customer.notes,
         ...priced,
       })
-      .select("number")
+      .select("id,number")
       .single();
     if (error || !saved) {
       if (error?.code === "P0001") throw new Error("Estoque ou preço alterado. Atualize o catálogo e confira o carrinho.");
@@ -70,11 +70,11 @@ export const submitOrder = createServerFn({ method: "POST" })
           .select("number")
           .eq("request_id", data.requestId)
           .maybeSingle();
-        if (duplicate) return { number: duplicate.number };
+        if (duplicate) return { id: duplicate.id, number: duplicate.number };
       }
       throw new Error("Não foi possível registrar o pedido. Seu carrinho foi mantido.");
     }
-    return { number: saved.number };
+    return { id: saved.id, number: saved.number };
   });
 export const listOrders = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
