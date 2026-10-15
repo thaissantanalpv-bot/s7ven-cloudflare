@@ -1,3 +1,7 @@
+# Correção das 22 listas cortadas
+- [ ] Conferir novamente as opções legíveis no PDF, remover trechos incompletos das descrições e deixar vazias as opções não informadas, sem alterar preços, fotos ou estoque.
+- [ ] Conferir os 22 registros salvos e as opções apresentadas no catálogo e painel.
+
 # Atualização completa do catálogo de 15/10/2026
 - [x] Conferir PDF: preços e fotos presentes; listas de sabores/cores truncadas e quantidades de estoque ausentes.
 - [x] Atualizar 198 produtos/capas do PDF, incluindo 4 novos; preços existentes já coincidem. Estoques nulos e somente opções completas legíveis; identidades, galerias adicionais e combos preservados.
