@@ -1,3 +1,8 @@
+# Impressão térmica de pedidos
+- [ ] Adicionar ícone de impressão nos pedidos e configuração local de nome/papel 58 ou 80 mm.
+- [ ] Verificar via do entregador com endereço, itens, pagamento e totais em pedido real do painel, sem alterar pedidos.
+- [ ] Conectar e testar a impressora física: depende do modelo/conexão e do aparelho da loja.
+
 # Publicação de 15/10/2026
 - [x] Publicar as correções pendentes (contagem por aparelho, entrega por endereço, combos até 100, loja fechada, esgotados, foto por variação, cards alinhados); a versão publicada mostrou 202 produtos, Destaques e Rua/Número/Bairro separados sem CEP.
 - [ ] Conferir no aparelho a reabertura sem internet e o envio real de pedido; a taxa por quilômetro só se confirma com endereço real.
