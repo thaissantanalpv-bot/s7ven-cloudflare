@@ -37,3 +37,4 @@
 
 - WhatsApp photo links use public galleries, never expiring URLs; checkout waits for validated insertion.
 - Print admin orders in escaped ephemeral iframes; store only local printer preferences because hardware pairing is device-owned.
+- Delivery tracking links are admin-set per catalog delivery order and exposed publicly only as stage + link by order id, because customers must never read other order data.
