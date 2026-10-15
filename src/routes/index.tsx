@@ -38,7 +38,6 @@ import { ComboBuilder } from "@/components/products/combo-builder";
 import { comboOption, parseComboOption, comboSummary, type ComboSelection } from "@/lib/combos";
 import {
   PAYMENT_METHODS,
-  WHATSAPP_NUMBER,
   STORE_NAME,
   brl,
 } from "@/lib/products";

@@ -13,7 +13,7 @@
 - Track anonymous browser/session UUIDs with bounded writes; poll admin-only unique-browser aggregates for inactivity-based abandonment notices. Convert only on successful order insertion; never infer contact details.
 - Record checkout conversion atomically with a session upsert on successful order insertion; checkout must never wait for optional visit telemetry, and blocked browser storage uses an in-memory identity.
 - Store shared delivery and weekly hours in `store_settings`; validate writes through authenticated server functions and admin-only RLS so customers cannot change store operations.
-- Store pickup address and selectable distance tiers in shared settings; distance mode takes precedence when enabled, otherwise fixed pricing precedes regions, keeping totals consistent.
+- Shared delivery pricing precedence: enabled distance tiers, then fixed fee, then regions; keep pickup free.
 - Calculate road-distance quotes through Google Maps in sealed browser-session flows; bind private short-lived quotes to address and settings and validate them during checkout so customers cannot choose their own fee.
 - Keep product photo AI editing admin-authenticated and stream original-image edits; applying a result replaces only the selected draft photo through private native storage and requires the usual product save.
 - Grant store administration through protected `user_roles` and a server-managed invitation checked against confirmed auth email; never grant privileges from browser state or editable metadata.
@@ -25,13 +25,13 @@
 - Preserve the imported baseline; expose only allowlisted sales fields, including admin-selected highlights. Raw overrides/writes stay admin-only.
 - Store product photos in private native storage with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads; this protects unpublished uploads without blocking admin previews.
 - Use separate public and admin catalog query keys so restricted override data cannot leak through a shared cache.
-- Keep the cover in image and additional photo paths in images within catalog overrides; resolve signed URLs separately from editable paths so galleries preserve legacy covers and admin saves never persist expiring URLs.
-- Render storefront photo navigation in ProductCardPhotos using productPhotos, keeping inline navigation independent of the enlargement dialog so every saved photo is accessible before opening it.
+- Keep cover/additional paths in image/images and resolve signed URLs separately; admin saves must never persist expiring URLs.
+- ProductCardPhotos uses productPhotos for inline navigation independent of enlargement; keep every saved photo accessible.
 - Reserve tracked product and variation stock atomically on order insertion using row locks, and reject stale prices; this prevents overselling across concurrent customers.
 - Represent grouped fixed-price combos as catalog products with comboGroups and structured order components; encode combo choices in separate option keys to preserve legacy carts, validate group membership server-side, and reserve all main/component quantities together in sorted row-lock order.
 - Persist counter sales in orders with a source and cashier, using admin-verified server-calculated checkout and the existing reservation trigger; this unifies history without duplicate stock deductions. Keep counter sales out of delivery stages and new-order alerts.
 - Keep manifest identity/start URL `/painel` and online admin auth. Generate guarded production-only offline caching for public catalog HTML/assets, never admin/auth/API. Persist public products/settings and viewed photos; refresh on reconnect and require online checkout.
 - Keep the administrative assistant in a single account-scoped text transcript with admin-only reads and server-managed writes; authenticate the streaming endpoint independently and send only allowlisted dashboard aggregates to AI to protect customer data.
-- Use AI SDK Responses streaming and AI Elements for the assistant, retaining full saved text history with bounded request leases and durable terminal-access blocks; this prevents duplicate paid requests and keeps analysis isolated from operational writes.
+- Use AI SDK Responses and AI Elements with saved history, bounded leases and durable terminal blocks to prevent duplicate paid requests; analysis never writes operations.
 
 - WhatsApp photo links open the public catalog gallery by product ID, never an expiring storage URL; checkout still waits for validated order insertion.
