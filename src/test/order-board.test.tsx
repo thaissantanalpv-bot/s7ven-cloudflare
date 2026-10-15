@@ -168,7 +168,15 @@ describe("Kanban order management", () => {
     fireEvent.change(input, { target: { value: "https://entrega.app/r/abc123" } });
     fireEvent.blur(input);
     await waitFor(() => expect(mocks.track).toHaveBeenCalledWith({ data: { id: row.id, trackingUrl: "https://entrega.app/r/abc123" } }));
-    fireEvent.click(screen.getByRole("button", { name: "Close" }).catch?.(() => null) ?? screen.getByRole("button", { name: /fechar|close/i }));
+  });
+
+  it("includes the tracking link in the out-for-delivery WhatsApp message", async () => {
+    row.status = "out_for_delivery";
+    row.tracking_url = "https://entrega.app/r/abc123";
+    mount();
+    await screen.findByText("Cliente teste");
+    const notify = screen.getByRole("link", { name: /Avisar cliente do pedido 42/ });
+    expect(decodeURIComponent(notify.getAttribute("href") ?? "")).toContain("https://entrega.app/r/abc123");
   });
 
   it("hides the tracking field for pickup orders", async () => {
