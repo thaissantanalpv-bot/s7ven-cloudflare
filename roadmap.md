@@ -1,3 +1,8 @@
+# Catálogo branco inspirado na referência
+- [ ] Aplicar fundo branco e abas pretas apenas no catálogo, preservando o painel.
+- [ ] Mostrar dois produtos por linha no celular e logo S7VEN no início.
+- [ ] Verificar fotos, opções e carrinho em celular e computador.
+
 # Catálogo offline
 - [x] Preparar abertura offline somente do catálogo público, sem cache de dados administrativos.
 - [x] Salvar produtos/configurações públicas e atualizar ao reconectar; manter pedidos online.
