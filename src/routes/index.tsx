@@ -79,7 +79,7 @@ function Catalog() {
   const { data: catalogProducts } = useSuspenseQuery(catalogQuery);
   const [online, setOnline] = useState(true);
   const [photoUrls, setPhotoUrls] = useState<Map<string, string>>(new Map());
-  const products = useMemo(() => online ? catalogProducts : catalogProducts.map(product => ({ ...product, image: photoUrls.get(product.image ?? "") ?? product.image, images: product.images?.map(url => photoUrls.get(url) ?? url) })), [catalogProducts, online, photoUrls]);
+  const products = useMemo<CatalogProduct[]>(() => online ? catalogProducts : catalogProducts.map(product => ({ ...product, ...(product.image ? { image: photoUrls.get(product.image) ?? product.image } : {}), ...(product.images ? { images: product.images.map(url => photoUrls.get(url) ?? url) } : {}) })), [catalogProducts, online, photoUrls]);
   useCatalogUpdates();
   const categories = ["Todos", ...new Set(products.map(p => p.category))];
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
