@@ -133,3 +133,39 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       throw new Error("O pedido mudou ou não foi salvo. Atualize o quadro e tente novamente.");
     return { saved: true };
   });
+export const updateOrderTracking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid(), trackingUrl: trackingUrlSchema }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: admin, error: roleError } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (roleError || !admin) throw new Error("Acesso restrito à administração.");
+    const { data: saved, error } = await context.supabase
+      .from("orders")
+      .update({ tracking_url: data.trackingUrl || null, updated_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .eq("source", "catalog")
+      .eq("fulfillment", "delivery")
+      .select("id")
+      .maybeSingle();
+    if (error || !saved)
+      throw new Error("Não foi possível salvar o link de rastreio. Atualize o quadro e tente novamente.");
+    return { saved: true };
+  });
+// Public, narrowly scoped read: the customer sees only the stage and the tracking link of their own order id.
+export const orderTracking = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin.rpc("order_tracking", { _id: data.id });
+    if (error) throw new Error("Não foi possível consultar a entrega.");
+    if (!row) throw new Error("Pedido não encontrado.");
+    const parsed = z
+      .object({ status: statusSchema, trackingUrl: z.string().nullable() })
+      .parse(row);
+    return { status: parsed.status, trackingUrl: parsed.trackingUrl };
+  });

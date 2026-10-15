@@ -190,8 +190,12 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
   };
 }
 export function orderWhatsApp(
-  order: Pick<Order, "number" | "customer_name" | "customer_phone" | "status">,
+  order: Pick<Order, "number" | "customer_name" | "customer_phone" | "status" | "tracking_url">,
 ) {
   const stage = ORDER_STAGES.find((s) => s.id === order.status);
-  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${stage?.message ?? ""}\nPedido #${order.number} — ${STORE_NAME}`)}`;
+  const tracking =
+    order.status === "out_for_delivery" && order.tracking_url
+      ? `\nAcompanhe a entrega em tempo real: ${order.tracking_url}`
+      : "";
+  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${stage?.message ?? ""}\nPedido #${order.number} — ${STORE_NAME}${tracking}`)}`;
 }
