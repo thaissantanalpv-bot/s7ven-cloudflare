@@ -4,6 +4,7 @@ import { z } from "zod";
 import { submitOrderSchema, priceOrder, statusSchema, type Order } from "./orders";
 import { EMPTY_SETTINGS, settingsSchema, storeStatus } from "./store-settings";
 import { mergeCatalog } from "./catalog";
+import { deliveryAddress } from "./delivery-address";
 
 export const submitOrder = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => submitOrderSchema.parse(input))
@@ -40,7 +41,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       const session = await deliverySession();
       if (!data.deliveryQuoteId || !session.data.ready || !session.id) throw new Error("Calcule a taxa de entrega antes de enviar.");
       const { data: quote, error: quoteError } = await supabaseAdmin.from("delivery_quotes").select("fee,distance_km,address,settings_hash").eq("id", data.deliveryQuoteId).eq("session_id", session.id).gte("created_at", new Date(Date.now()-15*60000).toISOString()).maybeSingle();
-      if (quoteError || !quote || quote.address !== data.customer.address || quote.settings_hash !== await deliverySettingsHash(settings)) throw new Error("O endereço ou a taxa mudou. Calcule a entrega novamente.");
+      if (quoteError || !quote || quote.address !== deliveryAddress(data.customer.address) || quote.settings_hash !== await deliverySettingsHash(settings)) throw new Error("O endereço ou a taxa mudou. Calcule a entrega novamente.");
       verifiedDelivery = { fee: Number(quote.fee), km: Number(quote.distance_km) };
     }
     const priced = priceOrder(data, settings, mergeCatalog(catalogRows), verifiedDelivery);
@@ -52,7 +53,7 @@ export const submitOrder = createServerFn({ method: "POST" })
         analytics_visitor_id: data.analytics?.visitorId ?? null,
         customer_name: data.customer.name,
         customer_phone: data.customer.phone,
-        address: data.customer.fulfillment === "pickup" ? "" : data.customer.address,
+        address: data.customer.fulfillment === "pickup" ? "" : deliveryAddress(data.customer.address),
         fulfillment: data.customer.fulfillment,
         payment: data.customer.payment,
         change_for: data.customer.change,

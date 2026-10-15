@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { cloneElement, isValidElement, useEffect, useId, useMemo, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,6 +30,7 @@ import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder } from "@/lib/orders.functions";
 import { startDeliverySession, quoteDelivery } from "@/lib/delivery.functions";
+import { DELIVERY_CITY, deliveryAddress } from "@/lib/delivery-address";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
@@ -120,6 +121,9 @@ function Catalog() {
   const calculateDistance = useServerFn(quoteDelivery);
   const [deliveryQuote, setDeliveryQuote] = useState<{ id: string; address: string; km: number; fee: number; expires: number; config: string } | null>(null);
   const [quoting, setQuoting] = useState(false);
+  const [deliveryError, setDeliveryError] = useState("");
+  const quoteRequest = useRef(0);
+  const pendingQuote = useRef("");
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [receipt, setReceipt] = useState<{ number: number; url: string; subtotal: number; deliveryFee: number; total: number } | null>(null);
@@ -217,16 +221,29 @@ function Catalog() {
   const isDelivery = form.fulfillment === "delivery";
   const distanceMode = settings.delivery_enabled && settings.delivery_distance_enabled;
   const distanceConfig = JSON.stringify([settings.delivery_origin, settings.delivery_distance_tiers]);
-  const validQuote = deliveryQuote?.address === form.address.trim() && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
+  const validQuote = deliveryQuote?.address === deliveryAddress(form.address) && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
   const deliveryFee = isDelivery && settings.delivery_enabled ? (distanceMode ? validQuote?.fee ?? 0 : settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
+  useEffect(() => {
+    quoteRequest.current += 1;
+    pendingQuote.current = "";
+    setQuoting(false);
+    setDeliveryError("");
+    setDeliveryQuote(null);
+  }, [form.address, form.fulfillment, distanceConfig]);
   const calculateDelivery = async () => {
-    setQuoting(true); setError(""); setDeliveryQuote(null);
+    const address = form.address.trim();
+    if (!isDelivery || !distanceMode || address.length < 8 || validQuote || pendingQuote.current === address) return;
+    if (!navigator.onLine) return setDeliveryError("Conecte-se à internet para calcular a taxa de entrega.");
+    const request = ++quoteRequest.current;
+    pendingQuote.current = address;
+    setQuoting(true); setDeliveryError(""); setDeliveryQuote(null);
     try {
       await startDistanceSession();
-      const quote = await calculateDistance({ data: { address: form.address.trim() } });
-      setDeliveryQuote({ ...quote, expires: Date.now()+14*60000, config: distanceConfig });
-    } catch(e) { setError(e instanceof Error ? e.message : "Não foi possível calcular a entrega."); }
-    finally { setQuoting(false); }
+      if (request !== quoteRequest.current) return;
+      const quote = await calculateDistance({ data: { address } });
+      if (request === quoteRequest.current) setDeliveryQuote({ ...quote, expires: Date.now()+14*60000, config: distanceConfig });
+    } catch(e) { if (request === quoteRequest.current) setDeliveryError(e instanceof Error ? e.message : "Não foi possível calcular a entrega. Confira o endereço e tente novamente."); }
+    finally { if (request === quoteRequest.current) { pendingQuote.current = ""; setQuoting(false); } }
   };
   const total = subtotal + deliveryFee;
 
@@ -304,7 +321,7 @@ function Catalog() {
       `*Total${!isDelivery || settings.delivery_enabled ? "" : " dos produtos"}: ${brl(total)}*`,
       "",
       `*Nome:* ${d.name}`,
-      isDelivery ? `*Endereço:* ${d.address}` : `*Modalidade:* Retirada na loja${settings.pickup_address ? `\n*Endereço de retirada:* ${settings.pickup_address}` : ""}`,
+      isDelivery ? `*Endereço:* ${deliveryAddress(d.address)}` : `*Modalidade:* Retirada na loja${settings.pickup_address ? `\n*Endereço de retirada:* ${settings.pickup_address}` : ""}`,
       `*Pagamento:* ${d.payment}${d.payment === "Dinheiro" && d.change ? ` (troco para ${d.change})` : ""}`,
       d.notes ? `*Obs.:* ${d.notes}` : "",
     ].filter((l, idx, arr) => l !== "" || arr[idx - 1] !== "");
@@ -600,11 +617,13 @@ function Catalog() {
                   required
                   aria-invalid={Boolean(fieldErrors.address?.length)}
                   aria-describedby={fieldErrors.address?.length ? "address-error" : undefined}
-                  placeholder="Rua, número, bairro, cidade e referência"
+                  placeholder="Rua, número, bairro e CEP"
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  onBlur={() => { void calculateDelivery(); }}
                 />
               </Field>}
+              {isDelivery && <label className="block text-sm">Cidade<input className="field mt-2" value={DELIVERY_CITY} readOnly /></label>}
               {!isDelivery && settings.pickup_address && (
                 <div className="border-l-2 border-primary py-2 pl-3 text-sm" role="status">
                   <p className="font-semibold">Endereço para retirada</p>
@@ -612,7 +631,7 @@ function Catalog() {
                 </div>
               )}
               {isDelivery && fieldErrors.address?.[0] && <p id="address-error" className="text-xs text-destructive">{fieldErrors.address[0]}</p>}
-              {isDelivery && distanceMode && <div className="space-y-2"><Button variant="outline" disabled={quoting || form.address.trim().length < 8} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : "Calcular entrega"}</Button>{validQuote && <p role="status" className="text-sm text-primary">{validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km · {brl(validQuote.fee)} · Google Maps</p>}</div>}
+              {isDelivery && distanceMode && <div className="space-y-2"><Button variant="outline" disabled={quoting || form.address.trim().length < 8 || Boolean(validQuote)} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : validQuote ? "Entrega calculada" : "Calcular entrega"}</Button>{validQuote && <p role="status" className="text-sm font-semibold text-primary">Taxa de entrega: {brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km pela rota</p>}{deliveryError && <p role="alert" className="text-sm text-destructive">{deliveryError}</p>}</div>}
               {isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && (
                 <Field label="Bairro ou região">
                   <select
@@ -718,14 +737,14 @@ function Catalog() {
               <span>{isDelivery ? "Entrega" : "Retirada na loja"}</span>
               <span>
                 {!isDelivery ? "Sem taxa" : settings.delivery_enabled
-                  ? distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : "Calcule a entrega" : settings.fixed_delivery_fee !== null || zone
+                  ? distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : quoting ? "Calculando…" : "A calcular" : settings.fixed_delivery_fee !== null || zone
                     ? brl(displayedDeliveryFee)
                     : "Selecione a região"
                   : "A confirmar"}
               </span>
             </div>
             <div className="flex justify-between text-lg">
-              <span>Total</span>
+              <span>{isDelivery && distanceMode && !validQuote && items.length ? "Total dos produtos" : "Total"}</span>
               <span className="font-display font-semibold">{brl(displayedTotal)}</span>
             </div>
             {status.configured && !status.open && (

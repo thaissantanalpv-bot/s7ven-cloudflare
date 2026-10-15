@@ -1,7 +1,9 @@
 # Correção do cálculo de entrega por endereço
-- [ ] Completar endereço de saída com a cidade conhecida, preservando as nove faixas reais e valores.
-- [ ] Calcular ao sair do campo de endereço, descartar respostas antigas e exibir taxa/erros junto do endereço sem indicar entrega gratuita antes da cotação.
-- [ ] Executar testes e conferir carrinho sem chamadas Google Maps; validação real da rota depende do site autorizado.
+- [x] Completar endereço de saída com Araçatuba via painel autenticado; readback confirmou preservação das nove faixas reais e valores.
+- [x] Preencher Araçatuba automaticamente e validar cidade/estado/país e endereço completo antes da rota; endereço normalizado também no pedido e WhatsApp.
+- [x] Calcular ao sair do campo de endereço, descartar respostas antigas e exibir taxa/erros junto do endereço sem indicar entrega gratuita antes da cotação.
+- [x] Executar 23 testes; carrinho de 384px mostrou cidade fixa e aviso offline sem chamadas Maps, sem erros de execução; build OK.
+- [ ] Validar rota e taxa real no site autorizado após publicação desta versão; Google Maps não pode ser verificado no ambiente de teste.
 
 # Melhorias de venda solicitadas em 15/10/2026
 - [x] Organizar mensagem WhatsApp com nomes, quantidades, valores e links permanentes para visualizar fotos dos produtos; verificação automatizada do destino e mensagem.
