@@ -17,7 +17,7 @@ export default defineConfig({
     devOptions: { enabled: false },
     workbox: {
       globPatterns: ["assets/**/*.{js,css,woff,woff2}"],
-      navigateFallback: undefined,
+      navigateFallback: null,
       cleanupOutdatedCaches: true,
       runtimeCaching: [{
         urlPattern: ({ request, url }) => request.mode === "navigate" && url.origin === self.location.origin && url.pathname === "/" && !url.searchParams.has("sw"),

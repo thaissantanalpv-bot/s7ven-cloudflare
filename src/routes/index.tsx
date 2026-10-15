@@ -63,7 +63,7 @@ export const Route = createFileRoute("/")({
     ],
   }),
   component: Catalog,
-  errorComponent: ({ error }) => <div role="alert" className="p-8 text-center">{error.message}<Button asChild variant="outline" className="mt-4"><a href="/">Tentar novamente</a></Button></div>,
+  errorComponent: ({ error }) => <div role="alert" className="p-8 text-center">{error instanceof Error ? error.message : "Não foi possível carregar o catálogo."}<Button asChild variant="outline" className="mt-4"><a href="/">Tentar novamente</a></Button></div>,
   notFoundComponent: () => <div className="p-8 text-center">Catálogo não encontrado.</div>,
 });
 
