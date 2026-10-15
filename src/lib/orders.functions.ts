@@ -13,7 +13,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existing, error: existingError } = await supabaseAdmin
       .from("orders")
-      .select("number")
+      .select("id,number")
       .eq("request_id", data.requestId)
       .maybeSingle();
     if (existingError) throw new Error("Não foi possível registrar o pedido. Tente novamente.");
@@ -67,7 +67,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       if (error?.code === "23505") {
         const { data: duplicate } = await supabaseAdmin
           .from("orders")
-          .select("number")
+          .select("id,number")
           .eq("request_id", data.requestId)
           .maybeSingle();
         if (duplicate) return { id: duplicate.id, number: duplicate.number };
