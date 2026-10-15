@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 - Keep catalog product/cart logic on the public catalog route and preserve per-option cart keys so existing saved carts continue to work.
-- Track the catalog funnel with anonymous browser/session UUIDs and bounded server writes; admin-only SQL aggregates count unique browsers, infer inactivity-based abandonment, and mark conversion only from successful order insertion. Poll aggregates so inactivity thresholds update without event broadcasts.
+- Track anonymous browser/session UUIDs with bounded writes; poll admin-only unique-browser aggregates for inactivity-based abandonment notices. Convert only on successful order insertion; never infer contact details.
 - Record checkout conversion atomically with a session upsert on successful order insertion; checkout must never wait for optional visit telemetry, and blocked browser storage uses an in-memory identity.
 - Store shared delivery and weekly hours in `store_settings`; validate writes through authenticated server functions and admin-only RLS so customers cannot change store operations.
 - Store pickup address and selectable distance tiers in shared settings; distance mode takes precedence when enabled, otherwise fixed pricing precedes regions, keeping totals consistent.
@@ -22,7 +22,7 @@
 - Persist catalog fulfillment independently of sales source; default legacy carts/orders to delivery and calculate pickup without address, region, or delivery fees on both client and server.
 - Share cart availability checks between catalog submission and server pricing, including aggregate product/variation quantities and missing saved-cart products; only navigate to WhatsApp after server validation and stock reservation succeed.
 - Keep order management in an admin-only panel module with authenticated status writes, conflict detection, paginated polling and user-activated audio; WhatsApp stage actions open prefilled messages rather than claiming automatic delivery.
-- Keep the imported catalog as the immutable baseline; public reads merge only the read-only allowlisted sales projection, while raw overrides and all writes remain admin-only.
+- Preserve the imported baseline; expose only allowlisted sales fields, including admin-selected highlights. Raw overrides/writes stay admin-only.
 - Store product photos in private native storage with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads; this protects unpublished uploads without blocking admin previews.
 - Use separate public and admin catalog query keys so restricted override data cannot leak through a shared cache.
 - Keep the cover in image and additional photo paths in images within catalog overrides; resolve signed URLs separately from editable paths so galleries preserve legacy covers and admin saves never persist expiring URLs.
@@ -33,3 +33,5 @@
 - Keep manifest identity/start URL `/painel` and online admin auth. Generate guarded production-only offline caching for public catalog HTML/assets, never admin/auth/API. Persist public products/settings and viewed photos; refresh on reconnect and require online checkout.
 - Keep the administrative assistant in a single account-scoped text transcript with admin-only reads and server-managed writes; authenticate the streaming endpoint independently and send only allowlisted dashboard aggregates to AI to protect customer data.
 - Use AI SDK Responses streaming and AI Elements for the assistant, retaining full saved text history with bounded request leases and durable terminal-access blocks; this prevents duplicate paid requests and keeps analysis isolated from operational writes.
+
+- WhatsApp photo links open the public catalog gallery by product ID, never an expiring storage URL; checkout still waits for validated order insertion.
