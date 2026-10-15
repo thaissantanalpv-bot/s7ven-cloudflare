@@ -4,13 +4,18 @@ export const DAYS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira",
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 export const settingsSchema = z.object({
   delivery_enabled: z.boolean(),
+  delivery_distance_enabled: z.boolean().default(false),
+  delivery_origin: z.string().trim().max(300).default(""),
+  delivery_distance_tiers: z.array(z.object({ id: z.string().min(1), upToKm: z.number().positive().max(500), fee: z.number().min(0).max(1000) })).max(50).default([]),
   fixed_delivery_fee: z.number().min(0).max(1000).nullable().default(null),
   pickup_address: z.string().trim().max(300).default(""),
   delivery_zones: z.array(z.object({ id: z.string().min(1), name: z.string().trim().min(2, "Informe o bairro ou região").max(80), fee: z.number().min(0).max(1000) })).max(100),
   hours_enabled: z.boolean(),
   opening_hours: z.array(z.object({ day: z.number().int().min(0).max(6), enabled: z.boolean(), open: time, close: time })).length(7),
 }).superRefine((s, ctx) => {
-  if (s.delivery_enabled && s.fixed_delivery_fee === null && !s.delivery_zones.length) ctx.addIssue({ code: "custom", message: "Cadastre pelo menos uma região antes de ativar as taxas." });
+  if (s.delivery_enabled && !s.delivery_distance_enabled && s.fixed_delivery_fee === null && !s.delivery_zones.length) ctx.addIssue({ code: "custom", message: "Cadastre pelo menos uma região antes de ativar as taxas." });
+  if (s.delivery_distance_enabled && (s.delivery_origin.length < 8 || !s.delivery_distance_tiers.length)) ctx.addIssue({ code: "custom", message: "Informe o endereço completo de saída e pelo menos uma faixa de km." });
+  if (new Set(s.delivery_distance_tiers.map(t => t.upToKm)).size !== s.delivery_distance_tiers.length) ctx.addIssue({ code: "custom", message: "Cada faixa precisa ter um limite de km diferente." });
   if (new Set(s.delivery_zones.map(z => z.name.toLocaleLowerCase())).size !== s.delivery_zones.length) ctx.addIssue({ code: "custom", message: "Cada região deve ter um nome diferente." });
   if (new Set(s.opening_hours.map(h => h.day)).size !== 7) ctx.addIssue({ code: "custom", message: "Informe os sete dias da semana." });
   if (s.hours_enabled && !s.opening_hours.some(h => h.enabled)) ctx.addIssue({ code: "custom", message: "Selecione pelo menos um dia de atendimento." });
@@ -19,8 +24,15 @@ export const settingsSchema = z.object({
 export type StoreSettings = z.infer<typeof settingsSchema>;
 export const EMPTY_SETTINGS: StoreSettings = {
   delivery_enabled: false, fixed_delivery_fee: null, pickup_address: "", delivery_zones: [], hours_enabled: false,
+  delivery_distance_enabled: false, delivery_origin: "", delivery_distance_tiers: [],
   opening_hours: DAYS.map((_, day) => ({ day, enabled: false, open: "18:00", close: "23:00" })),
 };
+export function distanceFee(settings: StoreSettings, distanceKm: number) {
+  if (!Number.isFinite(distanceKm) || distanceKm < 0) throw new Error("Distância inválida.");
+  const tier = [...settings.delivery_distance_tiers].sort((a, b) => a.upToKm - b.upToKm).find(t => distanceKm <= t.upToKm);
+  if (!tier) throw new Error("Endereço fora da área de entrega. Escolha retirada ou fale com a loja.");
+  return tier.fee;
+}
 export function storeStatus(settings: StoreSettings, now = new Date()) {
   if (!settings.hours_enabled) return { open: true, configured: false, label: "Horários a confirmar" };
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);

@@ -56,6 +56,24 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_photo_ai_state: {
+        Row: {
+          blocked_reason: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blocked_reason?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blocked_reason?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       catalog_products: {
         Row: {
           data: Json
@@ -101,6 +119,36 @@ export type Database = {
           rate_key?: string
           started_at?: string
           visitor_id?: string
+        }
+        Relationships: []
+      }
+      delivery_quotes: {
+        Row: {
+          address: string
+          created_at: string
+          distance_km: number
+          fee: number
+          id: string
+          session_id: string
+          settings_hash: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          distance_km: number
+          fee: number
+          id?: string
+          session_id: string
+          settings_hash: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          distance_km?: number
+          fee?: number
+          id?: string
+          session_id?: string
+          settings_hash?: string
         }
         Relationships: []
       }
@@ -190,7 +238,10 @@ export type Database = {
       }
       store_settings: {
         Row: {
+          delivery_distance_enabled: boolean
+          delivery_distance_tiers: Json
           delivery_enabled: boolean
+          delivery_origin: string
           delivery_zones: Json
           fixed_delivery_fee: number | null
           hours_enabled: boolean
@@ -200,7 +251,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          delivery_distance_enabled?: boolean
+          delivery_distance_tiers?: Json
           delivery_enabled?: boolean
+          delivery_origin?: string
           delivery_zones?: Json
           fixed_delivery_fee?: number | null
           hours_enabled?: boolean
@@ -210,7 +264,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          delivery_distance_enabled?: boolean
+          delivery_distance_tiers?: Json
           delivery_enabled?: boolean
+          delivery_origin?: string
           delivery_zones?: Json
           fixed_delivery_fee?: number | null
           hours_enabled?: boolean
