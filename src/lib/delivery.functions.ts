@@ -13,7 +13,7 @@ export const quoteDelivery = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { deliverySession, deliverySettingsHash } = await import("./delivery.server");
     const session = await deliverySession();
-    if (!session.data.ready) throw new Error("Reabra o carrinho para calcular a entrega.");
+    if (!session.data.ready || !session.id) throw new Error("Reabra o carrinho para calcular a entrega.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin.from("store_settings").select("*").eq("id", "main").single();
     if (error) throw new Error("Não foi possível conferir as taxas.");

@@ -38,7 +38,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     if (data.customer.fulfillment === "delivery" && settings.delivery_enabled && settings.delivery_distance_enabled) {
       const { deliverySession, deliverySettingsHash } = await import("./delivery.server");
       const session = await deliverySession();
-      if (!data.deliveryQuoteId || !session.data.ready) throw new Error("Calcule a taxa de entrega antes de enviar.");
+      if (!data.deliveryQuoteId || !session.data.ready || !session.id) throw new Error("Calcule a taxa de entrega antes de enviar.");
       const { data: quote, error: quoteError } = await supabaseAdmin.from("delivery_quotes").select("fee,distance_km,address,settings_hash").eq("id", data.deliveryQuoteId).eq("session_id", session.id).gte("created_at", new Date(Date.now()-15*60000).toISOString()).maybeSingle();
       if (quoteError || !quote || quote.address !== data.customer.address || quote.settings_hash !== await deliverySettingsHash(settings)) throw new Error("O endereço ou a taxa mudou. Calcule a entrega novamente.");
       verifiedDelivery = { fee: Number(quote.fee), km: Number(quote.distance_km) };
