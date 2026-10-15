@@ -34,6 +34,7 @@ import { storeSettingsQuery } from "@/lib/store-settings.query";
 import { checkStoreAdmin, saveStoreSettings } from "@/lib/store-settings.functions";
 import { OrderBoard } from "@/components/orders/order-board";
 import { ProductManager } from "@/components/products/product-manager";
+import { DistanceTiersEditor } from "@/components/distance-tiers-editor";
 import { PointOfSale } from "@/components/pos/point-of-sale";
 import { SalesHistory } from "@/components/pos/sales-history";
 import { CatalogAnalytics } from "@/components/catalog-analytics";
@@ -283,16 +284,18 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
           </label>
           <label className="mt-5 block text-sm">
             Tipo de taxa
-            <select className="field mt-2" value={draft.fixed_delivery_fee === null ? "region" : "fixed"} onChange={(e) => update({ ...draft, fixed_delivery_fee: e.target.value === "fixed" ? 0 : null })}>
+            <select className="field mt-2" value={draft.delivery_distance_enabled ? "distance" : draft.fixed_delivery_fee === null ? "region" : "fixed"} onChange={(e) => update({ ...draft, delivery_distance_enabled: e.target.value === "distance", fixed_delivery_fee: e.target.value === "fixed" ? draft.fixed_delivery_fee ?? 0 : e.target.value === "region" ? null : draft.fixed_delivery_fee })}>
               <option value="fixed">Taxa fixa</option>
               <option value="region">Por região</option>
+              <option value="distance">Por quilometragem</option>
             </select>
           </label>
-          {draft.fixed_delivery_fee !== null && <label className="mt-5 block text-sm">
+          {draft.delivery_distance_enabled && <DistanceTiersEditor settings={draft} onChange={update} />}
+          {!draft.delivery_distance_enabled && draft.fixed_delivery_fee !== null && <label className="mt-5 block text-sm">
             Taxa fixa (R$)
             <input className="field mt-2" type="number" min="0" max="1000" step="0.01" value={draft.fixed_delivery_fee} onChange={(e) => update({ ...draft, fixed_delivery_fee: Number(e.target.value) })} />
           </label>}
-          {draft.fixed_delivery_fee === null && <>
+          {!draft.delivery_distance_enabled && draft.fixed_delivery_fee === null && <>
           <div className="mt-7">
             {draft.delivery_zones.length === 0 && (
               <p className="border-y py-10 text-sm text-muted-foreground">
