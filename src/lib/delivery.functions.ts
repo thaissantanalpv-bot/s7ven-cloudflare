@@ -43,6 +43,9 @@ export const quoteDelivery = createServerFn({ method: "POST" })
     const route = payload.routes?.[0];
     if (!route?.duration || !/^\d+(\.\d+)?s$/.test(route.duration)) throw new Error("Não foi encontrada uma rota. Confira rua, número, cidade e CEP.");
     const km = (route.distanceMeters ?? 0) / 1000;
+    if (!Number.isFinite(km) || km < 0) throw new Error("A rota retornou uma distância inválida. Confira o endereço e tente novamente.");
+    const maxKm = Math.max(...settings.delivery_distance_tiers.map(t => t.upToKm));
+    if (km > maxKm) throw new Error(`A rota até este endereço tem ${km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km. A entrega atende até ${maxKm.toLocaleString("pt-BR")} km. Confira rua, número e cidade ou escolha retirada na loja.`);
     const fee = distanceFee(settings, km);
     const { data: saved, error: saveError } = await supabaseAdmin.from("delivery_quotes").insert({ session_id: session.id, address: data.address, settings_hash: hash, distance_km: km, fee }).select("id").single();
     if (saveError || !saved) throw new Error("Não foi possível guardar o cálculo. Tente novamente.");
