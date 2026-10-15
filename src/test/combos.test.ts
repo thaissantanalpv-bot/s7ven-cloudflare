@@ -37,11 +37,11 @@ describe("Grouped combos", () => {
   it("validates group quantities and excludes own products and own flavors", () => {
     expect(catalogProductSchema.safeParse(toDraft(combo)).success).toBe(true);
     expect(catalogProductSchema.safeParse({ ...toDraft(combo), comboGroups: [{ ...combo.comboGroups[0], quantity: 0 }] }).success).toBe(false);
-    expect(catalogProductSchema.safeParse({ ...toDraft(combo), comboGroups: [{ ...combo.comboGroups[0], quantity: 100 }] }).success).toBe(true);
-    expect(catalogProductSchema.safeParse({ ...toDraft(combo), comboGroups: [{ ...combo.comboGroups[0], quantity: 101 }] }).success).toBe(false);
-    const bigCombo = { ...combo, comboGroups: [{ id: "drink", name: "Bebida", quantity: 100, productIds: ["p1"] }] };
+    expect(catalogProductSchema.safeParse({ ...toDraft(combo), comboGroups: [{ ...combo.comboGroups[0], quantity: 200 }] }).success).toBe(true);
+    expect(catalogProductSchema.safeParse({ ...toDraft(combo), comboGroups: [{ ...combo.comboGroups[0], quantity: 201 }] }).success).toBe(false);
+    const bigCombo = { ...combo, comboGroups: [{ id: "drink", name: "Bebida", quantity: 200, productIds: ["p1"] }] };
     const bigProducts = [...base, bigCombo];
-    const bigLine = { productId: bigCombo.id, option: "", qty: 1, components: [{ groupId: "drink", productId: "p1", qty: 100, option: "" }] };
+    const bigLine = { productId: bigCombo.id, option: "", qty: 1, components: [{ groupId: "drink", productId: "p1", qty: 200, option: "" }] };
     expect(() => validateCartAvailability([bigLine], bigProducts)).not.toThrow();
     expect(() => validateCartAvailability([bigLine], bigProducts.map(p => p.id === "p1" ? { ...p, stock: 50 } : p))).toThrow("quantidade indisponível");
     expect(catalogProductSchema.safeParse({ ...toDraft(combo), comboGroups: [{ id: "self", name: "Self", quantity: 1, productIds: [combo.id] }] }).success).toBe(false);
