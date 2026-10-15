@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { mergeCatalog, type CatalogProduct } from "@/lib/catalog";
 import { ComboBuilder } from "@/components/products/combo-builder";
 import { ComboGroupsEditor } from "@/components/products/combo-groups-editor";
