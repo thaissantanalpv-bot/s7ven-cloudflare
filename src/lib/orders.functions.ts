@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { submitOrderSchema, priceOrder, statusSchema, type Order } from "./orders";
+import { submitOrderSchema, priceOrder, statusSchema, trackingUrlSchema, type Order } from "./orders";
 import { EMPTY_SETTINGS, settingsSchema, storeStatus } from "./store-settings";
 import { mergeCatalog } from "./catalog";
 import { deliveryAddress } from "./delivery-address";
