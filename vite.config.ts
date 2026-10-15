@@ -22,7 +22,7 @@ export default defineConfig({
       navigateFallback: null,
       cleanupOutdatedCaches: true,
       runtimeCaching: [{
-        urlPattern: ({ request, url }) => request.mode === "navigate" && url.origin === self.location.origin && url.pathname === "/" && !url.searchParams.has("sw"),
+        urlPattern: ({ request, url }) => (request.mode === "navigate" || request.destination === "") && url.origin === self.location.origin && url.pathname === "/" && !url.searchParams.has("sw"),
         handler: "NetworkFirst",
         options: { cacheName: "s7ven-public-pages-v1", networkTimeoutSeconds: 3, cacheableResponse: { statuses: [200] }, expiration: { maxEntries: 10, maxAgeSeconds: 30 * 86400 } },
       }],
