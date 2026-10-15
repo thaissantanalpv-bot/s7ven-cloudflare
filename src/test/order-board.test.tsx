@@ -37,6 +37,7 @@ beforeEach(() => {
     delivery_zone: "",
     delivery_confirmed: false,
     status: "received",
+    fulfillment: "delivery",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -184,6 +185,6 @@ describe("Kanban order management", () => {
     mount();
     await screen.findByText("Cliente teste");
     fireEvent.click(screen.getByRole("button", { name: "Detalhes" }));
-    await screen.findByText(/Retirada na loja/);
+    await screen.findAllByText(/Retirada na loja/);
     expect(screen.queryByLabelText("Link de rastreio do pedido 42")).toBeNull();
   });
