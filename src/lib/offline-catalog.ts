@@ -9,7 +9,7 @@ export function readPublicSnapshot<T>(key: string): T | undefined {
   try { return JSON.parse(localStorage.getItem(PREFIX + key) ?? 'null')?.data; } catch { return undefined; }
 }
 export async function publicOfflineRead<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
-  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+  if (typeof window !== 'undefined' && navigator.onLine === false) {
     const saved = readPublicSnapshot<T>(key);
     if (saved !== undefined) return saved;
     throw new Error('Conecte-se à internet para abrir o catálogo pela primeira vez.');
