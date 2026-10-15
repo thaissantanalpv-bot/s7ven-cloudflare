@@ -70,3 +70,9 @@
 - [ ] Importar preservando identidades, estoque e configurações de combos existentes.
 - [ ] Verificar catálogo, galerias e opções após atualização.
 - [ ] Exibir fotos inteiras e permitir navegar pelas fotos extras diretamente na vitrine.
+
+# Entrega por quilometragem e fotos com IA
+- [ ] Configurar faixas de distância com valores editáveis e cálculo pelo endereço.
+- [ ] Integrar taxa calculada ao carrinho e à validação do pedido.
+- [ ] Adicionar edição de fotos com IA, comparação e aplicação mediante confirmação.
+- [ ] Verificar os fluxos e informar custos e limitações dos serviços.
