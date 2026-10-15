@@ -15,10 +15,6 @@ import {
   X,
   MessageCircle,
   ChevronRight,
-  Wine,
-  Flame,
-  Leaf,
-  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -329,21 +325,16 @@ function Catalog() {
   };
 
   return (
-    <div className="min-h-screen pb-28 lg:pb-10">
+    <div className="catalog-theme min-h-screen bg-background pb-28 text-foreground lg:pb-10">
       {!online && <div role="status" className="border-b bg-muted px-4 py-2 text-center text-sm text-muted-foreground">Sem conexão · Exibindo o último catálogo salvo. Pedidos disponíveis ao reconectar.</div>}
-      <div className="border-b bg-primary px-4 py-2 text-center text-[11px] font-semibold text-primary-foreground">
-        S7VEN LOUNGE E TABACARIA <span className="mx-2">/</span> SEU PEDIDO, DO SEU JEITO.
-      </div>
       <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur-lg">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-8">
-          <Link to="/" className="flex items-center gap-3" aria-label="S7VEN Lounge e Tabacaria">
-            <span className="font-display text-3xl font-extrabold">
-              S<span className="text-primary">7</span>VEN<span className="text-primary">.</span>
-            </span>
-            <span className="hidden border-l pl-3 text-[10px] font-medium uppercase leading-5 text-muted-foreground sm:block">
-              Lounge &<br />
-              Tabacaria
-            </span>
+        <div className="mx-auto grid max-w-7xl grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-4 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:px-8">
+          <Button variant="ghost" size="icon" asChild title="Área da loja" className="sm:hidden">
+            <Link to="/painel" aria-label="Área da loja"><SlidersHorizontal /></Link>
+          </Button>
+          <Link to="/" className="flex min-w-0 items-center justify-center gap-3 sm:justify-start" aria-label="S7VEN Lounge e Tabacaria">
+            <img src="/icons/s7ven-192.png" alt="S7VEN Lounge e Tabacaria" className="size-16 shrink-0 rounded-md object-contain sm:size-20" />
+            <span className="hidden min-w-0 font-display text-xl font-semibold sm:block">S7VEN <span className="block text-xs font-normal text-muted-foreground">Lounge e Tabacaria</span></span>
           </Link>
           <div className="relative hidden w-full max-w-md md:block">
             <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
@@ -351,20 +342,20 @@ function Catalog() {
               aria-label="Buscar produto"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="O que você procura hoje?"
-              className="field pl-10"
+              placeholder="Digite sua busca…"
+              className="field bg-muted pl-10"
             />
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Button variant="ghost" size="icon" asChild title="Configurações da loja">
+            <Button variant="ghost" size="icon" asChild title="Configurações da loja" className="hidden sm:inline-flex">
               <Link to="/painel" aria-label="Configurações da loja">
                 <SlidersHorizontal />
               </Link>
             </Button>
-            <Button onClick={() => setOpen(true)} className="h-10">
+            <Button variant="ghost" onClick={() => setOpen(true)} aria-label={`Meu carrinho, ${count} itens`} className="relative h-11 px-2 sm:px-3">
               <ShoppingBag />
               <span className="hidden sm:inline">Meu carrinho</span>
-              <span className="grid size-5 place-items-center rounded-full bg-primary-foreground/10 text-xs">
+              <span className="absolute -right-1 top-0 grid size-5 place-items-center rounded-full bg-primary text-xs text-primary-foreground sm:static">
                 {count}
               </span>
             </Button>
@@ -376,25 +367,19 @@ function Catalog() {
             aria-label="Buscar produto"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="O que você procura hoje?"
-            className="field pl-10"
+            placeholder="Digite sua busca…"
+            className="field bg-muted pl-10"
           />
         </div>
       </header>
-      <section className="mx-auto max-w-7xl px-4 pt-5 sm:px-8 sm:pt-10">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase text-primary">
-              Bebidas · Tabacaria · Acessórios
-            </p>
-            <h1 className="font-display text-3xl font-bold sm:text-4xl">
+      <section className="mx-auto max-w-7xl px-4 pt-4 sm:px-8 sm:pt-6">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <div className="min-w-0">
+            <h1 className="font-display text-sm font-semibold sm:text-xl">
               S7VEN Lounge e Tabacaria
             </h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Sua seleção para brindar, relaxar e aproveitar.
-            </p>
           </div>
-          <Button variant="outline" onClick={() => setHoursOpen(!hoursOpen)} className="h-10">
+          <Button variant="outline" onClick={() => setHoursOpen(!hoursOpen)} className="h-9 shrink-0 px-2 text-xs sm:px-4">
             <span
               className={`size-2 rounded-full ${status.open && status.configured ? "bg-whatsapp" : "bg-muted-foreground"}`}
             />
@@ -423,32 +408,7 @@ function Catalog() {
             )}
           </div>
         )}
-        <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2 sm:mt-8">
-          {[
-            { name: "Bebidas", image: "p1", label: "Para brindar", Icon: Wine },
-            { name: "Narguiles > Essências", image: "p141", label: "Essências", Icon: Flame },
-            { name: "Tabaco", image: "p88", label: "Tabacaria", Icon: Leaf },
-            { name: "Headshop", image: "p27", label: "Headshop", Icon: Package },
-          ].map((c) => (
-            <Button
-              key={c.name}
-              variant="secondary"
-              onClick={() => {
-                setCat(c.name);
-                setQuery("");
-              }}
-              className="h-28 min-w-48 flex-1 justify-start overflow-hidden border p-0 text-left sm:h-32"
-            >
-              <img src={`/produtos/${c.image}.jpg`} alt="" loading="lazy" decoding="async" className="h-full w-24 object-cover" />
-              <span className="flex flex-1 flex-col gap-2 px-4">
-                <c.Icon className="text-primary" />
-                <span className="text-sm font-semibold">{c.label}</span>
-                <ArrowUpRight className="text-muted-foreground" />
-              </span>
-            </Button>
-          ))}
-        </div>
-        <div className="mt-4 flex flex-wrap gap-x-8 gap-y-2 border-b pb-4 text-xs text-muted-foreground">
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 border-b pb-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
             <Truck className="size-4 text-primary" />
             Entrega {settings.delivery_enabled ? settings.delivery_distance_enabled ? "por km" : settings.fixed_delivery_fee !== null ? brl(settings.fixed_delivery_fee) : "por região" : "a combinar"}
@@ -464,10 +424,17 @@ function Catalog() {
         </div>
       </section>
       <section className="mx-auto max-w-7xl px-4 py-5 sm:px-8 sm:py-7">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-baseline gap-3">
+        <nav aria-label="Categorias" className="no-scrollbar mb-5 flex gap-2 overflow-x-auto pb-2">
+          {categories.map((c) => (
+            <Button key={c} variant={cat === c ? "default" : "secondary"} onClick={() => setCat(c)} className="h-10 shrink-0 rounded-full px-5" aria-pressed={cat === c}>
+              {c.replace("Narguiles > ", "")}
+            </Button>
+          ))}
+        </nav>
+        <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <div className="min-w-0">
             <h2 className="font-display text-xl font-semibold">
-              {cat === "Todos" ? "Explore o catálogo" : cat.replace("Narguiles > ", "")}
+              {cat === "Todos" ? "Todos os produtos" : cat.replace("Narguiles > ", "")}
             </h2>
             <span className="text-xs text-muted-foreground">{filtered.length} produtos</span>
           </div>
@@ -483,20 +450,7 @@ function Catalog() {
             <option value="name">Nome: A–Z</option>
           </select>
         </div>
-        <nav aria-label="Categorias" className="no-scrollbar mb-6 flex gap-2 overflow-x-auto pb-2">
-          {categories.map((c) => (
-            <Button
-              key={c}
-              variant={cat === c ? "default" : "outline"}
-              onClick={() => setCat(c)}
-              size="sm"
-              className="shrink-0"
-            >
-              {c.replace("Narguiles > ", "")}
-            </Button>
-          ))}
-        </nav>
-        <main className="grid grid-cols-1 gap-4 min-[440px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <main className="grid grid-cols-2 items-start gap-x-3 gap-y-6 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
           {filtered.length === 0 && (
             <div className="col-span-full py-16 text-center">
               <Search className="mx-auto mb-4 size-8 text-muted-foreground" />
@@ -821,11 +775,11 @@ function ProductCard({
   const ready = (!hasOpts || (isOther ? !!text : !!chosen)) && available(p, option);
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-colors hover:border-primary/50">
+    <article className="group flex min-w-0 flex-col overflow-hidden rounded-lg bg-card">
       <ProductCardPhotos product={p} onEnlarge={() => setGalleryOpen(true)} />
-      <div className="flex min-w-0 flex-1 flex-col p-4">
-        <span className="text-[11px] uppercase text-muted-foreground">{p.category}</span>
-        <h2 className="mt-1 font-display text-base font-semibold leading-snug"><Button variant="link" onClick={() => setGalleryOpen(true)} className="h-auto w-full justify-start whitespace-normal p-0 text-left text-base text-foreground">{p.name}</Button></h2>
+      <div className="flex min-w-0 flex-1 flex-col px-1 py-3 sm:px-2">
+        <span className="truncate text-[10px] uppercase text-muted-foreground">{p.category}</span>
+        <h2 className="mt-1 font-display text-sm font-semibold leading-snug sm:text-base"><Button variant="link" onClick={() => setGalleryOpen(true)} className="h-auto w-full justify-start whitespace-normal break-words p-0 text-left text-sm text-foreground sm:text-base">{p.name}</Button></h2>
         {!available(p) && <p className="mt-2 text-xs text-destructive">{p.active ? "Esgotado" : "Indisponível"}</p>}
         {hasOpts ? (
           <div className="mt-2">
@@ -881,17 +835,19 @@ function ProductCard({
             <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
           )
         )}
-        <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-          <span className="text-lg font-bold text-primary">{brl(p.price)}</span>
-          {p.comboGroups?.length ? <Button disabled={!available(p)} onClick={onBuild}><Plus />Montar combo</Button> : qty > 0 ? (
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
+          <span className="text-base font-bold text-primary sm:text-lg">{brl(p.price)}</span>
+          {p.comboGroups?.length ? <Button disabled={!available(p)} onClick={onBuild} className="h-9 px-2 text-xs"><Plus />Montar combo</Button> : qty > 0 ? (
             <Qty qty={qty} onMinus={() => onChange(key, -1)} onPlus={() => onChange(key, 1)} />
           ) : (
             <Button
               onClick={() => onChange(key, 1)}
               disabled={!ready}
-              className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label={`Adicionar ${p.name}`}
+              title={`Adicionar ${p.name}`}
+              className="size-10 shrink-0 rounded-full bg-primary p-0 text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <Plus /> Adicionar
+              <Plus />
             </Button>
           )}
         </div>

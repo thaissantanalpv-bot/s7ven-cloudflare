@@ -60,6 +60,30 @@
   --overlay: oklch(0.08 0 0 / 0.8);
   --shadow-soft-value: 0 8px 28px oklch(0.05 0 0 / 0.2);
 }
+body:has(.catalog-theme) {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.22 0 0);
+  --card: oklch(1 0 0);
+  --primary: oklch(0.2 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.94 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.49 0 0);
+  --accent: oklch(0.25 0 0);
+  --border: oklch(0.88 0 0);
+  --destructive: oklch(0.52 0.19 25);
+  --whatsapp: oklch(0.49 0.14 150);
+  --shadow-soft-value: 0 5px 20px oklch(0.2 0 0 / 0.08);
+  color-scheme: light;
+}
+.catalog-theme input,
+.catalog-theme textarea,
+.catalog-theme select,
+body:has(.catalog-theme) [role="dialog"] input,
+body:has(.catalog-theme) [role="dialog"] textarea,
+body:has(.catalog-theme) [role="dialog"] select {
+  color-scheme: light;
+}
 @layer base {
   * {
     border-color: var(--border);
