@@ -1,0 +1,27 @@
+export const DELIVERY_CITY = "Araçatuba, SP";
+
+export function deliveryAddress(address: string) {
+  const trimmed = address.trim();
+  const normalized = trimmed.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return normalized.includes("aracatuba") ? trimmed : `${trimmed}, ${DELIVERY_CITY}, Brasil`;
+}
+
+type GeocodeResult = {
+  address_components?: { long_name: string; short_name: string; types: string[] }[];
+  geometry?: { location?: { lat: number; lng: number }; location_type?: string };
+  partial_match?: boolean;
+};
+
+export function deliveryLocation(payload: { status?: string; results?: GeocodeResult[] }) {
+  const result = payload.results?.[0];
+  if (payload.status !== "OK" || !result) throw new Error("Endereço não encontrado. Confira rua, número e bairro em Araçatuba.");
+  const components = result.address_components ?? [];
+  const city = components.find(c => c.types.includes("administrative_area_level_2"))?.long_name ?? components.find(c => c.types.includes("locality"))?.long_name;
+  const state = components.find(c => c.types.includes("administrative_area_level_1"))?.short_name;
+  const country = components.find(c => c.types.includes("country"))?.short_name;
+  const cityName = city?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (cityName !== "aracatuba" || state !== "SP" || country !== "BR") throw new Error("Fazemos entregas somente em Araçatuba, SP. Confira o endereço ou escolha retirada na loja.");
+  const location = result.geometry?.location;
+  if (result.partial_match || !components.some(c => c.types.includes("route")) || !components.some(c => c.types.includes("street_number")) || !location || !Number.isFinite(location.lat) || !Number.isFinite(location.lng)) throw new Error("Informe a rua e o número completos para calcular a entrega em Araçatuba.");
+  return { latitude: location.lat, longitude: location.lng };
+}
