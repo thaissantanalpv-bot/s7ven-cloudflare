@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 - Keep catalog product/cart logic on the public catalog route and preserve per-option cart keys so existing saved carts continue to work.
-- Track anonymous browser/session UUIDs with bounded writes; poll admin-only unique-browser aggregates for inactivity-based abandonment notices. Convert only on successful order insertion; never infer contact details.
+- Track anonymous UUIDs with bounded writes and admin-only abandonment aggregates; convert only on insertion and never infer contacts.
 - Record checkout conversion atomically with a session upsert on successful order insertion; checkout must never wait for optional visit telemetry, and blocked browser storage uses an in-memory identity.
 - Store shared delivery and weekly hours in `store_settings`; validate writes through authenticated server functions and admin-only RLS so customers cannot change store operations.
 - Shared delivery pricing precedence: enabled distance tiers, then fixed fee, then regions; keep pickup free.
@@ -27,7 +27,7 @@
 - Store product photos in private native storage with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads; this protects unpublished uploads without blocking admin previews.
 - Use separate public and admin catalog query keys so restricted override data cannot leak through a shared cache.
 - Keep cover/additional paths in image/images and resolve signed URLs separately; admin saves must never persist expiring URLs.
-- ProductCardPhotos uses productPhotos for inline navigation independent of enlargement; keep every saved photo accessible.
+- ProductCardPhotos uses productPhotos for inline navigation and enlargement; keep saved photos accessible.
 - Reserve tracked product and variation stock atomically on order insertion using row locks, and reject stale prices; this prevents overselling across concurrent customers.
 - Represent grouped fixed-price combos as catalog products with comboGroups and structured order components; encode combo choices in separate option keys to preserve legacy carts, validate group membership server-side, and reserve all main/component quantities together in sorted row-lock order.
 - Persist counter sales in orders with a source and cashier, using admin-verified server-calculated checkout and the existing reservation trigger; this unifies history without duplicate stock deductions. Keep counter sales out of delivery stages and new-order alerts.
@@ -35,4 +35,6 @@
 - Keep the administrative assistant in a single account-scoped text transcript with admin-only reads and server-managed writes; authenticate the streaming endpoint independently and send only allowlisted dashboard aggregates to AI to protect customer data.
 - Use AI SDK Responses and AI Elements with saved history, bounded leases and durable terminal blocks to prevent duplicate paid requests; analysis never writes operations.
 
-- WhatsApp photo links open the public catalog gallery by product ID, never an expiring storage URL; checkout still waits for validated order insertion.
+- WhatsApp photo links use public product galleries, never expiring URLs; checkout waits for validated insertion.
+
+- Print admin-read orders in escaped ephemeral iframes; store only local printer preferences because hardware pairing belongs to the device.
