@@ -14,12 +14,14 @@ import {
   Clock,
   X,
   CheckCircle2,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { listOrders, updateOrderStatus } from "@/lib/orders.functions";
 import { ORDER_STAGES, orderWhatsApp, type Order, type OrderStatus } from "@/lib/orders";
 import { brl } from "@/lib/products";
+import { OrderPrinting } from "./order-printing";
 
 const time = (value: string) =>
   new Intl.DateTimeFormat("pt-BR", {
@@ -48,6 +50,7 @@ export function OrderBoard() {
   const [busy, setBusy] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [drag, setDrag] = useState<string | null>(null);
+  const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const audio = useRef<AudioContext | null>(null);
   const seen = useRef<Set<string> | null>(null);
   const beep = () => {
@@ -148,6 +151,7 @@ export function OrderBoard() {
           </span>
         </div>
         <div className="flex gap-2">
+          <OrderPrinting order={printOrder} onClose={() => setPrintOrder(null)} />
           <Button
             variant={sound ? "secondary" : "outline"}
             onClick={toggleSound}
@@ -275,6 +279,7 @@ export function OrderBoard() {
                         <strong className="text-sm">{brl(order.total)}</strong>
                       </div>
                       <div className="flex gap-2">
+                        <Button variant="outline" size="icon" className="size-8" title="Imprimir pedido" aria-label={`Imprimir pedido ${order.number}`} onClick={() => setPrintOrder(order)}><Printer /></Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -404,6 +409,7 @@ export function OrderBoard() {
                     Avisar cliente no WhatsApp
                   </a>
                 </Button>
+                <Button variant="outline" className="w-full" onClick={() => { setSelected(null); setPrintOrder(detail); }}><Printer />Imprimir pedido</Button>
                 {detail.status === "delivered" && (
                   <p className="flex items-center gap-2 text-whatsapp">
                     <CheckCircle2 className="size-4" />

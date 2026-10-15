@@ -59,6 +59,8 @@
   --order-delivery: oklch(0.76 0.12 230);
   --overlay: oklch(0.08 0 0 / 0.8);
   --shadow-soft-value: 0 8px 28px oklch(0.05 0 0 / 0.2);
+  --receipt-paper: #ffffff;
+  --receipt-ink: #000000;
 }
 body:has(.catalog-theme) {
   --background: oklch(1 0 0);
@@ -139,3 +141,7 @@ body:has(.catalog-theme) [role="dialog"] select {
 @media (min-width: 768px) {
   .admin-save-bar { bottom: 0; }
 }
+
+.receipt-preview { height: 360px; border: 0; background: var(--receipt-paper); }
+.receipt-preview-58 { width: 54mm; max-width: 100%; }
+.receipt-preview-80 { width: 76mm; max-width: 100%; }
