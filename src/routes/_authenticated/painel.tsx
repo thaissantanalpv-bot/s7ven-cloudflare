@@ -38,6 +38,7 @@ import { DistanceTiersEditor } from "@/components/distance-tiers-editor";
 import { PointOfSale } from "@/components/pos/point-of-sale";
 import { SalesHistory } from "@/components/pos/sales-history";
 import { CatalogAnalytics } from "@/components/catalog-analytics";
+import { AbandonedCartNotice } from "@/components/abandoned-cart-notice";
 import { AnalyticsAssistant } from "@/components/analytics-assistant";
 import { adminCatalogQuery } from "@/lib/catalog.query";
 import { getCatalogFunnel } from "@/lib/catalog-analytics.functions";
@@ -179,6 +180,7 @@ function AdminHome({ onOpen }: { onOpen: (view: string) => void }) {
   return (
     <section className="py-6" aria-label="Resumo da loja">
       <p className="mb-4 flex items-center gap-2 text-sm text-primary"><Activity className="size-4" />{data ? `${data.online} online agora` : "Conectando…"}</p>
+      {!stats.error && data && <AbandonedCartNotice count={data.abandoned} onOpen={() => onOpen("analytics")} />}
       <div className="grid gap-4">
         {cards.map(({ label, hint, value, Icon, target }) => (
           <button key={label} type="button" onClick={() => onOpen(target)} className="flex min-h-28 items-center gap-5 rounded-2xl border bg-card p-6 text-left active:scale-[0.98]">

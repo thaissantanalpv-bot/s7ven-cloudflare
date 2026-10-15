@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Activity, Users, ShoppingCart, ShoppingBag, UserMinus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCatalogFunnel } from "@/lib/catalog-analytics.functions";
+import { AbandonedCartNotice } from "./abandoned-cart-notice";
 import type { z } from "zod";
 import type { analyticsPeriodSchema } from "@/lib/catalog-analytics";
 
@@ -30,6 +31,7 @@ export function CatalogAnalytics() {
       </div>
     </div>
     {stats.error && <p role="alert" className="py-4 text-sm text-destructive">Não foi possível atualizar os indicadores. <Button variant="link" onClick={() => stats.refetch()}>Tentar novamente</Button></p>}
+    {!stats.error && data && <AbandonedCartNotice count={data.abandoned} />}
     <div className="grid grid-cols-2 gap-3 py-6 sm:gap-4 xl:grid-cols-4">
       {cards.map(({ label, value, Icon }) => <article key={label} className="rounded-lg border bg-card p-4 sm:p-5">
         <Icon className="mb-5 size-5 text-primary" /><p className="min-h-10 text-sm text-muted-foreground">{label}</p>
