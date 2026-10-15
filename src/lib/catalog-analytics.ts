@@ -26,9 +26,9 @@ function writeVisitorCookie(visitorId: string) {
 
 export function readAnalyticsIdentity(): AnalyticsIdentity | undefined {
   try {
-    let visitorId = localStorage.getItem("s7ven-visitor");
-    if (!z.string().uuid().safeParse(visitorId).success) visitorId = readVisitorCookie();
-    if (!z.string().uuid().safeParse(visitorId).success) visitorId = crypto.randomUUID();
+    const stored = [localStorage.getItem("s7ven-visitor"), readVisitorCookie()]
+      .find((candidate): candidate is string => z.string().uuid().safeParse(candidate).success);
+    const visitorId = stored ?? crypto.randomUUID();
     localStorage.setItem("s7ven-visitor", visitorId);
     writeVisitorCookie(visitorId);
     let sessionId = sessionStorage.getItem("s7ven-session");
