@@ -23,4 +23,11 @@ describe("Store settings", () => {
     expect(storeStatus(settings,new Date("2026-10-10T05:00:00Z")).open).toBe(false);
     expect(storeStatus(settings,new Date("2026-10-09T20:00:00Z")).open).toBe(false);
   });
+  it("shows closed status before opening, at closing and on disabled days", () => {
+    const settings = {...EMPTY_SETTINGS, hours_enabled:true, opening_hours:EMPTY_SETTINGS.opening_hours.map(h => ({...h, enabled:h.day===4, open:"18:00", close:"23:00"}))};
+    expect(storeStatus(settings, new Date("2026-10-15T20:59:00Z"))).toEqual({open:false, configured:true, label:"Fechado agora"});
+    expect(storeStatus(settings, new Date("2026-10-15T21:00:00Z")).open).toBe(true);
+    expect(storeStatus(settings, new Date("2026-10-16T02:00:00Z")).open).toBe(false);
+    expect(storeStatus(settings, new Date("2026-10-16T21:00:00Z")).open).toBe(false);
+  });
 });

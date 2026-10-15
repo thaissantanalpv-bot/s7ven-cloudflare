@@ -413,7 +413,7 @@ function Catalog() {
               S7VEN Lounge e Tabacaria
             </h1>
           </div>
-          <Button variant="outline" onClick={() => setHoursOpen(!hoursOpen)} className="h-9 shrink-0 px-2 text-xs sm:px-4">
+          <Button variant="outline" aria-expanded={hoursOpen} aria-controls="catalog-opening-hours" onClick={() => setHoursOpen(!hoursOpen)} className="h-9 shrink-0 px-2 text-xs sm:px-4">
             <span
               className={`size-2 rounded-full ${status.open && status.configured ? "bg-whatsapp" : "bg-muted-foreground"}`}
             />
@@ -421,8 +421,18 @@ function Catalog() {
             <Clock className="ml-2" />
           </Button>
         </div>
+        {status.configured && !status.open && (
+          <div role="status" aria-live="polite" className="mt-4 flex items-start gap-3 border-l-4 border-primary bg-muted px-4 py-3">
+            <Clock className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">Loja fechada no momento</p>
+              <p className="mt-1 text-sm text-muted-foreground">Os pedidos estarão disponíveis durante o horário de atendimento.</p>
+              <Button variant="link" onClick={() => setHoursOpen(true)} aria-controls="catalog-opening-hours" className="mt-1 h-auto px-0 py-1 text-sm">Ver horários de funcionamento</Button>
+            </div>
+          </div>
+        )}
         {hoursOpen && (
-          <div className="mt-5 border-y py-4">
+          <div id="catalog-opening-hours" className="mt-5 border-y py-4">
             <h2 className="mb-3 text-sm font-semibold">Horários de atendimento · Brasília</h2>
             {settings.hours_enabled ? (
               <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
