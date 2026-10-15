@@ -31,7 +31,7 @@ import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder, orderTracking } from "@/lib/orders.functions";
 import { startDeliverySession, quoteDelivery } from "@/lib/delivery.functions";
-import { DELIVERY_CITY, deliveryAddress } from "@/lib/delivery-address";
+import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, restoreDeliveryFields } from "@/lib/delivery-address";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
@@ -167,6 +167,7 @@ function Catalog() {
     fulfillment: "delivery" as "delivery" | "pickup",
   });
   const fullAddress = [form.street.trim(), form.number.trim(), form.neighborhood.trim()].filter(Boolean).join(", ");
+  const addressComplete = deliveryFieldsComplete(form.street, form.number);
   const [error, setError] = useState("");
   const [sel, setSel] = useState<Record<string, string>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
@@ -191,11 +192,7 @@ function Catalog() {
         if (saved.cart) setCart(saved.cart);
         if (saved.form) setForm((f) => {
           // Saved carts from the previous single-field address keep working.
-          const { address: savedAddress = "", street, ...savedRest } = saved.form;
-          const migrated = typeof savedAddress === "string" && savedAddress.trim() && !street
-            ? { ...savedRest, street: savedAddress.trim() }
-            : savedRest;
-          return { ...f, ...migrated };
+          return { ...f, ...restoreDeliveryFields(saved.form) };
         });
       }
     } catch {}
@@ -252,6 +249,7 @@ function Catalog() {
   const calculateDelivery = async () => {
     const address = fullAddress;
     if (!isDelivery || !distanceMode || address.length < 8 || validQuote || pendingQuote.current === address) return;
+    if (!addressComplete) return setDeliveryError("Preencha a rua e o número para calcular a entrega.");
     if (!navigator.onLine) return setDeliveryError("Conecte-se à internet para calcular a taxa de entrega.");
     const request = ++quoteRequest.current;
     pendingQuote.current = address;
@@ -686,7 +684,7 @@ function Catalog() {
                 </div>
               )}
               {isDelivery && fieldErrors.address?.[0] && <p id="address-error" className="text-xs text-destructive">{fieldErrors.address[0]}</p>}
-              {isDelivery && distanceMode && <div className="space-y-2"><Button variant="outline" disabled={quoting || fullAddress.trim().length < 8 || Boolean(validQuote)} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : validQuote ? "Entrega calculada" : "Calcular entrega"}</Button>{validQuote && <p role="status" className="text-sm font-semibold text-primary">Taxa de entrega: {brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km pela rota</p>}{deliveryError && <p role="alert" className="text-sm text-destructive">{deliveryError}</p>}</div>}
+              {isDelivery && distanceMode && <div className="space-y-2"><Button variant="outline" disabled={quoting || !addressComplete || fullAddress.trim().length < 8 || Boolean(validQuote)} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : validQuote ? "Entrega calculada" : "Calcular entrega"}</Button>{validQuote && <p role="status" className="text-sm font-semibold text-primary">Taxa de entrega: {brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km pela rota</p>}{deliveryError && <p role="alert" className="text-sm text-destructive">{deliveryError}</p>}</div>}
               {isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && (
                 <Field label="Bairro ou região">
                   <select

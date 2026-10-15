@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deliveryAddress, deliveryLocation } from "@/lib/delivery-address";
+import { deliveryAddress, deliveryLocation, restoreDeliveryFields, deliveryFieldsComplete } from "@/lib/delivery-address";
 
 const result = (city = "Araçatuba") => ({ status: "OK", results: [{
   address_components: [
@@ -12,6 +12,17 @@ const result = (city = "Araçatuba") => ({ status: "OK", results: [{
 }] });
 
 describe("Endereço de entrega em Araçatuba", () => {
+  it("preserves the street, number and neighborhood after reopening a saved cart", () => {
+    const saved = { street: "Joaquim Candido", number: "2282", neighborhood: "", name: "Teste" };
+    expect(restoreDeliveryFields(saved)).toEqual(saved);
+    expect(restoreDeliveryFields({ address: "Rua antiga, 123", payment: "Pix" })).toEqual({ street: "Rua antiga, 123", number: "", neighborhood: "", payment: "Pix" });
+    expect(restoreDeliveryFields({ ...saved, address: "Endereço antigo" }).street).toBe(saved.street);
+  });
+  it("does not calculate an address missing its street or number", () => {
+    expect(deliveryFieldsComplete("Joaquim Candido", "2282")).toBe(true);
+    expect(deliveryFieldsComplete("", "2282")).toBe(false);
+    expect(deliveryFieldsComplete("Joaquim Candido", " ")).toBe(false);
+  });
   it("includes the city automatically without duplicating it", () => {
     expect(deliveryAddress("Rua Marechal Deodoro, 1696")).toBe("Rua Marechal Deodoro, 1696, Araçatuba, SP, Brasil");
     expect(deliveryAddress("Rua de teste, 123, Aracatuba SP")).toBe("Rua de teste, 123, Aracatuba SP");
