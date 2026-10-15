@@ -844,8 +844,8 @@ function ProductCard({
           ) : null}
         </div>
         {!p.comboGroups?.length && (
-          <div className="flex items-center gap-2 pt-2">
-            <div className="flex shrink-0 items-center rounded-full border bg-card">
+          <div className="flex flex-col items-stretch gap-2 pt-3">
+            <div className="mx-auto flex shrink-0 items-center rounded-full border bg-card">
               <Button
                 variant="ghost"
                 size="icon"
@@ -872,7 +872,7 @@ function ProductCard({
               disabled={!ready}
               aria-label={`Adicionar ${addQty} ${addQty > 1 ? "unidades" : "unidade"} de ${p.name}`}
               title={`Adicionar ${p.name}`}
-              className="h-9 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+              className="h-9 w-full rounded-full bg-primary text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
             >
               Adicionar
             </Button>
