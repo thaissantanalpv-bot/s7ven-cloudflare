@@ -1,5 +1,19 @@
 export const DELIVERY_CITY = "Araçatuba, SP";
 
+export function restoreDeliveryFields(saved: Record<string, unknown>) {
+  const { address, street, number, neighborhood, ...rest } = saved;
+  return {
+    ...rest,
+    street: typeof street === "string" && street.trim() ? street : typeof address === "string" ? address.trim() : "",
+    number: typeof number === "string" ? number : "",
+    neighborhood: typeof neighborhood === "string" ? neighborhood : "",
+  };
+}
+
+export function deliveryFieldsComplete(street: string, number: string) {
+  return street.trim().length >= 2 && number.trim().length > 0;
+}
+
 export function deliveryAddress(address: string) {
   const trimmed = address.trim();
   const normalized = trimmed.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
