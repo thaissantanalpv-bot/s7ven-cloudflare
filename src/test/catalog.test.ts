@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mergeCatalog, toDraft, catalogProductSchema, available, productPhotos } from "@/lib/catalog";
+import { mergeCatalog, toDraft, catalogProductSchema, available, productPhotos, variationPhoto } from "@/lib/catalog";
 import { priceOrder, submitOrderSchema } from "@/lib/orders";
 import { EMPTY_SETTINGS } from "@/lib/store-settings";
 
@@ -22,6 +22,18 @@ describe("Shared catalog", () => {
     expect(toDraft({ ...merged, images: ["https://signed.example/photo"], imagePaths: draft.images }).images).toEqual(draft.images);
     expect(catalogProductSchema.safeParse({ ...draft, images: ["https://external.example/photo.jpg"] }).success).toBe(false);
     expect(catalogProductSchema.safeParse({ ...draft, images: Array(10).fill("uploads/photo1.jpg") }).success).toBe(false);
+  });
+  it("links photos to variations and defaults old rows to unlinked", () => {
+    const original = mergeCatalog([])[0];
+    if (!original) throw new Error("Missing baseline");
+    expect(toDraft(original).variationPhotos).toEqual({});
+    const draft = { ...toDraft(original), images: ["uploads/photo1.jpg", "uploads/photo2.jpg"], variationPhotos: { "Maçã Verde": "uploads/photo2.jpg" } };
+    const merged = mergeCatalog([{ id: draft.id, data: draft, updated_at: "2026-10-15" }])[0];
+    if (!merged) throw new Error("Missing merged");
+    expect(variationPhoto(merged, "Maçã Verde")).toBe("uploads/photo2.jpg");
+    expect(variationPhoto(merged, "Outro sabor")).toBe("");
+    expect(variationPhoto(merged, "")).toBe("");
+    expect(catalogProductSchema.safeParse({ ...draft, variationPhotos: { "Maçã Verde": "https://external.example/photo.jpg" } }).success).toBe(false);
   });
   it("preserves all imported product IDs, photos and option names", () => {
     const products = mergeCatalog([]);

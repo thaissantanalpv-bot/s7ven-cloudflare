@@ -111,3 +111,7 @@
 - [x] Adicionar edição de fotos com IA, comparação e aplicação mediante confirmação.
 - [x] Verificar telas administrativas no celular, edição real com IA e 26 testes; build OK. Taxa real preservada, nenhum produto alterado durante a verificação.
 - [ ] Validar Google Maps no site publicado após cadastrar endereço completo de saída e faixas reais; chamadas de Maps não são verificáveis no ambiente de teste.
+## Novo pedido (Thais, 15/10/2026 19:44 UTC)
+- [ ] Linkar foto do produto às variações (foto muda conforme a variação selecionada) para o cliente entender qual é a variação.
+- [ ] Alinhar os produtos do catálogo na mesma altura/grade (cards uniformes).
+- [x] Implementado (15/10/2026): migration 0019 (variationPhotos na projeção, filtrada às fotos já públicas), photoForOption/variationPhoto em catalog.ts, ProductCardPhotos com prop option, seletor "Vincular à variação" por foto no painel (remoção/edição IA remapeiam ou desligam o vínculo), grids items-stretch + cards h-full. 84 testes passando.
