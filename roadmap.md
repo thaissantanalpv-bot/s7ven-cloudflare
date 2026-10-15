@@ -1,5 +1,6 @@
 # Correção do cálculo de entrega por endereço
 - [ ] Completar endereço de saída com a cidade conhecida, preservando as nove faixas reais e valores.
+- [ ] Preencher Araçatuba automaticamente e validar a cidade de destino, pois a loja atende somente Araçatuba.
 - [ ] Calcular ao sair do campo de endereço, descartar respostas antigas e exibir taxa/erros junto do endereço sem indicar entrega gratuita antes da cotação.
 - [ ] Executar testes e conferir carrinho sem chamadas Google Maps; validação real da rota depende do site autorizado.
 
