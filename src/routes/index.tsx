@@ -767,6 +767,7 @@ function ProductCard({
 }) {
   const hasOpts = Boolean(p.options?.length);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [addQty, setAddQty] = useState(1);
   const chosen = sel[p.id] ?? "";
   const isOther = chosen === OTHER;
   const text = (typed[p.id] ?? "").trim();
