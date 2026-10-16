@@ -176,4 +176,5 @@
 - [x] Conferir no site publicado (s7venlounge.shop): página, favicon, ícones do aplicativo e mapa do site respondendo; os ícones conferidos um a um estão no 7 dourado.
 - [ ] Confirmar a chegada do primeiro aviso real nos dois e-mails.
 - [ ] Pendências que seguem abertas: conectar a impressora física (depende do modelo e do aparelho) e conferir no aparelho a reabertura sem internet.
+- [x] Publicar o endereço em uma única linha com sugestões (16/10/2026); verificado em https://s7venlounge.shop: sugestão de "Joaquim Cândido 2282" preencheu bairro (Conjunto Residencial Toyokazu Kawata) e taxa R$ 11,10 · 7,02 km.
 - [ ] No celular da Thais: apagar o atalho atual da tela inicial e criar de novo ("Adicionar à tela inicial") para o ícone dourado aparecer.
