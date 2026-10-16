@@ -49,6 +49,7 @@ export const customerSchema = z.object({
 });
 export const submitOrderSchema = z.object({
   deliveryQuoteId: z.string().uuid().optional(),
+  deliveryToken: z.string().max(200).optional(),
   analytics: analyticsIdentitySchema.optional(),
   requestId: z.string().uuid(),
   customer: customerSchema,

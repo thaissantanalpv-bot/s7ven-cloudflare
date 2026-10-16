@@ -4,17 +4,16 @@ import { distanceFee, settingsSchema } from "./store-settings";
 import { deliveryAddress, deliveryLocation } from "./delivery-address";
 
 export const startDeliverySession = createServerFn({ method: "POST" }).handler(async () => {
-  const { deliverySession } = await import("./delivery.server");
-  const session = await deliverySession();
-  await session.update({ ready: true });
-  return { ready: true };
+  const { createDeliveryToken } = await import("./delivery.server");
+  return { token: await createDeliveryToken() };
 });
 export const quoteDelivery = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => z.object({ address: z.string().trim().min(8).max(300) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ address: z.string().trim().min(8).max(300), token: z.string().max(200) }).parse(input))
   .handler(async ({ data }) => {
-    const { deliverySession, deliverySettingsHash } = await import("./delivery.server");
-    const session = await deliverySession();
-    if (!session.data.ready || !session.id) throw new Error("Reabra o carrinho para calcular a entrega.");
+    const { verifyDeliveryToken, deliverySettingsHash } = await import("./delivery.server");
+    const sessionId = await verifyDeliveryToken(data.token);
+    if (!sessionId) throw new Error("DELIVERY_SESSION_EXPIRED");
+    const session = { id: sessionId };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin.from("store_settings").select("*").eq("id", "main").single();
     if (error) throw new Error("Não foi possível conferir as taxas.");
