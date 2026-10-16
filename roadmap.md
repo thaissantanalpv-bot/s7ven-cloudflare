@@ -1,3 +1,7 @@
+# Rota de moto e teste de alerta (Thais, 16/10/2026 21:35 UTC)
+- [ ] Conferir suporte a rotas de moto em Araçatuba e ajustar somente se houver cobertura.
+- [ ] Criar pedido fictício em Recebido sem e-mail, estoque ou conversão; aguardar Thais ouvir no celular e excluir somente esse pedido.
+
 # Endereço em uma única linha (Thais, 16/10/2026 02:22 UTC)
 - [x] Deixar só uma linha para rua e número, com as sugestões embaixo, e mostrar o bairro logo abaixo sem caixa própria. Conferido no preview: campos agora são Rua e número + Cidade; sugestão real preenchida, bairro "Conjunto Residencial Toyokazu Kawata" e taxa R$ 11,10 · 7,02 km; 11 testes, sem erros de digitação, 390px sem rolagem lateral. Falta publicar.
 - [x] Confirmar que só aparecem bairros de Araçatuba: sugestões filtradas por cidade e endereço conferido no cálculo da rota.
