@@ -70,8 +70,8 @@ export function toDraft(p: CatalogProduct): ProductDraft {
 // Low-stock alerts: items whose tracked stock reached the minimum set by the store.
 export function lowStockItems(p: CatalogProduct): { label: string; stock: number; min: number }[] {
   const items: { label: string; stock: number; min: number }[] = [];
-  if (p.stock !== null && p.minStock !== null && p.stock <= p.minStock) items.push({ label: p.name, stock: p.stock, min: p.minStock });
-  for (const v of p.variations) if (v.stock !== null && v.minStock !== null && v.stock <= v.minStock) items.push({ label: `${p.name} · ${v.name}`, stock: v.stock, min: v.minStock });
+  if (p.stock !== null && p.minStock != null && p.stock <= p.minStock) items.push({ label: p.name, stock: p.stock, min: p.minStock });
+  for (const v of p.variations) if (v.stock !== null && v.minStock != null && v.stock <= v.minStock) items.push({ label: `${p.name} · ${v.name}`, stock: v.stock, min: v.minStock });
   return items;
 }
 export function productPhotos(p: Pick<CatalogProduct, "image" | "images">) {
