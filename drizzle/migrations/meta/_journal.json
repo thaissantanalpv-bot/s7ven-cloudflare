@@ -173,8 +173,8 @@
     {
       "idx": 24,
       "version": "7",
-      "when": 1792195000000,
-      "tag": "0024_store_email_admin",
+      "when": 1792184330336,
+      "tag": "0024_store_email_admin_access",
       "breakpoints": true
     }
   ]

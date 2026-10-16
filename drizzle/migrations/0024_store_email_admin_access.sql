@@ -1,0 +1,2 @@
+INSERT INTO public.admin_invites(email) SELECT '7tabacariaelounge@gmail.com' WHERE NOT EXISTS (SELECT 1 FROM public.admin_invites WHERE email = '7tabacariaelounge@gmail.com');
+INSERT INTO public.user_roles(user_id, role) SELECT id, 'admin'::public.app_role FROM auth.users WHERE lower(email) = '7tabacariaelounge@gmail.com' AND email_confirmed_at IS NOT NULL ON CONFLICT (user_id, role) DO NOTHING;
