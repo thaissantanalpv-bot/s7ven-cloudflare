@@ -153,22 +153,16 @@ describe("Kanban order management", () => {
     // Alerta contínuo do pedido "received" já na tela, sem precisar clicar
     await waitFor(() => expect(start).toHaveBeenCalledTimes(3));
     start.mockClear();
-    start.mockImplementation(() => {});
-    const before = 0;
-    expect(start).toHaveBeenCalledTimes(before);
-    start.mockClear();
-    // reinicia contagem com base 6 para o restante do teste
-    for (let i = 0; i < 6; i++) start();
     mocks.list.mockImplementation(async () => [row, { ...row, id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", number: 43 }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
     await screen.findByText("1 novo pedido recebido");
-    expect(start).toHaveBeenCalledTimes(9);
+    expect(start).toHaveBeenCalledTimes(3);
     // Ao aceitar o pedido (sai de "received"), o alerta contínuo para
     mocks.list.mockImplementation(async () => [{ ...row, status: "preparing" }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Saiu para entrega" })).toBeInTheDocument());
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(start).toHaveBeenCalledTimes(9);
+    expect(start).toHaveBeenCalledTimes(3);
     vi.unstubAllGlobals();
   });
 });
