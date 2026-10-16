@@ -1,0 +1,2 @@
+ALTER TABLE public.delivery_quotes ADD COLUMN IF NOT EXISTS duration_seconds numeric CHECK (duration_seconds IS NULL OR duration_seconds >= 0);
+COMMENT ON COLUMN public.delivery_quotes.duration_seconds IS 'Google motorcycle route duration in seconds for informational delivery estimates; legacy quotes may omit it.';

@@ -127,6 +127,7 @@ export type Database = {
           address: string
           created_at: string
           distance_km: number
+          duration_seconds: number | null
           fee: number
           id: string
           session_id: string
@@ -136,6 +137,7 @@ export type Database = {
           address: string
           created_at?: string
           distance_km: number
+          duration_seconds?: number | null
           fee: number
           id?: string
           session_id: string
@@ -145,6 +147,7 @@ export type Database = {
           address?: string
           created_at?: string
           distance_km?: number
+          duration_seconds?: number | null
           fee?: number
           id?: string
           session_id?: string
