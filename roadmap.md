@@ -1,3 +1,6 @@
+# Sugestões automáticas de endereço (Thais, 16/10/2026 02:12 UTC)
+- [ ] Autocompletar rua+número com sugestões do Google restritas a Araçatuba; selecionar preenche rua, número e bairro e calcula a taxa.
+
 # Otimização do banco e consumo
 - [x] Medir créditos, consultas, índices e armazenamento: 03–16/10, 227,36 créditos solicitados; 221,90 criação, 5,46 funcionamento; banco pico 14,25 h / 1,10 crédito, 13,2 MB, saudável. Nenhum agendamento HTTP retornado; cron interno não inspecionável.
 - [x] Corrigir varreduras repetidas na autorização de fotos: migration 0021 adiciona índices das expressões de capa/galeria, sem alterar políticas, dados ou frequência de atualização.

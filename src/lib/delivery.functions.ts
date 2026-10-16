@@ -7,6 +7,69 @@ export const startDeliverySession = createServerFn({ method: "POST" }).handler(a
   const { createDeliveryToken } = await import("./delivery.server");
   return { token: await createDeliveryToken() };
 });
+
+const suggestionSchema = z.object({
+  input: z.string().trim().min(3).max(120),
+  token: z.string().max(200),
+  sessionToken: z.string().uuid(),
+});
+
+type AddressSuggestion = { placeId: string; text: string; street: string; number: string; neighborhood: string };
+
+/** Autocomplete de endereços de Araçatuba para o checkout; consome a sessão de entrega já existente. */
+export const suggestDeliveryAddress = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => suggestionSchema.parse(input))
+  .handler(async ({ data }) => {
+    const { verifyDeliveryToken } = await import("./delivery.server");
+    const sessionId = await verifyDeliveryToken(data.token);
+    if (!sessionId) throw new Error("DELIVERY_SESSION_EXPIRED");
+    const apiKey = process.env["LOVABLE_API_KEY"];
+    const mapsKey = process.env["GOOGLE_MAPS_API_KEY"];
+    if (!apiKey || !mapsKey) throw new Error("Conecte o Google Maps para sugerir endereços.");
+    const gateway = "https://connector-gateway.lovable.dev/google_maps";
+    const response = await fetch(`${gateway}/places/v1/places:autocomplete`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "X-Connection-Api-Key": mapsKey,
+        "Content-Type": "application/json",
+        "X-Goog-FieldMask": "suggestions.placePrediction.placeId,suggestions.placePrediction.text.text,suggestions.placePrediction.structuredFormat",
+      },
+      body: JSON.stringify({
+        input: data.input,
+        sessionToken: data.sessionToken,
+        languageCode: "pt-BR",
+        regionCode: "BR",
+        includedRegionCodes: ["br"],
+        locationBias: { circle: { center: { latitude: -21.2089, longitude: -50.4328 }, radius: 15000 } },
+      }),
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      console.error(`Google Maps autocomplete [${response.status}]: ${body}`);
+      throw new Error("Não foi possível buscar endereços agora. Digite o endereço completo.");
+    }
+    const payload = await response.json() as {
+      suggestions?: { placePrediction?: { placeId?: string; text?: { text?: string }; structuredFormat?: { mainText?: { text?: string }; secondaryText?: { text?: string } } } }[];
+    };
+    const suggestions: AddressSuggestion[] = [];
+    for (const item of payload.suggestions ?? []) {
+      const prediction = item.placePrediction;
+      const text = prediction?.text?.text?.trim() ?? "";
+      if (!prediction?.placeId || !text) continue;
+      const normalized = text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+      if (!normalized.includes("aracatuba")) continue;
+      const main = prediction.structuredFormat?.mainText?.text?.trim() ?? "";
+      const secondary = prediction.structuredFormat?.secondaryText?.text?.trim() ?? "";
+      const numberMatch = main.match(/^(.*?)[,\s]+(\d{1,6}[a-zA-Z-]?)$/);
+      const street = (numberMatch ? numberMatch[1] : main).trim();
+      const number = numberMatch ? numberMatch[2] : "";
+      const neighborhood = secondary.split(",")[0]?.replace(/-/g, " ").trim() ?? "";
+      if (street) suggestions.push({ placeId: prediction.placeId, text, street, number, neighborhood });
+      if (suggestions.length >= 5) break;
+    }
+    return { suggestions };
+  });
 export const quoteDelivery = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ address: z.string().trim().min(8).max(300), token: z.string().max(200), autoNeighborhood: z.boolean().optional() }).parse(input))
   .handler(async ({ data }) => {
