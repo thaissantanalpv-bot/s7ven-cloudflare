@@ -181,4 +181,4 @@
 
 # Pausar e excluir produtos (Thais, 16/10/2026 03:13 UTC)
 - [x] Adicionar exclusão definitiva de produto no painel, com confirmação; manter pausa para ocultar sem apagar. Migração 0022 libera exclusão só para administração; produtos da lista original importada não podem ser excluídos; produto em combo precisa sair do combo antes.
-- [ ] Publicar a opção de pausar e excluir produtos.
+- [x] Publicar a opção de pausar e excluir produtos: painel publicado (s7venlounge.shop) mostrou 196 botões Excluir e 169 Pausar (27 já pausados); confirmação "Excluir Combo Gin Viagem?" aberta e cancelada sem alterar nada, build e 22 testes OK antes da publicação.
