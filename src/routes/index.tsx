@@ -29,6 +29,7 @@ import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder, orderTracking } from "@/lib/orders.functions";
 import { startDeliverySession, quoteDelivery, suggestDeliveryAddress } from "@/lib/delivery.functions";
+import { estimatedDeliveryMinutes } from "@/lib/delivery-route";
 import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine } from "@/lib/delivery-address";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
@@ -142,7 +143,7 @@ function Catalog() {
   const startDistanceSession = useServerFn(startDeliverySession);
   const calculateDistance = useServerFn(quoteDelivery);
   const suggestAddress = useServerFn(suggestDeliveryAddress);
-  const [deliveryQuote, setDeliveryQuote] = useState<{ id: string; address: string; km: number; fee: number; expires: number; config: string } | null>(null);
+  const [deliveryQuote, setDeliveryQuote] = useState<{ id: string; address: string; km: number; fee: number; routeDurationSeconds: number; expires: number; config: string } | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [deliveryError, setDeliveryError] = useState("");
   const quoteRequest = useRef(0);
@@ -274,6 +275,7 @@ function Catalog() {
   const distanceMode = settings.delivery_enabled && settings.delivery_distance_enabled;
   const distanceConfig = JSON.stringify([settings.delivery_origin, settings.delivery_distance_tiers]);
   const validQuote = deliveryQuote?.address === deliveryAddress(fullAddress) && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
+  const deliveryEstimate = estimatedDeliveryMinutes(validQuote?.routeDurationSeconds);
   const deliveryFee = isDelivery && settings.delivery_enabled ? (distanceMode ? validQuote?.fee ?? 0 : settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
   useEffect(() => {
     if (deliveryQuote && deliveryQuote.address === deliveryAddress(fullAddress) && deliveryQuote.config === distanceConfig) return;
@@ -784,7 +786,7 @@ function Catalog() {
                 </div>
               )}
               {isDelivery && fieldErrors.address?.[0] && <p id="address-error" className="text-xs text-destructive">{fieldErrors.address[0]}</p>}
-              {isDelivery && distanceMode && <div className="space-y-2"><Button variant="outline" disabled={quoting || !addressComplete || fullAddress.trim().length < 8 || Boolean(validQuote)} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : validQuote ? "Entrega calculada" : "Calcular entrega"}</Button>{validQuote && <><p role="status" className="text-sm font-semibold text-primary">Taxa de entrega: {brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km pela rota de moto</p><p className="text-xs text-muted-foreground">Rotas de moto do Google estão em fase beta e podem não incluir todas as vias adequadas; o entregador deve respeitar a sinalização.</p></>}{deliveryError && <p role="alert" className="text-sm text-destructive">{deliveryError}</p>}</div>}
+              {isDelivery && distanceMode && <div className="space-y-2"><Button variant="outline" disabled={quoting || !addressComplete || fullAddress.trim().length < 8 || Boolean(validQuote)} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : validQuote ? "Entrega calculada" : "Calcular entrega"}</Button>{validQuote && <><p role="status" className="text-sm font-semibold text-primary">Taxa de entrega: {brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km pela rota de moto</p>{deliveryEstimate && <p role="status" className="flex items-center gap-2 text-sm"><Clock className="size-4 shrink-0 text-primary" />Entrega estimada: {deliveryEstimate.min}–{deliveryEstimate.max} min (preparo + trajeto)</p>}<p className="text-xs text-muted-foreground">Previsão aproximada; pode variar com o movimento e o trânsito. Rotas de moto do Google estão em fase beta e podem não incluir todas as vias adequadas; o entregador deve respeitar a sinalização.</p></>}{deliveryError && <p role="alert" className="text-sm text-destructive">{deliveryError}</p>}</div>}
               {isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && (
                 <Field label="Bairro ou região">
                   <select
