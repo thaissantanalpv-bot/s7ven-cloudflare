@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { distanceFee, settingsSchema } from "./store-settings";
 import { deliveryAddress, deliveryLocation, deliveryNeighborhood } from "./delivery-address";
+import { deliveryRouteRequest } from "./delivery-route";
 
 export const startDeliverySession = createServerFn({ method: "POST" }).handler(async () => {
   const { createDeliveryToken } = await import("./delivery.server");
@@ -115,7 +116,7 @@ export const quoteDelivery = createServerFn({ method: "POST" })
     const savedAddress = neighborhood ? deliveryAddress(`${data.address.trim()}, ${neighborhood}`) : address;
     const response = await fetch("https://connector-gateway.lovable.dev/google_maps/routes/directions/v2:computeRoutes", {
       method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "X-Connection-Api-Key": mapsKey, "Content-Type": "application/json", "X-Goog-FieldMask": "routes.distanceMeters,routes.duration" },
-      body: JSON.stringify({ origin: { address: deliveryAddress(settings.delivery_origin) }, destination: { location: { latLng: location } }, travelMode: "DRIVE", routingPreference: "TRAFFIC_UNAWARE" }),
+      body: JSON.stringify(deliveryRouteRequest(deliveryAddress(settings.delivery_origin), location)),
     });
     await checkResponse(response);
     const payload = await response.json() as { routes?: { distanceMeters?: number; duration?: string }[] };
