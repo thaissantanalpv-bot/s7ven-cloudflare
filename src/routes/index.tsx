@@ -31,7 +31,7 @@ import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder, orderTracking } from "@/lib/orders.functions";
 import { startDeliverySession, quoteDelivery, suggestDeliveryAddress } from "@/lib/delivery.functions";
-import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, restoreDeliveryFields } from "@/lib/delivery-address";
+import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine } from "@/lib/delivery-address";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
@@ -154,6 +154,7 @@ function Catalog() {
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const suggestRequest = useRef(0);
   const suggestSession = useRef(crypto.randomUUID());
+  const autoQuote = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
@@ -195,6 +196,7 @@ function Catalog() {
     zone: "",
     fulfillment: "delivery" as "delivery" | "pickup",
   });
+  const [addressLine, setAddressLine] = useState("");
   const fullAddress = [form.street.trim(), form.number.trim(), form.neighborhood.trim()].filter(Boolean).join(", ");
   const addressComplete = deliveryFieldsComplete(form.street, form.number);
   const [error, setError] = useState("");
@@ -219,10 +221,12 @@ function Catalog() {
       if (raw) {
         const saved = JSON.parse(raw);
         if (saved.cart) setCart(saved.cart);
-        if (saved.form) setForm((f) => {
+        if (saved.form) {
           // Saved carts from the previous single-field address keep working.
-          return { ...f, ...restoreDeliveryFields(saved.form) };
-        });
+          const restored = restoreDeliveryFields(saved.form);
+          setAddressLine(joinAddressLine(String(restored.street ?? ""), String(restored.number ?? "")));
+          setForm((f) => ({ ...f, ...restored }));
+        }
       }
     } catch {}
     setLoaded(true);
@@ -334,6 +338,9 @@ function Catalog() {
     suggestRequest.current += 1;
     setSuggestions([]);
     setSuggestionsOpen(false);
+    const number = suggestion.number || form.number;
+    autoQuote.current = true;
+    setAddressLine(joinAddressLine(suggestion.street, number));
     setForm(f => ({
       ...f,
       street: suggestion.street,
@@ -341,6 +348,13 @@ function Catalog() {
       neighborhood: suggestion.neighborhood || f.neighborhood,
     }));
   };
+  // Ao escolher uma sugestão, a taxa de entrega é calculada sozinha.
+  useEffect(() => {
+    if (!autoQuote.current) return;
+    autoQuote.current = false;
+    if (isDelivery && distanceMode && addressComplete) void calculateDelivery();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fullAddress]);
   const total = subtotal + deliveryFee;
 
   const displayedSubtotal = !items.length && receipt ? receipt.subtotal : subtotal;
