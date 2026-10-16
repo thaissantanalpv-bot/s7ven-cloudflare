@@ -2,12 +2,13 @@ import { fireEvent, render, screen, waitFor, within, cleanup } from "@testing-li
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Order } from "@/lib/orders";
-const mocks = vi.hoisted(() => ({ list: vi.fn(), update: vi.fn(), track: vi.fn() }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), update: vi.fn(), track: vi.fn(), cancel: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/orders.functions", () => ({
   listOrders: mocks.list,
   updateOrderStatus: mocks.update,
   updateOrderTracking: mocks.track,
+  cancelOrder: mocks.cancel,
 }));
 import { OrderBoard } from "@/components/orders/order-board";
 let row: Order;
@@ -50,6 +51,10 @@ beforeEach(() => {
     row.tracking_url = data.trackingUrl || null;
     return { saved: true };
   });
+  mocks.cancel.mockReset().mockImplementation(async ({ data }) => {
+    row = { ...row, status: "cancelled", cancellation_reason: data.reason, cancelled_at: new Date().toISOString(), stock_restored_at: new Date().toISOString() };
+    return { cancelled: true, alreadyCancelled: false, stockNotes: [] };
+  });
 });
 afterEach(cleanup);
 const mount = () =>
@@ -61,6 +66,22 @@ const mount = () =>
     </QueryClientProvider>,
   );
 describe("Kanban order management", () => {
+  it("requires a reason, persists cancellation and prevents a second action or reactivation", async () => {
+    mount();
+    await screen.findByText("Cliente teste");
+    fireEvent.click(screen.getByRole("button", { name: "Detalhes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar pedido" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar cancelamento" }));
+    expect(mocks.cancel).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Motivo do cancelamento"), { target: { value: "Cliente desistiu" } });
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar cancelamento" }));
+    await waitFor(() => expect(row.status).toBe("cancelled"));
+    expect(mocks.cancel).toHaveBeenCalledTimes(1);
+    expect(mocks.cancel).toHaveBeenCalledWith({ data: { id: row.id, reason: "Cliente desistiu", expectedUpdatedAt: row.updated_at } });
+    await waitFor(() => expect(screen.queryByLabelText("Etapa do pedido")).not.toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: "Cancelar pedido" })).not.toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
   it("opens a printable receipt and saves only local printer settings", async () => {
     mount();
     await screen.findByText("Cliente teste");
