@@ -4,7 +4,6 @@ import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { catalogProductSchema, mergeCatalog, type CatalogProduct } from "./catalog";
-import { PRODUCTS } from "./products";
 
 // Only the allowlisted, read-only sales projection is available to visitors.
 export const getCatalog = createServerFn({ method: "GET" }).handler(async () => {
@@ -105,7 +104,6 @@ export const deleteCatalogProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: admin, error: roleError } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (roleError || !admin) throw new Error("Acesso restrito à administração.");
-    if (PRODUCTS.some(p => p.id === data.id)) throw new Error("Este produto veio da lista original importada e não pode ser excluído. Use Pausar para escondê-lo do catálogo.");
     const { data: combos, error: comboError } = await context.supabase.from("catalog_products").select("id,data");
     if (comboError) throw new Error("Não foi possível conferir os combos.");
     const usedBy = combos.filter(row => { const parsed = catalogProductSchema.safeParse(row.data); return parsed.success && parsed.data.comboGroups.some(g => g.productIds.includes(data.id)); });
