@@ -1,6 +1,6 @@
 # Cancelamento de pedidos (Thais, 16/10/2026 22:28 UTC)
-- [ ] Registrar motivo obrigatório e devolver estoque de produtos, variações e combos uma única vez, com proteção contra concorrência.
-- [ ] Disponibilizar cancelamento e histórico no painel; verificar testes e fluxo administrativo real.
+- [x] Registrar motivo obrigatório e devolver estoque uma única vez. Teste real: 2 combos/6 unidades de sabor restauraram estoques exatos 10/20/15; repetições simultâneas não duplicaram e reativação foi rejeitada.
+- [x] Painel e histórico conferidos após recarregar; 40 testes passaram, registros temporários removidos, catálogo HTTP 200 e build OK. Aguardando solicitação de publicação.
 
 # Rota de moto e teste de alerta (Thais, 16/10/2026 21:35 UTC)
 - [x] Google Routes suporta TWO_WHEELER no Brasil; cálculo ajustado para moto, taxas preservadas, cotações antigas invalidadas e aviso beta incluído. 12 testes passaram; validação real da rota depende do site publicado.

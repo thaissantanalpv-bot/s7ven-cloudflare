@@ -26,8 +26,8 @@
 - Store photos privately with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads. Index the exact cover/gallery lookup expressions to avoid repeated authorization scans without changing access.
 - Use separate public and admin catalog query keys so restricted override data cannot leak through a shared cache.
 - Keep cover/additional paths in image/images and resolve signed URLs separately; admin saves must never persist expiring URLs.
-- Keep every saved photo accessible through ProductCardPhotos navigation and enlargement.
-- Reserve stock atomically under sorted row locks and reject stale prices. Admin cancellation is terminal: snapshot controlled product/variation/component quantities on insertion and restore once atomically; record missing/untracked items, never recreate them. Legacy snapshots use current control flags.
+- Keep all saved photos navigable and enlargeable through ProductCardPhotos.
+- Reserve stock under sorted row locks; reject stale prices. Admin cancellation is terminal: snapshot product/variation/component control flags at insertion (current flags for legacy orders), restore once, record missing/untracked items without recreating them. Exclude cancelled sales from revenue, retaining totals and conversion events.
 - Represent fixed-price combos as catalog products with comboGroups and structured order components; encode choices in separate option keys to preserve legacy carts, validate group membership server-side, and reserve all quantities together in sorted row-lock order.
 - Persist counter sales in orders with a source and cashier, using admin-verified server-calculated checkout and the existing reservation trigger, unifying history without duplicate stock deductions. Keep counter sales out of delivery stages and new-order alerts.
 - Keep manifest identity/start URL `/painel` and online admin auth. Cache offline only public catalog HTML/assets, products/settings and viewed photos — never admin/auth/API; refresh on reconnect and require online checkout.
