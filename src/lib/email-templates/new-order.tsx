@@ -81,7 +81,6 @@ export const template = {
   component: Email,
   subject: (data: Record<string, any>) => `Novo pedido #${data['number'] ?? ''} — S7VEN`,
   displayName: 'Aviso de novo pedido',
-  to: 'thais.santana.lpv@gmail.com',
   previewData: {
     number: 42,
     customerName: 'Maria Silva',

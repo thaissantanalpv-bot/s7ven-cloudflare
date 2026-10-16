@@ -161,3 +161,8 @@
 - [x] Publicar combos até 200, impressão com endereço, rastreio do entregador e as correções de entrega (aviso de reabrir o carrinho e bairro automático).
 - [x] Conferir no site publicado: bairro preenchido sozinho (Conjunto Residencial Toyokazu Kawata) e taxa pela rota de R$ 11,10 · 7,02 km em Rua Joaquim Cândido, 2282, sem erros de execução.
 - [ ] Pendências que seguem abertas: conectar a impressora física (depende do modelo e do aparelho), conferir no aparelho a reabertura sem internet e o envio real de pedido.
+
+## Aviso de novo pedido para dois e-mails (Thais, 16/10/2026 01:43 UTC)
+- [x] Enviar o aviso para thais.santana.lpv@gmail.com e 7tabacariaelounge@gmail.com, cada um recebendo um e-mail próprio sem ver o endereço do outro.
+- [x] Verificar 16 testes (dois envios, chaves de repetição separadas, falha de um destinatário não bloqueia o outro) e domínio de envio verificado.
+- [ ] Publicar e confirmar a chegada do primeiro aviso real nos dois e-mails (o envio de teste pode ser disparado em Mais → E-mails).
