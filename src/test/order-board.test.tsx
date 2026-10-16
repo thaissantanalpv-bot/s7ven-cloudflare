@@ -152,11 +152,18 @@ describe("Kanban order management", () => {
     expect(start).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Ativar som" }));
     await screen.findByRole("button", { name: "Som ativo" });
-    expect(start).toHaveBeenCalledTimes(3);
+    // Ativação (3) + alerta contínuo do pedido "received" já na tela (3)
+    expect(start).toHaveBeenCalledTimes(6);
     mocks.list.mockImplementation(async () => [row, { ...row, id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", number: 43 }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
     await screen.findByText("1 novo pedido recebido");
-    expect(start).toHaveBeenCalledTimes(6);
+    expect(start).toHaveBeenCalledTimes(9);
+    // Ao aceitar o pedido (sai de "received"), o alerta contínuo para
+    mocks.list.mockImplementation(async () => [{ ...row, status: "preparing" }]);
+    fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Saiu para entrega" })).toBeInTheDocument());
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(start).toHaveBeenCalledTimes(9);
     vi.unstubAllGlobals();
   });
 });

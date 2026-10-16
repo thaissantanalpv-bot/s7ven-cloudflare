@@ -189,3 +189,8 @@
 - [x] 5 testes em src/test/order-cutoff.test.ts passando.
 - [x] Publicado em https://s7venlounge.shop.
 - [ ] Pendências que seguem abertas: conectar a impressora física (depende do modelo e do aparelho), conferir no aparelho a reabertura sem internet, confirmar a chegada do primeiro aviso real nos dois e-mails e recriar o atalho da tela inicial no celular para o ícone dourado.
+
+# Alerta contínuo de pedido + link do site (Thais, 16/10/2026 18:39 UTC)
+- [x] Som em loop a cada 3s enquanto houver pedido "recebido" (para ao aceitar); requer "Ativar som"
+- [x] Cartão "Link do seu catálogo" no painel (Início) com copiar, WhatsApp e Instagram
+- [ ] Publicar
