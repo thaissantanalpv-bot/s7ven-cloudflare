@@ -52,13 +52,13 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   };
   return <section className="py-7">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-      <div className="flex gap-6 text-sm"><span><strong>{managed.length}</strong> {combos ? "combos" : "produtos"}</span><span className="text-muted-foreground">{managed.filter(p => !available(p)).length} indisponíveis</span></div>
-      <Button onClick={() => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, category: combos ? "Combos" : "", emoji: "🛍️", image: "", images: [], variationPhotos: {}, active: true, featured: false, stock: null, optionLabel: "Sabor", allowOther: false, variations: [], comboGroups: combos ? [{ id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }] : [] }, expected: null, preview: "" }); }}><Plus /> {combos ? "Novo combo" : "Novo produto"}</Button>
+      <div className="flex gap-6 text-sm"><span><strong>{managed.length}</strong> {combos ? "combos" : "produtos"}</span><span className="text-muted-foreground">{managed.filter(p => !available(p)).length} indisponíveis</span>{lowCount > 0 && <span className="text-destructive"><strong>{lowCount}</strong> para repor</span>}</div>
+      <Button onClick={() => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, category: combos ? "Combos" : "", emoji: "🛍️", image: "", images: [], variationPhotos: {}, active: true, featured: false, stock: null, minStock: null, optionLabel: "Sabor", allowOther: false, variations: [], comboGroups: combos ? [{ id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }] : [] }, expected: null, preview: "" }); }}><Plus /> {combos ? "Novo combo" : "Novo produto"}</Button>
     </div>
     <div className="mb-5 flex flex-wrap gap-3">
       <div className="relative min-w-48 flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><input className="field pl-10" aria-label="Buscar produtos no painel" placeholder="Buscar produtos" value={query} onChange={e => setQuery(e.target.value)} /></div>
       <select className="field w-auto" aria-label="Filtrar categoria" value={category} onChange={e => setCategory(e.target.value)}><option value="">Todas as categorias</option>{categories.map(c => <option key={c}>{c}</option>)}</select>
-      <select className="field w-auto" aria-label="Disponibilidade" value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos os produtos</option><option value="active">Disponíveis</option><option value="paused">Indisponíveis</option></select>
+      <select className="field w-auto" aria-label="Disponibilidade" value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos os produtos</option><option value="active">Disponíveis</option><option value="paused">Indisponíveis</option><option value="low">Estoque baixo</option></select>
     </div>
     {!editing && message && <p role="status" className="mb-4 text-sm text-primary">{message}</p>}
     <div className="divide-y border-y">
