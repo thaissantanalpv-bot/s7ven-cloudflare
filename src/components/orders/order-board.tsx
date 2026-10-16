@@ -106,17 +106,19 @@ export function OrderBoard() {
       setNotice(
         `${newOrders.length} ${newOrders.length === 1 ? "novo pedido recebido" : "novos pedidos recebidos"}`,
       );
-      if (sound) beep();
     }
     seen.current = new Set(orders.data.map((o) => o.id));
-  }, [orders.data, sound]);
+  }, [orders.data]);
   const hasNew = (orders.data ?? []).some((o) => o.source !== "counter" && o.status === "received");
   useEffect(() => {
-    if (!sound || !audioReady || !hasNew) return;
-    beep();
-    const loop = setInterval(beep, 3000);
-    return () => clearInterval(loop);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const el = audio.current;
+    if (!el) return;
+    if (sound && audioReady && hasNew) {
+      el.play().catch(() => setAudioReady(false));
+    } else {
+      el.pause();
+      el.currentTime = 0;
+    }
   }, [sound, audioReady, hasNew]);
   const move = async (order: Order, status: OrderStatus) => {
     if (busy || order.status === status) return;
