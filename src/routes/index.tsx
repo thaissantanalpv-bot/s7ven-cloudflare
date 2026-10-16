@@ -125,6 +125,7 @@ function Catalog() {
   const [deliveryError, setDeliveryError] = useState("");
   const quoteRequest = useRef(0);
   const pendingQuote = useRef("");
+  const deliveryToken = useRef("");
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
@@ -254,12 +255,20 @@ function Catalog() {
     const request = ++quoteRequest.current;
     pendingQuote.current = address;
     setQuoting(true); setDeliveryError(""); setDeliveryQuote(null);
+    const freshToken = async () => (deliveryToken.current = (await startDistanceSession()).token);
     try {
-      await startDistanceSession();
+      const token = deliveryToken.current || await freshToken();
       if (request !== quoteRequest.current) return;
-      const quote = await calculateDistance({ data: { address } });
+      let quote;
+      try { quote = await calculateDistance({ data: { address, token } }); }
+      catch (e) {
+        if (!(e instanceof Error) || e.message !== "DELIVERY_SESSION_EXPIRED") throw e;
+        const retryToken = await freshToken();
+        if (request !== quoteRequest.current) return;
+        quote = await calculateDistance({ data: { address, token: retryToken } });
+      }
       if (request === quoteRequest.current) setDeliveryQuote({ ...quote, expires: Date.now()+14*60000, config: distanceConfig });
-    } catch(e) { if (request === quoteRequest.current) setDeliveryError(e instanceof Error ? e.message : "Não foi possível calcular a entrega. Confira o endereço e tente novamente."); }
+    } catch(e) { if (request === quoteRequest.current) setDeliveryError(e instanceof Error && e.message !== "DELIVERY_SESSION_EXPIRED" ? e.message : "Não foi possível calcular a entrega. Confira o endereço e tente novamente."); }
     finally { if (request === quoteRequest.current) { pendingQuote.current = ""; setQuoting(false); } }
   };
   const total = subtotal + deliveryFee;
