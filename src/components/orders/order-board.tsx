@@ -60,16 +60,20 @@ export function OrderBoard() {
     const el = audio.current;
     if (!el || audioReady) return;
     el.muted = true;
-    el.play()
-      .then(() => {
-        el.pause();
-        el.currentTime = 0;
-        el.muted = false;
-        setAudioReady(true);
-      })
-      .catch(() => {
-        el.muted = false;
-      });
+    try {
+      Promise.resolve(el.play())
+        .then(() => {
+          el.pause();
+          el.currentTime = 0;
+          el.muted = false;
+          setAudioReady(true);
+        })
+        .catch(() => {
+          el.muted = false;
+        });
+    } catch {
+      el.muted = false;
+    }
   };
   const toggleSound = () => {
     if (sound && audioReady) {
@@ -114,7 +118,11 @@ export function OrderBoard() {
     const el = audio.current;
     if (!el) return;
     if (sound && audioReady && hasNew) {
-      el.play().catch(() => setAudioReady(false));
+      try {
+        Promise.resolve(el.play()).catch(() => setAudioReady(false));
+      } catch {
+        setAudioReady(false);
+      }
     } else {
       el.pause();
       el.currentTime = 0;
