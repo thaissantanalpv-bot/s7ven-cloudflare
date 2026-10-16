@@ -40,3 +40,9 @@ describe("Endereço de entrega em Araçatuba", () => {
     expect(() => deliveryLocation(incomplete)).toThrow("número completos");
   });
 });
+import { deliveryNeighborhood } from "@/lib/delivery-address";
+import { it as itN, expect as expectN } from "vitest";
+itN("reads the neighborhood from geocoding results", () => {
+  expectN(deliveryNeighborhood({ results: [{ address_components: [{ long_name: "Jardim Nova Yorque", short_name: "Jd.", types: ["sublocality_level_1", "sublocality", "political"] }] }] })).toBe("Jardim Nova Yorque");
+  expectN(deliveryNeighborhood({ results: [] })).toBe("");
+});

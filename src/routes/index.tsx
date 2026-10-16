@@ -125,6 +125,7 @@ function Catalog() {
   const [deliveryError, setDeliveryError] = useState("");
   const quoteRequest = useRef(0);
   const pendingQuote = useRef("");
+  const deliveryToken = useRef("");
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
@@ -240,11 +241,13 @@ function Catalog() {
   const validQuote = deliveryQuote?.address === deliveryAddress(fullAddress) && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
   const deliveryFee = isDelivery && settings.delivery_enabled ? (distanceMode ? validQuote?.fee ?? 0 : settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
   useEffect(() => {
+    if (deliveryQuote && deliveryQuote.address === deliveryAddress(fullAddress) && deliveryQuote.config === distanceConfig) return;
     quoteRequest.current += 1;
     pendingQuote.current = "";
     setQuoting(false);
     setDeliveryError("");
     setDeliveryQuote(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fullAddress, form.fulfillment, distanceConfig]);
   const calculateDelivery = async () => {
     const address = fullAddress;
@@ -254,12 +257,24 @@ function Catalog() {
     const request = ++quoteRequest.current;
     pendingQuote.current = address;
     setQuoting(true); setDeliveryError(""); setDeliveryQuote(null);
+    const autoNeighborhood = !form.neighborhood.trim();
+    const freshToken = async () => (deliveryToken.current = (await startDistanceSession()).token);
     try {
-      await startDistanceSession();
+      const token = deliveryToken.current || await freshToken();
       if (request !== quoteRequest.current) return;
-      const quote = await calculateDistance({ data: { address } });
-      if (request === quoteRequest.current) setDeliveryQuote({ ...quote, expires: Date.now()+14*60000, config: distanceConfig });
-    } catch(e) { if (request === quoteRequest.current) setDeliveryError(e instanceof Error ? e.message : "Não foi possível calcular a entrega. Confira o endereço e tente novamente."); }
+      let quote;
+      try { quote = await calculateDistance({ data: { address, token, autoNeighborhood } }); }
+      catch (e) {
+        if (!(e instanceof Error) || e.message !== "DELIVERY_SESSION_EXPIRED") throw e;
+        const retryToken = await freshToken();
+        if (request !== quoteRequest.current) return;
+        quote = await calculateDistance({ data: { address, token: retryToken, autoNeighborhood } });
+      }
+      if (request !== quoteRequest.current) return;
+      const { neighborhood, ...found } = quote;
+      setDeliveryQuote({ ...found, expires: Date.now()+14*60000, config: distanceConfig });
+      if (autoNeighborhood && neighborhood) setForm(f => f.neighborhood.trim() ? f : { ...f, neighborhood });
+    } catch(e) { if (request === quoteRequest.current) setDeliveryError(e instanceof Error && e.message !== "DELIVERY_SESSION_EXPIRED" ? e.message : "Não foi possível calcular a entrega. Confira o endereço e tente novamente."); }
     finally { if (request === quoteRequest.current) { pendingQuote.current = ""; setQuoting(false); } }
   };
   const total = subtotal + deliveryFee;
@@ -321,7 +336,7 @@ function Catalog() {
     const d = r.data;
     const requestId = attempt?.signature === JSON.stringify({ customer: d, items: inputItems }) ? attempt.id : crypto.randomUUID();
     const analytics = readAnalyticsIdentity();
-    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems, analytics, deliveryQuoteId: isDelivery && distanceMode ? validQuote?.id : undefined });
+    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems, analytics, deliveryQuoteId: isDelivery && distanceMode ? validQuote?.id : undefined, deliveryToken: isDelivery && distanceMode && deliveryToken.current ? deliveryToken.current : undefined });
     if (!validated.success) return setError("Confira os produtos e as quantidades do carrinho antes de enviar.");
     const lines = [
       `*Novo pedido — ${STORE_NAME}*`,
@@ -661,6 +676,7 @@ function Catalog() {
                         placeholder="Nº"
                         value={form.number}
                         onChange={(e) => setForm({ ...form, number: e.target.value })}
+                        onBlur={() => { void calculateDelivery(); }}
                       />
                     </label>
                   </div>
@@ -668,7 +684,7 @@ function Catalog() {
                     <input
                       className="field mt-1"
                       maxLength={80}
-                      placeholder="Bairro"
+                      placeholder="Preenchido pelo número"
                       value={form.neighborhood}
                       onChange={(e) => setForm({ ...form, neighborhood: e.target.value })}
                       onBlur={() => { void calculateDelivery(); }}

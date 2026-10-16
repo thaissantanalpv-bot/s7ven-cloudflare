@@ -13,7 +13,7 @@
 - Track anonymous UUIDs with bounded writes and admin-only abandonment aggregates; record checkout conversion atomically via session upsert on order insertion, never infer contacts, never block checkout on telemetry, and fall back to in-memory identity when browser storage is blocked.
 - Store shared delivery and weekly hours in `store_settings`; validate writes through authenticated server functions and admin-only RLS so customers cannot change store operations.
 - Shared delivery pricing precedence: enabled distance tiers, then fixed fee, then regions; keep pickup free.
-- Quote road distance via Google Maps in sealed browser-session flows; verify the configured delivery city, bind short-lived quotes to normalized address/settings and revalidate at checkout to prevent forged fees.
+- Quote road distance via Google Maps with HMAC-signed session tokens sent in the request body (not cookies, which embedded/in-app browsers block); verify the configured delivery city, bind short-lived quotes to normalized address/settings and revalidate at checkout to prevent forged fees.
 - Keep product photo AI editing admin-authenticated, streaming original-image edits; applying a result replaces only the selected draft photo and requires the usual product save.
 - Grant store administration through protected `user_roles` and a server-managed invite checked against confirmed auth email; never grant privileges from browser state or editable metadata.
 - Use TanStack Query for shared settings and the pathless authenticated layout for the panel, keeping public catalog reads independent of login.

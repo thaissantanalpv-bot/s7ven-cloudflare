@@ -142,3 +142,11 @@
 - [x] Botão "Acompanhar entrega em tempo real" no comprovante do cliente, atualizado sozinho
 - [x] Link incluído na mensagem de WhatsApp "Saiu para entrega"
 - [x] Confirmado no painel com pedido real: link salva, persiste e remove; consulta pública expõe só etapa e link
+
+## Entrega (Thais, 15/10/2026 23:08 UTC)
+- [x] Corrigir "Reabra o carrinho para calcular a entrega" (código assinado em vez de cookie bloqueado)
+- [ ] Preencher o bairro sozinho a partir da rua e número (pedido 16/10 00:03 UTC)
+
+## Entrega (Thais, 15/10/2026 23:08 UTC)
+- [x] Corrigir "Reabra o carrinho para calcular a entrega" (código assinado em vez de cookie bloqueado)
+- [x] Preencher o bairro sozinho a partir da rua e número (pedido 16/10 00:03 UTC)
