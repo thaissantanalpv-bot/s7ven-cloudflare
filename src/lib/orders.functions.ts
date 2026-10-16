@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { submitOrderSchema, priceOrder, statusSchema, trackingUrlSchema, type Order } from "./orders";
+import { submitOrderSchema, priceOrder, statusSchema, workflowStatusSchema, cancelOrderSchema, trackingUrlSchema, type Order } from "./orders";
 import { EMPTY_SETTINGS, ordersOpen, settingsSchema } from "./store-settings";
 import { mergeCatalog } from "./catalog";
 import { deliveryAddress } from "./delivery-address";
@@ -135,7 +135,7 @@ export const listOrders = createServerFn({ method: "POST" })
 export const updateOrderStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ id: z.string().uuid(), status: statusSchema, expected: statusSchema }).parse(input),
+    z.object({ id: z.string().uuid(), status: workflowStatusSchema, expected: workflowStatusSchema }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { data: admin, error: roleError } = await context.supabase.rpc("has_role", {
@@ -172,6 +172,7 @@ export const updateOrderTracking = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("source", "catalog")
       .eq("fulfillment", "delivery")
+      .neq("status", "cancelled")
       .select("id")
       .maybeSingle();
     if (error || !saved)
@@ -190,4 +191,15 @@ export const orderTracking = createServerFn({ method: "POST" })
       .object({ status: statusSchema, trackingUrl: z.string().nullable() })
       .parse(row);
     return { status: parsed.status, trackingUrl: parsed.trackingUrl };
+  });
+
+export const cancelOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => cancelOrderSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: admin, error: roleError } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (roleError || !admin) throw new Error("Acesso restrito à administração.");
+    const { data: result, error } = await context.supabase.rpc("cancel_store_order", { _id: data.id, _reason: data.reason, _expected_updated_at: data.expectedUpdatedAt });
+    if (error) throw new Error("O pedido mudou ou não foi cancelado. Atualize e tente novamente.");
+    return z.object({ cancelled: z.boolean(), alreadyCancelled: z.boolean(), stockNotes: z.array(z.string()) }).parse(result);
   });

@@ -32,7 +32,16 @@ export const ORDER_STAGES = [
     message: "seu pedido foi entregue. Obrigado por escolher a S7VEN!",
   },
 ] as const;
-export const statusSchema = z.enum(["received", "preparing", "out_for_delivery", "delivered"]);
+export const workflowStatusSchema = z.enum(["received", "preparing", "out_for_delivery", "delivered"]);
+export const statusSchema = z.enum(["received", "preparing", "out_for_delivery", "delivered", "cancelled"]);
+export const cancelOrderSchema = z.object({
+  id: z.string().uuid(),
+  reason: z.string().trim().min(1, "Informe o motivo do cancelamento").max(300, "Use até 300 caracteres"),
+  expectedUpdatedAt: z.string().datetime({ offset: true }),
+});
+export function isActiveOrder(status: OrderStatus) { return status !== "delivered" && status !== "cancelled"; }
+export function orderStatusLabel(status: OrderStatus) { return status === "cancelled" ? "Cancelado" : ORDER_STAGES.find(s => s.id === status)?.label ?? status; }
+export function recordedSalesTotal(orders: Pick<Order, "status" | "total">[]) { return orders.filter(o => o.status !== "cancelled").reduce((sum, o) => sum + o.total, 0); }
 export type OrderStatus = z.infer<typeof statusSchema>;
 export const customerSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome").max(80),
@@ -98,6 +107,11 @@ export type Order = {
   total: number;
   status: OrderStatus;
   tracking_url?: string | null;
+  cancellation_reason?: string | null;
+  cancelled_at?: string | null;
+  cancelled_by?: string | null;
+  stock_restored_at?: string | null;
+  cancellation_stock_notes?: unknown;
   created_at: string;
   updated_at: string;
 };
@@ -198,5 +212,5 @@ export function orderWhatsApp(
     order.status === "out_for_delivery" && order.tracking_url
       ? `\nAcompanhe a entrega em tempo real: ${order.tracking_url}`
       : "";
-  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${stage?.message ?? ""}\nPedido #${order.number} — ${STORE_NAME}${tracking}`)}`;
+  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${order.status === "cancelled" ? "seu pedido foi cancelado. Entre em contato com a loja para mais informações." : stage?.message ?? ""}\nPedido #${order.number} — ${STORE_NAME}${tracking}`)}`;
 }
