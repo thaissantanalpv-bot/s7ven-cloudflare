@@ -1,5 +1,6 @@
 # Rota de moto e teste de alerta (Thais, 16/10/2026 21:35 UTC)
-- [ ] Conferir suporte a rotas de moto em Araçatuba e ajustar somente se houver cobertura.
+- [x] Google Routes suporta TWO_WHEELER no Brasil; cálculo ajustado para moto, taxas preservadas, cotações antigas invalidadas e aviso beta incluído. 12 testes passaram; validação real da rota depende do site publicado.
+- [ ] Publicar a mudança para rota de moto e conferir um endereço no celular.
 - [ ] Criar pedido fictício em Recebido sem e-mail, estoque ou conversão; aguardar Thais ouvir no celular e excluir somente esse pedido.
 
 # Endereço em uma única linha (Thais, 16/10/2026 02:22 UTC)
