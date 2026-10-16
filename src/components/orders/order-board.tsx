@@ -66,10 +66,11 @@ export function OrderBoard() {
       oscillator.frequency.value = frequency;
       const start = ctx.currentTime + index * 0.18;
       gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.15, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+      // Volume máximo: o alerta precisa sobressair sobre a caixa de som da loja.
+      gain.gain.exponentialRampToValueAtTime(1, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.24);
       oscillator.start(start);
-      oscillator.stop(start + 0.18);
+      oscillator.stop(start + 0.26);
     });
   };
   const toggleSound = async () => {
