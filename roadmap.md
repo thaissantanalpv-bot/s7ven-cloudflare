@@ -1,6 +1,6 @@
 # Rota de moto e teste de alerta (Thais, 16/10/2026 21:35 UTC)
 - [x] Google Routes suporta TWO_WHEELER no Brasil; cálculo ajustado para moto, taxas preservadas, cotações antigas invalidadas e aviso beta incluído. 12 testes passaram; validação real da rota depende do site publicado.
-- [ ] Publicar a mudança para rota de moto e conferir um endereço no celular.
+- [x] Publicado em s7venlounge.shop e conferido no celular (390px): sugestão "Rua Joaquim Cândido, 2282" preencheu o bairro e a taxa saiu "R$ 11,10 · 7,02 km pela rota de moto", com o aviso beta visível e sem erros de página.
 - [x] Pedido fictício -2135 criado em Recebido sem itens, e-mail ou conversão; painel de celular mostrou Som ativo sem erros. O teste foi movido para Entregue durante a verificação e excluído pelo ID exclusivo, sem alterar pedidos reais.
 
 # Endereço em uma única linha (Thais, 16/10/2026 02:22 UTC)
