@@ -22,7 +22,7 @@ export async function createDeliveryToken(now = Date.now()) {
 export async function verifyDeliveryToken(token: string | undefined, now = Date.now()) {
   const match = /^([0-9a-f-]{36})\.(\d{1,16})\.([0-9a-f]{64})$/.exec(token ?? "");
   if (!match) return null;
-  const [, id, exp, sig] = match;
+  const id = match[1]!, exp = match[2]!, sig = match[3]!;
   if (Number(exp) < now) return null;
   const ok = await crypto.subtle.verify("HMAC", await signingKey(), fromHex(sig), encoder.encode(`${id}.${exp}`));
   return ok ? id : null;
