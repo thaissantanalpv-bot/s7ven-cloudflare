@@ -17,7 +17,9 @@ export default defineConfig({
     manifest: false,
     devOptions: { enabled: false },
     workbox: {
-      globPatterns: ["assets/**/*.{js,css,woff,woff2}"],
+      // Precache only the entry files so the worker installs in seconds on mobile;
+      // everything else under /assets/ is cached at runtime on first online view.
+      globPatterns: ["assets/index-*.js", "assets/styles-*.css"],
       maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
       navigateFallback: null,
       cleanupOutdatedCaches: true,
@@ -25,6 +27,10 @@ export default defineConfig({
         urlPattern: ({ request, url }) => (request.mode === "navigate" || request.destination === "") && url.origin === self.location.origin && url.pathname === "/" && !url.searchParams.has("sw"),
         handler: "NetworkFirst",
         options: { cacheName: "s7ven-public-pages-v1", networkTimeoutSeconds: 3, cacheableResponse: { statuses: [200] }, expiration: { maxEntries: 10, maxAgeSeconds: 30 * 86400 } },
+      }, {
+        urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.startsWith("/assets/"),
+        handler: "CacheFirst",
+        options: { cacheName: "s7ven-public-assets-v1", cacheableResponse: { statuses: [200] }, expiration: { maxEntries: 600, maxAgeSeconds: 30 * 86400 } },
       }],
     },
   })],
