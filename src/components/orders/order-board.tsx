@@ -53,40 +53,31 @@ export function OrderBoard() {
   const [selected, setSelected] = useState<string | null>(null);
   const [drag, setDrag] = useState<string | null>(null);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
-  const audio = useRef<AudioContext | null>(null);
+  const audio = useRef<HTMLAudioElement | null>(null);
   const seen = useRef<Set<string> | null>(null);
-  const beep = () => {
-    const ctx = audio.current;
-    if (!ctx || ctx.state !== "running") return;
-    [660, 880, 990].forEach((frequency, index) => {
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      oscillator.connect(gain);
-      gain.connect(ctx.destination);
-      oscillator.frequency.value = frequency;
-      const start = ctx.currentTime + index * 0.18;
-      gain.gain.setValueAtTime(0.0001, start);
-      // Volume máximo: o alerta precisa sobressair sobre a caixa de som da loja.
-      gain.gain.exponentialRampToValueAtTime(1, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.24);
-      oscillator.start(start);
-      oscillator.stop(start + 0.26);
-    });
+  const unlock = () => {
+    // O navegador só libera som depois de um toque na tela; desbloqueia no primeiro toque.
+    const el = audio.current;
+    if (!el || audioReady) return;
+    el.muted = true;
+    el.play()
+      .then(() => {
+        el.pause();
+        el.currentTime = 0;
+        el.muted = false;
+        setAudioReady(true);
+      })
+      .catch(() => {
+        el.muted = false;
+      });
   };
-  const toggleSound = async () => {
+  const toggleSound = () => {
     if (sound && audioReady) {
       setSound(false);
       return;
     }
-    try {
-      if (!audio.current) audio.current = new AudioContext();
-      await audio.current.resume();
-      setAudioReady(audio.current.state === "running");
-      setSound(true);
-      beep();
-    } catch {
-      setError("Não foi possível ativar o som neste navegador.");
-    }
+    setSound(true);
+    unlock();
   };
   useEffect(() => {
     // Browsers only allow sound after a tap/click, so arm it on the first interaction anywhere.
