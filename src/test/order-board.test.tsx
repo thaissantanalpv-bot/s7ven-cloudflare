@@ -135,35 +135,24 @@ describe("Kanban order management", () => {
     expect(screen.queryByText("Cliente teste")).not.toBeInTheDocument();
     expect(screen.getAllByText("Nenhum pedido")).toHaveLength(4);
   });
-  it("turns sound on automatically and keeps alerting new orders", async () => {
-    const start = vi.fn();
-    class TestAudio {
-      state = "running";
-      currentTime = 0;
-      destination = {};
-      resume = async () => {};
-      close = async () => {};
-      createOscillator = () => ({ connect: vi.fn(), frequency: { value: 0 }, start, stop: vi.fn() });
-      createGain = () => ({ connect: vi.fn(), gain: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() } });
-    }
-    vi.stubGlobal("AudioContext", TestAudio);
+  it("turns sound on automatically and keeps alerting until the order is accepted", async () => {
+    const play = vi.fn(() => Promise.resolve());
+    const pause = vi.fn();
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(play);
+    vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(pause);
     mount();
     await screen.findByText("Cliente teste");
+    // Som já vem ativo: o desbloqueio do navegador acontece no toque,
+    // e o alerta contínuo começa com o pedido "received" já na tela.
     await screen.findByRole("button", { name: "Som ativo" });
-    // Alerta contínuo do pedido "received" já na tela, sem precisar clicar
-    await waitFor(() => expect(start).toHaveBeenCalledTimes(3));
-    start.mockClear();
-    mocks.list.mockImplementation(async () => [row, { ...row, id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", number: 43 }]);
-    fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
-    await screen.findByText("1 novo pedido recebido");
-    expect(start).toHaveBeenCalledTimes(3);
+    await waitFor(() => expect(play).toHaveBeenCalled());
+    const pausesBeforeAccept = pause.mock.calls.length;
     // Ao aceitar o pedido (sai de "received"), o alerta contínuo para
     mocks.list.mockImplementation(async () => [{ ...row, status: "preparing" }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Saiu para entrega" })).toBeInTheDocument());
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(start).toHaveBeenCalledTimes(3);
-    vi.unstubAllGlobals();
+    await waitFor(() => expect(pause.mock.calls.length).toBeGreaterThan(pausesBeforeAccept));
+    vi.restoreAllMocks();
   });
 });
 

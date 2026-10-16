@@ -53,69 +53,55 @@ export function OrderBoard() {
   const [selected, setSelected] = useState<string | null>(null);
   const [drag, setDrag] = useState<string | null>(null);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
-  const audio = useRef<AudioContext | null>(null);
+  const audio = useRef<HTMLAudioElement | null>(null);
   const seen = useRef<Set<string> | null>(null);
-  const beep = () => {
-    const ctx = audio.current;
-    if (!ctx || ctx.state !== "running") return;
-    [660, 880, 990].forEach((frequency, index) => {
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      oscillator.connect(gain);
-      gain.connect(ctx.destination);
-      oscillator.frequency.value = frequency;
-      const start = ctx.currentTime + index * 0.18;
-      gain.gain.setValueAtTime(0.0001, start);
-      // Volume máximo: o alerta precisa sobressair sobre a caixa de som da loja.
-      gain.gain.exponentialRampToValueAtTime(1, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.24);
-      oscillator.start(start);
-      oscillator.stop(start + 0.26);
-    });
+  const unlock = () => {
+    // O navegador só libera som depois de um toque na tela; desbloqueia no primeiro toque.
+    const el = audio.current;
+    if (!el || audioReady) return;
+    el.muted = true;
+    try {
+      Promise.resolve(el.play())
+        .then(() => {
+          el.pause();
+          el.currentTime = 0;
+          el.muted = false;
+          setAudioReady(true);
+        })
+        .catch(() => {
+          el.muted = false;
+        });
+    } catch {
+      el.muted = false;
+    }
   };
-  const toggleSound = async () => {
+  const toggleSound = () => {
     if (sound && audioReady) {
       setSound(false);
       return;
     }
-    try {
-      if (!audio.current) audio.current = new AudioContext();
-      await audio.current.resume();
-      setAudioReady(audio.current.state === "running");
-      setSound(true);
-      beep();
-    } catch {
-      setError("Não foi possível ativar o som neste navegador.");
-    }
+    setSound(true);
+    unlock();
   };
   useEffect(() => {
-    // Browsers only allow sound after a tap/click, so arm it on the first interaction anywhere.
-    let ctx: AudioContext | null = null;
-    try {
-      ctx = new AudioContext();
-      audio.current = ctx;
-    } catch {
-      return;
-    }
-    const arm = () => {
-      void ctx?.resume().then(() => {
-        if (ctx?.state === "running") {
-          setAudioReady(true);
-          remove();
-        }
-      });
-    };
-    const remove = () => {
-      window.removeEventListener("pointerdown", arm);
-      window.removeEventListener("keydown", arm);
-    };
+    // O alerta usa um arquivo de áudio em loop (não osciladores): funciona melhor
+    // no celular, continua tocando com a aba em segundo plano e no volume máximo.
+    const el = new Audio("/sounds/new-order-alert.mp3");
+    el.loop = true;
+    el.volume = 1;
+    el.preload = "auto";
+    audio.current = el;
+    unlock(); // pode já estar liberado (ex.: computador com interação prévia)
+    const arm = () => unlock();
     window.addEventListener("pointerdown", arm);
     window.addEventListener("keydown", arm);
-    arm();
     return () => {
-      remove();
-      void ctx?.close();
+      window.removeEventListener("pointerdown", arm);
+      window.removeEventListener("keydown", arm);
+      el.pause();
+      audio.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (!orders.data) return;
@@ -124,17 +110,23 @@ export function OrderBoard() {
       setNotice(
         `${newOrders.length} ${newOrders.length === 1 ? "novo pedido recebido" : "novos pedidos recebidos"}`,
       );
-      if (sound) beep();
     }
     seen.current = new Set(orders.data.map((o) => o.id));
-  }, [orders.data, sound]);
+  }, [orders.data]);
   const hasNew = (orders.data ?? []).some((o) => o.source !== "counter" && o.status === "received");
   useEffect(() => {
-    if (!sound || !audioReady || !hasNew) return;
-    beep();
-    const loop = setInterval(beep, 3000);
-    return () => clearInterval(loop);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const el = audio.current;
+    if (!el) return;
+    if (sound && audioReady && hasNew) {
+      try {
+        Promise.resolve(el.play()).catch(() => setAudioReady(false));
+      } catch {
+        setAudioReady(false);
+      }
+    } else {
+      el.pause();
+      el.currentTime = 0;
+    }
   }, [sound, audioReady, hasNew]);
   const move = async (order: Order, status: OrderStatus) => {
     if (busy || order.status === status) return;
