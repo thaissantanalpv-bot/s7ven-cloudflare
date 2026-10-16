@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Ban } from "lucide-react";
+import { Ban, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cancelOrder } from "@/lib/orders.functions";
-import { cancelOrderSchema, type Order } from "@/lib/orders";
+import { cancelOrderSchema, orderWhatsApp, type Order } from "@/lib/orders";
 
 export function CancellationRecord({ order }: { order: Order }) {
   if (order.status !== "cancelled") return null;

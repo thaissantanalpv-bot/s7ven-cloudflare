@@ -205,12 +205,14 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
   };
 }
 export function orderWhatsApp(
-  order: Pick<Order, "number" | "customer_name" | "customer_phone" | "status" | "tracking_url">,
+  order: Pick<Order, "number" | "customer_name" | "customer_phone" | "status" | "tracking_url"> & { cancellation_reason?: string | null },
 ) {
   const stage = ORDER_STAGES.find((s) => s.id === order.status);
   const tracking =
     order.status === "out_for_delivery" && order.tracking_url
       ? `\nAcompanhe a entrega em tempo real: ${order.tracking_url}`
       : "";
-  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${order.status === "cancelled" ? "seu pedido foi cancelado. Entre em contato com a loja para mais informações." : stage?.message ?? ""}\nPedido #${order.number} — ${STORE_NAME}${tracking}`)}`;
+  const reason = order.cancellation_reason?.trim();
+  const cancelled = `seu pedido foi cancelado${reason ? `. Motivo: ${reason}` : ""}. Qualquer dúvida, estamos à disposição.`;
+  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${order.status === "cancelled" ? cancelled : stage?.message ?? ""}\nPedido #${order.number} — ${STORE_NAME}${tracking}`)}`;
 }
