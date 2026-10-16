@@ -44,6 +44,7 @@ import { AnalyticsAssistant } from "@/components/analytics-assistant";
 import { adminCatalogQuery } from "@/lib/catalog.query";
 import { getCatalogFunnel } from "@/lib/catalog-analytics.functions";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
+import { lowStockItems } from "@/lib/catalog";
 
 export const Route = createFileRoute("/_authenticated/painel")({ staticData: { sitemap: false },
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(adminCatalogQuery)]),
@@ -172,11 +173,14 @@ function Admin() {
 function AdminHome({ onOpen }: { onOpen: (view: string) => void }) {
   const getStats = useServerFn(getCatalogFunnel);
   const stats = useQuery({ queryKey: ["admin-catalog-funnel", "today"], queryFn: () => getStats({ data: "today" }), refetchInterval: 5000, retry: 1 });
+  const { data: products } = useSuspenseQuery(adminCatalogQuery);
+  const lowStock = products.flatMap(lowStockItems);
   const data = stats.data;
   const cards = [
     { label: "Visitas", hint: "pessoas que abriram o catálogo hoje", value: data?.visitors, Icon: Users, target: "analytics" },
     { label: "Carrinhos", hint: "clientes montando pedido agora", value: data?.pending, Icon: ShoppingCart, target: "analytics" },
     { label: "Pedidos", hint: "pedidos enviados hoje", value: data?.completed, Icon: ShoppingBag, target: "orders" },
+    { label: "Estoque baixo", hint: lowStock.length ? lowStock.slice(0, 2).map(i => i.label).join(", ") + (lowStock.length > 2 ? "…" : "") : "nenhum item no mínimo", value: lowStock.length, Icon: Package, target: "products" },
   ];
   return (
     <section className="py-6" aria-label="Resumo da loja">

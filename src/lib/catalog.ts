@@ -3,7 +3,7 @@ import { PRODUCTS, type Product } from "./products";
 
 const quantity = z.number().int().min(0).max(1000000).nullable();
 const photoPath = z.string().max(1000).refine(v => /^\/produtos\/p\d+\.jpg$/.test(v) || /^uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v), "Foto inválida.");
-export const variationSchema = z.object({ name: z.string().trim().min(1).max(40), active: z.boolean(), stock: quantity });
+export const variationSchema = z.object({ name: z.string().trim().min(1).max(40), active: z.boolean(), stock: quantity, minStock: quantity.default(null) });
 export const comboGroupSchema = z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]{1,40}$/),
   name: z.string().trim().min(1, "Informe o nome do grupo.").max(80),
@@ -23,6 +23,7 @@ export const catalogProductSchema = z.object({
   active: z.boolean(),
   featured: z.boolean().default(false),
   stock: quantity,
+  minStock: quantity.default(null),
   optionLabel: z.enum(["Sabor", "Cor", "Variação"]),
   allowOther: z.boolean(),
   comboGroups: z.array(comboGroupSchema).max(8).default([]),
@@ -35,6 +36,7 @@ export type CatalogProduct = Product & {
   featured?: boolean;
   active: boolean;
   stock: number | null;
+  minStock?: number | null;
   allowOther: boolean;
   variations: z.infer<typeof variationSchema>[];
   updatedAt: string | null;
@@ -46,7 +48,7 @@ export type CatalogProduct = Product & {
 };
 export type ProductDraft = z.infer<typeof catalogProductSchema>;
 export function mergeCatalog(rows: { id: string; data: unknown; updated_at: string }[]): CatalogProduct[] {
-  const base: CatalogProduct[] = PRODUCTS.map(p => ({ ...p, active: true, stock: null, allowOther: Boolean(p.options?.length), variations: (p.options ?? []).map(name => ({ name, active: true, stock: null })), updatedAt: null }));
+  const base: CatalogProduct[] = PRODUCTS.map(p => ({ ...p, active: true, stock: null, minStock: null, allowOther: Boolean(p.options?.length), variations: (p.options ?? []).map(name => ({ name, active: true, stock: null, minStock: null })), updatedAt: null }));
   const map = new Map(base.map(p => [p.id, p]));
   for (const row of rows) {
     const p = catalogProductSchema.parse(row.data);
@@ -63,7 +65,14 @@ export function available(p: Product | CatalogProduct, option = "", qty = 1) {
   return v ? v.active && (v.stock === null || v.stock >= qty) : p.allowOther;
 }
 export function toDraft(p: CatalogProduct): ProductDraft {
-  return { id: p.id, name: p.name, description: p.description, price: p.price, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], variationPhotos: p.variationPhotos ?? {}, active: p.active, featured: p.featured ?? false, stock: p.stock, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations, comboGroups: p.comboGroups ?? [] };
+  return { id: p.id, name: p.name, description: p.description, price: p.price, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], variationPhotos: p.variationPhotos ?? {}, active: p.active, featured: p.featured ?? false, stock: p.stock, minStock: p.minStock ?? null, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations.map(v => ({ ...v, minStock: v.minStock ?? null })), comboGroups: p.comboGroups ?? [] };
+}
+// Low-stock alerts: items whose tracked stock reached the minimum set by the store.
+export function lowStockItems(p: CatalogProduct): { label: string; stock: number; min: number }[] {
+  const items: { label: string; stock: number; min: number }[] = [];
+  if (p.stock !== null && p.minStock != null && p.stock <= p.minStock) items.push({ label: p.name, stock: p.stock, min: p.minStock });
+  for (const v of p.variations) if (v.stock !== null && v.minStock != null && v.stock <= v.minStock) items.push({ label: `${p.name} · ${v.name}`, stock: v.stock, min: v.minStock });
+  return items;
 }
 export function productPhotos(p: Pick<CatalogProduct, "image" | "images">) {
   return [...new Set([p.image, ...(p.images ?? [])].filter((v): v is string => Boolean(v)))];
