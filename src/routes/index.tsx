@@ -159,9 +159,12 @@ function Catalog() {
   const trackOrder = useServerFn(orderTracking);
   const tracking = useQuery({
     queryKey: ["order-tracking", receipt?.id],
-    queryFn: () => trackOrder({ data: { id: receipt!.id } }),
-    enabled: Boolean(receipt?.delivery),
-    refetchInterval: (q) => (q.state.data?.status === "delivered" ? false : 30000),
+    queryFn: () => {
+      if (!receipt) throw new Error("Pedido não encontrado.");
+      return trackOrder({ data: { id: receipt.id } });
+    },
+    enabled: Boolean(receipt),
+    refetchInterval: (q) => (["delivered", "cancelled"].includes(q.state.data?.status ?? "") ? false : 30000),
     retry: false,
   });
   const [attempt, setAttempt] = useState<{ signature: string; id: string } | null>(null);
@@ -909,7 +912,7 @@ function Catalog() {
             )}
             {receipt && (
               <div role="status" className="space-y-2 text-sm text-primary">
-                <p>Pedido #{receipt.number} recebido pela loja.</p>
+                <p>{tracking.data?.status === "cancelled" ? `Pedido #${receipt.number} cancelado pela loja.` : `Pedido #${receipt.number} recebido pela loja.`}</p>
                 <Button asChild variant="outline" className="w-full">
                   <a href={receipt.url} target="_blank" rel="noopener noreferrer">
                     <MessageCircle />

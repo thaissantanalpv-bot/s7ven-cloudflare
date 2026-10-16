@@ -157,6 +157,10 @@ export type Database = {
           address: string
           analytics_session_id: string | null
           analytics_visitor_id: string | null
+          cancellation_reason: string | null
+          cancellation_stock_notes: Json
+          cancelled_at: string | null
+          cancelled_by: string | null
           cash_change: number | null
           cash_received: number | null
           cashier_id: string | null
@@ -176,6 +180,8 @@ export type Database = {
           request_id: string
           source: string
           status: string
+          stock_reservations: Json | null
+          stock_restored_at: string | null
           subtotal: number
           total: number
           tracking_url: string | null
@@ -185,6 +191,10 @@ export type Database = {
           address: string
           analytics_session_id?: string | null
           analytics_visitor_id?: string | null
+          cancellation_reason?: string | null
+          cancellation_stock_notes?: Json
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           cash_change?: number | null
           cash_received?: number | null
           cashier_id?: string | null
@@ -204,6 +214,8 @@ export type Database = {
           request_id: string
           source?: string
           status?: string
+          stock_reservations?: Json | null
+          stock_restored_at?: string | null
           subtotal: number
           total: number
           tracking_url?: string | null
@@ -213,6 +225,10 @@ export type Database = {
           address?: string
           analytics_session_id?: string | null
           analytics_visitor_id?: string | null
+          cancellation_reason?: string | null
+          cancellation_stock_notes?: Json
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           cash_change?: number | null
           cash_received?: number | null
           cashier_id?: string | null
@@ -232,6 +248,8 @@ export type Database = {
           request_id?: string
           source?: string
           status?: string
+          stock_reservations?: Json | null
+          stock_restored_at?: string | null
           subtotal?: number
           total?: number
           tracking_url?: string | null
@@ -308,6 +326,10 @@ export type Database = {
     }
     Functions: {
       admin_ai_dashboard_snapshot: { Args: never; Returns: Json }
+      cancel_store_order: {
+        Args: { _expected_updated_at: string; _id: string; _reason: string }
+        Returns: Json
+      }
       catalog_funnel_stats: { Args: { _period?: string }; Returns: Json }
       ensure_admin_ai_conversation: { Args: never; Returns: Json }
       has_role: {
@@ -326,6 +348,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      order_stock_snapshot: { Args: { _items: Json }; Returns: Json }
       order_tracking: { Args: { _id: string }; Returns: Json }
       track_catalog_session: {
         Args: {

@@ -19,9 +19,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { listOrders, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
-import { ORDER_STAGES, orderWhatsApp, type Order, type OrderStatus } from "@/lib/orders";
+import { ORDER_STAGES, orderWhatsApp, isActiveOrder, type Order, type OrderStatus } from "@/lib/orders";
 import { brl } from "@/lib/products";
 import { OrderPrinting } from "./order-printing";
+import { OrderCancellation } from "./order-cancellation";
 
 const time = (value: string) =>
   new Intl.DateTimeFormat("pt-BR", {
@@ -105,7 +106,7 @@ export function OrderBoard() {
   }, []);
   useEffect(() => {
     if (!orders.data) return;
-    const newOrders = seen.current ? orders.data.filter((o) => o.source !== "counter" && !seen.current?.has(o.id)) : [];
+    const newOrders = seen.current ? orders.data.filter((o) => o.source !== "counter" && o.status === "received" && !seen.current?.has(o.id)) : [];
     if (newOrders.length) {
       setNotice(
         `${newOrders.length} ${newOrders.length === 1 ? "novo pedido recebido" : "novos pedidos recebidos"}`,
@@ -129,7 +130,7 @@ export function OrderBoard() {
     }
   }, [sound, audioReady, hasNew]);
   const move = async (order: Order, status: OrderStatus) => {
-    if (busy || order.status === status) return;
+    if (busy || order.status === status || order.status === "cancelled") return;
     setBusy(order.id);
     setError("");
     try {
@@ -167,7 +168,8 @@ export function OrderBoard() {
         new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
           new Date(o.created_at),
         ) === today) &&
-      (period !== "active" || o.status !== "delivered") &&
+      (period !== "active" || isActiveOrder(o.status)) &&
+      (period !== "cancelled" || o.status === "cancelled") &&
       (!search ||
         `${o.number} ${o.customer_name} ${o.customer_phone}`
           .toLocaleLowerCase()
@@ -180,7 +182,7 @@ export function OrderBoard() {
         <div className="flex flex-wrap gap-6 text-sm">
           <span>
             <strong className="text-2xl font-display">
-              {all.filter((o) => o.status !== "delivered").length}
+              {all.filter((o) => isActiveOrder(o.status)).length}
             </strong>
             <span className="ml-2 text-muted-foreground">em andamento</span>
           </span>
@@ -233,6 +235,7 @@ export function OrderBoard() {
           <option value="active">Em andamento</option>
           <option value="today">Hoje</option>
           <option value="all">Todos os pedidos</option>
+          <option value="cancelled">Cancelados</option>
         </select>
       </div>
       {notice && (
@@ -371,6 +374,15 @@ export function OrderBoard() {
           ))}
         </div>
       )}
+      {visible.some(o => o.status === "cancelled") && <section aria-label="Cancelados" className="mt-8 border-t pt-5">
+        <h2 className="mb-4 font-semibold text-destructive">Cancelados</h2>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{visible.filter(o => o.status === "cancelled").map(order => <article key={order.id} className="min-w-0 rounded-lg border bg-card p-4">
+          <Button variant="link" className="h-auto p-0" onClick={() => setSelected(order.id)}>#{order.number} · {order.customer_name}</Button>
+          <p className="mt-2 break-words text-sm text-muted-foreground">{order.cancellation_reason}</p>
+          <p className="mt-3 text-sm">{brl(order.total)} · Cancelado</p>
+          <Button variant="outline" className="mt-3 w-full" onClick={() => setSelected(order.id)}><Package />Detalhes</Button>
+        </article>)}</div>
+      </section>}
       <Dialog
         open={!!detail}
         onOpenChange={(value) => {
@@ -428,7 +440,7 @@ export function OrderBoard() {
                 {detail.notes && (
                   <p className="break-words text-muted-foreground">Observações: {detail.notes}</p>
                 )}
-                {detail.fulfillment === "delivery" && (
+                {detail.fulfillment === "delivery" && detail.status !== "cancelled" && (
                   <label className="block">
                     Link de rastreio do entregador
                     <input
@@ -447,7 +459,7 @@ export function OrderBoard() {
                     </span>
                   </label>
                 )}
-                 <label className="block">
+                {detail.status !== "cancelled" && <label className="block">
                   Etapa
                   <select
                     aria-label="Etapa do pedido"
@@ -462,7 +474,8 @@ export function OrderBoard() {
                       </option>
                     ))}
                   </select>
-                </label>
+                </label>}
+                <OrderCancellation key={detail.id} order={detail} disabled={!!busy} />
                 <Button asChild className="w-full bg-whatsapp text-whatsapp-foreground">
                   <a href={orderWhatsApp(detail)} target="_blank" rel="noopener noreferrer">
                     <MessageCircle />
