@@ -305,6 +305,42 @@ function Catalog() {
     } catch(e) { if (request === quoteRequest.current) setDeliveryError(e instanceof Error && e.message !== "DELIVERY_SESSION_EXPIRED" ? e.message : "Não foi possível calcular a entrega. Confira o endereço e tente novamente."); }
     finally { if (request === quoteRequest.current) { pendingQuote.current = ""; setQuoting(false); } }
   };
+  // Sugestões de endereço enquanto o cliente digita a rua (somente Araçatuba).
+  useEffect(() => {
+    const text = `${form.street.trim()} ${form.number.trim()}`.trim();
+    if (!isDelivery || !distanceMode || !online || text.length < 3) {
+      setSuggestions([]);
+      setSuggestionsOpen(false);
+      return;
+    }
+    const request = ++suggestRequest.current;
+    const timer = setTimeout(async () => {
+      try {
+        if (!deliveryToken.current) deliveryToken.current = (await startDistanceSession()).token;
+        const result = await suggestAddress({ data: { input: text, token: deliveryToken.current, sessionToken: suggestSession.current } });
+        if (request !== suggestRequest.current) return;
+        setSuggestions(result.suggestions);
+        setSuggestionsOpen(result.suggestions.length > 0);
+      } catch (e) {
+        if (e instanceof Error && e.message === "DELIVERY_SESSION_EXPIRED") deliveryToken.current = "";
+        if (request === suggestRequest.current) { setSuggestions([]); setSuggestionsOpen(false); }
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.street, form.number, isDelivery, distanceMode, online]);
+  const pickSuggestion = (suggestion: { street: string; number: string; neighborhood: string }) => {
+    suggestSession.current = crypto.randomUUID();
+    suggestRequest.current += 1;
+    setSuggestions([]);
+    setSuggestionsOpen(false);
+    setForm(f => ({
+      ...f,
+      street: suggestion.street,
+      number: suggestion.number || f.number,
+      neighborhood: suggestion.neighborhood || f.neighborhood,
+    }));
+  };
   const total = subtotal + deliveryFee;
 
   const displayedSubtotal = !items.length && receipt ? receipt.subtotal : subtotal;
