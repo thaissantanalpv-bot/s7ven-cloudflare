@@ -457,6 +457,21 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
               </div>
             ))}
           </div>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Pedidos pelo site até</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Depois desse horário o catálogo continua aberto para consulta, mas o botão de pedido é bloqueado.
+              </p>
+            </div>
+            <input
+              aria-label="Horário limite para pedidos"
+              type="time"
+              className="field w-32"
+              value={draft.order_cutoff}
+              onChange={(e) => update({ ...draft, order_cutoff: e.target.value })}
+            />
+          </div>
         </section>
       )}
       <div className="admin-save-bar sticky flex flex-wrap items-center justify-between gap-4 border-t bg-background/95 py-5 backdrop-blur">
