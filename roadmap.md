@@ -182,3 +182,10 @@
 # Pausar e excluir produtos (Thais, 16/10/2026 03:13 UTC)
 - [x] Adicionar exclusão definitiva de produto no painel, com confirmação; manter pausa para ocultar sem apagar. Migração 0022 libera exclusão só para administração; produtos da lista original importada não podem ser excluídos; produto em combo precisa sair do combo antes.
 - [x] Publicar a opção de pausar e excluir produtos: painel publicado (s7venlounge.shop) mostrou 196 botões Excluir e 169 Pausar (27 já pausados); confirmação "Excluir Combo Gin Viagem?" aberta e cancelada sem alterar nada; testes e compilação já haviam passado na etapa anterior.
+
+## Bloqueio de pedidos após 23:00 (Thais, 16/10/2026 04:38 UTC)
+- [x] Campo "Pedidos pelo site até" nas configurações da loja (padrão 23:00), coluna order_cutoff em store_settings (migração).
+- [x] Pedidos bloqueados após o limite com aviso no catálogo; catálogo segue aberto para consulta. Verificação também no servidor (orders.functions.ts).
+- [x] 5 testes em src/test/order-cutoff.test.ts passando.
+- [x] Publicado em https://s7venlounge.shop.
+- [ ] Pendências que seguem abertas: conectar a impressora física (depende do modelo e do aparelho), conferir no aparelho a reabertura sem internet, confirmar a chegada do primeiro aviso real nos dois e-mails e recriar o atalho da tela inicial no celular para o ícone dourado.
