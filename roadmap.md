@@ -151,10 +151,6 @@
 
 ## Entrega (Thais, 15/10/2026 23:08 UTC)
 - [x] Corrigir "Reabra o carrinho para calcular a entrega" (código assinado em vez de cookie bloqueado)
-- [ ] Preencher o bairro sozinho a partir da rua e número (pedido 16/10 00:03 UTC)
-
-## Entrega (Thais, 15/10/2026 23:08 UTC)
-- [x] Corrigir "Reabra o carrinho para calcular a entrega" (código assinado em vez de cookie bloqueado)
 - [x] Preencher o bairro sozinho a partir da rua e número (pedido 16/10 00:03 UTC)
 
 ## Publicação de 16/10/2026
@@ -165,4 +161,12 @@
 ## Aviso de novo pedido para dois e-mails (Thais, 16/10/2026 01:43 UTC)
 - [x] Enviar o aviso para thais.santana.lpv@gmail.com e 7tabacariaelounge@gmail.com, cada um recebendo um e-mail próprio sem ver o endereço do outro.
 - [x] Verificar 16 testes (dois envios, chaves de repetição separadas, falha de um destinatário não bloqueia o outro) e domínio de envio verificado.
-- [ ] Publicar e confirmar a chegada do primeiro aviso real nos dois e-mails (o envio de teste pode ser disparado em Mais → E-mails).
+- [x] Publicar o aviso nos dois e-mails.
+- [ ] Confirmar a chegada do primeiro aviso real nos dois e-mails (o envio de teste pode ser disparado em Mais → E-mails).
+
+## Publicação de 16/10/2026 (02:00 UTC)
+- [x] Publicar ícone dourado do aplicativo, favicon dourado, melhorias de busca (Araçatuba no título e nome da página, prévia ao compartilhar, produtos legíveis pelo Google, mapa do site) e o aviso de novo pedido para os dois e-mails.
+- [x] Conferir no site publicado (s7venlounge.shop): página, favicon, ícones do aplicativo e mapa do site respondendo; os ícones conferidos um a um estão no 7 dourado.
+- [ ] Confirmar a chegada do primeiro aviso real nos dois e-mails.
+- [ ] Pendências que seguem abertas: conectar a impressora física (depende do modelo e do aparelho) e conferir no aparelho a reabertura sem internet.
+- [ ] No celular da Thais: apagar o atalho atual da tela inicial e criar de novo ("Adicionar à tela inicial") para o ícone dourado aparecer.
