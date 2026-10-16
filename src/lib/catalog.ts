@@ -3,7 +3,7 @@ import { PRODUCTS, type Product } from "./products";
 
 const quantity = z.number().int().min(0).max(1000000).nullable();
 const photoPath = z.string().max(1000).refine(v => /^\/produtos\/p\d+\.jpg$/.test(v) || /^uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v), "Foto inválida.");
-export const variationSchema = z.object({ name: z.string().trim().min(1).max(40), active: z.boolean(), stock: quantity });
+export const variationSchema = z.object({ name: z.string().trim().min(1).max(40), active: z.boolean(), stock: quantity, minStock: quantity.default(null) });
 export const comboGroupSchema = z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]{1,40}$/),
   name: z.string().trim().min(1, "Informe o nome do grupo.").max(80),
@@ -23,6 +23,7 @@ export const catalogProductSchema = z.object({
   active: z.boolean(),
   featured: z.boolean().default(false),
   stock: quantity,
+  minStock: quantity.default(null),
   optionLabel: z.enum(["Sabor", "Cor", "Variação"]),
   allowOther: z.boolean(),
   comboGroups: z.array(comboGroupSchema).max(8).default([]),
