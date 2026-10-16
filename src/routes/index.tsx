@@ -719,16 +719,45 @@ function Catalog() {
                 <fieldset className="space-y-2" aria-label="Endereço de entrega">
                   <legend className="text-sm">Endereço de entrega *</legend>
                   <div role="group" aria-label="Rua e número" className="grid grid-cols-[1fr_88px] gap-2">
-                    <label className="block text-sm">Rua
+                    <label className="relative block text-sm">Rua
                       <input
                         className="field mt-1"
                         required
                         maxLength={120}
                         aria-invalid={Boolean(fieldErrors.address?.length)}
+                        aria-expanded={suggestionsOpen}
+                        aria-controls="address-suggestions"
+                        aria-autocomplete="list"
+                        autoComplete="off"
                         placeholder="Rua ou Avenida"
                         value={form.street}
                         onChange={(e) => setForm({ ...form, street: e.target.value })}
+                        onFocus={() => { if (suggestions.length) setSuggestionsOpen(true); }}
+                        onBlur={() => setTimeout(() => setSuggestionsOpen(false), 200)}
                       />
+                      {suggestionsOpen && (
+                        <ul
+                          id="address-suggestions"
+                          role="listbox"
+                          aria-label="Sugestões de endereço em Araçatuba"
+                          className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-xl border bg-card shadow-lg"
+                        >
+                          {suggestions.map((suggestion) => (
+                            <li key={suggestion.placeId}>
+                              <button
+                                type="button"
+                                role="option"
+                                aria-selected={false}
+                                className="block w-full break-words px-3 py-2.5 text-left text-sm hover:bg-secondary"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => pickSuggestion(suggestion)}
+                              >
+                                {suggestion.text}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </label>
                     <label className="block text-sm">Número
                       <input
