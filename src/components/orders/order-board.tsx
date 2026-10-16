@@ -54,6 +54,7 @@ export function OrderBoard() {
   const [selected, setSelected] = useState<string | null>(null);
   const [drag, setDrag] = useState<string | null>(null);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
+  const [pendingMessage, setPendingMessage] = useState<Order | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   const seen = useRef<Set<string> | null>(null);
   const unlock = () => {
@@ -129,14 +130,23 @@ export function OrderBoard() {
       el.currentTime = 0;
     }
   }, [sound, audioReady, hasNew]);
-  const move = async (order: Order, status: OrderStatus) => {
+  const move = async (order: Order, status: OrderStatus, notify = false) => {
     if (busy || order.status === status || order.status === "cancelled") return;
+    const popup = notify ? window.open("about:blank", "_blank") : null;
+    if (popup) popup.opener = null;
     setBusy(order.id);
     setError("");
     try {
       await update({ data: { id: order.id, status, expected: order.status } });
+      if (notify) {
+        const changed = { ...order, status };
+        setPendingMessage(changed);
+        if (popup) popup.location.replace(orderWhatsApp(changed));
+      }
+      void client.invalidateQueries({ queryKey: ["admin-sales-report"] });
       await client.invalidateQueries({ queryKey: ["store-orders"] });
     } catch (e) {
+      popup?.close();
       setError(e instanceof Error ? e.message : "Não foi possível alterar a etapa.");
       await orders.refetch();
     } finally {
@@ -264,6 +274,7 @@ export function OrderBoard() {
           </Button>
         </p>
       )}
+      {pendingMessage && <div role="status" className="mt-4 flex flex-wrap items-center gap-3 border-l-2 border-whatsapp py-3 pl-4 text-sm"><span>Pedido #{pendingMessage.number}: etapa salva.</span><Button asChild variant="outline" className="text-whatsapp"><a href={orderWhatsApp(pendingMessage)} target="_blank" rel="noopener noreferrer"><MessageCircle />Abrir mensagem no WhatsApp</a></Button><Button variant="ghost" size="icon" aria-label="Dispensar mensagem" onClick={() => setPendingMessage(null)}><X /></Button></div>}
       {orders.isPending ? (
         <p className="py-16 text-muted-foreground">Carregando pedidos…</p>
       ) : (
@@ -350,17 +361,18 @@ export function OrderBoard() {
                           </a>
                         </Button>
                       </div>
-                      {ORDER_STAGES[index + 1] && (
+                      {ORDER_STAGES[index + 1] && <div className="mt-2 flex gap-2">
                         <Button
                           disabled={!!busy}
-                          className="mt-2 w-full text-xs"
+                          className="min-w-0 flex-1 text-xs"
                           size="sm"
                           onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id)}
                         >
                           {busy === order.id ? "Salvando…" : ORDER_STAGES[index + 1]?.label}
                           <ArrowRight />
                         </Button>
-                      )}
+                        <Button variant="outline" size="icon" className="size-8 shrink-0 text-whatsapp" disabled={!!busy} title={`${ORDER_STAGES[index + 1]?.label} e avisar no WhatsApp`} aria-label={`${ORDER_STAGES[index + 1]?.label} e avisar pedido ${order.number} no WhatsApp`} onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id, true)}><MessageCircle /></Button>
+                      </div>}
                     </article>
                   ))}
                 {!visible.some((o) => o.status === stage.id) && (

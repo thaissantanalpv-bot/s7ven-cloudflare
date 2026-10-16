@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { distanceFee, settingsSchema } from "./store-settings";
 import { deliveryAddress, deliveryLocation, deliveryNeighborhood } from "./delivery-address";
-import { deliveryRouteRequest } from "./delivery-route";
+import { deliveryRouteRequest, routeDurationSeconds } from "./delivery-route";
 
 export const startDeliverySession = createServerFn({ method: "POST" }).handler(async () => {
   const { createDeliveryToken } = await import("./delivery.server");
@@ -86,8 +86,8 @@ export const quoteDelivery = createServerFn({ method: "POST" })
     const hash = await deliverySettingsHash(settings);
     const address = deliveryAddress(data.address);
     const since = new Date(Date.now() - 15 * 60000).toISOString();
-    const { data: cached } = await supabaseAdmin.from("delivery_quotes").select("id,distance_km,fee").eq("session_id", session.id).eq("address", address).eq("settings_hash", hash).gte("created_at", since).limit(1).maybeSingle();
-    if (cached) return { id: cached.id, address, km: Number(cached.distance_km), fee: Number(cached.fee), neighborhood: "" };
+    const { data: cached } = await supabaseAdmin.from("delivery_quotes").select("id,distance_km,fee,duration_seconds").eq("session_id", session.id).eq("address", address).eq("settings_hash", hash).gte("created_at", since).limit(1).maybeSingle();
+    if (cached && cached.duration_seconds !== null) return { id: cached.id, address, km: Number(cached.distance_km), fee: Number(cached.fee), routeDurationSeconds: Number(cached.duration_seconds), neighborhood: "" };
     const { count, error: countError } = await supabaseAdmin.from("delivery_quotes").select("id", { head: true, count: "exact" }).eq("session_id", session.id).gte("created_at", since);
     if (countError || (count ?? 0) >= 10) throw new Error("Aguarde antes de calcular mais endereços.");
     const apiKey = process.env["LOVABLE_API_KEY"];
@@ -122,12 +122,13 @@ export const quoteDelivery = createServerFn({ method: "POST" })
     const payload = await response.json() as { routes?: { distanceMeters?: number; duration?: string }[] };
     const route = payload.routes?.[0];
     if (!route?.duration || !/^\d+(\.\d+)?s$/.test(route.duration)) throw new Error("Não foi encontrada uma rota. Confira rua, número, cidade e CEP.");
+    const durationSeconds = routeDurationSeconds(route.duration);
     const km = (route.distanceMeters ?? 0) / 1000;
     if (!Number.isFinite(km) || km < 0) throw new Error("A rota retornou uma distância inválida. Confira o endereço e tente novamente.");
     const maxKm = Math.max(...settings.delivery_distance_tiers.map(t => t.upToKm));
     if (km > maxKm) throw new Error(`A rota até este endereço tem ${km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km. A entrega atende até ${maxKm.toLocaleString("pt-BR")} km. Confira rua, número e cidade ou escolha retirada na loja.`);
     const fee = distanceFee(settings, km);
-    const { data: saved, error: saveError } = await supabaseAdmin.from("delivery_quotes").insert({ session_id: session.id, address: savedAddress, settings_hash: hash, distance_km: km, fee }).select("id").single();
+    const { data: saved, error: saveError } = await supabaseAdmin.from("delivery_quotes").insert({ session_id: session.id, address: savedAddress, settings_hash: hash, distance_km: km, fee, duration_seconds: durationSeconds }).select("id").single();
     if (saveError || !saved) throw new Error("Não foi possível guardar o cálculo. Tente novamente.");
-    return { id: saved.id, address: savedAddress, km, fee, neighborhood };
+    return { id: saved.id, address: savedAddress, km, fee, routeDurationSeconds: durationSeconds, neighborhood };
   });
