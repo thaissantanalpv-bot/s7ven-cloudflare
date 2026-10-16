@@ -194,4 +194,11 @@
 - [x] Som em loop a cada 3s enquanto houver pedido "recebido" (para ao aceitar); requer "Ativar som"
 - [x] Cartão "Link do seu catálogo" no painel (Início) com copiar, WhatsApp e Instagram
 - [x] Publicado em https://s7venlounge.shop.
+
+# Som do alerta: automático, mais alto e no celular (Thais, 16/10/2026 21:33 UTC)
+- [x] Som ligado sozinho ao abrir a aba Pedidos e desligado ao fechar a página.
+- [x] Toque em volume máximo do aparelho e em loop contínuo enquanto houver pedido em "Recebido", parando ao aceitar.
+- [x] Motor trocado de osciladores para arquivo de áudio (public/sounds/new-order-alert.mp3), que funciona no celular; 10 testes passaram e build OK.
+- [x] Publicado em https://s7venlounge.shop.
+- [ ] Confirmar no celular da Thais: abrir s7venlounge.shop/painel na aba Pedidos, tocar na tela uma vez e ver o alerta tocar em loop com um pedido novo real.
 - [ ] Pendências que seguem abertas: conectar a impressora física (depende do modelo e do aparelho), conferir no aparelho a reabertura sem internet, confirmar a chegada do primeiro aviso real nos dois e-mails e recriar o atalho da tela inicial no celular para o ícone dourado.
