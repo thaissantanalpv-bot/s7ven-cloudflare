@@ -12,6 +12,7 @@ export const settingsSchema = z.object({
   delivery_zones: z.array(z.object({ id: z.string().min(1), name: z.string().trim().min(2, "Informe o bairro ou região").max(80), fee: z.number().min(0).max(1000) })).max(100),
   hours_enabled: z.boolean(),
   opening_hours: z.array(z.object({ day: z.number().int().min(0).max(6), enabled: z.boolean(), open: time, close: time })).length(7),
+  order_cutoff: time.default("23:00"),
 }).superRefine((s, ctx) => {
   if (s.delivery_enabled && !s.delivery_distance_enabled && s.fixed_delivery_fee === null && !s.delivery_zones.length) ctx.addIssue({ code: "custom", message: "Cadastre pelo menos uma região antes de ativar as taxas." });
   if (s.delivery_distance_enabled && (s.delivery_origin.length < 8 || !s.delivery_distance_tiers.length)) ctx.addIssue({ code: "custom", message: "Informe o endereço completo de saída e pelo menos uma faixa de km." });
@@ -26,6 +27,7 @@ export const EMPTY_SETTINGS: StoreSettings = {
   delivery_enabled: false, fixed_delivery_fee: null, pickup_address: "", delivery_zones: [], hours_enabled: false,
   delivery_distance_enabled: false, delivery_origin: "", delivery_distance_tiers: [],
   opening_hours: DAYS.map((_, day) => ({ day, enabled: false, open: "18:00", close: "23:00" })),
+  order_cutoff: "23:00",
 };
 export function distanceFee(settings: StoreSettings, distanceKm: number) {
   if (!Number.isFinite(distanceKm) || distanceKm < 0) throw new Error("Distância inválida.");

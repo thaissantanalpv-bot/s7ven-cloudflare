@@ -250,6 +250,7 @@ export type Database = {
           hours_enabled: boolean
           id: string
           opening_hours: Json
+          order_cutoff: string
           pickup_address: string
           updated_at: string
         }
@@ -263,6 +264,7 @@ export type Database = {
           hours_enabled?: boolean
           id?: string
           opening_hours?: Json
+          order_cutoff?: string
           pickup_address?: string
           updated_at?: string
         }
@@ -276,6 +278,7 @@ export type Database = {
           hours_enabled?: boolean
           id?: string
           opening_hours?: Json
+          order_cutoff?: string
           pickup_address?: string
           updated_at?: string
         }

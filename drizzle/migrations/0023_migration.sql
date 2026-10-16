@@ -1,0 +1,1 @@
+alter table public.store_settings add column if not exists order_cutoff text not null default '23:00';
