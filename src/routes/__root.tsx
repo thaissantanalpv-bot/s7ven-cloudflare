@@ -76,6 +76,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -84,21 +85,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "S7VEN" },
-      { title: "S7VEN Lounge e Tabacaria — Catálogo Digital" },
-      {
-        name: "description",
-        content:
-          "Catálogo digital da S7VEN Lounge e Tabacaria: monte seu carrinho e envie o pedido pelo WhatsApp.",
-      },
       { name: "author", content: "S7VEN Lounge e Tabacaria" },
-      { property: "og:title", content: "S7VEN Lounge e Tabacaria — Catálogo Digital" },
-      {
-        property: "og:description",
-        content: "Veja os produtos, monte seu carrinho e envie o pedido pelo WhatsApp.",
-      },
+      { property: "og:site_name", content: "S7VEN Lounge e Tabacaria" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {

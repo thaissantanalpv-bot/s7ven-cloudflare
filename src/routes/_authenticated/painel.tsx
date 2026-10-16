@@ -44,7 +44,7 @@ import { adminCatalogQuery } from "@/lib/catalog.query";
 import { getCatalogFunnel } from "@/lib/catalog-analytics.functions";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 
-export const Route = createFileRoute("/_authenticated/painel")({
+export const Route = createFileRoute("/_authenticated/painel")({ staticData: { sitemap: false },
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(adminCatalogQuery)]),
   head: () => ({
     meta: [

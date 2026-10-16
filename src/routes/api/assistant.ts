@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/api/assistant")({
+export const Route = createFileRoute("/api/assistant")({ staticData: { sitemap: false },
   server: {
     handlers: {
       POST: async ({ request }) => {

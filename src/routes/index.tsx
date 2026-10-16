@@ -48,19 +48,42 @@ import { checkoutWhatsApp, productMessage } from "@/lib/order-message";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
-  head: () => ({
-    meta: [
-      { title: `${STORE_NAME} — Catálogo Digital` },
-      {
-        name: "description",
-        content: "Veja nossos produtos, monte seu carrinho e faça o pedido pelo WhatsApp.",
-      },
-      { property: "og:title", content: `${STORE_NAME} — Catálogo Digital` },
-      { property: "og:description", content: "Monte seu pedido e envie direto pelo WhatsApp." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  staticData: { sitemap: true },
+  head: ({ loaderData }) => {
+    const title = "S7VEN Lounge e Tabacaria em Araçatuba — Catálogo Digital";
+    const description = "Tabacaria em Araçatuba, SP: veja os produtos, monte seu carrinho e peça pelo WhatsApp com entrega ou retirada.";
+    const products = (loaderData?.[1] ?? []).filter((p) => p.active && !p.comboGroups?.length).slice(0, 100);
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: "https://s7venlounge.shop/" },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: [{ rel: "canonical", href: "https://s7venlounge.shop/" }],
+      scripts: [{
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          itemListElement: products.map((p, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            item: {
+              "@type": "Product",
+              name: p.name,
+              ...(p.description ? { description: p.description.slice(0, 500) } : {}),
+              url: `https://s7venlounge.shop/?produto=${encodeURIComponent(p.id)}`,
+              offers: { "@type": "Offer", price: p.price.toFixed(2), priceCurrency: "BRL", availability: p.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock" },
+            },
+          })),
+        }),
+      }],
+    };
+  },
   component: Catalog,
   errorComponent: ({ error }) => <div role="alert" className="p-8 text-center">{error instanceof Error ? error.message : "Não foi possível carregar o catálogo."}<Button asChild variant="outline" className="mt-4"><a href="/">Tentar novamente</a></Button></div>,
   notFoundComponent: () => <div className="p-8 text-center">Catálogo não encontrado.</div>,
@@ -432,7 +455,7 @@ function Catalog() {
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <div className="min-w-0">
             <h1 className="font-display text-sm font-semibold sm:text-xl">
-              S7VEN Lounge e Tabacaria
+              S7VEN Lounge e Tabacaria <span className="text-muted-foreground">· Araçatuba</span>
             </h1>
           </div>
           <Button variant="outline" aria-expanded={hoursOpen} aria-controls="catalog-opening-hours" onClick={() => setHoursOpen(!hoursOpen)} className="h-9 shrink-0 px-2 text-xs sm:px-4">
