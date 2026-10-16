@@ -1,3 +1,7 @@
+# Endereço em uma única linha (Thais, 16/10/2026 02:22 UTC)
+- [x] Deixar só uma linha para rua e número, com as sugestões embaixo, e mostrar o bairro logo abaixo sem caixa própria. Conferido no preview: campos agora são Rua e número + Cidade; sugestão real preenchida, bairro "Conjunto Residencial Toyokazu Kawata" e taxa R$ 11,10 · 7,02 km; 11 testes, sem erros de digitação, 390px sem rolagem lateral. Falta publicar.
+- [x] Confirmar que só aparecem bairros de Araçatuba: sugestões filtradas por cidade e endereço conferido no cálculo da rota.
+
 # Sugestões automáticas de endereço (Thais, 16/10/2026 02:12 UTC)
 - [x] Autocompletar rua+número com sugestões do Google restritas a Araçatuba; selecionar preenche rua, número e bairro. Verificado no preview com endereço real (Rua Joaquim Cândido, 2282 → bairro preenchido); 10 testes e build OK. Falta publicar.
 

@@ -31,7 +31,7 @@ import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder, orderTracking } from "@/lib/orders.functions";
 import { startDeliverySession, quoteDelivery, suggestDeliveryAddress } from "@/lib/delivery.functions";
-import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, restoreDeliveryFields } from "@/lib/delivery-address";
+import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine } from "@/lib/delivery-address";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
@@ -154,6 +154,7 @@ function Catalog() {
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const suggestRequest = useRef(0);
   const suggestSession = useRef(crypto.randomUUID());
+  const autoQuote = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
@@ -195,6 +196,7 @@ function Catalog() {
     zone: "",
     fulfillment: "delivery" as "delivery" | "pickup",
   });
+  const [addressLine, setAddressLine] = useState("");
   const fullAddress = [form.street.trim(), form.number.trim(), form.neighborhood.trim()].filter(Boolean).join(", ");
   const addressComplete = deliveryFieldsComplete(form.street, form.number);
   const [error, setError] = useState("");
@@ -219,10 +221,12 @@ function Catalog() {
       if (raw) {
         const saved = JSON.parse(raw);
         if (saved.cart) setCart(saved.cart);
-        if (saved.form) setForm((f) => {
+        if (saved.form) {
           // Saved carts from the previous single-field address keep working.
-          return { ...f, ...restoreDeliveryFields(saved.form) };
-        });
+          const restored = restoreDeliveryFields(saved.form);
+          setAddressLine(joinAddressLine(String(restored.street ?? ""), String(restored.number ?? "")));
+          setForm((f) => ({ ...f, ...restored }));
+        }
       }
     } catch {}
     setLoaded(true);
@@ -334,6 +338,9 @@ function Catalog() {
     suggestRequest.current += 1;
     setSuggestions([]);
     setSuggestionsOpen(false);
+    const number = suggestion.number || form.number;
+    autoQuote.current = true;
+    setAddressLine(joinAddressLine(suggestion.street, number));
     setForm(f => ({
       ...f,
       street: suggestion.street,
@@ -341,6 +348,13 @@ function Catalog() {
       neighborhood: suggestion.neighborhood || f.neighborhood,
     }));
   };
+  // Ao escolher uma sugestão, a taxa de entrega é calculada sozinha.
+  useEffect(() => {
+    if (!autoQuote.current) return;
+    autoQuote.current = false;
+    if (isDelivery && distanceMode && addressComplete) void calculateDelivery();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fullAddress]);
   const total = subtotal + deliveryFee;
 
   const displayedSubtotal = !items.length && receipt ? receipt.subtotal : subtotal;
@@ -718,23 +732,27 @@ function Catalog() {
               {isDelivery && (
                 <fieldset className="space-y-2" aria-label="Endereço de entrega">
                   <legend className="text-sm">Endereço de entrega *</legend>
-                  <div role="group" aria-label="Rua e número" className="grid grid-cols-[1fr_88px] gap-2">
-                    <label className="relative block text-sm">Rua
-                      <input
-                        className="field mt-1"
-                        required
-                        maxLength={120}
-                        aria-invalid={Boolean(fieldErrors.address?.length)}
-                        aria-expanded={suggestionsOpen}
-                        aria-controls="address-suggestions"
-                        aria-autocomplete="list"
-                        autoComplete="off"
-                        placeholder="Rua ou Avenida"
-                        value={form.street}
-                        onChange={(e) => setForm({ ...form, street: e.target.value })}
-                        onFocus={() => { if (suggestions.length) setSuggestionsOpen(true); }}
-                        onBlur={() => setTimeout(() => setSuggestionsOpen(false), 200)}
-                      />
+                  <label className="relative block text-sm">Rua e número
+                    <input
+                      className="field mt-1"
+                      required
+                      maxLength={120}
+                      aria-invalid={Boolean(fieldErrors.address?.length)}
+                      aria-expanded={suggestionsOpen}
+                      aria-controls="address-suggestions"
+                      aria-autocomplete="list"
+                      autoComplete="off"
+                      placeholder="Rua e número"
+                      value={addressLine}
+                      onChange={(e) => {
+                        const line = e.target.value;
+                        setAddressLine(line);
+                        const { street, number } = splitAddressLine(line);
+                        setForm({ ...form, street, number });
+                      }}
+                      onFocus={() => { if (suggestions.length) setSuggestionsOpen(true); }}
+                      onBlur={() => { setTimeout(() => setSuggestionsOpen(false), 200); void calculateDelivery(); }}
+                    />
                       {suggestionsOpen && (
                         <ul
                           id="address-suggestions"
@@ -759,30 +777,10 @@ function Catalog() {
                         </ul>
                       )}
                     </label>
-                    <label className="block text-sm">Número
-                      <input
-                        className="field mt-1 text-center"
-                        required
-                        inputMode="numeric"
-                        maxLength={10}
-                        aria-invalid={Boolean(fieldErrors.address?.length)}
-                        placeholder="Nº"
-                        value={form.number}
-                        onChange={(e) => setForm({ ...form, number: e.target.value })}
-                        onBlur={() => { void calculateDelivery(); }}
-                      />
-                    </label>
-                  </div>
-                  <label className="block text-sm">Bairro
-                    <input
-                      className="field mt-1"
-                      maxLength={80}
-                      placeholder="Preenchido pelo número"
-                      value={form.neighborhood}
-                      onChange={(e) => setForm({ ...form, neighborhood: e.target.value })}
-                      onBlur={() => { void calculateDelivery(); }}
-                    />
-                  </label>
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">Bairro:</span>{" "}
+                    <span className="font-medium">{form.neighborhood.trim() || "aparece automaticamente"}</span>
+                  </p>
                 </fieldset>
               )}
               {isDelivery && <label className="block text-sm">Cidade<input className="field mt-2" value={DELIVERY_CITY} readOnly /></label>}

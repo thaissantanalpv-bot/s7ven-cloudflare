@@ -40,9 +40,18 @@ describe("Endereço de entrega em Araçatuba", () => {
     expect(() => deliveryLocation(incomplete)).toThrow("número completos");
   });
 });
-import { deliveryNeighborhood } from "@/lib/delivery-address";
+import { deliveryNeighborhood, joinAddressLine, splitAddressLine } from "@/lib/delivery-address";
 import { it as itN, expect as expectN } from "vitest";
 itN("reads the neighborhood from geocoding results", () => {
   expectN(deliveryNeighborhood({ results: [{ address_components: [{ long_name: "Jardim Nova Yorque", short_name: "Jd.", types: ["sublocality_level_1", "sublocality", "political"] }] }] })).toBe("Jardim Nova Yorque");
   expectN(deliveryNeighborhood({ results: [] })).toBe("");
+});
+itN("splits the single street and number line the customer types", () => {
+  expectN(splitAddressLine("Rua Joaquim Cândido 2282")).toEqual({ street: "Rua Joaquim Cândido", number: "2282" });
+  expectN(splitAddressLine("Rua Joaquim Cândido, 2282")).toEqual({ street: "Rua Joaquim Cândido", number: "2282" });
+  expectN(splitAddressLine("  Av. Carlos Chagas   1550-A  ")).toEqual({ street: "Av. Carlos Chagas", number: "1550-A" });
+  expectN(splitAddressLine("Rua sem número")).toEqual({ street: "Rua sem número", number: "" });
+  expectN(splitAddressLine("2282")).toEqual({ street: "2282", number: "" });
+  expectN(joinAddressLine("Rua Joaquim Cândido", "2282")).toBe("Rua Joaquim Cândido, 2282");
+  expectN(joinAddressLine("Rua Joaquim Cândido", "")).toBe("Rua Joaquim Cândido");
 });
