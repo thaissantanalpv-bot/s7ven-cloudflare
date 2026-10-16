@@ -20,7 +20,7 @@ export async function createDeliveryToken(now = Date.now()) {
 }
 /** Returns the session id when the token is authentic and not expired. */
 export async function verifyDeliveryToken(token: string | undefined, now = Date.now()) {
-  const match = /^([0-9a-f-]{36})\.(\d{10,16})\.([0-9a-f]{64})$/.exec(token ?? "");
+  const match = /^([0-9a-f-]{36}).(\d{1,16}).([0-9a-f]{64})$/.exec(token ?? "");
   if (!match) return null;
   const [, id, exp, sig] = match;
   if (Number(exp) < now) return null;
