@@ -1,3 +1,8 @@
+# Rota de moto e teste de alerta (Thais, 16/10/2026 21:35 UTC)
+- [x] Google Routes suporta TWO_WHEELER no Brasil; cálculo ajustado para moto, taxas preservadas, cotações antigas invalidadas e aviso beta incluído. 12 testes passaram; validação real da rota depende do site publicado.
+- [ ] Publicar a mudança para rota de moto e conferir um endereço no celular.
+- [x] Pedido fictício -2135 criado em Recebido sem itens, e-mail ou conversão; painel de celular mostrou Som ativo sem erros. O teste foi movido para Entregue durante a verificação e excluído pelo ID exclusivo, sem alterar pedidos reais.
+
 # Endereço em uma única linha (Thais, 16/10/2026 02:22 UTC)
 - [x] Deixar só uma linha para rua e número, com as sugestões embaixo, e mostrar o bairro logo abaixo sem caixa própria. Conferido no preview: campos agora são Rua e número + Cidade; sugestão real preenchida, bairro "Conjunto Residencial Toyokazu Kawata" e taxa R$ 11,10 · 7,02 km; 11 testes, sem erros de digitação, 390px sem rolagem lateral. Falta publicar.
 - [x] Confirmar que só aparecem bairros de Araçatuba: sugestões filtradas por cidade e endereço conferido no cálculo da rota.
