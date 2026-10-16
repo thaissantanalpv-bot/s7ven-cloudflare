@@ -1,3 +1,9 @@
+# Melhorias solicitadas em 16/10/2026
+- [ ] Relatório de vendas hoje/semana/mês, mais vendidos, ticket médio e cancelamentos.
+- [ ] Previsão de entrega: 30–45 minutos de preparo + duração da rota de moto.
+- [ ] Alterar etapa e abrir mensagem WhatsApp em uma ação, sem envio automático.
+- [ ] Testes e conferência com conta administrativa e endereço real.
+
 # Aviso de cancelamento ao cliente (Thais, 16/10/2026 23:09 UTC)
 - [x] Sem e-mail do cliente nos pedidos; Thais escolheu WhatsApp. Mensagem de cancelamento inclui o motivo registrado; botão "Avisar o cliente no WhatsApp" aparece logo após cancelar e no registro de cancelados. 29 testes, tipos e build OK. Falta publicar.
 
