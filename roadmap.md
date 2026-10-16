@@ -3,10 +3,10 @@
 - [x] Previsão de entrega: 30–45 minutos de preparo + duração da rota de moto; duração persistida nas cotações. Rua Joaquim Cândido, 2282: R$ 11,10 / 7,02 km / estimativa 47–62 min.
 - [x] Alterar etapa e abrir mensagem WhatsApp em uma ação, sem envio automático; abre somente após salvar, com atalho de recuperação se janela bloqueada.
 - [x] 42 testes passaram; relatório desktop/celular sem rolagem lateral, pedido fictício mudou etapa e mensagem correta após salvar/recarregar; removido por ID exclusivo. Endereço real conferido, sem erros de página; build OK.
-- [ ] Publicar as três melhorias e o aviso de cancelamento por WhatsApp: aguarda pedido de publicação.
+- [x] Publicado em s7venlounge.shop em 16/10/2026 23:45 UTC com relatório de vendas, previsão de entrega, etapa+WhatsApp e aviso de cancelamento.
 
 # Aviso de cancelamento ao cliente (Thais, 16/10/2026 23:09 UTC)
-- [x] Sem e-mail do cliente nos pedidos; Thais escolheu WhatsApp. Mensagem de cancelamento inclui o motivo registrado; botão "Avisar o cliente no WhatsApp" aparece logo após cancelar e no registro de cancelados. 29 testes, tipos e build OK. Falta publicar.
+- [x] Sem e-mail do cliente nos pedidos; Thais escolheu WhatsApp. Mensagem de cancelamento inclui o motivo registrado; botão "Avisar o cliente no WhatsApp" aparece logo após cancelar e no registro de cancelados. 29 testes, tipos e build OK. Publicado em 16/10/2026 23:45 UTC.
 
 # Alerta de estoque baixo (Thais, 16/10/2026 23:00 UTC)
 - [x] Mínimo por produto e por sabor (minStock, padrão sem alerta); painel mostra "Repor" por item, filtro "Estoque baixo" e cartão na tela inicial. 119 testes, tipos e build OK.
