@@ -102,6 +102,14 @@ export function OrderBoard() {
     }
     seen.current = new Set(orders.data.map((o) => o.id));
   }, [orders.data, sound]);
+  const hasNew = (orders.data ?? []).some((o) => o.source !== "counter" && o.status === "received");
+  useEffect(() => {
+    if (!sound || !hasNew) return;
+    beep();
+    const loop = setInterval(beep, 3000);
+    return () => clearInterval(loop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sound, hasNew]);
   const move = async (order: Order, status: OrderStatus) => {
     if (busy || order.status === status) return;
     setBusy(order.id);
