@@ -1,3 +1,7 @@
+# Cancelamento de pedidos (Thais, 16/10/2026 22:28 UTC)
+- [ ] Registrar motivo obrigatório e devolver estoque de produtos, variações e combos uma única vez, com proteção contra concorrência.
+- [ ] Disponibilizar cancelamento e histórico no painel; verificar testes e fluxo administrativo real.
+
 # Rota de moto e teste de alerta (Thais, 16/10/2026 21:35 UTC)
 - [x] Google Routes suporta TWO_WHEELER no Brasil; cálculo ajustado para moto, taxas preservadas, cotações antigas invalidadas e aviso beta incluído. 12 testes passaram; validação real da rota depende do site publicado.
 - [x] Publicado em s7venlounge.shop e conferido no celular (390px): sugestão "Rua Joaquim Cândido, 2282" preencheu o bairro e a taxa saiu "R$ 11,10 · 7,02 km pela rota de moto", com o aviso beta visível e sem erros de página.
