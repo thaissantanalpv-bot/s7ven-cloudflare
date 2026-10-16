@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { AdminAppAccess } from "@/components/admin-app-access";
+import { SiteLinkCard } from "@/components/site-link-card";
 import { supabase } from "@/integrations/supabase/client";
 import { storeSettingsQuery } from "@/lib/store-settings.query";
 import { checkStoreAdmin, saveStoreSettings } from "@/lib/store-settings.functions";
@@ -141,7 +142,7 @@ function Admin() {
             {view === "home" ? (
               <>
                 <div className="md:hidden"><AdminHome onOpen={setView} /></div>
-                <div className="hidden md:block"><CatalogAnalytics /></div>
+                <div className="hidden md:block"><CatalogAnalytics /><SiteLinkCard /></div>
               </>
             ) : view === "assistant" ? <AnalyticsAssistant /> : view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : <SettingsEditor initial={settings} />}
             <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background md:hidden" aria-label="Navegação do aplicativo">
@@ -195,6 +196,7 @@ function AdminHome({ onOpen }: { onOpen: (view: string) => void }) {
         ))}
       </div>
       {stats.error && <p role="alert" className="mt-4 text-sm text-destructive">Não foi possível atualizar os números. <Button variant="link" onClick={() => stats.refetch()}>Tentar novamente</Button></p>}
+      <SiteLinkCard />
     </section>
   );
 }
