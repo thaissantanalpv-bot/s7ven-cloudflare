@@ -39,6 +39,16 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
     finally { setBusy(false); }
   };
   const edit = (p: CatalogProduct) => { setMessage(""); setEditing({ draft: toDraft(p), expected: p.updatedAt, preview: p.image ?? "" }); };
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setBusy(true); setMessage("");
+    try {
+      await remove({ data: { id: deleting.id } });
+      await client.invalidateQueries({ queryKey: adminCatalogQuery.queryKey });
+      setDeleting(null); setMessage("Produto excluído.");
+    } catch (e) { setMessage(e instanceof Error ? e.message : "Não foi possível excluir."); setDeleting(null); }
+    finally { setBusy(false); }
+  };
   return <section className="py-7">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div className="flex gap-6 text-sm"><span><strong>{managed.length}</strong> {combos ? "combos" : "produtos"}</span><span className="text-muted-foreground">{managed.filter(p => !available(p)).length} indisponíveis</span></div>
