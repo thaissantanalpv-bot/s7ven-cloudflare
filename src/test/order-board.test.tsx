@@ -161,7 +161,8 @@ describe("Kanban order management", () => {
     // Ao aceitar o pedido (sai de "received"), o alerta contínuo para
     mocks.list.mockImplementation(async () => [{ ...row, status: "preparing" }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
-    await screen.findByText("Em preparo");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Saiu para entrega" })).toBeInTheDocument());
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(start).toHaveBeenCalledTimes(9);
     vi.unstubAllGlobals();
   });
