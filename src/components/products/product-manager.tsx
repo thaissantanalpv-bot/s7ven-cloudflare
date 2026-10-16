@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { supabase } from "@/integrations/supabase/client";
 import { adminCatalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { deleteCatalogProduct, saveCatalogProduct } from "@/lib/catalog.functions";
-import { available, catalogProductSchema, toDraft, type CatalogProduct, type ProductDraft } from "@/lib/catalog";
+import { available, catalogProductSchema, lowStockItems, toDraft, type CatalogProduct, type ProductDraft } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { ComboGroupsEditor } from "./combo-groups-editor";
 import { AiPhotoEditor } from "./ai-photo-editor";
@@ -28,7 +28,8 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   const [busy, setBusy] = useState(false);
   const categories = [...new Set(products.map(p => p.category))];
   const managed = products.filter(p => combos ? Boolean(p.comboGroups?.length) : !p.comboGroups?.length);
-  const visible = managed.filter(p => (!category || p.category === category) && (!query || `${p.name} ${p.category}`.toLowerCase().includes(query.toLowerCase())) && (filter === "all" || (filter === "active" ? available(p) : !available(p))));
+  const lowCount = managed.reduce((n, p) => n + lowStockItems(p).length, 0);
+  const visible = managed.filter(p => (!category || p.category === category) && (!query || `${p.name} ${p.category}`.toLowerCase().includes(query.toLowerCase())) && (filter === "all" || (filter === "active" ? available(p) : filter === "low" ? lowStockItems(p).length > 0 : !available(p))));
   const persist = async (product: ProductDraft, expected: string | null) => {
     setBusy(true); setMessage("");
     try {
