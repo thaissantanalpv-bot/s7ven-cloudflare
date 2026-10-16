@@ -1,3 +1,6 @@
+# Endereço em uma única linha (Thais, 16/10/2026 02:22 UTC)
+- [ ] Deixar só uma linha para rua e número, com as sugestões embaixo, e mostrar o bairro logo abaixo sem caixa própria.
+
 # Sugestões automáticas de endereço (Thais, 16/10/2026 02:12 UTC)
 - [x] Autocompletar rua+número com sugestões do Google restritas a Araçatuba; selecionar preenche rua, número e bairro. Verificado no preview com endereço real (Rua Joaquim Cândido, 2282 → bairro preenchido); 10 testes e build OK. Falta publicar.
 
