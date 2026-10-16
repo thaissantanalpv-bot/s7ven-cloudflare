@@ -23,7 +23,7 @@
 - Keep order management in an admin-only panel module with authenticated status writes, conflict detection, paginated polling and user-activated audio; WhatsApp stage actions open prefilled messages, never claim automatic delivery.
 - Preserve the imported baseline; expose only allowlisted sales fields, including admin-selected highlights. Raw overrides/writes stay admin-only.
 - Validate variation-photo links (variationPhotos) as allowlisted photo paths and project them publicly only when already exposed via image/images; the catalog swaps the displayed photo while the matching variation is selected.
-- Store product photos in private native storage with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads, protecting unpublished uploads without blocking admin previews.
+- Store photos privately with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads. Index the exact cover/gallery lookup expressions to avoid repeated authorization scans without changing access.
 - Use separate public and admin catalog query keys so restricted override data cannot leak through a shared cache.
 - Keep cover/additional paths in image/images and resolve signed URLs separately; admin saves must never persist expiring URLs.
 - Keep every saved photo accessible through ProductCardPhotos navigation and enlargement.
