@@ -4,8 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { mergeCatalog } from "@/lib/catalog";
 
 const mocks = vi.hoisted(() => ({ save: vi.fn(), remove: vi.fn(), upload: vi.fn(), signed: vi.fn() }));
-vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => String(fn).includes("deleteCatalogProduct") ? mocks.remove : mocks.save }));
-vi.mock("@/lib/catalog.functions", () => ({ saveCatalogProduct: vi.fn(), deleteCatalogProduct: vi.fn() }));
+vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: { __kind?: string }) => fn.__kind === "remove" ? mocks.remove : mocks.save }));
+vi.mock("@/lib/catalog.functions", () => ({ saveCatalogProduct: { __kind: "save" }, deleteCatalogProduct: { __kind: "remove" } }));
 vi.mock("@/lib/catalog.query", () => ({ adminCatalogQuery: { queryKey: ["admin-catalog-products"], queryFn: async () => [], staleTime: Infinity }, useCatalogUpdates: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { storage: { from: () => ({ upload: mocks.upload, createSignedUrl: mocks.signed }) } } }));
 vi.mock("@/components/ui/switch", () => ({ Switch: ({ checked, onCheckedChange, ...props }: { checked: boolean; onCheckedChange: (value: boolean) => void; "aria-label": string }) => <button type="button" role="switch" aria-checked={checked} onClick={() => onCheckedChange(!checked)} {...props} /> }));
