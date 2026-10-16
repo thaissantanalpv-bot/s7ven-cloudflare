@@ -178,3 +178,7 @@
 - [ ] Pendências que seguem abertas: conectar a impressora física (depende do modelo e do aparelho) e conferir no aparelho a reabertura sem internet.
 - [x] Publicar o endereço em uma única linha com sugestões (16/10/2026); verificado em https://s7venlounge.shop: sugestão de "Joaquim Cândido 2282" preencheu bairro (Conjunto Residencial Toyokazu Kawata) e taxa R$ 11,10 · 7,02 km.
 - [ ] No celular da Thais: apagar o atalho atual da tela inicial e criar de novo ("Adicionar à tela inicial") para o ícone dourado aparecer.
+
+# Pausar e excluir produtos (Thais, 16/10/2026 03:13 UTC)
+- [x] Adicionar exclusão definitiva de produto no painel, com confirmação; manter pausa para ocultar sem apagar. Migração 0022 libera exclusão só para administração; produtos da lista original importada não podem ser excluídos; produto em combo precisa sair do combo antes.
+- [x] Publicar a opção de pausar e excluir produtos: painel publicado (s7venlounge.shop) mostrou 196 botões Excluir e 169 Pausar (27 já pausados); confirmação "Excluir Combo Gin Viagem?" aberta e cancelada sem alterar nada; testes e compilação já haviam passado na etapa anterior.
