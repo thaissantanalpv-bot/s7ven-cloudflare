@@ -80,33 +80,24 @@ export function OrderBoard() {
     unlock();
   };
   useEffect(() => {
-    // Browsers only allow sound after a tap/click, so arm it on the first interaction anywhere.
-    let ctx: AudioContext | null = null;
-    try {
-      ctx = new AudioContext();
-      audio.current = ctx;
-    } catch {
-      return;
-    }
-    const arm = () => {
-      void ctx?.resume().then(() => {
-        if (ctx?.state === "running") {
-          setAudioReady(true);
-          remove();
-        }
-      });
-    };
-    const remove = () => {
-      window.removeEventListener("pointerdown", arm);
-      window.removeEventListener("keydown", arm);
-    };
+    // O alerta usa um arquivo de áudio em loop (não osciladores): funciona melhor
+    // no celular, continua tocando com a aba em segundo plano e no volume máximo.
+    const el = new Audio("/sounds/new-order-alert.mp3");
+    el.loop = true;
+    el.volume = 1;
+    el.preload = "auto";
+    audio.current = el;
+    unlock(); // pode já estar liberado (ex.: computador com interação prévia)
+    const arm = () => unlock();
     window.addEventListener("pointerdown", arm);
     window.addEventListener("keydown", arm);
-    arm();
     return () => {
-      remove();
-      void ctx?.close();
+      window.removeEventListener("pointerdown", arm);
+      window.removeEventListener("keydown", arm);
+      el.pause();
+      audio.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (!orders.data) return;
