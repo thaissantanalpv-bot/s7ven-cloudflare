@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mergeCatalog, toDraft, catalogProductSchema, available, productPhotos, variationPhoto } from "@/lib/catalog";
+import { mergeCatalog, toDraft, catalogProductSchema, available, productPhotos, variationPhoto, lowStockItems } from "@/lib/catalog";
 import { priceOrder, submitOrderSchema } from "@/lib/orders";
 import { EMPTY_SETTINGS } from "@/lib/store-settings";
 
