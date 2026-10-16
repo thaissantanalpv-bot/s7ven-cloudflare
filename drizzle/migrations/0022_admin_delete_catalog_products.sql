@@ -1,0 +1,1 @@
+CREATE POLICY admin_catalog_delete ON public.catalog_products FOR DELETE TO authenticated USING (has_role(auth.uid(), 'admin'::app_role));

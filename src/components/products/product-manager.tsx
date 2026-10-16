@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { adminCatalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
-import { saveCatalogProduct } from "@/lib/catalog.functions";
+import { deleteCatalogProduct, saveCatalogProduct } from "@/lib/catalog.functions";
 import { available, catalogProductSchema, toDraft, type CatalogProduct, type ProductDraft } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { ComboGroupsEditor } from "./combo-groups-editor";
@@ -18,6 +18,8 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   useCatalogUpdates();
   const client = useQueryClient();
   const save = useServerFn(saveCatalogProduct);
+  const remove = useServerFn(deleteCatalogProduct);
+  const [deleting, setDeleting] = useState<CatalogProduct | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [category, setCategory] = useState("");
@@ -37,6 +39,16 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
     finally { setBusy(false); }
   };
   const edit = (p: CatalogProduct) => { setMessage(""); setEditing({ draft: toDraft(p), expected: p.updatedAt, preview: p.image ?? "" }); };
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setBusy(true); setMessage("");
+    try {
+      await remove({ data: { id: deleting.id } });
+      await client.invalidateQueries({ queryKey: adminCatalogQuery.queryKey });
+      setDeleting(null); setMessage("Produto excluído.");
+    } catch (e) { setMessage(e instanceof Error ? e.message : "Não foi possível excluir."); setDeleting(null); }
+    finally { setBusy(false); }
+  };
   return <section className="py-7">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div className="flex gap-6 text-sm"><span><strong>{managed.length}</strong> {combos ? "combos" : "produtos"}</span><span className="text-muted-foreground">{managed.filter(p => !available(p)).length} indisponíveis</span></div>
@@ -54,7 +66,7 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
         <div className="min-w-0 flex-1"><h2 className="font-semibold">{p.name}</h2><p className="mt-1 text-xs text-muted-foreground">{p.category} · {p.variations.length ? `${p.variations.length} variações` : "Sem variações"}</p><p className={`mt-1 text-xs ${available(p) ? "text-whatsapp" : "text-destructive"}`}>{!p.active ? "Pausado" : !available(p) ? "Esgotado" : "Disponível"} · {p.stock === null ? "Sem limite de estoque" : `${p.stock} unidades`}</p></div>
         {p.featured && <span className="flex items-center gap-1 text-xs text-primary"><Star className="size-3" />Destaque</span>}
         <span className="font-mono text-sm">{brl(p.price)}</span>
-        <div className="flex gap-1"><Button variant="outline" size="icon" title="Editar produto" aria-label={`Editar ${p.name}`} onClick={() => edit(p)}><Pencil /></Button><Button variant="ghost" size="icon" disabled={busy} title={p.active ? "Pausar produto" : "Reativar produto"} aria-label={`${p.active ? "Pausar" : "Reativar"} ${p.name}`} onClick={() => persist({ ...toDraft(p), active: !p.active }, p.updatedAt)}>{p.active ? <Pause /> : <Play />}</Button></div>
+        <div className="flex gap-1"><Button variant="outline" size="icon" title="Editar produto" aria-label={`Editar ${p.name}`} onClick={() => edit(p)}><Pencil /></Button><Button variant="ghost" size="icon" disabled={busy} title={p.active ? "Pausar produto" : "Reativar produto"} aria-label={`${p.active ? "Pausar" : "Reativar"} ${p.name}`} onClick={() => persist({ ...toDraft(p), active: !p.active }, p.updatedAt)}>{p.active ? <Pause /> : <Play />}</Button><Button variant="ghost" size="icon" disabled={busy} title="Excluir produto" aria-label={`Excluir ${p.name}`} onClick={() => { setMessage(""); setDeleting(p); }}><Trash2 /></Button></div>
       </div>)}
       {!visible.length && <p className="py-12 text-center text-muted-foreground">Nenhum produto encontrado.</p>}
     </div>
@@ -62,6 +74,16 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
         <DialogTitle>{editing?.draft.name || "Novo produto"}</DialogTitle><DialogDescription>S7VEN · Produtos e estoque</DialogDescription>
         {editing && <ProductEditor combos={combos} products={products.filter(p => p.id !== editing.draft.id)} initial={editing.draft} preview={editing.preview} galleryPreview={products.find(p => p.id === editing.draft.id)?.images ?? []} categories={categories} busy={busy} message={message} onSave={p => persist(p, editing.expected)} />}
+      </DialogContent>
+    </Dialog>
+    <Dialog open={Boolean(deleting)} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogTitle>Excluir {deleting?.name}?</DialogTitle>
+        <DialogDescription>Esta ação remove o produto para sempre. Se quiser apenas escondê-lo do catálogo, use Pausar.</DialogDescription>
+        <div className="flex justify-end gap-3 pt-4">
+          <Button variant="outline" disabled={busy} onClick={() => setDeleting(null)}>Cancelar</Button>
+          <Button variant="destructive" disabled={busy} onClick={() => void confirmDelete()}>{busy ? "Excluindo…" : "Excluir para sempre"}</Button>
+        </div>
       </DialogContent>
     </Dialog>
   </section>;

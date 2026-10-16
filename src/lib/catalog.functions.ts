@@ -4,6 +4,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { catalogProductSchema, mergeCatalog, type CatalogProduct } from "./catalog";
+import { PRODUCTS } from "./products";
 
 // Only the allowlisted, read-only sales projection is available to visitors.
 export const getCatalog = createServerFn({ method: "GET" }).handler(async () => {
@@ -96,4 +97,20 @@ export const saveCatalogProduct = createServerFn({ method: "POST" })
     const { data: saved, error } = await query.select("id,data,updated_at").maybeSingle();
     if (error || !saved) throw new Error("O produto mudou ou não foi salvo. Atualize a lista antes de tentar novamente.");
     return mergeCatalog([saved]).find(p => p.id === saved.id);
+  });
+
+export const deleteCatalogProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().regex(/^[a-zA-Z0-9_-]{1,30}$/) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: admin, error: roleError } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (roleError || !admin) throw new Error("Acesso restrito à administração.");
+    if (PRODUCTS.some(p => p.id === data.id)) throw new Error("Este produto veio da lista original importada e não pode ser excluído. Use Pausar para escondê-lo do catálogo.");
+    const { data: combos, error: comboError } = await context.supabase.from("catalog_products").select("id,data");
+    if (comboError) throw new Error("Não foi possível conferir os combos.");
+    const usedBy = combos.filter(row => { const parsed = catalogProductSchema.safeParse(row.data); return parsed.success && parsed.data.comboGroups.some(g => g.productIds.includes(data.id)); });
+    if (usedBy.length) throw new Error("Este produto faz parte de um combo. Remova-o do combo antes de excluir.");
+    const { error } = await context.supabase.from("catalog_products").delete().eq("id", data.id);
+    if (error) throw new Error("Não foi possível excluir o produto.");
+    return { id: data.id };
   });

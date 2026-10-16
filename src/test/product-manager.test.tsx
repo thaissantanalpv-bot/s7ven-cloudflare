@@ -3,9 +3,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { mergeCatalog } from "@/lib/catalog";
 
-const mocks = vi.hoisted(() => ({ save: vi.fn(), upload: vi.fn(), signed: vi.fn() }));
-vi.mock("@tanstack/react-start", () => ({ useServerFn: () => mocks.save }));
-vi.mock("@/lib/catalog.functions", () => ({ saveCatalogProduct: vi.fn() }));
+const mocks = vi.hoisted(() => ({ save: vi.fn(), remove: vi.fn(), upload: vi.fn(), signed: vi.fn() }));
+vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: { __kind?: string }) => fn.__kind === "remove" ? mocks.remove : mocks.save }));
+vi.mock("@/lib/catalog.functions", () => ({ saveCatalogProduct: { __kind: "save" }, deleteCatalogProduct: { __kind: "remove" } }));
 vi.mock("@/lib/catalog.query", () => ({ adminCatalogQuery: { queryKey: ["admin-catalog-products"], queryFn: async () => [], staleTime: Infinity }, useCatalogUpdates: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { storage: { from: () => ({ upload: mocks.upload, createSignedUrl: mocks.signed }) } } }));
 vi.mock("@/components/ui/switch", () => ({ Switch: ({ checked, onCheckedChange, ...props }: { checked: boolean; onCheckedChange: (value: boolean) => void; "aria-label": string }) => <button type="button" role="switch" aria-checked={checked} onClick={() => onCheckedChange(!checked)} {...props} /> }));
@@ -34,7 +34,18 @@ describe("Product manager", () => {
     expect(draft.image).toMatch(/^uploads\//);
     expect(draft.images).toEqual(["/produtos/p1.jpg"]);
   });
-  beforeEach(() => { vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} }); vi.clearAllMocks(); mocks.save.mockResolvedValue({}); mocks.upload.mockResolvedValue({ error: null }); mocks.signed.mockResolvedValue({ data: { signedUrl: "https://example.test/photo.jpg" }, error: null }); });
+  beforeEach(() => { vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} }); vi.clearAllMocks(); mocks.save.mockResolvedValue({}); mocks.remove.mockResolvedValue({}); mocks.upload.mockResolvedValue({ error: null }); mocks.signed.mockResolvedValue({ data: { signedUrl: "https://example.test/photo.jpg" }, error: null }); });
+  it("asks for confirmation before deleting a product", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Excluir Gin Invictus" }));
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("remove o produto para sempre");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    expect(mocks.remove).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Excluir Gin Invictus" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Excluir para sempre" }));
+    await waitFor(() => expect(mocks.remove).toHaveBeenCalledWith({ data: { id: "p4" } }));
+  });
   it("edits prices and variation stock while preserving the product ID", async () => {
     setup();
     fireEvent.click(screen.getByRole("button", { name: "Editar Gin Invictus" }));
