@@ -47,7 +47,7 @@ export type CatalogProduct = Product & {
 };
 export type ProductDraft = z.infer<typeof catalogProductSchema>;
 export function mergeCatalog(rows: { id: string; data: unknown; updated_at: string }[]): CatalogProduct[] {
-  const base: CatalogProduct[] = PRODUCTS.map(p => ({ ...p, active: true, stock: null, allowOther: Boolean(p.options?.length), variations: (p.options ?? []).map(name => ({ name, active: true, stock: null })), updatedAt: null }));
+  const base: CatalogProduct[] = PRODUCTS.map(p => ({ ...p, active: true, stock: null, minStock: null, allowOther: Boolean(p.options?.length), variations: (p.options ?? []).map(name => ({ name, active: true, stock: null, minStock: null })), updatedAt: null }));
   const map = new Map(base.map(p => [p.id, p]));
   for (const row of rows) {
     const p = catalogProductSchema.parse(row.data);
@@ -64,7 +64,14 @@ export function available(p: Product | CatalogProduct, option = "", qty = 1) {
   return v ? v.active && (v.stock === null || v.stock >= qty) : p.allowOther;
 }
 export function toDraft(p: CatalogProduct): ProductDraft {
-  return { id: p.id, name: p.name, description: p.description, price: p.price, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], variationPhotos: p.variationPhotos ?? {}, active: p.active, featured: p.featured ?? false, stock: p.stock, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations, comboGroups: p.comboGroups ?? [] };
+  return { id: p.id, name: p.name, description: p.description, price: p.price, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], variationPhotos: p.variationPhotos ?? {}, active: p.active, featured: p.featured ?? false, stock: p.stock, minStock: p.minStock ?? null, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations.map(v => ({ ...v, minStock: v.minStock ?? null })), comboGroups: p.comboGroups ?? [] };
+}
+// Low-stock alerts: items whose tracked stock reached the minimum set by the store.
+export function lowStockItems(p: CatalogProduct): { label: string; stock: number; min: number }[] {
+  const items: { label: string; stock: number; min: number }[] = [];
+  if (p.stock !== null && p.minStock !== null && p.stock <= p.minStock) items.push({ label: p.name, stock: p.stock, min: p.minStock });
+  for (const v of p.variations) if (v.stock !== null && v.minStock !== null && v.stock <= v.minStock) items.push({ label: `${p.name} · ${v.name}`, stock: v.stock, min: v.minStock });
+  return items;
 }
 export function productPhotos(p: Pick<CatalogProduct, "image" | "images">) {
   return [...new Set([p.image, ...(p.images ?? [])].filter((v): v is string => Boolean(v)))];
