@@ -85,7 +85,7 @@ describe("Orders", () => {
     expect(() => validateCartAvailability([first], [{ ...product, active: false }])).toThrow();
     expect(() => validateCartAvailability([{ ...first, option: "" }], [product])).toThrow("Escolha");
     expect(() => validateCartAvailability([{ ...first, option: "Inexistente" }], [product])).toThrow();
-    expect(() => validateCartAvailability([first], [{ ...product, variations: product.variations.map(v => ({ ...v, active: false })) }])).toThrow();
+    expect(() => validateCartAvailability([first], [{ ...product, variations: product.variations.map(v => ({ ...v, active: false, minStock: null })) }])).toThrow();
     expect(() => validateCartAvailability([first], [product])).not.toThrow();
   });
   it("requires phone with DDD and normalizes it", () => {
