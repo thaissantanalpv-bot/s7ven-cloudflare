@@ -27,7 +27,9 @@ describe("sales report", () => {
   });
   it("does not double-count the value or units of combo components", () => {
     const combo = row(40);
-    combo.items[0].components = [{ groupId: "g", productId: "b", name: "Segundo", qty: 3, option: "", price: 20 }];
+    const item = combo.items[0];
+    if (!item) throw new Error("Missing combo fixture");
+    item.components = [{ groupId: "g", productId: "b", name: "Segundo", qty: 3, option: "", price: 20 }];
     expect(summarizeSales([combo]).bestSellers).toEqual([{ id: "a", name: "Produto", quantity: 1, revenue: 10 }]);
   });
 });
