@@ -76,6 +76,16 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
         {editing && <ProductEditor combos={combos} products={products.filter(p => p.id !== editing.draft.id)} initial={editing.draft} preview={editing.preview} galleryPreview={products.find(p => p.id === editing.draft.id)?.images ?? []} categories={categories} busy={busy} message={message} onSave={p => persist(p, editing.expected)} />}
       </DialogContent>
     </Dialog>
+    <Dialog open={Boolean(deleting)} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogTitle>Excluir {deleting?.name}?</DialogTitle>
+        <DialogDescription>Esta ação remove o produto para sempre. Se quiser apenas escondê-lo do catálogo, use Pausar.</DialogDescription>
+        <div className="flex justify-end gap-3 pt-4">
+          <Button variant="outline" disabled={busy} onClick={() => setDeleting(null)}>Cancelar</Button>
+          <Button variant="destructive" disabled={busy} onClick={() => void confirmDelete()}>{busy ? "Excluindo…" : "Excluir para sempre"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   </section>;
 }
 
