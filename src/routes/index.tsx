@@ -732,23 +732,27 @@ function Catalog() {
               {isDelivery && (
                 <fieldset className="space-y-2" aria-label="Endereço de entrega">
                   <legend className="text-sm">Endereço de entrega *</legend>
-                  <div role="group" aria-label="Rua e número" className="grid grid-cols-[1fr_88px] gap-2">
-                    <label className="relative block text-sm">Rua
-                      <input
-                        className="field mt-1"
-                        required
-                        maxLength={120}
-                        aria-invalid={Boolean(fieldErrors.address?.length)}
-                        aria-expanded={suggestionsOpen}
-                        aria-controls="address-suggestions"
-                        aria-autocomplete="list"
-                        autoComplete="off"
-                        placeholder="Rua ou Avenida"
-                        value={form.street}
-                        onChange={(e) => setForm({ ...form, street: e.target.value })}
-                        onFocus={() => { if (suggestions.length) setSuggestionsOpen(true); }}
-                        onBlur={() => setTimeout(() => setSuggestionsOpen(false), 200)}
-                      />
+                  <label className="relative block text-sm">Rua e número
+                    <input
+                      className="field mt-1"
+                      required
+                      maxLength={120}
+                      aria-invalid={Boolean(fieldErrors.address?.length)}
+                      aria-expanded={suggestionsOpen}
+                      aria-controls="address-suggestions"
+                      aria-autocomplete="list"
+                      autoComplete="off"
+                      placeholder="Rua e número"
+                      value={addressLine}
+                      onChange={(e) => {
+                        const line = e.target.value;
+                        setAddressLine(line);
+                        const { street, number } = splitAddressLine(line);
+                        setForm({ ...form, street, number });
+                      }}
+                      onFocus={() => { if (suggestions.length) setSuggestionsOpen(true); }}
+                      onBlur={() => { setTimeout(() => setSuggestionsOpen(false), 200); void calculateDelivery(); }}
+                    />
                       {suggestionsOpen && (
                         <ul
                           id="address-suggestions"
@@ -773,30 +777,10 @@ function Catalog() {
                         </ul>
                       )}
                     </label>
-                    <label className="block text-sm">Número
-                      <input
-                        className="field mt-1 text-center"
-                        required
-                        inputMode="numeric"
-                        maxLength={10}
-                        aria-invalid={Boolean(fieldErrors.address?.length)}
-                        placeholder="Nº"
-                        value={form.number}
-                        onChange={(e) => setForm({ ...form, number: e.target.value })}
-                        onBlur={() => { void calculateDelivery(); }}
-                      />
-                    </label>
-                  </div>
-                  <label className="block text-sm">Bairro
-                    <input
-                      className="field mt-1"
-                      maxLength={80}
-                      placeholder="Preenchido pelo número"
-                      value={form.neighborhood}
-                      onChange={(e) => setForm({ ...form, neighborhood: e.target.value })}
-                      onBlur={() => { void calculateDelivery(); }}
-                    />
-                  </label>
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">Bairro:</span>{" "}
+                    <span className="font-medium">{form.neighborhood.trim() || "aparece automaticamente"}</span>
+                  </p>
                 </fieldset>
               )}
               {isDelivery && <label className="block text-sm">Cidade<input className="field mt-2" value={DELIVERY_CITY} readOnly /></label>}
