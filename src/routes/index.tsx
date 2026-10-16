@@ -30,7 +30,7 @@ import { useCatalogAnalytics } from "@/lib/use-catalog-analytics";
 import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder, orderTracking } from "@/lib/orders.functions";
-import { startDeliverySession, quoteDelivery } from "@/lib/delivery.functions";
+import { startDeliverySession, quoteDelivery, suggestDeliveryAddress } from "@/lib/delivery.functions";
 import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, restoreDeliveryFields } from "@/lib/delivery-address";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
@@ -143,12 +143,17 @@ function Catalog() {
   const registerOrder = useServerFn(submitOrder);
   const startDistanceSession = useServerFn(startDeliverySession);
   const calculateDistance = useServerFn(quoteDelivery);
+  const suggestAddress = useServerFn(suggestDeliveryAddress);
   const [deliveryQuote, setDeliveryQuote] = useState<{ id: string; address: string; km: number; fee: number; expires: number; config: string } | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [deliveryError, setDeliveryError] = useState("");
   const quoteRequest = useRef(0);
   const pendingQuote = useRef("");
   const deliveryToken = useRef("");
+  const [suggestions, setSuggestions] = useState<{ placeId: string; text: string; street: string; number: string; neighborhood: string }[]>([]);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const suggestRequest = useRef(0);
+  const suggestSession = useRef(crypto.randomUUID());
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
@@ -299,6 +304,42 @@ function Catalog() {
       if (autoNeighborhood && neighborhood) setForm(f => f.neighborhood.trim() ? f : { ...f, neighborhood });
     } catch(e) { if (request === quoteRequest.current) setDeliveryError(e instanceof Error && e.message !== "DELIVERY_SESSION_EXPIRED" ? e.message : "Não foi possível calcular a entrega. Confira o endereço e tente novamente."); }
     finally { if (request === quoteRequest.current) { pendingQuote.current = ""; setQuoting(false); } }
+  };
+  // Sugestões de endereço enquanto o cliente digita a rua (somente Araçatuba).
+  useEffect(() => {
+    const text = `${form.street.trim()} ${form.number.trim()}`.trim();
+    if (!isDelivery || !distanceMode || !online || text.length < 3) {
+      setSuggestions([]);
+      setSuggestionsOpen(false);
+      return;
+    }
+    const request = ++suggestRequest.current;
+    const timer = setTimeout(async () => {
+      try {
+        if (!deliveryToken.current) deliveryToken.current = (await startDistanceSession()).token;
+        const result = await suggestAddress({ data: { input: text, token: deliveryToken.current, sessionToken: suggestSession.current } });
+        if (request !== suggestRequest.current) return;
+        setSuggestions(result.suggestions);
+        setSuggestionsOpen(result.suggestions.length > 0);
+      } catch (e) {
+        if (e instanceof Error && e.message === "DELIVERY_SESSION_EXPIRED") deliveryToken.current = "";
+        if (request === suggestRequest.current) { setSuggestions([]); setSuggestionsOpen(false); }
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.street, form.number, isDelivery, distanceMode, online]);
+  const pickSuggestion = (suggestion: { street: string; number: string; neighborhood: string }) => {
+    suggestSession.current = crypto.randomUUID();
+    suggestRequest.current += 1;
+    setSuggestions([]);
+    setSuggestionsOpen(false);
+    setForm(f => ({
+      ...f,
+      street: suggestion.street,
+      number: suggestion.number || f.number,
+      neighborhood: suggestion.neighborhood || f.neighborhood,
+    }));
   };
   const total = subtotal + deliveryFee;
 
@@ -678,16 +719,45 @@ function Catalog() {
                 <fieldset className="space-y-2" aria-label="Endereço de entrega">
                   <legend className="text-sm">Endereço de entrega *</legend>
                   <div role="group" aria-label="Rua e número" className="grid grid-cols-[1fr_88px] gap-2">
-                    <label className="block text-sm">Rua
+                    <label className="relative block text-sm">Rua
                       <input
                         className="field mt-1"
                         required
                         maxLength={120}
                         aria-invalid={Boolean(fieldErrors.address?.length)}
+                        aria-expanded={suggestionsOpen}
+                        aria-controls="address-suggestions"
+                        aria-autocomplete="list"
+                        autoComplete="off"
                         placeholder="Rua ou Avenida"
                         value={form.street}
                         onChange={(e) => setForm({ ...form, street: e.target.value })}
+                        onFocus={() => { if (suggestions.length) setSuggestionsOpen(true); }}
+                        onBlur={() => setTimeout(() => setSuggestionsOpen(false), 200)}
                       />
+                      {suggestionsOpen && (
+                        <ul
+                          id="address-suggestions"
+                          role="listbox"
+                          aria-label="Sugestões de endereço em Araçatuba"
+                          className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-xl border bg-card shadow-lg"
+                        >
+                          {suggestions.map((suggestion) => (
+                            <li key={suggestion.placeId}>
+                              <button
+                                type="button"
+                                role="option"
+                                aria-selected={false}
+                                className="block w-full break-words px-3 py-2.5 text-left text-sm hover:bg-secondary"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => pickSuggestion(suggestion)}
+                              >
+                                {suggestion.text}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </label>
                     <label className="block text-sm">Número
                       <input
