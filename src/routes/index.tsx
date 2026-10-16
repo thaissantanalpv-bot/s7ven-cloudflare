@@ -467,9 +467,7 @@ function Catalog() {
       {!online && <div role="status" className="border-b bg-muted px-4 py-2 text-center text-sm text-muted-foreground">Sem conexão · Exibindo o último catálogo salvo. Pedidos disponíveis ao reconectar.</div>}
       <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur-lg">
         <div className="mx-auto grid max-w-7xl grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-4 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:px-8">
-          <Button variant="ghost" size="icon" asChild title="Área da loja" className="sm:hidden">
-            <Link to="/painel" aria-label="Área da loja"><SlidersHorizontal /></Link>
-          </Button>
+          <span aria-hidden className="sm:hidden" />
           <Link to="/" className="flex min-w-0 items-center justify-center gap-3 sm:justify-start" aria-label="S7VEN Lounge e Tabacaria">
             <img src="/icons/s7ven-192.png" alt="S7VEN Lounge e Tabacaria" className="size-16 shrink-0 rounded-md object-contain sm:size-20" />
             <span className="hidden min-w-0 font-display text-xl font-semibold sm:block">S7VEN <span className="block text-xs font-normal text-muted-foreground">Lounge e Tabacaria</span></span>
@@ -485,11 +483,6 @@ function Catalog() {
             />
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Button variant="ghost" size="icon" asChild title="Configurações da loja" className="hidden sm:inline-flex">
-              <Link to="/painel" aria-label="Configurações da loja">
-                <SlidersHorizontal />
-              </Link>
-            </Button>
             <Button variant="ghost" onClick={() => setOpen(true)} aria-label={`Meu carrinho, ${count} itens`} className="relative h-11 px-2 sm:px-3">
               <ShoppingBag />
               <span className="hidden sm:inline">Meu carrinho</span>
@@ -640,11 +633,6 @@ function Catalog() {
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t px-4 py-6 text-xs text-muted-foreground sm:px-8">
         <span>{STORE_NAME}</span>
         <span>Venda de bebidas e produtos de tabacaria somente para maiores de 18 anos.</span>
-        <Button asChild variant="link" size="sm">
-          <Link to="/painel">
-            Área da loja <ArrowUpRight />
-          </Link>
-        </Button>
       </footer>
 
       {count > 0 && !open && (
