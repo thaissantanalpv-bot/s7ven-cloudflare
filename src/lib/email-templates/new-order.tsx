@@ -43,7 +43,7 @@ const Email = ({
 }: Props) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Novo pedido #{number ?? ''} — {customerName ?? 'cliente'}</Preview>
+    <Preview>{`Novo pedido #${number ?? ''} — ${customerName ?? 'cliente'}`}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={heading}>Novo pedido #{number ?? ''}</Heading>
@@ -79,7 +79,7 @@ const Email = ({
 
 export const template = {
   component: Email,
-  subject: (data: Record<string, any>) => `Novo pedido #${data.number ?? ''} — S7VEN`,
+  subject: (data: Record<string, any>) => `Novo pedido #${data['number'] ?? ''} — S7VEN`,
   displayName: 'Aviso de novo pedido',
   to: 'thais.santana.lpv@gmail.com',
   previewData: {
