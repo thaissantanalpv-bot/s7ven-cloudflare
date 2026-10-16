@@ -111,7 +111,7 @@ export type Order = {
   cancelled_at?: string | null;
   cancelled_by?: string | null;
   stock_restored_at?: string | null;
-  cancellation_stock_notes?: unknown;
+  cancellation_stock_notes?: string[];
   created_at: string;
   updated_at: string;
 };

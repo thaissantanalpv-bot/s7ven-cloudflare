@@ -122,6 +122,7 @@ export const listOrders = createServerFn({ method: "POST" })
           source: z.enum(["catalog", "counter"]).parse(row.source),
           fulfillment: z.enum(["delivery", "pickup"]).parse(row.fulfillment),
           status: statusSchema.parse(row.status),
+          cancellation_stock_notes: z.array(z.string()).parse(row.cancellation_stock_notes),
           items: row.items as Order["items"],
           subtotal: Number(row.subtotal),
           delivery_fee: Number(row.delivery_fee),
