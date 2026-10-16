@@ -34,7 +34,18 @@ describe("Product manager", () => {
     expect(draft.image).toMatch(/^uploads\//);
     expect(draft.images).toEqual(["/produtos/p1.jpg"]);
   });
-  beforeEach(() => { vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} }); vi.clearAllMocks(); mocks.save.mockResolvedValue({}); mocks.upload.mockResolvedValue({ error: null }); mocks.signed.mockResolvedValue({ data: { signedUrl: "https://example.test/photo.jpg" }, error: null }); });
+  beforeEach(() => { vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} }); vi.clearAllMocks(); mocks.save.mockResolvedValue({}); mocks.remove.mockResolvedValue({}); mocks.upload.mockResolvedValue({ error: null }); mocks.signed.mockResolvedValue({ data: { signedUrl: "https://example.test/photo.jpg" }, error: null }); });
+  it("asks for confirmation before deleting a product", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Excluir Gin Invictus" }));
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("remove o produto para sempre");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    expect(mocks.remove).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Excluir Gin Invictus" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Excluir para sempre" }));
+    await waitFor(() => expect(mocks.remove).toHaveBeenCalledWith({ data: { id: "p4" } }));
+  });
   it("edits prices and variation stock while preserving the product ID", async () => {
     setup();
     fireEvent.click(screen.getByRole("button", { name: "Editar Gin Invictus" }));
