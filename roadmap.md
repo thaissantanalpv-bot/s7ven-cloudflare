@@ -1,3 +1,8 @@
+# Otimização do banco e consumo
+- [ ] Medir créditos, consultas, índices, armazenamento e tarefas agendadas.
+- [ ] Corrigir o maior desperdício medido sem mudar segurança ou frequência de atualização.
+- [ ] Comparar o mesmo trabalho antes/depois e executar testes.
+
 # Falha intermitente no cálculo de entrega
 - [x] Corrigir restauração da rua no carrinho salvo e impedir cálculo sem rua/número.
 - [x] Verificar endereço Joaquim Candido, 2282 restaurado no navegador, bloqueio sem número e 22 testes; build OK, sem chamadas Maps.
