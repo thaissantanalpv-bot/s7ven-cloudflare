@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/auth")({
+export const Route = createFileRoute("/auth")({ staticData: { sitemap: false },
   head: () => ({ meta: [
     { title: "Acesso à loja — S7VEN" }, { name: "description", content: "Acesso seguro às configurações da S7VEN Lounge e Tabacaria." },
     { property: "og:title", content: "Acesso à loja — S7VEN" }, { property: "og:description", content: "Entre na área de administração da S7VEN." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
