@@ -1,7 +1,7 @@
 # Falha intermitente no cálculo de entrega
 - [x] Corrigir restauração da rua no carrinho salvo e impedir cálculo sem rua/número.
 - [x] Verificar endereço Joaquim Candido, 2282 restaurado no navegador, bloqueio sem número e 22 testes; build OK, sem chamadas Maps.
-- [ ] Confirmar cálculo real após publicar: Google Maps não é verificável no ambiente de teste; falta mensagem exata da falha relatada para confirmar outras causas.
+- [x] Confirmar cálculo real no site publicado: carrinho de teste com Rua Joaquim Cândido, 2282 calculou a rota e a taxa sem erros de execução.
 
 # Impressão térmica de pedidos
 - [x] Adicionar ícone de impressão nos pedidos e configuração local de nome/papel 58 ou 80 mm.
@@ -18,7 +18,7 @@
 - [x] Preencher Araçatuba automaticamente e validar cidade/estado/país e endereço completo antes da rota; endereço normalizado também no pedido e WhatsApp.
 - [x] Calcular ao sair do campo de endereço, descartar respostas antigas e exibir taxa/erros junto do endereço sem indicar entrega gratuita antes da cotação.
 - [x] Executar 23 testes; carrinho de 384px mostrou cidade fixa e aviso offline sem chamadas Maps, sem erros de execução; build OK.
-- [ ] Validar rota e taxa real no site autorizado após publicação desta versão; Google Maps não pode ser verificado no ambiente de teste.
+- [x] Validar rota e taxa real no site publicado: taxa calculada pela rota exibida no carrinho com endereço real de Araçatuba, sem erros de execução.
 
 # Melhorias de venda solicitadas em 15/10/2026
 - [x] Organizar mensagem WhatsApp com nomes, quantidades, valores e links permanentes para visualizar fotos dos produtos; verificação automatizada do destino e mensagem.
@@ -126,7 +126,7 @@
 - [x] Integrar taxa calculada ao carrinho e à validação do pedido.
 - [x] Adicionar edição de fotos com IA, comparação e aplicação mediante confirmação.
 - [x] Verificar telas administrativas no celular, edição real com IA e 26 testes; build OK. Taxa real preservada, nenhum produto alterado durante a verificação.
-- [ ] Validar Google Maps no site publicado após cadastrar endereço completo de saída e faixas reais; chamadas de Maps não são verificáveis no ambiente de teste.
+- [x] Validar Google Maps no site publicado: rota e taxa reais confirmadas em 16/10/2026 com endereço de teste, faixas cadastradas preservadas.
 - [ ] Confirmar o aviso de loja fechada na versão publicada fora do horário (aberta durante a verificação) e o selo "Esgotado" com um produto de estoque zerado.
 ## Novo pedido (Thais, 15/10/2026 19:44 UTC)
 - [x] Implementado (15/10/2026): migration 0019 (variationPhotos na projeção, filtrada às fotos já públicas), photoForOption/variationPhoto em catalog.ts, ProductCardPhotos com prop option, seletor "Vincular à variação" por foto no painel (remoção/edição IA remapeiam ou desligam o vínculo), grids items-stretch + cards h-full. 84 testes passando.
