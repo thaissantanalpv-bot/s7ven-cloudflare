@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { adminCatalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
-import { saveCatalogProduct } from "@/lib/catalog.functions";
+import { deleteCatalogProduct, saveCatalogProduct } from "@/lib/catalog.functions";
 import { available, catalogProductSchema, toDraft, type CatalogProduct, type ProductDraft } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { ComboGroupsEditor } from "./combo-groups-editor";
@@ -18,6 +18,8 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   useCatalogUpdates();
   const client = useQueryClient();
   const save = useServerFn(saveCatalogProduct);
+  const remove = useServerFn(deleteCatalogProduct);
+  const [deleting, setDeleting] = useState<CatalogProduct | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [category, setCategory] = useState("");
