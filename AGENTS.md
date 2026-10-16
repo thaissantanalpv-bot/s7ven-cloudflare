@@ -25,7 +25,7 @@
 - Validate variation-photo links (variationPhotos) as allowlisted photo paths and project them publicly only when already exposed via image/images; the catalog swaps the displayed photo while the matching variation is selected.
 - Store photos privately with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads. Index the exact cover/gallery lookup expressions to avoid repeated authorization scans without changing access.
 - Separate public/admin catalog query keys prevent restricted data leaking through cache.
-- Keep cover/additional paths in image/images and resolve signed URLs separately; admin saves must never persist expiring URLs.
+- Store cover/gallery paths in image/images; resolve signed URLs separately and never persist them.
 - Saved photos remain navigable/enlargeable via ProductCardPhotos.
 - Reserve stock under sorted row locks; reject stale prices. Admin cancellation is terminal: snapshot product/variation/component control flags at insertion (current flags for legacy orders), restore once, record missing/untracked items without recreating them. Exclude cancelled sales from revenue, retaining totals and conversion events.
 - Represent fixed-price combos as catalog products with comboGroups and structured order components; encode choices in separate option keys to preserve legacy carts, validate group membership server-side, and reserve all quantities together in sorted row-lock order.
