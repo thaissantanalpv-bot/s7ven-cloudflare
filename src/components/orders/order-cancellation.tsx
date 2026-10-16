@@ -24,7 +24,8 @@ export function OrderCancellation({ order, disabled = false }: { order: Order; d
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  if (order.status === "cancelled") return <CancellationRecord order={order} />;
+  const [cancelledReason, setCancelledReason] = useState("");
+  if (order.status === "cancelled" && !cancelledReason) return <CancellationRecord order={order} />;
   const submit = async () => {
     const parsed = cancelOrderSchema.safeParse({ id: order.id, reason, expectedUpdatedAt: order.updated_at });
     if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Confira o motivo"); return; }
@@ -34,11 +35,19 @@ export function OrderCancellation({ order, disabled = false }: { order: Order; d
       await cancel({ data: parsed.data });
       await Promise.all(["store-orders", "catalog-products", "admin-catalog-products", "catalog-funnel"].map(key => client.invalidateQueries({ queryKey: [key] })));
       setConfirming(false);
+      setCancelledReason(parsed.data.reason);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Não foi possível cancelar.");
       await client.invalidateQueries({ queryKey: ["store-orders"] });
     } finally { setBusy(false); }
   };
+  if (cancelledReason) return <div className="space-y-3 border-t pt-4">
+    <p className="font-semibold text-destructive">Pedido #{order.number} cancelado. Os itens voltaram ao estoque.</p>
+    <Button asChild className="w-full bg-whatsapp text-whatsapp-foreground">
+      <a href={orderWhatsApp({ ...order, status: "cancelled", cancellation_reason: cancelledReason })} target="_blank" rel="noopener noreferrer"><MessageCircle />Avisar o cliente no WhatsApp</a>
+    </Button>
+    <p className="text-sm text-muted-foreground">A mensagem já vai pronta com o motivo do cancelamento.</p>
+  </div>;
   return <div className="space-y-3 border-t pt-4">
     {!confirming ? <Button variant="outline" className="w-full text-destructive" disabled={disabled} onClick={() => setConfirming(true)}><Ban />Cancelar pedido</Button> : <>
       <p className="font-semibold">Cancelar pedido #{order.number}?</p>
