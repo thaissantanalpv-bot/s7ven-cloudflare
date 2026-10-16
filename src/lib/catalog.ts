@@ -36,6 +36,7 @@ export type CatalogProduct = Product & {
   featured?: boolean;
   active: boolean;
   stock: number | null;
+  minStock?: number | null;
   allowOther: boolean;
   variations: z.infer<typeof variationSchema>[];
   updatedAt: string | null;
