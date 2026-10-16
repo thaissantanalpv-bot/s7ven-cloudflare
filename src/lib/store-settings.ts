@@ -47,3 +47,17 @@ export function storeStatus(settings: StoreSettings, now = new Date()) {
   const open = !!(afterMidnight || (today?.enabled && (today.open < today.close ? current >= today.open && current < today.close : current >= today.open)));
   return { open, configured: true, label: open ? "Aberto agora" : "Fechado agora" };
 }
+
+/** Pedidos só são aceitos enquanto a loja está aberta e antes do horário limite (ex.: entregas até 23:00). */
+export function ordersOpen(settings: StoreSettings, now = new Date()) {
+  const status = storeStatus(settings, now);
+  if (!status.open) return { open: false as const, configured: status.configured, reason: "closed" as const };
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
+  const part = (name: string) => parts.find(p => p.type === name)?.value ?? "";
+  const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(part("weekday"));
+  const current = `${part("hour")}:${part("minute")}`;
+  const yesterday = settings.opening_hours.find(h => h.day === (day + 6) % 7);
+  const afterMidnight = !!(yesterday?.enabled && yesterday.open > yesterday.close && current < yesterday.close);
+  if (afterMidnight || current >= settings.order_cutoff) return { open: false as const, configured: status.configured, reason: "cutoff" as const };
+  return { open: true as const, configured: status.configured, reason: null };
+}
