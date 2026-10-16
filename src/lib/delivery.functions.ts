@@ -1,14 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { distanceFee, settingsSchema } from "./store-settings";
-import { deliveryAddress, deliveryLocation } from "./delivery-address";
+import { deliveryAddress, deliveryLocation, deliveryNeighborhood } from "./delivery-address";
 
 export const startDeliverySession = createServerFn({ method: "POST" }).handler(async () => {
   const { createDeliveryToken } = await import("./delivery.server");
   return { token: await createDeliveryToken() };
 });
 export const quoteDelivery = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => z.object({ address: z.string().trim().min(8).max(300), token: z.string().max(200) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ address: z.string().trim().min(8).max(300), token: z.string().max(200), autoNeighborhood: z.boolean().optional() }).parse(input))
   .handler(async ({ data }) => {
     const { verifyDeliveryToken, deliverySettingsHash } = await import("./delivery.server");
     const sessionId = await verifyDeliveryToken(data.token);
@@ -23,7 +23,7 @@ export const quoteDelivery = createServerFn({ method: "POST" })
     const address = deliveryAddress(data.address);
     const since = new Date(Date.now() - 15 * 60000).toISOString();
     const { data: cached } = await supabaseAdmin.from("delivery_quotes").select("id,distance_km,fee").eq("session_id", session.id).eq("address", address).eq("settings_hash", hash).gte("created_at", since).limit(1).maybeSingle();
-    if (cached) return { id: cached.id, address, km: Number(cached.distance_km), fee: Number(cached.fee) };
+    if (cached) return { id: cached.id, address, km: Number(cached.distance_km), fee: Number(cached.fee), neighborhood: "" };
     const { count, error: countError } = await supabaseAdmin.from("delivery_quotes").select("id", { head: true, count: "exact" }).eq("session_id", session.id).gte("created_at", since);
     if (countError || (count ?? 0) >= 10) throw new Error("Aguarde antes de calcular mais endereços.");
     const apiKey = process.env["LOVABLE_API_KEY"];
@@ -48,6 +48,8 @@ export const quoteDelivery = createServerFn({ method: "POST" })
     const geocoded = await geocode.json() as Parameters<typeof deliveryLocation>[0] & { error_message?: string };
     if (geocoded.status === "REQUEST_DENIED" || geocoded.status === "OVER_QUERY_LIMIT") throw new Error(`Google Maps: ${geocoded.error_message ?? geocoded.status}`);
     const location = deliveryLocation(geocoded);
+    const neighborhood = data.autoNeighborhood ? deliveryNeighborhood(geocoded) : "";
+    const savedAddress = neighborhood ? deliveryAddress(`${data.address.trim()}, ${neighborhood}`) : address;
     const response = await fetch("https://connector-gateway.lovable.dev/google_maps/routes/directions/v2:computeRoutes", {
       method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "X-Connection-Api-Key": mapsKey, "Content-Type": "application/json", "X-Goog-FieldMask": "routes.distanceMeters,routes.duration" },
       body: JSON.stringify({ origin: { address: deliveryAddress(settings.delivery_origin) }, destination: { location: { latLng: location } }, travelMode: "DRIVE", routingPreference: "TRAFFIC_UNAWARE" }),
@@ -61,7 +63,7 @@ export const quoteDelivery = createServerFn({ method: "POST" })
     const maxKm = Math.max(...settings.delivery_distance_tiers.map(t => t.upToKm));
     if (km > maxKm) throw new Error(`A rota até este endereço tem ${km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km. A entrega atende até ${maxKm.toLocaleString("pt-BR")} km. Confira rua, número e cidade ou escolha retirada na loja.`);
     const fee = distanceFee(settings, km);
-    const { data: saved, error: saveError } = await supabaseAdmin.from("delivery_quotes").insert({ session_id: session.id, address, settings_hash: hash, distance_km: km, fee }).select("id").single();
+    const { data: saved, error: saveError } = await supabaseAdmin.from("delivery_quotes").insert({ session_id: session.id, address: savedAddress, settings_hash: hash, distance_km: km, fee }).select("id").single();
     if (saveError || !saved) throw new Error("Não foi possível guardar o cálculo. Tente novamente.");
-    return { id: saved.id, address, km, fee };
+    return { id: saved.id, address: savedAddress, km, fee, neighborhood };
   });

@@ -146,3 +146,7 @@
 ## Entrega (Thais, 15/10/2026 23:08 UTC)
 - [x] Corrigir "Reabra o carrinho para calcular a entrega" (código assinado em vez de cookie bloqueado)
 - [ ] Preencher o bairro sozinho a partir da rua e número (pedido 16/10 00:03 UTC)
+
+## Entrega (Thais, 15/10/2026 23:08 UTC)
+- [x] Corrigir "Reabra o carrinho para calcular a entrega" (código assinado em vez de cookie bloqueado)
+- [x] Preencher o bairro sozinho a partir da rua e número (pedido 16/10 00:03 UTC)

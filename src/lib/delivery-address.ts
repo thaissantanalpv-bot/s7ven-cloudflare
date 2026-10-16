@@ -39,3 +39,9 @@ export function deliveryLocation(payload: { status?: string; results?: GeocodeRe
   if (result.partial_match || !components.some(c => c.types.includes("route")) || !components.some(c => c.types.includes("street_number")) || !location || !Number.isFinite(location.lat) || !Number.isFinite(location.lng)) throw new Error("Informe a rua e o número completos para calcular a entrega em Araçatuba.");
   return { latitude: location.lat, longitude: location.lng };
 }
+/** Neighborhood (bairro) reported by Google for the first geocoding result, if any. */
+export function deliveryNeighborhood(payload: { results?: GeocodeResult[] }) {
+  const components = payload.results?.[0]?.address_components ?? [];
+  const found = ["sublocality_level_1", "sublocality", "neighborhood"].map(t => components.find(c => c.types.includes(t))?.long_name).find(Boolean);
+  return found?.trim().slice(0, 80) ?? "";
+}
