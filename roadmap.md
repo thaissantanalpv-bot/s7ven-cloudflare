@@ -1,3 +1,9 @@
+# Otimização do banco e consumo
+- [x] Medir créditos, consultas, índices e armazenamento: 03–16/10, 227,36 créditos solicitados; 221,90 criação, 5,46 funcionamento; banco pico 14,25 h / 1,10 crédito, 13,2 MB, saudável. Nenhum agendamento HTTP retornado; cron interno não inspecionável.
+- [x] Corrigir varreduras repetidas na autorização de fotos: migration 0021 adiciona índices das expressões de capa/galeria, sem alterar políticas, dados ou frequência de atualização.
+- [x] Comparar o mesmo trabalho: 199 capas, execução 16,336 → 4,545 ms, plano usa ambos os índices; 56 KiB adicionais; 13 testes passaram, catálogo e administração autenticada conferidos, build OK.
+- [ ] Reduzir consultas automáticas de 5 segundos: depende de autorização para mudar a frequência dos avisos/indicadores; economia de créditos depende de medir horas ativas após a mudança.
+
 # Falha intermitente no cálculo de entrega
 - [x] Corrigir restauração da rua no carrinho salvo e impedir cálculo sem rua/número.
 - [x] Verificar endereço Joaquim Candido, 2282 restaurado no navegador, bloqueio sem número e 22 testes; build OK, sem chamadas Maps.

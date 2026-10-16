@@ -148,6 +148,13 @@
       "when": 1792097109087,
       "tag": "0020_order_tracking_link",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792111788478,
+      "tag": "0021_catalog_photo_lookup_indexes",
+      "breakpoints": true
     }
   ]
 }
