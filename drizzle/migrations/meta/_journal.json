@@ -155,6 +155,13 @@
       "when": 1792111788478,
       "tag": "0021_catalog_photo_lookup_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792120210350,
+      "tag": "0022_admin_delete_catalog_products",
+      "breakpoints": true
     }
   ]
 }
