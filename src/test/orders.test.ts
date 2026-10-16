@@ -158,4 +158,13 @@ describe("tracking link", () => {
     const noLink = new URL(orderWhatsApp({ number: 7, customer_name: "Cliente", customer_phone: "18999999999", status: "out_for_delivery", tracking_url: null }));
     expect(noLink.searchParams.get("text")).not.toContain("Acompanhe");
   });
+  it("includes the registered reason in the cancellation notice", () => {
+    const base = { number: 9, customer_name: "Cliente", customer_phone: "18999999999", status: "cancelled" as const, tracking_url: null };
+    const withReason = new URL(orderWhatsApp({ ...base, cancellation_reason: "Produto esgotado" }));
+    expect(withReason.searchParams.get("text")).toContain("Motivo: Produto esgotado");
+    expect(withReason.searchParams.get("text")).toContain("#9");
+    const withoutReason = new URL(orderWhatsApp({ ...base, cancellation_reason: null }));
+    expect(withoutReason.searchParams.get("text")).toContain("cancelado");
+    expect(withoutReason.searchParams.get("text")).not.toContain("Motivo:");
+  });
 });
