@@ -14,13 +14,13 @@ export function deliveryFieldsComplete(street: string, number: string) {
   return street.trim().length >= 2 && number.trim().length > 0;
 }
 
-const TRAILING_NUMBER = /^(.*?)[,\s]+(\d{1,6}[a-zA-Z-]?)$/;
+const TRAILING_NUMBER = /^(.*?)[,\s]+(\d{1,6}[a-zA-Z-]*)$/;
 
 /** Splits the single "street and number" line the customer types. */
-export function splitAddressLine(line: string) {
+export function splitAddressLine(line: string): { street: string; number: string } {
   const trimmed = line.trim().replace(/\s+/g, " ");
   const found = TRAILING_NUMBER.exec(trimmed);
-  return found ? { street: found[1].trim(), number: found[2] } : { street: trimmed, number: "" };
+  return { street: (found?.[1] ?? trimmed).trim(), number: found?.[2] ?? "" };
 }
 
 export function joinAddressLine(street: string, number: string) {
