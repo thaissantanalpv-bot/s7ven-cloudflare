@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { submitOrderSchema, priceOrder, statusSchema, trackingUrlSchema, type Order } from "./orders";
-import { EMPTY_SETTINGS, settingsSchema, storeStatus } from "./store-settings";
+import { EMPTY_SETTINGS, ordersOpen, settingsSchema } from "./store-settings";
 import { mergeCatalog } from "./catalog";
 import { deliveryAddress } from "./delivery-address";
 
@@ -27,12 +27,14 @@ export const submitOrder = createServerFn({ method: "POST" })
       throw new Error("Aguarde um minuto antes de enviar outro pedido.");
     const { data: row, error: settingsError } = await supabaseAdmin
       .from("store_settings")
-      .select("delivery_enabled,fixed_delivery_fee,pickup_address,delivery_zones,hours_enabled,opening_hours,delivery_distance_enabled,delivery_origin,delivery_distance_tiers")
+      .select("delivery_enabled,fixed_delivery_fee,pickup_address,delivery_zones,hours_enabled,opening_hours,order_cutoff,delivery_distance_enabled,delivery_origin,delivery_distance_tiers")
       .eq("id", "main")
       .maybeSingle();
     if (settingsError) throw new Error("Não foi possível conferir a entrega. Tente novamente.");
     const settings = row ? settingsSchema.parse(row) : EMPTY_SETTINGS;
-    if (!storeStatus(settings).open) throw new Error("A loja está fechada. Confira os horários.");
+    const orderStatus = ordersOpen(settings);
+    if (!orderStatus.open && orderStatus.reason === "cutoff") throw new Error(`Os pedidos de hoje encerraram às ${settings.order_cutoff}. O catálogo continua aberto para consulta.`);
+    if (!orderStatus.open) throw new Error("A loja está fechada. Confira os horários.");
     const { data: catalogRows, error: catalogError } = await supabaseAdmin.from("catalog_products").select("id,data,updated_at").in("id", [...new Set(data.items.flatMap(i => [i.productId, ...(i.components ?? []).map(c => c.productId)]))]);
     if (catalogError) throw new Error("Não foi possível conferir o estoque.");
     let verifiedDelivery: { fee: number; km: number } | undefined;

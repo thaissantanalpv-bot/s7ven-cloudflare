@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { publicStoreSettingsQuery as storeSettingsQuery } from "@/lib/store-settings.query";
 import { savePublicSnapshot, readPublicSnapshot, cacheViewedCatalogPhotos, offlinePhotoUrls } from "@/lib/offline-catalog";
-import { storeStatus, DAYS } from "@/lib/store-settings";
+import { ordersOpen, storeStatus, DAYS } from "@/lib/store-settings";
 import { QRCodeSVG } from "qrcode.react";
 import { useServerFn } from "@tanstack/react-start";
 import { PhoneField } from "@/components/orders/phone-field";
@@ -176,6 +176,8 @@ function Catalog() {
   const status = now
     ? storeStatus(settings, now)
     : { open: true, configured: false, label: "Atendimento" };
+  const orderStatus = now ? ordersOpen(settings, now) : { open: true, configured: false, reason: null };
+  const orderingBlocked = orderStatus.configured && !orderStatus.open;
   const [hoursOpen, setHoursOpen] = useState(false);
   const [sort, setSort] = useState("catalog");
   const [cart, setCart] = useState<Cart>({});
@@ -407,8 +409,10 @@ function Catalog() {
     if (isDelivery && distanceMode && !validQuote) return setError("Calcule a entrega pelo endereço antes de enviar.");
     if (isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && !zone)
       return setError("Escolha o bairro ou região de entrega.");
-    if (status.configured && !status.open)
-      return setError("A loja está fechada. Confira os horários de atendimento.");
+    if (orderingBlocked)
+      return setError(orderStatus.reason === "cutoff"
+        ? `Os pedidos de hoje encerraram às ${settings.order_cutoff}. O catálogo continua aberto para consulta.`
+        : "A loja está fechada. Confira os horários de atendimento.");
     const r = customerSchema.safeParse({ ...form, address: fullAddress });
     if (!r.success) return setError(r.error.issues[0]?.message ?? "Verifique os dados");
     const d = r.data;
@@ -912,6 +916,11 @@ function Catalog() {
                 Loja fechada no momento. Confira os horários de atendimento.
               </p>
             )}
+            {orderingBlocked && orderStatus.reason === "cutoff" && (
+              <p className="text-xs text-destructive">
+                Pedidos encerrados por hoje (até às {settings.order_cutoff}). O catálogo continua aberto para consulta.
+              </p>
+            )}
             {receipt && (
               <div role="status" className="space-y-2 text-sm text-primary">
                 <p>Pedido #{receipt.number} recebido pela loja.</p>
@@ -936,7 +945,7 @@ function Catalog() {
             )}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button
-              disabled={!online || sending || !items.length || (status.configured && !status.open)}
+              disabled={!online || sending || !items.length || orderingBlocked}
               onClick={send}
               className="h-12 w-full rounded-lg bg-whatsapp py-4 font-semibold text-whatsapp-foreground"
             >
