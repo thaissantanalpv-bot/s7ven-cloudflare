@@ -1,3 +1,6 @@
+# Alerta de estoque baixo (Thais, 16/10/2026 23:00 UTC)
+- [x] Mínimo por produto e por sabor (minStock, padrão sem alerta); painel mostra "Repor" por item, filtro "Estoque baixo" e cartão na tela inicial. 119 testes, tipos e build OK.
+
 # Cancelamento de pedidos (Thais, 16/10/2026 22:28 UTC)
 - [x] Registrar motivo obrigatório e devolver estoque uma única vez. Teste real: 2 combos/6 unidades de sabor restauraram estoques exatos 10/20/15; repetições simultâneas não duplicaram e reativação foi rejeitada.
 - [x] Painel e histórico conferidos após recarregar; 40 testes passaram, registros temporários removidos, catálogo HTTP 200 e build OK. Aguardando solicitação de publicação.
