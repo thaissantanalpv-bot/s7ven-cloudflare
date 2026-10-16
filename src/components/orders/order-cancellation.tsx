@@ -14,6 +14,9 @@ export function CancellationRecord({ order }: { order: Order }) {
     <p className="break-words">Motivo: {order.cancellation_reason}</p>
     <p className="text-muted-foreground">{notes.length ? "Devolução processada com pendências:" : "Itens devolvidos ao estoque uma única vez."}</p>
     {notes.length > 0 && <ul className="list-disc pl-5 text-muted-foreground">{notes.map((note, i) => <li key={i} className="break-words">{note}</li>)}</ul>}
+    <Button asChild variant="outline" size="sm" className="text-whatsapp">
+      <a href={orderWhatsApp(order)} target="_blank" rel="noopener noreferrer"><MessageCircle />Avisar o cliente no WhatsApp</a>
+    </Button>
   </div>;
 }
 
