@@ -183,6 +183,13 @@
       "when": 1792189812728,
       "tag": "0025_cancel_orders_restore_stock_once",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792189906998,
+      "tag": "0026_cancelled_order_tracking_sales_aggregates",
+      "breakpoints": true
     }
   ]
 }
