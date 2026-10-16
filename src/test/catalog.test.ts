@@ -70,3 +70,18 @@ describe("Shared catalog", () => {
     expect(available(product, "Inexistente")).toBe(false);
   });
 });
+describe("lowStockItems", () => {
+  const base = { active: true, stock: null, minStock: null, allowOther: false, variations: [], updatedAt: null } as const;
+  it("sinaliza produto no mínimo ou abaixo dele", () => {
+    const p = { ...base, id: "x", name: "Essência", stock: 3, minStock: 3 } as never;
+    expect(lowStockItems(p)).toEqual([{ label: "Essência", stock: 3, min: 3 }]);
+    expect(lowStockItems({ ...base, id: "x", name: "Essência", stock: 4, minStock: 3 } as never)).toEqual([]);
+  });
+  it("sinaliza variação no mínimo e ignora sem estoque controlado", () => {
+    const p = { ...base, id: "x", name: "Vape", variations: [{ name: "Uva", active: true, stock: 1, minStock: 2 }, { name: "Menta", active: true, stock: null, minStock: 5 }] } as never;
+    expect(lowStockItems(p)).toEqual([{ label: "Vape · Uva", stock: 1, min: 2 }]);
+  });
+  it("sem mínimo definido não gera alerta", () => {
+    expect(lowStockItems({ ...base, id: "x", name: "Seda", stock: 0, minStock: null } as never)).toEqual([]);
+  });
+});
