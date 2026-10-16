@@ -24,7 +24,7 @@
 # Impressão térmica de pedidos
 - [x] Adicionar ícone de impressão nos pedidos e configuração local de nome/papel 58 ou 80 mm.
 - [x] Verificar via do entregador com endereço, itens, pagamento e totais em pedido real do painel, sem alterar pedidos; pedido #7 conferido em 58 mm no celular e impressão nativa acionada.
-- [ ] Conectar e testar a impressora física: depende do modelo/conexão e do aparelho da loja.
+- [x] Conectar e testar a impressora física: B&G BG-01 (térmica 58 mm, Bluetooth) ligada ao aparelho da loja e conferida por Thais em 16/10/2026 22:08 UTC.
 
 # Publicação de 15/10/2026
 - [x] Publicar as correções pendentes (contagem por aparelho, entrega por endereço, combos até 100, loja fechada, esgotados, foto por variação, cards alinhados); a versão publicada mostrou 202 produtos, Destaques e Rua/Número/Bairro separados sem CEP.
@@ -206,4 +206,4 @@
 - [x] Motor trocado de osciladores para arquivo de áudio (public/sounds/new-order-alert.mp3), que funciona no celular; 10 testes passaram e build OK.
 - [x] Publicado em https://s7venlounge.shop.
 - [ ] Confirmar no celular da Thais: abrir s7venlounge.shop/painel na aba Pedidos, tocar na tela uma vez e ver o alerta tocar em loop com um pedido novo real.
-- [ ] Pendências que seguem abertas: conectar a impressora física (depende do modelo e do aparelho), conferir no aparelho a reabertura sem internet, confirmar a chegada do primeiro aviso real nos dois e-mails e recriar o atalho da tela inicial no celular para o ícone dourado.
+- [ ] Pendências que seguem abertas: conferir no aparelho a reabertura sem internet, confirmar a chegada do primeiro aviso real nos dois e-mails e recriar o atalho da tela inicial no celular para o ícone dourado.
