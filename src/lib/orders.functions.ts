@@ -74,6 +74,29 @@ export const submitOrder = createServerFn({ method: "POST" })
       }
       throw new Error("Não foi possível registrar o pedido. Seu carrinho foi mantido.");
     }
+    // Aviso por e-mail para a loja; falhas de envio nunca bloqueiam o pedido.
+    try {
+      const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+      await sendTemplateEmail("new-order", "", {
+        idempotencyKey: `new-order-${saved.id}`,
+        templateData: {
+          number: saved.number,
+          customerName: data.customer.name,
+          customerPhone: data.customer.phone,
+          fulfillment: data.customer.fulfillment,
+          address: data.customer.fulfillment === "pickup" ? "" : deliveryAddress(data.customer.address),
+          payment: data.customer.payment,
+          changeFor: data.customer.change,
+          notes: data.customer.notes,
+          items: priced.items,
+          subtotal: priced.subtotal,
+          deliveryFee: priced.delivery_fee,
+          total: priced.total,
+        },
+      });
+    } catch (emailError) {
+      console.error("Falha ao enviar aviso de novo pedido:", emailError);
+    }
     return { id: saved.id, number: saved.number };
   });
 export const listOrders = createServerFn({ method: "POST" })
