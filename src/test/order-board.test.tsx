@@ -135,7 +135,7 @@ describe("Kanban order management", () => {
     expect(screen.queryByText("Cliente teste")).not.toBeInTheDocument();
     expect(screen.getAllByText("Nenhum pedido")).toHaveLength(4);
   });
-  it("alerts and plays sound only for new orders after activation", async () => {
+  it("turns sound on automatically and keeps alerting new orders", async () => {
     const start = vi.fn();
     class TestAudio {
       state = "running";
@@ -149,21 +149,20 @@ describe("Kanban order management", () => {
     vi.stubGlobal("AudioContext", TestAudio);
     mount();
     await screen.findByText("Cliente teste");
-    expect(start).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Ativar som" }));
     await screen.findByRole("button", { name: "Som ativo" });
-    // Ativação (3) + alerta contínuo do pedido "received" já na tela (3)
-    expect(start).toHaveBeenCalledTimes(6);
+    // Alerta contínuo do pedido "received" já na tela, sem precisar clicar
+    await waitFor(() => expect(start).toHaveBeenCalledTimes(3));
+    start.mockClear();
     mocks.list.mockImplementation(async () => [row, { ...row, id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", number: 43 }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
     await screen.findByText("1 novo pedido recebido");
-    expect(start).toHaveBeenCalledTimes(9);
+    expect(start).toHaveBeenCalledTimes(3);
     // Ao aceitar o pedido (sai de "received"), o alerta contínuo para
     mocks.list.mockImplementation(async () => [{ ...row, status: "preparing" }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Saiu para entrega" })).toBeInTheDocument());
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(start).toHaveBeenCalledTimes(9);
+    expect(start).toHaveBeenCalledTimes(3);
     vi.unstubAllGlobals();
   });
 });

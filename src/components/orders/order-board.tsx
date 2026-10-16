@@ -45,7 +45,8 @@ export function OrderBoard() {
   });
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState("all");
-  const [sound, setSound] = useState(false);
+  const [sound, setSound] = useState(true);
+  const [audioReady, setAudioReady] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
@@ -72,25 +73,49 @@ export function OrderBoard() {
     });
   };
   const toggleSound = async () => {
-    if (sound) {
+    if (sound && audioReady) {
       setSound(false);
       return;
     }
     try {
       if (!audio.current) audio.current = new AudioContext();
       await audio.current.resume();
+      setAudioReady(audio.current.state === "running");
       setSound(true);
       beep();
     } catch {
       setError("Não foi possível ativar o som neste navegador.");
     }
   };
-  useEffect(
-    () => () => {
-      void audio.current?.close();
-    },
-    [],
-  );
+  useEffect(() => {
+    // Browsers only allow sound after a tap/click, so arm it on the first interaction anywhere.
+    let ctx: AudioContext | null = null;
+    try {
+      ctx = new AudioContext();
+      audio.current = ctx;
+    } catch {
+      return;
+    }
+    const arm = () => {
+      void ctx?.resume().then(() => {
+        if (ctx?.state === "running") {
+          setAudioReady(true);
+          remove();
+        }
+      });
+    };
+    const remove = () => {
+      window.removeEventListener("pointerdown", arm);
+      window.removeEventListener("keydown", arm);
+    };
+    window.addEventListener("pointerdown", arm);
+    window.addEventListener("keydown", arm);
+    arm();
+    return () => {
+      remove();
+      void ctx?.close();
+    };
+  }, []);
   useEffect(() => {
     if (!orders.data) return;
     const newOrders = seen.current ? orders.data.filter((o) => o.source !== "counter" && !seen.current?.has(o.id)) : [];
@@ -104,12 +129,12 @@ export function OrderBoard() {
   }, [orders.data, sound]);
   const hasNew = (orders.data ?? []).some((o) => o.source !== "counter" && o.status === "received");
   useEffect(() => {
-    if (!sound || !hasNew) return;
+    if (!sound || !audioReady || !hasNew) return;
     beep();
     const loop = setInterval(beep, 3000);
     return () => clearInterval(loop);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sound, hasNew]);
+  }, [sound, audioReady, hasNew]);
   const move = async (order: Order, status: OrderStatus) => {
     if (busy || order.status === status) return;
     setBusy(order.id);
@@ -176,12 +201,12 @@ export function OrderBoard() {
         <div className="flex gap-2">
           <OrderPrinting order={printOrder} onClose={() => setPrintOrder(null)} />
           <Button
-            variant={sound ? "secondary" : "outline"}
+            variant={sound && audioReady ? "secondary" : "outline"}
             onClick={toggleSound}
-            aria-pressed={sound}
+            aria-pressed={sound && audioReady}
           >
-            {sound ? <Volume2 /> : <VolumeX />}
-            {sound ? "Som ativo" : "Ativar som"}
+            {sound && audioReady ? <Volume2 /> : <VolumeX />}
+            {!sound ? "Ativar som" : audioReady ? "Som ativo" : "Toque na tela para ativar o som"}
           </Button>
           <Button
             variant="outline"
