@@ -66,6 +66,34 @@ const mount = () =>
     </QueryClientProvider>,
   );
 describe("Kanban order management", () => {
+  it("opens the matching WhatsApp message only after the new stage is saved", async () => {
+    const replace = vi.fn(), close = vi.fn();
+    const open = vi.spyOn(window, "open").mockReturnValue({ opener: null, location: { replace }, close } as unknown as Window);
+    let finish: (() => void) | undefined;
+    mocks.update.mockImplementationOnce(() => new Promise(resolve => { finish = () => { row.status = "preparing"; resolve({ saved: true }); }; }));
+    mount();
+    await screen.findByText("Cliente teste");
+    fireEvent.click(screen.getByRole("button", { name: "Em preparo e avisar pedido 42 no WhatsApp" }));
+    expect(replace).not.toHaveBeenCalled();
+    finish?.();
+    await waitFor(() => expect(replace).toHaveBeenCalledTimes(1));
+    expect(decodeURIComponent(replace.mock.calls[0]?.[0])).toContain("seu pedido está em preparo");
+    expect(row.status).toBe("preparing");
+    open.mockRestore();
+  });
+  it("never opens a stage message if the status write fails", async () => {
+    const replace = vi.fn(), close = vi.fn();
+    const open = vi.spyOn(window, "open").mockReturnValue({ opener: null, location: { replace }, close } as unknown as Window);
+    mocks.update.mockRejectedValueOnce(new Error("Falha ao salvar"));
+    mount();
+    await screen.findByText("Cliente teste");
+    fireEvent.click(screen.getByRole("button", { name: "Em preparo e avisar pedido 42 no WhatsApp" }));
+    await screen.findByRole("alert");
+    expect(replace).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledOnce();
+    expect(row.status).toBe("received");
+    open.mockRestore();
+  });
   it("requires a reason, persists cancellation and prevents a second action or reactivation", async () => {
     mount();
     await screen.findByText("Cliente teste");
