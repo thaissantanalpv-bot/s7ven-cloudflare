@@ -62,8 +62,8 @@ export const suggestDeliveryAddress = createServerFn({ method: "POST" })
       const main = prediction.structuredFormat?.mainText?.text?.trim() ?? "";
       const secondary = prediction.structuredFormat?.secondaryText?.text?.trim() ?? "";
       const numberMatch = main.match(/^(.*?)[,\s]+(\d{1,6}[a-zA-Z-]?)$/);
-      const street = (numberMatch ? numberMatch[1] : main).trim();
-      const number = numberMatch ? numberMatch[2] : "";
+      const street = (numberMatch?.[1] ?? main).trim();
+      const number = numberMatch?.[2] ?? "";
       const neighborhood = secondary.split(",")[0]?.replace(/-/g, " ").trim() ?? "";
       if (street) suggestions.push({ placeId: prediction.placeId, text, street, number, neighborhood });
       if (suggestions.length >= 5) break;
