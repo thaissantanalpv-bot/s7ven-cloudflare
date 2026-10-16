@@ -14,6 +14,20 @@ export function deliveryFieldsComplete(street: string, number: string) {
   return street.trim().length >= 2 && number.trim().length > 0;
 }
 
+const TRAILING_NUMBER = /^(.*?)[,\s]+(\d{1,6}[a-zA-Z-]?)$/;
+
+/** Splits the single "street and number" line the customer types. */
+export function splitAddressLine(line: string) {
+  const trimmed = line.trim().replace(/\s+/g, " ");
+  const found = TRAILING_NUMBER.exec(trimmed);
+  return found ? { street: found[1].trim(), number: found[2] } : { street: trimmed, number: "" };
+}
+
+export function joinAddressLine(street: string, number: string) {
+  return [street.trim(), number.trim()].filter(Boolean).join(", ");
+}
+
+
 export function deliveryAddress(address: string) {
   const trimmed = address.trim();
   const normalized = trimmed.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
