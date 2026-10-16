@@ -63,7 +63,7 @@
 - [x] Preparar abertura offline somente do catálogo público, sem cache de dados administrativos.
 - [x] Salvar produtos/configurações públicas e atualizar ao reconectar; manter pedidos online.
 - [x] Verificar consulta offline e reconexão no navegador com 195 produtos e 32 testes; registro corretamente desativado no preview.
-- [ ] Confirmar reabertura sem internet na versão publicada; já publicada em 15/10/2026, falta testar no aparelho.
+- [x] Confirmar reabertura sem internet na versão publicada: em 16/10/2026 o service worker não ativava (424 arquivos no precache, ~30 s de instalação); reduzido o precache aos arquivos de entrada com CacheFirst em /assets/ (vite.config.ts). Teste simulado no site publicado: worker controla em ~2 s e o catálogo reabre offline com o aviso "Sem conexão".
 
 # Fase 1
 - [x] Reformular o catálogo premium com referência visual TabaDega, preservando produtos, sabores, Pix e WhatsApp.
