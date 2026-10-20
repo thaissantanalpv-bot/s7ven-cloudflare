@@ -3,7 +3,7 @@ import { brazilPhoneSchema, normalizePhone } from "./phone";
 export { normalizePhone } from "./phone";
 import { PRODUCTS, PAYMENT_METHODS, STORE_NAME, type Product } from "./products";
 import { available, type CatalogProduct } from "./catalog";
-import type { StoreSettings } from "./store-settings";
+import { applyCoupon, type StoreSettings } from "./store-settings";
 import { comboSelectionsSchema, type ComboSelection } from "./combos";
 import { analyticsIdentitySchema } from "./catalog-analytics";
 export const ORDER_STAGES = [
