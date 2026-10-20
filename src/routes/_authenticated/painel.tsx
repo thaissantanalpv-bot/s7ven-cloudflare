@@ -24,6 +24,7 @@ import {
   Activity,
   Users,
   ShoppingCart,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -46,6 +47,7 @@ import { adminCatalogQuery } from "@/lib/catalog.query";
 import { getCatalogFunnel } from "@/lib/catalog-analytics.functions";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 import { lowStockItems } from "@/lib/catalog";
+import { AdminSettings } from "@/components/admin-settings";
 
 export const Route = createFileRoute("/_authenticated/painel")({ staticData: { sitemap: false },
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(adminCatalogQuery)]),
@@ -99,7 +101,7 @@ function Admin() {
       <main className="mx-auto max-w-7xl px-4 py-7 pb-28 sm:px-5 sm:py-10 sm:pb-28 md:pb-10">
         <p className="mb-2 text-xs uppercase text-primary">Área da loja</p>
         <h1 className="font-display text-3xl font-semibold">
-          {view === "home" ? "Minha loja" : view === "report" ? "Relatório de vendas" : view === "assistant" ? "Assistente da loja" : view === "analytics" ? "Movimento do catálogo" : view === "combos" ? "Combos" : view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : "Configurações"}
+          {view === "home" ? "Minha loja" : view === "report" ? "Relatório de vendas" : view === "assistant" ? "Assistente da loja" : view === "analytics" ? "Movimento do catálogo" : view === "combos" ? "Combos" : view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : view === "app-settings" ? "Configurações" : "Taxas e horários"}
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">S7VEN Lounge e Tabacaria.</p>
         {permission.isPending ? (
@@ -141,13 +143,20 @@ function Admin() {
               >
                 Taxas e horários
               </Button>
+              <Button
+                variant={view === "app-settings" ? "default" : "ghost"}
+                onClick={() => setView("app-settings")}
+              >
+                <Settings className="size-4" />
+                Configurações
+              </Button>
             </nav>
             {view === "home" ? (
               <>
                 <div className="md:hidden"><AdminHome onOpen={setView} /></div>
                 <div className="hidden md:block"><CatalogAnalytics /><SiteLinkCard /></div>
               </>
-            ) : view === "report" ? <SalesReport /> : view === "assistant" ? <AnalyticsAssistant /> : view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : <SettingsEditor initial={settings} />}
+            ) : view === "report" ? <SalesReport /> : view === "assistant" ? <AnalyticsAssistant /> : view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : view === "app-settings" ? <AdminSettings /> : <SettingsEditor initial={settings} />}
             <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background md:hidden" aria-label="Navegação do aplicativo">
               {[
                 { id: "home", label: "Início", Icon: Home },
@@ -155,14 +164,14 @@ function Admin() {
                 { id: "pos", label: "Caixa", Icon: Receipt },
                 { id: "products", label: "Produtos", Icon: Package },
               ].map(({ id, label, Icon }) => <Button key={id} variant="ghost" aria-current={view === id ? "page" : undefined} className={`h-16 min-w-0 flex-col gap-1 rounded-none px-1 text-[11px] ${view === id ? "text-primary" : "text-muted-foreground"}`} onClick={() => setView(id)}><Icon className="size-5" />{label}</Button>)}
-              <Button variant="ghost" className={`h-16 flex-col gap-1 rounded-none px-1 text-[11px] ${["assistant", "combos", "history", "report", "settings"].includes(view) ? "text-primary" : "text-muted-foreground"}`} onClick={() => setMenuOpen(true)}><Menu className="size-5" />Menu</Button>
+              <Button variant="ghost" className={`h-16 flex-col gap-1 rounded-none px-1 text-[11px] ${["assistant", "combos", "history", "report", "settings", "app-settings"].includes(view) ? "text-primary" : "text-muted-foreground"}`} onClick={() => setMenuOpen(true)}><Menu className="size-5" />Menu</Button>
             </nav>
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetContent side="bottom" className="mx-auto max-w-lg pb-8">
                 <SheetTitle>Minha loja</SheetTitle>
                 <SheetDescription className="mt-2">S7VEN Lounge e Tabacaria</SheetDescription>
                 <div className="mt-6 grid gap-2">
-                  {[{ id: "report", label: "Relatório de vendas", Icon: Receipt }, { id: "assistant", label: "Assistente", Icon: MessageCircle }, { id: "combos", label: "Combos", Icon: Layers }, { id: "history", label: "Histórico de vendas", Icon: History }, { id: "settings", label: "Taxas e horários", Icon: Clock }].map(({ id, label, Icon }) => <Button key={id} variant="ghost" className="h-14 justify-start border-b" onClick={() => { setView(id); setMenuOpen(false); }}><Icon className="text-primary" />{label}<ChevronRight className="ml-auto" /></Button>)}
+                  {[{ id: "app-settings", label: "Configurações (Sons & Alertas)", Icon: Settings }, { id: "report", label: "Relatório de vendas", Icon: Receipt }, { id: "assistant", label: "Assistente", Icon: MessageCircle }, { id: "combos", label: "Combos", Icon: Layers }, { id: "history", label: "Histórico de vendas", Icon: History }, { id: "settings", label: "Taxas e horários", Icon: Clock }].map(({ id, label, Icon }) => <Button key={id} variant="ghost" className="h-14 justify-start border-b" onClick={() => { setView(id); setMenuOpen(false); }}><Icon className="text-primary" />{label}<ChevronRight className="ml-auto" /></Button>)}
                 </div>
               </SheetContent>
             </Sheet>
