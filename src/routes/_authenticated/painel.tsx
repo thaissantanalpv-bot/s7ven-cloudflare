@@ -25,6 +25,7 @@ import {
   Users,
   ShoppingCart,
   Settings,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -50,6 +51,7 @@ import { lowStockItems } from "@/lib/catalog";
 import { AdminSettings } from "@/components/admin-settings";
 
 export const Route = createFileRoute("/_authenticated/painel")({ staticData: { sitemap: false },
+
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(adminCatalogQuery)]),
   head: () => ({
     meta: [
@@ -70,12 +72,89 @@ export const Route = createFileRoute("/_authenticated/painel")({ staticData: { s
   }),
   component: Admin,
 });
+
+type ViewId = "home" | "analytics" | "assistant" | "orders" | "products" | "combos" | "pos" | "report" | "history" | "settings" | "app-settings" | "order-tracking";
+
 function Admin() {
-  const [view, setView] = useState("home");
+  const [view, setView] = useState<ViewId>("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const check = useServerFn(checkStoreAdmin);
   const permission = useQuery({ queryKey: ["store-admin"], queryFn: () => check(), retry: false });
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
+
+  const viewTitle: Record<ViewId, string> = {
+    home: "Minha loja",
+    report: "Relatório de vendas",
+    assistant: "Assistente da loja",
+    analytics: "Movimento do catálogo",
+    combos: "Combos",
+    pos: "Frente de caixa",
+    history: "Histórico de vendas",
+    orders: "Pedidos",
+    products: "Produtos e estoque",
+    "app-settings": "Configurações (Banner, Cupons, Sons)",
+    "order-tracking": "Acompanhamento de pedidos",
+    settings: "Taxas e horários",
+  };
+
+  const sidebarItems: { id: ViewId; label: string; Icon: typeof Home; color: string }[] = [
+    { id: "analytics", label: "Movimento", Icon: Activity, color: "text-emerald-400" },
+    { id: "assistant", label: "Assistente", Icon: MessageCircle, color: "text-violet-400" },
+    { id: "orders", label: "Pedidos", Icon: ShoppingBag, color: "text-orange-400" },
+    { id: "order-tracking", label: "Acompanhamento", Icon: Eye, color: "text-cyan-400" },
+    { id: "products", label: "Produtos", Icon: Package, color: "text-sky-400" },
+
+    { id: "combos", label: "Combos", Icon: Layers, color: "text-pink-400" },
+    { id: "pos", label: "Caixa / Balcão", Icon: Receipt, color: "text-yellow-400" },
+    { id: "report", label: "Relatório", Icon: Receipt, color: "text-teal-400" },
+    { id: "history", label: "Histórico", Icon: History, color: "text-indigo-400" },
+    { id: "settings", label: "Taxas e horários", Icon: Clock, color: "text-amber-400" },
+    { id: "app-settings", label: "Configurações", Icon: Settings, color: "text-slate-400" },
+  ];
+
+  const mobileMenuItems: { id: ViewId; label: string; Icon: typeof Home }[] = [
+    { id: "app-settings", label: "Configurações (Banner, Cupons, Sons)", Icon: Settings },
+    { id: "order-tracking", label: "Acompanhamento de pedidos", Icon: Eye },
+    { id: "analytics", label: "Movimento do catálogo", Icon: Activity },
+    { id: "report", label: "Relatório de vendas", Icon: Receipt },
+    { id: "assistant", label: "Assistente", Icon: MessageCircle },
+    { id: "combos", label: "Combos", Icon: Layers },
+    { id: "history", label: "Histórico de vendas", Icon: History },
+    { id: "settings", label: "Taxas e horários", Icon: Clock },
+  ];
+
+  const mobileMenuIds = mobileMenuItems.map((i) => i.id);
+
+  function renderView(v: ViewId) {
+    switch (v) {
+      case "home":
+      case "analytics":
+        return <><CatalogAnalytics /><SiteLinkCard /></>;
+      case "report":
+        return <SalesReport />;
+      case "assistant":
+        return <AnalyticsAssistant />;
+      case "combos":
+        return <ProductManager key="combos" combos />;
+      case "pos":
+        return <PointOfSale />;
+      case "history":
+        return <SalesHistory />;
+      case "orders":
+        return <OrderBoard />;
+      case "products":
+        return <ProductManager key="products" />;
+      case "app-settings":
+        return <AdminSettings />;
+      case "order-tracking":
+        return <OrderBoard />;
+      case "settings":
+        return <SettingsEditor initial={settings} />;
+      default:
+        return <SettingsEditor initial={settings} />;
+    }
+  }
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
@@ -100,9 +179,7 @@ function Admin() {
       </header>
       <main className="mx-auto max-w-7xl px-4 py-7 pb-28 sm:px-5 sm:py-10 sm:pb-28 md:pb-10">
         <p className="mb-2 text-xs uppercase text-primary">Área da loja</p>
-        <h1 className="font-display text-3xl font-semibold">
-          {view === "home" ? "Minha loja" : view === "report" ? "Relatório de vendas" : view === "assistant" ? "Assistente da loja" : view === "analytics" ? "Movimento do catálogo" : view === "combos" ? "Combos" : view === "pos" ? "Frente de caixa" : view === "history" ? "Histórico de vendas" : view === "orders" ? "Pedidos" : view === "products" ? "Produtos e estoque" : view === "app-settings" ? "Configurações" : "Taxas e horários"}
-        </h1>
+        <h1 className="font-display text-3xl font-semibold">{viewTitle[view]}</h1>
         <p className="mt-3 text-sm text-muted-foreground">S7VEN Lounge e Tabacaria.</p>
         {permission.isPending ? (
           <p className="py-12 text-muted-foreground">Conferindo seu acesso…</p>
@@ -125,18 +202,7 @@ function Admin() {
           <>
             <div className="mt-7 hidden gap-6 md:flex">
               <nav className="admin-sidebar w-56 shrink-0 space-y-1 rounded-xl border bg-card p-3" aria-label="Painel da loja">
-                {([
-                  { id: "analytics", label: "Movimento", Icon: Activity, color: "text-emerald-400" },
-                  { id: "assistant", label: "Assistente", Icon: MessageCircle, color: "text-violet-400" },
-                  { id: "orders", label: "Pedidos", Icon: ShoppingBag, color: "text-orange-400" },
-                  { id: "products", label: "Produtos", Icon: Package, color: "text-sky-400" },
-                  { id: "combos", label: "Combos", Icon: Layers, color: "text-pink-400" },
-                  { id: "pos", label: "Caixa / Balcão", Icon: Receipt, color: "text-yellow-400" },
-                  { id: "report", label: "Relatório", Icon: Receipt, color: "text-teal-400" },
-                  { id: "history", label: "Histórico", Icon: History, color: "text-indigo-400" },
-                  { id: "settings", label: "Taxas e horários", Icon: Clock, color: "text-amber-400" },
-                  { id: "app-settings", label: "Configurações", Icon: Settings, color: "text-slate-400" },
-                ] as const).map(({ id, label, Icon, color }) => (
+                {sidebarItems.map(({ id, label, Icon, color }) => (
                   <button
                     key={id}
                     type="button"
@@ -152,27 +218,27 @@ function Admin() {
                 ))}
               </nav>
               <div className="min-w-0 flex-1">
-                {view === "home" || view === "analytics" ? <><CatalogAnalytics /><SiteLinkCard /></> : view === "report" ? <SalesReport /> : view === "assistant" ? <AnalyticsAssistant /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : view === "app-settings" ? <AdminSettings /> : <SettingsEditor initial={settings} />}
+                {renderView(view)}
               </div>
             </div>
             <div className="md:hidden">
-              {view === "home" ? <AdminHome onOpen={setView} /> : view === "report" ? <SalesReport /> : view === "assistant" ? <AnalyticsAssistant /> : view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : view === "app-settings" ? <AdminSettings /> : <SettingsEditor initial={settings} />}
+              {view === "home" ? <AdminHome onOpen={(v) => setView(v as ViewId)} /> : renderView(view)}
             </div>
             <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background md:hidden" aria-label="Navegação do aplicativo">
-              {[
-                { id: "home", label: "Início", Icon: Home },
-                { id: "orders", label: "Pedidos", Icon: ShoppingBag },
-                { id: "pos", label: "Caixa", Icon: Receipt },
-                { id: "products", label: "Produtos", Icon: Package },
-              ].map(({ id, label, Icon }) => <Button key={id} variant="ghost" aria-current={view === id ? "page" : undefined} className={`h-16 min-w-0 flex-col gap-1 rounded-none px-1 text-[11px] ${view === id ? "text-primary" : "text-muted-foreground"}`} onClick={() => setView(id)}><Icon className="size-5" />{label}</Button>)}
-              <Button variant="ghost" className={`h-16 flex-col gap-1 rounded-none px-1 text-[11px] ${["assistant", "combos", "history", "report", "settings", "app-settings"].includes(view) ? "text-primary" : "text-muted-foreground"}`} onClick={() => setMenuOpen(true)}><Menu className="size-5" />Menu</Button>
+              {([
+                { id: "home" as ViewId, label: "Início", Icon: Home },
+                { id: "orders" as ViewId, label: "Pedidos", Icon: ShoppingBag },
+                { id: "pos" as ViewId, label: "Caixa", Icon: Receipt },
+                { id: "products" as ViewId, label: "Produtos", Icon: Package },
+              ]).map(({ id, label, Icon }) => <Button key={id} variant="ghost" aria-current={view === id ? "page" : undefined} className={`h-16 min-w-0 flex-col gap-1 rounded-none px-1 text-[11px] ${view === id ? "text-primary" : "text-muted-foreground"}`} onClick={() => setView(id)}><Icon className="size-5" />{label}</Button>)}
+              <Button variant="ghost" className={`h-16 flex-col gap-1 rounded-none px-1 text-[11px] ${mobileMenuIds.includes(view) ? "text-primary" : "text-muted-foreground"}`} onClick={() => setMenuOpen(true)}><Menu className="size-5" />Menu</Button>
             </nav>
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetContent side="bottom" className="mx-auto max-w-lg pb-8">
                 <SheetTitle>Minha loja</SheetTitle>
                 <SheetDescription className="mt-2">S7VEN Lounge e Tabacaria</SheetDescription>
                 <div className="mt-6 grid gap-2">
-                  {[{ id: "app-settings", label: "Configurações (Sons & Alertas)", Icon: Settings }, { id: "report", label: "Relatório de vendas", Icon: Receipt }, { id: "assistant", label: "Assistente", Icon: MessageCircle }, { id: "combos", label: "Combos", Icon: Layers }, { id: "history", label: "Histórico de vendas", Icon: History }, { id: "settings", label: "Taxas e horários", Icon: Clock }].map(({ id, label, Icon }) => <Button key={id} variant="ghost" className="h-14 justify-start border-b" onClick={() => { setView(id); setMenuOpen(false); }}><Icon className="text-primary" />{label}<ChevronRight className="ml-auto" /></Button>)}
+                  {mobileMenuItems.map(({ id, label, Icon }) => <Button key={id} variant="ghost" className="h-14 justify-start border-b" onClick={() => { setView(id); setMenuOpen(false); }}><Icon className="text-primary" />{label}<ChevronRight className="ml-auto" /></Button>)}
                 </div>
               </SheetContent>
             </Sheet>

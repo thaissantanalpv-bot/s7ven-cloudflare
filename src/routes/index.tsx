@@ -36,6 +36,7 @@ import { available, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
 import { ProductCardPhotos } from "@/components/products/product-card-photos";
 import { ComboBuilder } from "@/components/products/combo-builder";
+import { OrderTrackingStatus } from "@/components/orders/order-tracking-modal";
 import { comboOption, parseComboOption, comboSummary, type ComboSelection } from "@/lib/combos";
 import {
   PAYMENT_METHODS,
@@ -462,6 +463,8 @@ function Catalog() {
       setReceipt({ id: saved.id, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery });
       setCart({});
       setAttempt(null);
+      setAppliedCoupon(null);
+      setCouponInput("");
       if (popup) popup.location.href = url;
     } catch (e) {
       popup?.close();
