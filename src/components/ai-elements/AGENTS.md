@@ -1,0 +1,1 @@
+- Do not load the Streamdown mermaid plugin here; its bundled graphlib chunk crashes the production admin panel with a blank screen.
