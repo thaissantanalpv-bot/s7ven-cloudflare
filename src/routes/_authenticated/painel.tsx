@@ -123,40 +123,41 @@ function Admin() {
           </div>
         ) : (
           <>
-            <nav className="mt-7 hidden flex-wrap gap-2 border-b pb-3 md:flex" aria-label="Painel da loja">
-              <Button variant={view === "analytics" ? "default" : "ghost"} onClick={() => setView("analytics")}>Movimento do catálogo</Button>
-              <Button variant={view === "assistant" ? "default" : "ghost"} onClick={() => setView("assistant")}><MessageCircle />Assistente</Button>
-              <Button variant={view === "pos" ? "default" : "ghost"} onClick={() => setView("pos")}>Caixa / Balcão</Button>
-              <Button variant={view === "report" ? "default" : "ghost"} onClick={() => setView("report")}>Relatório de vendas</Button>
-              <Button variant={view === "history" ? "default" : "ghost"} onClick={() => setView("history")}>Histórico de vendas</Button>
-              <Button
-                variant={view === "orders" ? "default" : "ghost"}
-                onClick={() => setView("orders")}
-              >
-                Pedidos
-              </Button>
-              <Button variant={view === "products" ? "default" : "ghost"} onClick={() => setView("products")}>Produtos e estoque</Button>
-              <Button variant={view === "combos" ? "default" : "ghost"} onClick={() => setView("combos")}>Combos</Button>
-              <Button
-                variant={view === "settings" ? "default" : "ghost"}
-                onClick={() => setView("settings")}
-              >
-                Taxas e horários
-              </Button>
-              <Button
-                variant={view === "app-settings" ? "default" : "ghost"}
-                onClick={() => setView("app-settings")}
-              >
-                <Settings className="size-4" />
-                Configurações
-              </Button>
-            </nav>
-            {view === "home" ? (
-              <>
-                <div className="md:hidden"><AdminHome onOpen={setView} /></div>
-                <div className="hidden md:block"><CatalogAnalytics /><SiteLinkCard /></div>
-              </>
-            ) : view === "report" ? <SalesReport /> : view === "assistant" ? <AnalyticsAssistant /> : view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : view === "app-settings" ? <AdminSettings /> : <SettingsEditor initial={settings} />}
+            <div className="mt-7 hidden gap-6 md:flex">
+              <nav className="admin-sidebar w-56 shrink-0 space-y-1 rounded-xl border bg-card p-3" aria-label="Painel da loja">
+                {([
+                  { id: "analytics", label: "Movimento", Icon: Activity, color: "text-emerald-400" },
+                  { id: "assistant", label: "Assistente", Icon: MessageCircle, color: "text-violet-400" },
+                  { id: "orders", label: "Pedidos", Icon: ShoppingBag, color: "text-orange-400" },
+                  { id: "products", label: "Produtos", Icon: Package, color: "text-sky-400" },
+                  { id: "combos", label: "Combos", Icon: Layers, color: "text-pink-400" },
+                  { id: "pos", label: "Caixa / Balcão", Icon: Receipt, color: "text-yellow-400" },
+                  { id: "report", label: "Relatório", Icon: Receipt, color: "text-teal-400" },
+                  { id: "history", label: "Histórico", Icon: History, color: "text-indigo-400" },
+                  { id: "settings", label: "Taxas e horários", Icon: Clock, color: "text-amber-400" },
+                  { id: "app-settings", label: "Configurações", Icon: Settings, color: "text-slate-400" },
+                ] as const).map(({ id, label, Icon, color }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-current={view === id ? "page" : undefined}
+                    onClick={() => setView(id)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
+                      view === id ? "bg-primary/15 font-semibold text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className={`size-5 shrink-0 ${view === id ? "text-primary" : color}`} />
+                    {label}
+                  </button>
+                ))}
+              </nav>
+              <div className="min-w-0 flex-1">
+                {view === "home" || view === "analytics" ? <><CatalogAnalytics /><SiteLinkCard /></> : view === "report" ? <SalesReport /> : view === "assistant" ? <AnalyticsAssistant /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : view === "app-settings" ? <AdminSettings /> : <SettingsEditor initial={settings} />}
+              </div>
+            </div>
+            <div className="md:hidden">
+              {view === "home" ? <AdminHome onOpen={setView} /> : view === "report" ? <SalesReport /> : view === "assistant" ? <AnalyticsAssistant /> : view === "analytics" ? <CatalogAnalytics /> : view === "combos" ? <ProductManager key="combos" combos /> : view === "pos" ? <PointOfSale /> : view === "history" ? <SalesHistory /> : view === "orders" ? <OrderBoard /> : view === "products" ? <ProductManager key="products" /> : view === "app-settings" ? <AdminSettings /> : <SettingsEditor initial={settings} />}
+            </div>
             <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background md:hidden" aria-label="Navegação do aplicativo">
               {[
                 { id: "home", label: "Início", Icon: Home },
