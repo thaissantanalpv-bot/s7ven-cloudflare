@@ -73,7 +73,7 @@ export const Route = createFileRoute("/_authenticated/painel")({ staticData: { s
   component: Admin,
 });
 
-type ViewId = "home" | "analytics" | "assistant" | "orders" | "products" | "combos" | "pos" | "report" | "history" | "settings" | "app-settings" | "order-tracking";
+type ViewId = "home" | "analytics" | "assistant" | "orders" | "products" | "combos" | "pos" | "report" | "history" | "settings" | "app-settings";
 
 function Admin() {
   const [view, setView] = useState<ViewId>("home");
@@ -90,10 +90,9 @@ function Admin() {
     combos: "Combos",
     pos: "Frente de caixa",
     history: "Histórico de vendas",
-    orders: "Pedidos",
+    orders: "Pedidos e Acompanhamento",
     products: "Produtos e estoque",
     "app-settings": "Configurações (Banner, Cupons, Sons)",
-    "order-tracking": "Acompanhamento de pedidos",
     settings: "Taxas e horários",
   };
 
@@ -101,7 +100,6 @@ function Admin() {
     { id: "analytics", label: "Movimento", Icon: Activity, color: "text-emerald-400" },
     { id: "assistant", label: "Assistente", Icon: MessageCircle, color: "text-violet-400" },
     { id: "orders", label: "Pedidos", Icon: ShoppingBag, color: "text-orange-400" },
-    { id: "order-tracking", label: "Acompanhamento", Icon: Eye, color: "text-cyan-400" },
     { id: "products", label: "Produtos", Icon: Package, color: "text-sky-400" },
 
     { id: "combos", label: "Combos", Icon: Layers, color: "text-pink-400" },
@@ -114,7 +112,6 @@ function Admin() {
 
   const mobileMenuItems: { id: ViewId; label: string; Icon: typeof Home }[] = [
     { id: "app-settings", label: "Configurações (Banner, Cupons, Sons)", Icon: Settings },
-    { id: "order-tracking", label: "Acompanhamento de pedidos", Icon: Eye },
     { id: "analytics", label: "Movimento do catálogo", Icon: Activity },
     { id: "report", label: "Relatório de vendas", Icon: Receipt },
     { id: "assistant", label: "Assistente", Icon: MessageCircle },
@@ -146,8 +143,6 @@ function Admin() {
         return <ProductManager key="products" />;
       case "app-settings":
         return <AdminSettings />;
-      case "order-tracking":
-        return <OrderBoard />;
       case "settings":
         return <SettingsEditor initial={settings} />;
       default:
