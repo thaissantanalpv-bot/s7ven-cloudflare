@@ -15,6 +15,12 @@ import {
   ChevronRight,
   Star,
   Navigation,
+  Heart,
+  Share2,
+  RotateCcw,
+  QrCode,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -158,13 +164,13 @@ function Catalog() {
   const autoQuote = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
-  const [receipt, setReceipt] = useState<{ id: string; requestId: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
+  const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
   const trackOrder = useServerFn(orderTracking);
   const tracking = useQuery({
     queryKey: ["order-tracking", receipt?.id],
     queryFn: () => {
       if (!receipt) throw new Error("Pedido não encontrado.");
-      return trackOrder({ data: { id: receipt.id, requestId: receipt.requestId } });
+      return trackOrder({ data: { id: receipt.id } });
     },
     enabled: Boolean(receipt),
     refetchInterval: (q) => (["delivered", "cancelled"].includes(q.state.data?.status ?? "") ? false : 30000),
@@ -214,6 +220,26 @@ function Catalog() {
   const [couponError, setCouponError] = useState("");
   const [building, setBuilding] = useState<CatalogProduct | null>(null);
   const [sharedProduct, setSharedProduct] = useState<CatalogProduct | null>(null);
+  const [qrModalProduct, setQrModalProduct] = useState<CatalogProduct | null>(null);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem("s7ven-favorites") || "[]"); } catch { return []; }
+  });
+  const [orderHistory, setOrderHistory] = useState<any[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem("s7ven-order-history") || "[]"); } catch { return []; }
+  });
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [filterFavorites, setFilterFavorites] = useState(false);
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => {
+      const next = prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId];
+      try { localStorage.setItem("s7ven-favorites", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+
   useEffect(() => {
     const id = new URL(window.location.href).searchParams.get("produto");
     if (id) setSharedProduct(products.find(p => p.id === id) ?? null);
@@ -429,7 +455,7 @@ function Catalog() {
     const d = r.data;
     const requestId = attempt?.signature === JSON.stringify({ customer: d, items: inputItems }) ? attempt.id : crypto.randomUUID();
     const analytics = readAnalyticsIdentity();
-    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems, analytics, couponCode: couponResult && appliedCoupon ? appliedCoupon.code : undefined, deliveryQuoteId: isDelivery && distanceMode ? validQuote?.id : undefined, deliveryToken: isDelivery && distanceMode && deliveryToken.current ? deliveryToken.current : undefined });
+    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems, analytics, deliveryQuoteId: isDelivery && distanceMode ? validQuote?.id : undefined, deliveryToken: isDelivery && distanceMode && deliveryToken.current ? deliveryToken.current : undefined });
     if (!validated.success) return setError("Confira os produtos e as quantidades do carrinho antes de enviar.");
     const lines = [
       `*Novo pedido — ${STORE_NAME}*`,
@@ -460,7 +486,13 @@ function Catalog() {
     try {
       const saved = await registerOrder({ data: validated.data });
       const url = checkoutWhatsApp(saved.number, lines, d.phone, couponResult && appliedCoupon ? { code: appliedCoupon.code, discount: couponResult.discount } : null);
-      setReceipt({ id: saved.id, requestId: validated.data.requestId, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery });
+      setReceipt({ id: saved.id, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery });
+      try {
+        const historyEntry = { id: saved.id, number: saved.number, date: new Date().toISOString(), total, items: inputItems, summary: items.map(i => `${i.qty}x ${i.product.name}`).join(", ") };
+        const updatedHistory = [historyEntry, ...orderHistory.slice(0, 19)];
+        setOrderHistory(updatedHistory);
+        localStorage.setItem("s7ven-order-history", JSON.stringify(updatedHistory));
+      } catch {}
       setCart({});
       setAttempt(null);
       setAppliedCoupon(null);
@@ -486,6 +518,74 @@ function Catalog() {
           ) : settings.promoBanner.text}
         </div>
       )}
+      {/* Reorder / Repeat Order Modal */}
+      <Sheet open={showHistoryModal} onOpenChange={setShowHistoryModal}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          <SheetTitle>Meus Pedidos Anteriores</SheetTitle>
+          <SheetDescription>Repita um pedido favorito em 1 clique sem precisar procurar item por item.</SheetDescription>
+          <div className="mt-4 space-y-4">
+            {orderHistory.length === 0 ? (
+              <p className="py-12 text-center text-sm text-muted-foreground">Você ainda não realizou pedidos neste dispositivo.</p>
+            ) : (
+              orderHistory.map((h, i) => (
+                <div key={h.id || i} className="rounded-lg border p-4 space-y-2 bg-card">
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <span className="font-mono font-bold text-foreground">Pedido #{h.number}</span>
+                    <span>{new Date(h.date).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{h.summary}</p>
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <span className="font-bold text-sm text-primary">{brl(h.total)}</span>
+                    <Button size="sm" onClick={() => {
+                      const newCart: Cart = { ...cart };
+                      h.items.forEach((it: any) => {
+                        const k = keyOf(it.productId, it.option);
+                        newCart[k] = (newCart[k] || 0) + it.qty;
+                      });
+                      setCart(newCart);
+                      setShowHistoryModal(false);
+                      setOpen(true);
+                    }}><RotateCcw className="size-3.5" /> Repetir pedido</Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Individual Product Share & QR Code Modal */}
+      {qrModalProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setQrModalProduct(null)}>
+          <div className="w-full max-w-sm rounded-xl border bg-background p-6 shadow-xl space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-semibold text-base line-clamp-1">{qrModalProduct.name}</h3>
+                <p className="text-xs text-muted-foreground">Compartilhe link direto ou QR Code no impresso</p>
+              </div>
+              <Button variant="ghost" size="icon" className="size-7" onClick={() => setQrModalProduct(null)}><X className="size-4" /></Button>
+            </div>
+            <div className="flex justify-center p-4 bg-white rounded-lg">
+              <QRCodeSVG value={`${window.location.origin}/?produto=${encodeURIComponent(qrModalProduct.id)}`} size={180} level="M" includeMargin />
+            </div>
+            <div className="space-y-2">
+              <Button className="w-full" onClick={() => {
+                const shareUrl = `${window.location.origin}/?produto=${encodeURIComponent(qrModalProduct.id)}`;
+                if (navigator.share) {
+                  navigator.share({ title: qrModalProduct.name, url: shareUrl }).catch(() => {});
+                } else {
+                  copy(shareUrl, "link");
+                }
+              }}><Share2 className="size-4" /> {copied === "link" ? "Link copiado!" : "Copiar Link / Compartilhar"}</Button>
+              <Button variant="outline" className="w-full" onClick={() => {
+                const msg = `Confira ${qrModalProduct.name} na ${STORE_NAME}: ${window.location.origin}/?produto=${encodeURIComponent(qrModalProduct.id)}`;
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, "_blank");
+              }}><MessageCircle className="size-4 text-whatsapp" /> Enviar no WhatsApp</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur-lg">
         <div className="mx-auto grid max-w-7xl grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-4 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:px-8">
           <span aria-hidden className="sm:hidden" />
@@ -584,6 +684,9 @@ function Catalog() {
             <ShoppingBag className="size-4 text-primary" />
             Pix, cartão ou dinheiro
           </span>
+          <button type="button" onClick={() => setShowHistoryModal(true)} className="flex items-center gap-1.5 text-primary hover:underline cursor-pointer">
+            <RotateCcw className="size-3.5" /> Meus pedidos / Repetir compra
+          </button>
         </div>
       </section>
       {cat === "Todos" && !query.trim() && featured.length > 0 && <section aria-label="Produtos em destaque" className="mx-auto max-w-7xl border-b px-4 py-5 sm:px-8">
@@ -593,9 +696,12 @@ function Catalog() {
         </div>
       </section>}
       <section className="mx-auto max-w-7xl px-4 py-5 sm:px-8 sm:py-7">
-        <nav aria-label="Categorias" className="no-scrollbar mb-5 flex gap-2 overflow-x-auto pb-2">
+                <nav aria-label="Categorias" className="no-scrollbar mb-5 flex gap-2 overflow-x-auto pb-2">
+          <Button variant={filterFavorites ? "default" : "secondary"} onClick={() => { setFilterFavorites(!filterFavorites); if (!filterFavorites) setCat("Todos"); }} className="h-10 shrink-0 rounded-full px-5 text-destructive font-semibold">
+            <Heart className={`size-4 fill-current mr-1.5`} /> Favoritos ({favorites.length})
+          </Button>
           {categories.map((c) => (
-            <Button key={c} variant={cat === c ? "default" : "secondary"} onClick={() => setCat(c)} className="h-10 shrink-0 rounded-full px-5" aria-pressed={cat === c}>
+            <Button key={c} variant={!filterFavorites && cat === c ? "default" : "secondary"} onClick={() => { setCat(c); setFilterFavorites(false); }} className="h-10 shrink-0 rounded-full px-5" aria-pressed={!filterFavorites && cat === c}>
               {c.replace("Narguiles > ", "")}
             </Button>
           ))}
@@ -916,29 +1022,6 @@ function Catalog() {
                   : "A confirmar"}
               </span>
             </div>
-            {items.length > 0 && settings.coupons.some(c => c.active) && (
-              <div className="space-y-1">
-                {appliedCoupon ? (
-                  <div className="flex items-center justify-between text-sm text-primary">
-                    <span>Cupom {appliedCoupon.code} ({couponResult?.label ?? appliedCoupon.label})</span>
-                    <span className="flex items-center gap-2">−{brl(displayedCouponDiscount)}
-                      <button type="button" className="text-xs underline" onClick={() => { setAppliedCoupon(null); setCouponInput(""); }}>remover</button>
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <input aria-label="Cupom de desconto" placeholder="Cupom de desconto" value={couponInput} onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(""); }} className="h-9 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm uppercase" />
-                    <button type="button" className="h-9 rounded-md border px-3 text-sm font-medium" onClick={() => {
-                      const r = applyCoupon(settings, couponInput, subtotal);
-                      if (!r) return setCouponError("Cupom inválido ou pedido abaixo do mínimo.");
-                      setAppliedCoupon({ code: couponInput.trim().toUpperCase(), discount: r.discount, label: r.label });
-                    }}>Aplicar</button>
-                  </div>
-                )}
-                {couponError && <p className="text-xs text-destructive">{couponError}</p>}
-                {appliedCoupon && !couponResult && <p className="text-xs text-destructive">O pedido ficou abaixo do mínimo do cupom.</p>}
-              </div>
-            )}
             <div className="flex justify-between text-lg">
               <span>{isDelivery && distanceMode && !validQuote && items.length ? "Total dos produtos" : "Total"}</span>
               <span className="font-display font-semibold">{brl(displayedTotal)}</span>
