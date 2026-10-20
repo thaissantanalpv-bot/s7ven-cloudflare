@@ -141,6 +141,13 @@ body:has(.catalog-theme) [role="dialog"] select {
 @media (min-width: 768px) {
   .admin-save-bar { bottom: 0; }
 }
+.admin-sidebar {
+  position: sticky;
+  top: 6rem;
+  align-self: start;
+  max-height: calc(100dvh - 7rem);
+  overflow-y: auto;
+}
 
 .receipt-preview { height: 360px; border: 0; background: var(--receipt-paper); }
 .receipt-preview-58 { width: 54mm; max-width: 100%; }
