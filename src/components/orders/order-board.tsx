@@ -32,6 +32,7 @@ const time = (value: string) =>
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+
 export function OrderBoard() {
   const fetchOrders = useServerFn(listOrders);
   const update = useServerFn(updateOrderStatus);
@@ -57,8 +58,8 @@ export function OrderBoard() {
   const [pendingMessage, setPendingMessage] = useState<Order | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   const seen = useRef<Set<string> | null>(null);
+
   const unlock = () => {
-    // O navegador só libera som depois de um toque na tela; desbloqueia no primeiro toque.
     const el = audio.current;
     if (!el || audioReady) return;
     el.muted = true;
@@ -77,6 +78,7 @@ export function OrderBoard() {
       el.muted = false;
     }
   };
+
   const toggleSound = () => {
     if (sound && audioReady) {
       setSound(false);
@@ -85,15 +87,14 @@ export function OrderBoard() {
     setSound(true);
     unlock();
   };
+
   useEffect(() => {
-    // O alerta usa um arquivo de áudio em loop (não osciladores): funciona melhor
-    // no celular, continua tocando com a aba em segundo plano e no volume máximo.
     const el = new Audio("/sounds/new-order-alert.mp3");
     el.loop = true;
     el.volume = 1;
     el.preload = "auto";
     audio.current = el;
-    unlock(); // pode já estar liberado (ex.: computador com interação prévia)
+    unlock();
     const arm = () => unlock();
     window.addEventListener("pointerdown", arm);
     window.addEventListener("keydown", arm);
@@ -105,9 +106,12 @@ export function OrderBoard() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   useEffect(() => {
     if (!orders.data) return;
-    const newOrders = seen.current ? orders.data.filter((o) => o.source !== "counter" && o.status === "received" && !seen.current?.has(o.id)) : [];
+    const newOrders = seen.current
+      ? orders.data.filter((o) => o.source !== "counter" && o.status === "received" && !seen.current?.has(o.id))
+      : [];
     if (newOrders.length) {
       setNotice(
         `${newOrders.length} ${newOrders.length === 1 ? "novo pedido recebido" : "novos pedidos recebidos"}`,
@@ -115,7 +119,9 @@ export function OrderBoard() {
     }
     seen.current = new Set(orders.data.map((o) => o.id));
   }, [orders.data]);
+
   const hasNew = (orders.data ?? []).some((o) => o.source !== "counter" && o.status === "received");
+
   useEffect(() => {
     const el = audio.current;
     if (!el) return;
@@ -130,6 +136,7 @@ export function OrderBoard() {
       el.currentTime = 0;
     }
   }, [sound, audioReady, hasNew]);
+
   const move = async (order: Order, status: OrderStatus, notify = false) => {
     if (busy || order.status === status || order.status === "cancelled") return;
     const popup = notify ? window.open("about:blank", "_blank") : null;
@@ -154,6 +161,7 @@ export function OrderBoard() {
       setDrag(null);
     }
   };
+
   const saveTracking = async (order: Order, trackingUrl: string) => {
     if (busy || (order.tracking_url ?? "") === trackingUrl.trim()) return;
     setBusy(order.id);
@@ -168,16 +176,25 @@ export function OrderBoard() {
       setBusy("");
     }
   };
-  const all = (orders.data ?? []).filter(o => o.source !== "counter");
+
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
     new Date(),
   );
+
+  const isOrderFromToday = (dateStr: string) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
+      new Date(dateStr),
+    ) === today;
+
+  const all = (orders.data ?? []).filter(
+    (o) =>
+      o.source !== "counter" &&
+      (o.status !== "delivered" || isOrderFromToday(o.updated_at || o.created_at)),
+  );
+
   const visible = all.filter(
     (o) =>
-      (period !== "today" ||
-        new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
-          new Date(o.created_at),
-        ) === today) &&
+      (period !== "today" || isOrderFromToday(o.created_at)) &&
       (period !== "active" || isActiveOrder(o.status)) &&
       (period !== "cancelled" || o.status === "cancelled") &&
       (!search ||
@@ -185,7 +202,9 @@ export function OrderBoard() {
           .toLocaleLowerCase()
           .includes(search.toLocaleLowerCase())),
   );
+
   const detail = all.find((o) => o.id === selected);
+
   return (
     <section className="py-7">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -274,7 +293,20 @@ export function OrderBoard() {
           </Button>
         </p>
       )}
-      {pendingMessage && <div role="status" className="mt-4 flex flex-wrap items-center gap-3 border-l-2 border-whatsapp py-3 pl-4 text-sm"><span>Pedido #{pendingMessage.number}: etapa salva.</span><Button asChild variant="outline" className="text-whatsapp"><a href={orderWhatsApp(pendingMessage)} target="_blank" rel="noopener noreferrer"><MessageCircle />Abrir mensagem no WhatsApp</a></Button><Button variant="ghost" size="icon" aria-label="Dispensar mensagem" onClick={() => setPendingMessage(null)}><X /></Button></div>}
+      {pendingMessage && (
+        <div role="status" className="mt-4 flex flex-wrap items-center gap-3 border-l-2 border-whatsapp py-3 pl-4 text-sm">
+          <span>Pedido #{pendingMessage.number}: etapa salva.</span>
+          <Button asChild variant="outline" className="text-whatsapp">
+            <a href={orderWhatsApp(pendingMessage)} target="_blank" rel="noopener noreferrer">
+              <MessageCircle />
+              Abrir mensagem no WhatsApp
+            </a>
+          </Button>
+          <Button variant="ghost" size="icon" aria-label="Dispensar mensagem" onClick={() => setPendingMessage(null)}>
+            <X />
+          </Button>
+        </div>
+      )}
       {orders.isPending ? (
         <p className="py-16 text-muted-foreground">Carregando pedidos…</p>
       ) : (
@@ -334,7 +366,16 @@ export function OrderBoard() {
                         <strong className="text-sm">{brl(order.total)}</strong>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="icon" className="size-8" title="Imprimir pedido" aria-label={`Imprimir pedido ${order.number}`} onClick={() => setPrintOrder(order)}><Printer /></Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="size-8"
+                          title="Imprimir pedido"
+                          aria-label={`Imprimir pedido ${order.number}`}
+                          onClick={() => setPrintOrder(order)}
+                        >
+                          <Printer />
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -361,18 +402,30 @@ export function OrderBoard() {
                           </a>
                         </Button>
                       </div>
-                      {ORDER_STAGES[index + 1] && <div className="mt-2 flex gap-2">
-                        <Button
-                          disabled={!!busy}
-                          className="min-w-0 flex-1 text-xs"
-                          size="sm"
-                          onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id)}
-                        >
-                          {busy === order.id ? "Salvando…" : ORDER_STAGES[index + 1]?.label}
-                          <ArrowRight />
-                        </Button>
-                        <Button variant="outline" size="icon" className="size-8 shrink-0 text-whatsapp" disabled={!!busy} title={`${ORDER_STAGES[index + 1]?.label} e avisar no WhatsApp`} aria-label={`${ORDER_STAGES[index + 1]?.label} e avisar pedido ${order.number} no WhatsApp`} onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id, true)}><MessageCircle /></Button>
-                      </div>}
+                      {ORDER_STAGES[index + 1] && (
+                        <div className="mt-2 flex gap-2">
+                          <Button
+                            disabled={!!busy}
+                            className="min-w-0 flex-1 text-xs"
+                            size="sm"
+                            onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id)}
+                          >
+                            {busy === order.id ? "Salvando…" : ORDER_STAGES[index + 1]?.label}
+                            <ArrowRight />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="size-8 shrink-0 text-whatsapp"
+                            disabled={!!busy}
+                            title={`${ORDER_STAGES[index + 1]?.label} e avisar no WhatsApp`}
+                            aria-label={`${ORDER_STAGES[index + 1]?.label} e avisar pedido ${order.number} no WhatsApp`}
+                            onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id, true)}
+                          >
+                            <MessageCircle />
+                          </Button>
+                        </div>
+                      )}
                     </article>
                   ))}
                 {!visible.some((o) => o.status === stage.id) && (
@@ -386,15 +439,28 @@ export function OrderBoard() {
           ))}
         </div>
       )}
-      {visible.some(o => o.status === "cancelled") && <section aria-label="Cancelados" className="mt-8 border-t pt-5">
-        <h2 className="mb-4 font-semibold text-destructive">Cancelados</h2>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{visible.filter(o => o.status === "cancelled").map(order => <article key={order.id} className="min-w-0 rounded-lg border bg-card p-4">
-          <Button variant="link" className="h-auto p-0" onClick={() => setSelected(order.id)}>#{order.number} · {order.customer_name}</Button>
-          <p className="mt-2 break-words text-sm text-muted-foreground">{order.cancellation_reason}</p>
-          <p className="mt-3 text-sm">{brl(order.total)} · Cancelado</p>
-          <Button variant="outline" className="mt-3 w-full" onClick={() => setSelected(order.id)}><Package />Detalhes</Button>
-        </article>)}</div>
-      </section>}
+      {visible.some((o) => o.status === "cancelled") && (
+        <section aria-label="Cancelados" className="mt-8 border-t pt-5">
+          <h2 className="mb-4 font-semibold text-destructive">Cancelados</h2>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {visible
+              .filter((o) => o.status === "cancelled")
+              .map((order) => (
+                <article key={order.id} className="min-w-0 rounded-lg border bg-card p-4">
+                  <Button variant="link" className="h-auto p-0" onClick={() => setSelected(order.id)}>
+                    #{order.number} · {order.customer_name}
+                  </Button>
+                  <p className="mt-2 break-words text-sm text-muted-foreground">{order.cancellation_reason}</p>
+                  <p className="mt-3 text-sm">{brl(order.total)} · Cancelado</p>
+                  <Button variant="outline" className="mt-3 w-full" onClick={() => setSelected(order.id)}>
+                    <Package />
+                    Detalhes
+                  </Button>
+                </article>
+              ))}
+          </div>
+        </section>
+      )}
       <Dialog
         open={!!detail}
         onOpenChange={(value) => {
@@ -471,22 +537,24 @@ export function OrderBoard() {
                     </span>
                   </label>
                 )}
-                {detail.status !== "cancelled" && <label className="block">
-                  Etapa
-                  <select
-                    aria-label="Etapa do pedido"
-                    className="field mt-2"
-                    disabled={!!busy}
-                    value={detail.status}
-                    onChange={(e) => void move(detail, e.target.value as OrderStatus)}
-                  >
-                    {ORDER_STAGES.map((stage) => (
-                      <option key={stage.id} value={stage.id}>
-                        {stage.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>}
+                {detail.status !== "cancelled" && (
+                  <label className="block">
+                    Etapa
+                    <select
+                      aria-label="Etapa do pedido"
+                      className="field mt-2"
+                      disabled={!!busy}
+                      value={detail.status}
+                      onChange={(e) => void move(detail, e.target.value as OrderStatus)}
+                    >
+                      {ORDER_STAGES.map((stage) => (
+                        <option key={stage.id} value={stage.id}>
+                          {stage.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <OrderCancellation key={detail.id} order={detail} disabled={!!busy} />
                 <Button asChild className="w-full bg-whatsapp text-whatsapp-foreground">
                   <a href={orderWhatsApp(detail)} target="_blank" rel="noopener noreferrer">
@@ -494,7 +562,17 @@ export function OrderBoard() {
                     Avisar cliente no WhatsApp
                   </a>
                 </Button>
-                <Button variant="outline" className="w-full" onClick={() => { setSelected(null); setPrintOrder(detail); }}><Printer />Imprimir pedido</Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setSelected(null);
+                    setPrintOrder(detail);
+                  }}
+                >
+                  <Printer />
+                  Imprimir pedido
+                </Button>
                 {detail.status === "delivered" && (
                   <p className="flex items-center gap-2 text-whatsapp">
                     <CheckCircle2 className="size-4" />

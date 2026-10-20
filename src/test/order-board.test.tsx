@@ -136,6 +136,23 @@ describe("Kanban order management", () => {
     expect(screen.queryByText("Cliente balcão")).not.toBeInTheDocument();
     expect(screen.queryByText("1 novo pedido recebido")).not.toBeInTheDocument();
   });
+
+  it("archives delivered orders from previous days showing only today delivered orders", async () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const oldDelivered: Order = {
+      ...row,
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      number: 99,
+      customer_name: "Cliente Antigo",
+      status: "delivered",
+      created_at: yesterday,
+      updated_at: yesterday,
+    };
+    mocks.list.mockImplementation(async () => [row, oldDelivered]);
+    mount();
+    await screen.findByText("Cliente teste");
+    expect(screen.queryByText("Cliente Antigo")).not.toBeInTheDocument();
+  });
   it("moves through every stage and builds matching customer updates", async () => {
     mount();
     await screen.findByText("Cliente teste");
