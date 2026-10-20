@@ -25,6 +25,7 @@ import {
   Users,
   ShoppingCart,
   Settings,
+  Tag,
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ import { getCatalogFunnel } from "@/lib/catalog-analytics.functions";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 import { lowStockItems } from "@/lib/catalog";
 import { AdminSettings } from "@/components/admin-settings";
+import { PromotionsEditor } from "@/components/promotions-editor";
 
 export const Route = createFileRoute("/_authenticated/painel")({ staticData: { sitemap: false },
 
