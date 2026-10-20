@@ -204,6 +204,13 @@
       "when": 1792531981298,
       "tag": "0028_coupons_promo_banner",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792532399269,
+      "tag": "0029_harden_tracking_quotes_profiles_photos",
+      "breakpoints": true
     }
   ]
 }
