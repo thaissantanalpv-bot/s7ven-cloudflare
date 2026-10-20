@@ -429,7 +429,7 @@ function Catalog() {
     const d = r.data;
     const requestId = attempt?.signature === JSON.stringify({ customer: d, items: inputItems }) ? attempt.id : crypto.randomUUID();
     const analytics = readAnalyticsIdentity();
-    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems, analytics, deliveryQuoteId: isDelivery && distanceMode ? validQuote?.id : undefined, deliveryToken: isDelivery && distanceMode && deliveryToken.current ? deliveryToken.current : undefined });
+    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems, analytics, couponCode: couponResult && appliedCoupon ? appliedCoupon.code : undefined, deliveryQuoteId: isDelivery && distanceMode ? validQuote?.id : undefined, deliveryToken: isDelivery && distanceMode && deliveryToken.current ? deliveryToken.current : undefined });
     if (!validated.success) return setError("Confira os produtos e as quantidades do carrinho antes de enviar.");
     const lines = [
       `*Novo pedido — ${STORE_NAME}*`,
@@ -916,6 +916,29 @@ function Catalog() {
                   : "A confirmar"}
               </span>
             </div>
+            {items.length > 0 && settings.coupons.some(c => c.active) && (
+              <div className="space-y-1">
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between text-sm text-primary">
+                    <span>Cupom {appliedCoupon.code} ({couponResult?.label ?? appliedCoupon.label})</span>
+                    <span className="flex items-center gap-2">−{brl(displayedCouponDiscount)}
+                      <button type="button" className="text-xs underline" onClick={() => { setAppliedCoupon(null); setCouponInput(""); }}>remover</button>
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input aria-label="Cupom de desconto" placeholder="Cupom de desconto" value={couponInput} onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(""); }} className="h-9 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm uppercase" />
+                    <button type="button" className="h-9 rounded-md border px-3 text-sm font-medium" onClick={() => {
+                      const r = applyCoupon(settings, couponInput, subtotal);
+                      if (!r) return setCouponError("Cupom inválido ou pedido abaixo do mínimo.");
+                      setAppliedCoupon({ code: couponInput.trim().toUpperCase(), discount: r.discount, label: r.label });
+                    }}>Aplicar</button>
+                  </div>
+                )}
+                {couponError && <p className="text-xs text-destructive">{couponError}</p>}
+                {appliedCoupon && !couponResult && <p className="text-xs text-destructive">O pedido ficou abaixo do mínimo do cupom.</p>}
+              </div>
+            )}
             <div className="flex justify-between text-lg">
               <span>{isDelivery && distanceMode && !validQuote && items.length ? "Total dos produtos" : "Total"}</span>
               <span className="font-display font-semibold">{brl(displayedTotal)}</span>
