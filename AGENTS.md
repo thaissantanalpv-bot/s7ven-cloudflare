@@ -37,3 +37,4 @@
 - Delivery tracking links are admin-set per catalog delivery order and exposed publicly only as stage + link by order id, because customers must never read other order data.
 
 - Admin sales reports read period-bounded order fields and return aggregates, excluding cancelled sales and avoiding combo component revenue duplication.
+- Do not load the Streamdown mermaid plugin in AI Elements; its bundled graphlib chunk crashes the production admin panel with a blank screen.
