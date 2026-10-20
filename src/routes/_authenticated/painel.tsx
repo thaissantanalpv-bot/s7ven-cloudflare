@@ -25,6 +25,7 @@ import {
   Users,
   ShoppingCart,
   Settings,
+  Tag,
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ import { getCatalogFunnel } from "@/lib/catalog-analytics.functions";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 import { lowStockItems } from "@/lib/catalog";
 import { AdminSettings } from "@/components/admin-settings";
+import { PromotionsEditor } from "@/components/promotions-editor";
 
 export const Route = createFileRoute("/_authenticated/painel")({ staticData: { sitemap: false },
 
@@ -341,6 +343,16 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
           <Clock />
           Horários
         </Button>
+        <Button
+          role="tab"
+          aria-selected={tab === "promo"}
+          variant="ghost"
+          onClick={() => setTab("promo")}
+          className={tab === "promo" ? "rounded-none border-b-2 border-primary text-primary" : "rounded-none"}
+        >
+          <Tag />
+          Cupons e banner
+        </Button>
       </div>
       {tab === "delivery" ? (
         <section className="py-8">
@@ -460,6 +472,8 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
           </Button>
           </>}
         </section>
+      ) : tab === "promo" ? (
+        <PromotionsEditor draft={draft} update={update} />
       ) : (
         <section className="py-8">
           <div className="flex items-center justify-between gap-4">

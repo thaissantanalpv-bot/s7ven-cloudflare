@@ -31,3 +31,11 @@ describe("Store settings", () => {
     expect(storeStatus(settings, new Date("2026-10-16T21:00:00Z")).open).toBe(false);
   });
 });
+import { describe as d2, it as i2, expect as e2 } from "vitest";
+import { applyCoupon as ac, EMPTY_SETTINGS as ES } from "@/lib/store-settings";
+d2("cupons", () => {
+  const s = { ...ES, coupons: [{ code: "SEXTOU10", type: "percent" as const, value: 10, minOrder: 50, active: true }, { code: "OFF", type: "fixed" as const, value: 5, minOrder: 0, active: false }] };
+  i2("aplica porcentagem acima do mínimo", () => e2(ac(s, "sextou10", 100)?.discount).toBe(10));
+  i2("rejeita abaixo do mínimo", () => e2(ac(s, "SEXTOU10", 40)).toBeNull());
+  i2("rejeita cupom inativo", () => e2(ac(s, "OFF", 100)).toBeNull());
+});

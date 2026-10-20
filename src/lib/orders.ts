@@ -3,7 +3,7 @@ import { brazilPhoneSchema, normalizePhone } from "./phone";
 export { normalizePhone } from "./phone";
 import { PRODUCTS, PAYMENT_METHODS, STORE_NAME, type Product } from "./products";
 import { available, type CatalogProduct } from "./catalog";
-import type { StoreSettings } from "./store-settings";
+import { applyCoupon, type StoreSettings } from "./store-settings";
 import { comboSelectionsSchema, type ComboSelection } from "./combos";
 import { analyticsIdentitySchema } from "./catalog-analytics";
 export const ORDER_STAGES = [
@@ -198,8 +198,14 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
   const subtotal =
     Math.round(items.reduce((s, i) => s + Math.round(i.price * 100) * i.qty, 0)) / 100;
   const delivery_fee = byDistance ? verifiedDelivery?.fee ?? 0 : delivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
-  const couponDiscount = couponOverride?.discount ?? 0;
-  const couponCode = couponOverride?.code ?? null;
+  let couponDiscount = couponOverride?.discount ?? 0;
+  let couponCode = couponOverride?.code ?? null;
+  if (!couponOverride && input.couponCode) {
+    const applied = applyCoupon(settings, input.couponCode, subtotal);
+    if (!applied) throw new Error("Cupom inválido, inativo ou abaixo do valor mínimo. Remova o cupom e tente de novo.");
+    couponDiscount = applied.discount;
+    couponCode = input.couponCode.trim().toUpperCase();
+  }
   return {
     items,
     subtotal,
