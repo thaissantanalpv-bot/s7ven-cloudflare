@@ -43,7 +43,8 @@ import {
   brl,
 } from "@/lib/products";
 import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
-import { checkoutWhatsApp, productMessage } from "@/lib/order-message";
+import { checkoutWhatsApp, productMessage, insertCouponLine } from "@/lib/order-message";
+import { applyCoupon } from "@/lib/store-settings";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
@@ -207,6 +208,9 @@ function Catalog() {
   const [sel, setSel] = useState<Record<string, string>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState("");
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; label: string } | null>(null);
+  const [couponError, setCouponError] = useState("");
   const [building, setBuilding] = useState<CatalogProduct | null>(null);
   const [sharedProduct, setSharedProduct] = useState<CatalogProduct | null>(null);
   useEffect(() => {
@@ -360,10 +364,13 @@ function Catalog() {
     if (isDelivery && distanceMode && addressComplete) void calculateDelivery();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fullAddress]);
-  const total = subtotal + deliveryFee;
+  const couponResult = appliedCoupon ? applyCoupon(settings, appliedCoupon.code, subtotal) : null;
+  const couponDiscount = couponResult?.discount ?? 0;
+  const total = Math.round((subtotal + deliveryFee - couponDiscount) * 100) / 100;
 
   const displayedSubtotal = !items.length && receipt ? receipt.subtotal : subtotal;
   const displayedDeliveryFee = !items.length && receipt ? receipt.deliveryFee : deliveryFee;
+  const displayedCouponDiscount = !items.length && receipt ? 0 : couponDiscount;
   const displayedTotal = !items.length && receipt ? receipt.total : total;
   const pixPayload = useMemo(() => buildPixPayload(displayedTotal), [displayedTotal]);
   const copy = async (text: string, label: string) => {
@@ -435,7 +442,8 @@ function Catalog() {
       !isDelivery ? "*Retirada na loja · Sem taxa de entrega*" : settings.delivery_enabled
         ? `*Entrega${distanceMode ? ` (${validQuote?.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km)` : settings.fixed_delivery_fee === null ? ` (${zone?.name})` : ""}: ${brl(deliveryFee)}*`
         : "*Entrega: valor a confirmar com a loja*",
-      `*Total${!isDelivery || settings.delivery_enabled ? "" : " dos produtos"}: ${brl(total)}*`,
+      `*Total${!isDelivery || settings.delivery_enabled ? "" : " dos produtos"}: ${brl(subtotal + deliveryFee)}*`,
+      ...(couponResult && appliedCoupon ? [`*Cupom ${appliedCoupon.code} (${couponResult.label}): −${brl(couponResult.discount)}*`, `*Total com desconto: ${brl(total)}*`] : []),
       "",
       `*Nome:* ${d.name}`,
       isDelivery ? `*Endereço:* ${deliveryAddress(d.address)}` : `*Modalidade:* Retirada na loja${settings.pickup_address ? `\n*Endereço de retirada:* ${settings.pickup_address}` : ""}`,
@@ -450,7 +458,7 @@ function Catalog() {
     if (popup) popup.opener = null;
     try {
       const saved = await registerOrder({ data: validated.data });
-      const url = checkoutWhatsApp(saved.number, lines, d.phone);
+      const url = checkoutWhatsApp(saved.number, lines, d.phone, couponResult && appliedCoupon ? { code: appliedCoupon.code, discount: couponResult.discount } : null);
       setReceipt({ id: saved.id, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery });
       setCart({});
       setAttempt(null);
@@ -468,6 +476,13 @@ function Catalog() {
   return (
     <div className="catalog-theme min-h-screen bg-background pb-28 text-foreground lg:pb-10">
       {!online && <div role="status" className="border-b bg-muted px-4 py-2 text-center text-sm text-muted-foreground">Sem conexão · Exibindo o último catálogo salvo. Pedidos disponíveis ao reconectar.</div>}
+      {settings.promoBanner?.enabled && settings.promoBanner.text && (
+        <div className="bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground">
+          {settings.promoBanner.link ? (
+            <a href={settings.promoBanner.link} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">{settings.promoBanner.text}</a>
+          ) : settings.promoBanner.text}
+        </div>
+      )}
       <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur-lg">
         <div className="mx-auto grid max-w-7xl grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-4 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:px-8">
           <span aria-hidden className="sm:hidden" />
