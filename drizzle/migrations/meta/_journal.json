@@ -197,6 +197,13 @@
       "when": 1792193504052,
       "tag": "0027_delivery_route_duration",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1792531981298,
+      "tag": "0028_coupons_promo_banner",
+      "breakpoints": true
     }
   ]
 }

@@ -212,6 +212,8 @@ export type Database = {
           cash_received: number | null
           cashier_id: string | null
           change_for: string
+          coupon_code: string | null
+          coupon_discount: number | null
           created_at: string
           customer_name: string
           customer_phone: string
@@ -246,6 +248,8 @@ export type Database = {
           cash_received?: number | null
           cashier_id?: string | null
           change_for?: string
+          coupon_code?: string | null
+          coupon_discount?: number | null
           created_at?: string
           customer_name: string
           customer_phone: string
@@ -280,6 +284,8 @@ export type Database = {
           cash_received?: number | null
           cashier_id?: string | null
           change_for?: string
+          coupon_code?: string | null
+          coupon_discount?: number | null
           created_at?: string
           customer_name?: string
           customer_phone?: string
@@ -330,6 +336,7 @@ export type Database = {
       }
       store_settings: {
         Row: {
+          coupons: Json
           delivery_distance_enabled: boolean
           delivery_distance_tiers: Json
           delivery_enabled: boolean
@@ -341,9 +348,11 @@ export type Database = {
           opening_hours: Json
           order_cutoff: string
           pickup_address: string
+          promoBanner: Json
           updated_at: string
         }
         Insert: {
+          coupons?: Json
           delivery_distance_enabled?: boolean
           delivery_distance_tiers?: Json
           delivery_enabled?: boolean
@@ -355,9 +364,11 @@ export type Database = {
           opening_hours?: Json
           order_cutoff?: string
           pickup_address?: string
+          promoBanner?: Json
           updated_at?: string
         }
         Update: {
+          coupons?: Json
           delivery_distance_enabled?: boolean
           delivery_distance_tiers?: Json
           delivery_enabled?: boolean
@@ -369,6 +380,7 @@ export type Database = {
           opening_hours?: Json
           order_cutoff?: string
           pickup_address?: string
+          promoBanner?: Json
           updated_at?: string
         }
         Relationships: []

@@ -1,0 +1,2 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS coupon_code text, ADD COLUMN IF NOT EXISTS coupon_discount numeric;
+ALTER TABLE public.store_settings ADD COLUMN IF NOT EXISTS coupons jsonb NOT NULL DEFAULT '[]'::jsonb, ADD COLUMN IF NOT EXISTS "promoBanner" jsonb NOT NULL DEFAULT '{"enabled":false,"text":"","link":""}'::jsonb;
