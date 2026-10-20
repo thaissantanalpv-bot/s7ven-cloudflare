@@ -11,13 +11,21 @@ export const submitOrder = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     // Public checkout is a narrowly scoped privileged write, never a public read of customer data.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: existing, error: existingError } = await supabaseAdmin
-      .from("orders")
-      .select("id,number")
-      .eq("request_id", data.requestId)
-      .maybeSingle();
-    if (existingError) throw new Error("Não foi possível registrar o pedido. Tente novamente.");
-    if (existing) return { id: existing.id, number: existing.number };
+    // Idempotent retries only replay an order placed with the same checkout key by the same customer.
+    const replay = async () => {
+      const { data: existing, error: existingError } = await supabaseAdmin
+        .from("orders")
+        .select("id,number,customer_phone,customer_name")
+        .eq("request_id", data.requestId)
+        .maybeSingle();
+      if (existingError) throw new Error("Não foi possível registrar o pedido. Tente novamente.");
+      if (!existing) return null;
+      if (existing.customer_phone !== data.customer.phone || existing.customer_name !== data.customer.name)
+        throw new Error("Não foi possível registrar o pedido. Atualize a página e tente novamente.");
+      return { id: existing.id, number: existing.number };
+    };
+    const existing = await replay();
+    if (existing) return existing;
     const { count, error: rateError } = await supabaseAdmin
       .from("orders")
       .select("id", { count: "exact", head: true })
@@ -67,12 +75,8 @@ export const submitOrder = createServerFn({ method: "POST" })
     if (error || !saved) {
       if (error?.code === "P0001") throw new Error("Estoque ou preço alterado. Atualize o catálogo e confira o carrinho.");
       if (error?.code === "23505") {
-        const { data: duplicate } = await supabaseAdmin
-          .from("orders")
-          .select("id,number")
-          .eq("request_id", data.requestId)
-          .maybeSingle();
-        if (duplicate) return { id: duplicate.id, number: duplicate.number };
+        const duplicate = await replay();
+        if (duplicate) return duplicate;
       }
       throw new Error("Não foi possível registrar o pedido. Seu carrinho foi mantido.");
     }
@@ -180,12 +184,12 @@ export const updateOrderTracking = createServerFn({ method: "POST" })
       throw new Error("Não foi possível salvar o link de rastreio. Atualize o quadro e tente novamente.");
     return { saved: true };
   });
-// Public, narrowly scoped read: the customer sees only the stage and the tracking link of their own order id.
+// Public, narrowly scoped read: only the browser that placed the order knows both the order id and its checkout key.
 export const orderTracking = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid(), requestId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin.rpc("order_tracking", { _id: data.id });
+    const { data: row, error } = await supabaseAdmin.rpc("order_tracking_for", { _id: data.id, _request_id: data.requestId });
     if (error) throw new Error("Não foi possível consultar a entrega.");
     if (!row) throw new Error("Pedido não encontrado.");
     const parsed = z

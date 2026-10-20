@@ -433,6 +433,10 @@ export type Database = {
       }
       order_stock_snapshot: { Args: { _items: Json }; Returns: Json }
       order_tracking: { Args: { _id: string }; Returns: Json }
+      order_tracking_for: {
+        Args: { _id: string; _request_id: string }
+        Returns: Json
+      }
       track_catalog_session: {
         Args: {
           _cart: boolean
