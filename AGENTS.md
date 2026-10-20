@@ -23,10 +23,7 @@
 - Admin orders use authenticated conflict-checked writes, paginated polling and user-activated audio; combined WhatsApp actions navigate only after save, never send automatically.
 - Preserve the imported baseline; expose only allowlisted sales fields, including admin-selected highlights. Raw overrides/writes stay admin-only.
 - Validate variation-photo links (variationPhotos) as allowlisted photo paths and project them publicly only when already exposed via image/images; the catalog swaps the displayed photo while the matching variation is selected.
-- Store photos privately with anonymous reads limited to catalog-linked paths and admin-only uploads/full reads. Index the exact cover/gallery lookup expressions to avoid repeated authorization scans without changing access.
-- Separate public/admin catalog query keys prevent restricted data leaking through cache.
-- Store cover/gallery paths in image/images; resolve signed URLs separately and never persist them.
-- Saved photos remain navigable/enlargeable via ProductCardPhotos.
+- Store photos privately: anonymous reads only for catalog-linked paths, admin-only uploads/full reads; index the exact cover/gallery lookup expressions. Persist paths in image/images, never signed URLs; keep public/admin catalog query keys separate so restricted data never leaks through cache.
 - Reserve stock under sorted row locks; reject stale prices. Admin cancellation is terminal: snapshot product/variation/component control flags at insertion (current flags for legacy orders), restore once, record missing/untracked items without recreating them. Exclude cancelled sales from revenue, retaining totals and conversion events.
 - Represent fixed-price combos as catalog products with comboGroups and structured order components; encode choices in separate option keys to preserve legacy carts, validate group membership server-side, and reserve all quantities together in sorted row-lock order.
 - Persist counter sales in orders with a source and cashier, using admin-verified server-calculated checkout and the existing reservation trigger, unifying history without duplicate stock deductions. Keep counter sales out of delivery stages and new-order alerts.
@@ -35,5 +32,5 @@
 - WhatsApp photos use public galleries, never expiring URLs; checkout waits for validated insertion.
 - Print admin orders in escaped ephemeral iframes; store only local printer preferences because hardware pairing is device-owned.
 - Delivery tracking links are admin-set per catalog delivery order and exposed publicly only as stage + link by order id, because customers must never read other order data.
-
 - Admin sales reports read period-bounded order fields and return aggregates, excluding cancelled sales and avoiding combo component revenue duplication.
+- Subdirectories have their own AGENTS.md; read it before changing files there.

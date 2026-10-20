@@ -1,0 +1,1 @@
+- Saved photos remain navigable/enlargeable via ProductCardPhotos.

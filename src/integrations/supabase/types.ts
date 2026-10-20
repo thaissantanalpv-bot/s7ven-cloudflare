@@ -122,6 +122,38 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_wishlists: {
+        Row: {
+          created_at: string
+          id: string
+          notify_restock: boolean
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notify_restock?: boolean
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notify_restock?: boolean
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_wishlists_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_quotes: {
         Row: {
           address: string
@@ -217,6 +249,7 @@ export type Database = {
           created_at: string
           customer_name: string
           customer_phone: string
+          customer_user_id: string | null
           delivery_confirmed: boolean
           delivery_fee: number
           delivery_zone: string
@@ -253,6 +286,7 @@ export type Database = {
           created_at?: string
           customer_name: string
           customer_phone: string
+          customer_user_id?: string | null
           delivery_confirmed?: boolean
           delivery_fee?: number
           delivery_zone?: string
@@ -289,6 +323,7 @@ export type Database = {
           created_at?: string
           customer_name?: string
           customer_phone?: string
+          customer_user_id?: string | null
           delivery_confirmed?: boolean
           delivery_fee?: number
           delivery_zone?: string
