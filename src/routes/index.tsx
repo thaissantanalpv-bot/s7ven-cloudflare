@@ -158,13 +158,13 @@ function Catalog() {
   const autoQuote = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
-  const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
+  const [receipt, setReceipt] = useState<{ id: string; requestId: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
   const trackOrder = useServerFn(orderTracking);
   const tracking = useQuery({
     queryKey: ["order-tracking", receipt?.id],
     queryFn: () => {
       if (!receipt) throw new Error("Pedido não encontrado.");
-      return trackOrder({ data: { id: receipt.id } });
+      return trackOrder({ data: { id: receipt.id, requestId: receipt.requestId } });
     },
     enabled: Boolean(receipt),
     refetchInterval: (q) => (["delivered", "cancelled"].includes(q.state.data?.status ?? "") ? false : 30000),
@@ -460,7 +460,7 @@ function Catalog() {
     try {
       const saved = await registerOrder({ data: validated.data });
       const url = checkoutWhatsApp(saved.number, lines, d.phone, couponResult && appliedCoupon ? { code: appliedCoupon.code, discount: couponResult.discount } : null);
-      setReceipt({ id: saved.id, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery });
+      setReceipt({ id: saved.id, requestId: validated.data.requestId, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery });
       setCart({});
       setAttempt(null);
       setAppliedCoupon(null);

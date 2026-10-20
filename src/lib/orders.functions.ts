@@ -75,12 +75,8 @@ export const submitOrder = createServerFn({ method: "POST" })
     if (error || !saved) {
       if (error?.code === "P0001") throw new Error("Estoque ou preço alterado. Atualize o catálogo e confira o carrinho.");
       if (error?.code === "23505") {
-        const { data: duplicate } = await supabaseAdmin
-          .from("orders")
-          .select("id,number")
-          .eq("request_id", data.requestId)
-          .maybeSingle();
-        if (duplicate) return { id: duplicate.id, number: duplicate.number };
+        const duplicate = await replay();
+        if (duplicate) return duplicate;
       }
       throw new Error("Não foi possível registrar o pedido. Seu carrinho foi mantido.");
     }

@@ -6,12 +6,12 @@ import { ORDER_STAGES } from "@/lib/orders";
 
 const ICONS = [Clock, ChefHat, Truck, CheckCircle2] as const;
 
-export function OrderTrackingStatus({ orderId }: { orderId: string }) {
+export function OrderTrackingStatus({ orderId, requestId }: { orderId: string; requestId: string }) {
   const track = useServerFn(orderTracking);
   const tracking = useQuery({
     queryKey: ["order-tracking", orderId],
-    queryFn: () => track({ data: { id: orderId } }),
-    enabled: Boolean(orderId),
+    queryFn: () => track({ data: { id: orderId, requestId } }),
+    enabled: Boolean(orderId && requestId),
     refetchInterval: (q) =>
       ["delivered", "cancelled"].includes(q.state.data?.status ?? "") ? false : 15000,
     retry: 2,
