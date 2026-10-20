@@ -2,7 +2,25 @@ import { z } from "zod";
 
 export const DAYS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+const couponSchema = z.object({
+  code: z.string().trim().min(1).max(30),
+  type: z.enum(["percent", "fixed"]),
+  value: z.number().positive().max(100000),
+  minOrder: z.number().min(0).default(0),
+  active: z.boolean().default(true),
+});
+export type Coupon = z.infer<typeof couponSchema>;
+
+const promoBannerSchema = z.object({
+  enabled: z.boolean().default(false),
+  text: z.string().trim().max(300).default(""),
+  link: z.string().trim().max(500).default(""),
+});
+export type PromoBanner = z.infer<typeof promoBannerSchema>;
+
 export const settingsSchema = z.object({
+  promoBanner: promoBannerSchema.default({ enabled: false, text: "", link: "" }),
+  coupons: z.array(couponSchema).max(100).default([]),
   delivery_enabled: z.boolean(),
   delivery_distance_enabled: z.boolean().default(false),
   delivery_origin: z.string().trim().max(300).default(""),
@@ -24,11 +42,23 @@ export const settingsSchema = z.object({
 });
 export type StoreSettings = z.infer<typeof settingsSchema>;
 export const EMPTY_SETTINGS: StoreSettings = {
+  promoBanner: { enabled: false, text: "", link: "" },
+  coupons: [],
   delivery_enabled: false, fixed_delivery_fee: null, pickup_address: "", delivery_zones: [], hours_enabled: false,
   delivery_distance_enabled: false, delivery_origin: "", delivery_distance_tiers: [],
   opening_hours: DAYS.map((_, day) => ({ day, enabled: false, open: "18:00", close: "23:00" })),
   order_cutoff: "23:00",
 };
+
+export function applyCoupon(settings: StoreSettings, code: string, subtotal: number): { discount: number; label: string } | null {
+  const coupon = settings.coupons.find(c => c.active && c.code.toUpperCase() === code.trim().toUpperCase());
+  if (!coupon) return null;
+  if (subtotal < coupon.minOrder) return null;
+  const raw = coupon.type === "percent" ? subtotal * coupon.value / 100 : coupon.value;
+  const discount = Math.min(Math.round(raw * 100) / 100, subtotal);
+  const label = coupon.type === "percent" ? `${coupon.value}%` : `R$ ${coupon.value.toFixed(2).replace(".", ",")}`;
+  return { discount, label };
+}
 export function distanceFee(settings: StoreSettings, distanceKm: number) {
   if (!Number.isFinite(distanceKm) || distanceKm < 0) throw new Error("Distância inválida.");
   const tier = [...settings.delivery_distance_tiers].sort((a, b) => a.upToKm - b.upToKm).find(t => distanceKm <= t.upToKm);

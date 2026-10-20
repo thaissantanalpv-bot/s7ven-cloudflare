@@ -60,6 +60,7 @@ export const submitOrderSchema = z.object({
   deliveryQuoteId: z.string().uuid().optional(),
   deliveryToken: z.string().max(200).optional(),
   analytics: analyticsIdentitySchema.optional(),
+  couponCode: z.string().trim().max(30).optional(),
   requestId: z.string().uuid(),
   customer: customerSchema,
   items: z
@@ -91,6 +92,8 @@ export type Order = {
   cash_received?: number | null;
   cash_change?: number | null;
   cashier_id?: string | null;
+  coupon_code?: string | null;
+  coupon_discount?: number | null;
   id: string;
   number: number;
   customer_name: string;
@@ -164,7 +167,7 @@ export function validateCartAvailability(
       throw new Error(`${product.name}: item esgotado ou quantidade indisponível. Remova ou ajuste a quantidade no carrinho.`);
   }
 }
-export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: StoreSettings, products: (Product | CatalogProduct)[] = PRODUCTS, verifiedDelivery?: { fee: number; km: number }) {
+export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: StoreSettings, products: (Product | CatalogProduct)[] = PRODUCTS, verifiedDelivery?: { fee: number; km: number }, couponOverride?: { discount: number; code: string }) {
   validateCartAvailability(input.items, products);
   const items = input.items.map((line) => {
     const product = products.find((p) => p.id === line.productId);
@@ -195,13 +198,17 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
   const subtotal =
     Math.round(items.reduce((s, i) => s + Math.round(i.price * 100) * i.qty, 0)) / 100;
   const delivery_fee = byDistance ? verifiedDelivery?.fee ?? 0 : delivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
+  const couponDiscount = couponOverride?.discount ?? 0;
+  const couponCode = couponOverride?.code ?? null;
   return {
     items,
     subtotal,
     delivery_fee,
     delivery_zone: byDistance ? `${verifiedDelivery?.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km` : delivery && settings.delivery_enabled && settings.fixed_delivery_fee === null ? (zone?.name ?? "") : "",
     delivery_confirmed: !delivery || settings.delivery_enabled,
-    total: Math.round((subtotal + delivery_fee) * 100) / 100,
+    coupon_code: couponCode,
+    coupon_discount: couponDiscount,
+    total: Math.round((subtotal + delivery_fee - couponDiscount) * 100) / 100,
   };
 }
 export function orderWhatsApp(
