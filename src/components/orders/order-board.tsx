@@ -445,22 +445,24 @@ export function OrderBoard() {
                       draggable={!busy}
                       onDragStart={() => setDrag(order.id)}
                       onDragEnd={() => setDrag(null)}
-                      className="rounded-lg border bg-card p-3 shadow-sm"
+                      className={`rounded-xl border bg-card p-3.5 shadow-sm transition-all hover:border-primary/50 ${
+                        order.status === "received" ? "ring-2 ring-primary/30 animate-pulse-subtle" : ""
+                      }`}
                     >
-                      {/* Top bar: badges + timer */}
+                      {/* Top bar: badges + timer estilo Anota AI */}
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold ${
                           order.fulfillment === "pickup"
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                            : "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
+                            ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30"
+                            : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
                         }`}>
-                          {order.fulfillment === "pickup" ? "Balcão" : "Delivery"}
+                          {order.fulfillment === "pickup" ? "🏪 Retirada" : "🛵 Entrega"}
                         </span>
-                        <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                          {order.payment}
+                        <span className="inline-flex items-center rounded-md border bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-foreground">
+                          💳 {order.payment}
                         </span>
-                        <span className={`ml-auto inline-flex items-center gap-1 text-[11px] font-semibold ${elapsedColor(order.created_at)}`}>
-                          <Clock className="size-3" />
+                        <span className={`ml-auto inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold ${elapsedColor(order.created_at)}`}>
+                          <Clock className="size-3.5" />
                           {elapsed(order.created_at)}
                         </span>
                       </div>
@@ -488,27 +490,27 @@ export function OrderBoard() {
                         <span className={`text-xs font-medium ${stage.tone}`}>{stage.label}</span>
                         <strong className="text-sm">{brl(order.total)}</strong>
                       </div>
-                      {/* Quick action buttons */}
+                      {/* Quick action buttons - Anota AI style */}
                       <div className="flex gap-1.5">
                         {ORDER_STAGES[index + 1] ? (
                           <Button
                             disabled={!!busy}
-                            className="min-w-0 flex-1 text-xs"
+                            className="min-w-0 flex-1 font-semibold text-xs h-9 shadow-sm"
                             size="sm"
                             onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id)}
                           >
-                            {busy === order.id ? "…" : stage.id === "received" ? "Aceitar" : ORDER_STAGES[index + 1]?.label}
-                            <ArrowRight />
+                            {busy === order.id ? "Salvando…" : stage.id === "received" ? "✓ Aceitar Pedido" : `Avançar p/ ${ORDER_STAGES[index + 1]?.label}`}
+                            <ArrowRight className="size-3.5 ml-1" />
                           </Button>
                         ) : (
                           <Button
                             variant="outline"
                             size="sm"
-                            className="min-w-0 flex-1 text-xs"
+                            className="min-w-0 flex-1 text-xs h-9"
                             onClick={() => setSelected(order.id)}
                           >
-                            <Package />
-                            Detalhes
+                            <CheckCircle2 className="size-3.5 mr-1 text-emerald-500" />
+                            Ver detalhes
                           </Button>
                         )}
                         <Button
