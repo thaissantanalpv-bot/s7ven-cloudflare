@@ -1,1 +1,3 @@
 - Saved photos remain navigable/enlargeable via ProductCardPhotos.
+- Keep product photo AI editing admin-authenticated, streaming original-image edits; applying a result replaces only the selected draft photo and requires the usual product save.
+- Validate variation-photo links (variationPhotos) as allowlisted photo paths and project them publicly only when already exposed via image/images; the catalog swaps the displayed photo while the matching variation is selected.

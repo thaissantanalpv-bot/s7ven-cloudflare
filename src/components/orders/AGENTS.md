@@ -1,0 +1,1 @@
+- Print admin orders in escaped ephemeral iframes; store only local printer preferences because hardware pairing is device-owned.
