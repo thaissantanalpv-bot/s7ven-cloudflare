@@ -30,7 +30,7 @@
 - Keep manifest identity/start URL `/painel` and online admin auth. Cache offline only public catalog HTML/assets, products/settings and viewed photos — never admin/auth/API; refresh on reconnect and require online checkout.
 - Keep the administrative assistant in a single account-scoped transcript with admin-only reads and server-managed writes; authenticate the streaming endpoint independently and send only allowlisted dashboard aggregates to AI. Use AI SDK Responses and AI Elements with saved history, bounded leases and durable terminal blocks to prevent duplicate paid requests; analysis never writes operations.
 - WhatsApp photos use public galleries, never expiring URLs; checkout waits for validated insertion.
-- Print admin orders in escaped ephemeral iframes; store only local printer preferences because hardware pairing is device-owned.
 - Delivery tracking links are admin-set per catalog delivery order and exposed publicly only as stage + link by order id, because customers must never read other order data.
 - Admin sales reports read period-bounded order fields and return aggregates, excluding cancelled sales and avoiding combo component revenue duplication.
+- New catalog orders notify admin devices by Web Push from a dedicated-scope worker separate from the offline worker; admin-owned subscriptions, sent server-side after insertion, never blocking checkout.
 - Subdirectories have their own AGENTS.md; read it before changing files there.
