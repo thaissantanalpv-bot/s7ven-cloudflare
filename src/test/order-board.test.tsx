@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Order } from "@/lib/orders";
 const mocks = vi.hoisted(() => ({ list: vi.fn(), update: vi.fn(), track: vi.fn(), cancel: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
+vi.mock("@/components/push-notifications", () => ({ PushQuickButton: () => null }));
 vi.mock("@/lib/orders.functions", () => ({
   listOrders: mocks.list,
   updateOrderStatus: mocks.update,

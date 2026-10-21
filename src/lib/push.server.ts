@@ -5,7 +5,7 @@ import type { PushPayload } from "./push";
 type StoredSubscription = { id: string; endpoint: string; p256dh: string; auth: string };
 
 function privateJwk(): JsonWebKey & { x: string; y: string } {
-  const raw = process.env.VAPID_PRIVATE_JWK;
+  const raw = process.env["VAPID_PRIVATE_JWK"];
   if (!raw) throw new Error("VAPID_PRIVATE_JWK is not configured");
   const jwk = JSON.parse(raw) as JsonWebKey;
   if (!jwk.x || !jwk.y || !jwk.d) throw new Error("VAPID_PRIVATE_JWK is invalid");

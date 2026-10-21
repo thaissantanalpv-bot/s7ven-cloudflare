@@ -38,7 +38,7 @@ function toInput(sub: PushSubscription) {
   const json = sub.toJSON();
   return {
     endpoint: sub.endpoint,
-    keys: { p256dh: json.keys?.p256dh ?? "", auth: json.keys?.auth ?? "" },
+    keys: { p256dh: json.keys?.["p256dh"] ?? "", auth: json.keys?.["auth"] ?? "" },
     deviceLabel: deviceLabelFromAgent(navigator.userAgent),
   };
 }
