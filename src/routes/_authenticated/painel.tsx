@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { OPEN_ORDERS_MESSAGE } from "@/lib/push";
 import {
   ArrowLeft,
   Check,
@@ -79,6 +80,16 @@ type ViewId = "home" | "analytics" | "assistant" | "orders" | "products" | "comb
 
 function Admin() {
   const [view, setView] = useState<ViewId>("home");
+  // Tapping a new-order notification opens the orders board (fresh window or already-open panel).
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("aba") === "pedidos") setView("orders");
+    if (!("serviceWorker" in navigator)) return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type === OPEN_ORDERS_MESSAGE) setView("orders");
+    };
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () => navigator.serviceWorker.removeEventListener("message", onMessage);
+  }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const check = useServerFn(checkStoreAdmin);
   const permission = useQuery({ queryKey: ["store-admin"], queryFn: () => check(), retry: false });

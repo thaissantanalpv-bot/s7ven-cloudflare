@@ -1,42 +1,23 @@
 import { useState } from "react";
-import { Bell, Volume2, Smartphone, Monitor, CheckCircle } from "lucide-react";
+import { Bell, Volume2, CheckCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button as UiButton } from "@/components/ui/button";
+import { PushNotificationsCard } from "@/components/push-notifications";
 import {
   getNotificationSettings,
   saveNotificationSettings,
   playWhatsAppChime,
-  requestBrowserNotification,
-  triggerBrowserNotification,
   type NotificationSettings,
 } from "@/lib/order-audio";
 
 export function AdminSettings() {
   const [settings, setSettings] = useState<NotificationSettings>(() => getNotificationSettings());
   const [tested, setTested] = useState(false);
-  const [browserPermission, setBrowserPermission] = useState<NotificationPermission | "unsupported">(
-    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported"
-  );
 
   const update = (partial: Partial<NotificationSettings>) => {
     const next = { ...settings, ...partial };
     setSettings(next);
     saveNotificationSettings(next);
-  };
-
-  const handleToggleBrowser = async (enabled: boolean) => {
-    if (enabled) {
-      const granted = await requestBrowserNotification();
-      setBrowserPermission(
-        typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported"
-      );
-      update({ browserEnabled: granted });
-      if (granted) {
-        triggerBrowserNotification("S7VEN Tabacaria", "Notificações de pedidos ativadas com sucesso!");
-      }
-    } else {
-      update({ browserEnabled: false });
-    }
   };
 
   const testAlert = () => {
@@ -47,9 +28,6 @@ export function AdminSettings() {
         const audio = new Audio("/sounds/new-order-alert.mp3");
         void audio.play().catch(() => {});
       }
-    }
-    if (settings.browserEnabled && browserPermission === "granted") {
-      triggerBrowserNotification("Novo Pedido #1024", "R$ 135,00 · 3 itens · Toque para abrir");
     }
     setTested(true);
     setTimeout(() => setTested(false), 2500);
@@ -129,30 +107,8 @@ export function AdminSettings() {
             </div>
           )}
 
-          {/* Notificação no Navegador / Mobile */}
-          <div className="flex items-center justify-between gap-4 border-t pt-5">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 font-medium text-sm">
-                <Monitor className="size-4 text-primary" />
-                <Smartphone className="size-4 text-primary" />
-                Notificação no Computador e Celular
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Envia pop-up mesmo com a tela minimizada ou aba em segundo plano.
-              </p>
-              {browserPermission === "denied" && (
-                <p className="text-xs text-destructive font-medium">
-                  Permissão bloqueada no navegador. Permita notificações nas configurações do site.
-                </p>
-              )}
-            </div>
-            <Switch
-              aria-label="Ativar notificações nativas"
-              checked={settings.browserEnabled && browserPermission === "granted"}
-              disabled={browserPermission === "unsupported"}
-              onCheckedChange={handleToggleBrowser}
-            />
-          </div>
+          {/* Aviso no celular/computador mesmo com o painel fechado */}
+          <PushNotificationsCard />
 
           {/* Testar notificação */}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/20 p-4 border-t">

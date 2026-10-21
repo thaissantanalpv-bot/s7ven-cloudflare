@@ -23,6 +23,7 @@ import { ORDER_STAGES, orderWhatsApp, isActiveOrder, type Order, type OrderStatu
 import { brl } from "@/lib/products";
 import { OrderPrinting } from "./order-printing";
 import { OrderCancellation } from "./order-cancellation";
+import { PushQuickButton } from "@/components/push-notifications";
 
 const time = (value: string) =>
   new Intl.DateTimeFormat("pt-BR", {
@@ -93,7 +94,7 @@ export function OrderBoard() {
   const [drag, setDrag] = useState<string | null>(null);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const [pendingMessage, setPendingMessage] = useState<Order | null>(null);
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+  const [, setNotificationPermission] = useState<NotificationPermission>(
     typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default",
   );
   const audio = useRef<HTMLAudioElement | null>(null);
@@ -295,12 +296,7 @@ export function OrderBoard() {
             {sound && audioReady ? <Volume2 /> : <VolumeX />}
             {!sound ? "Ativar som" : audioReady ? "Som ativo (WhatsApp)" : "Toque na tela para ativar o som"}
           </Button>
-          {notificationPermission !== "granted" && typeof window !== "undefined" && "Notification" in window && (
-            <Button variant="outline" onClick={requestNotification} title="Receber aviso no celular ao chegar pedido">
-              <BellRing className="size-4" />
-              <span className="hidden sm:inline">Ativar avisos no celular</span>
-            </Button>
-          )}
+          <PushQuickButton />
           <Button
             variant="outline"
             size="icon"
