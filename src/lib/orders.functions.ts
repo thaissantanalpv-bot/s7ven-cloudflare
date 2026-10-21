@@ -80,8 +80,20 @@ export const submitOrder = createServerFn({ method: "POST" })
       }
       throw new Error("Não foi possível registrar o pedido. Seu carrinho foi mantido.");
     }
-    // Aviso por e-mail para a loja; falhas de envio nunca bloqueiam o pedido.
-    try {
+    // Avisos para a loja (celular e e-mail) em paralelo; falhas de envio nunca bloqueiam o pedido.
+    const pushNotice = (async () => {
+      const { newOrderPush } = await import("@/lib/push");
+      const { notifyAdminsPush } = await import("@/lib/push.server");
+      await notifyAdminsPush(newOrderPush({
+        id: saved.id,
+        number: saved.number,
+        customerName: data.customer.name,
+        total: priced.total,
+        fulfillment: data.customer.fulfillment,
+        items: priced.items,
+      }));
+    })();
+    const emailNotice = (async () => {
       const { notifyNewOrder } = await import("@/lib/order-notifications");
       await notifyNewOrder(saved.id, {
         number: saved.number,
@@ -97,9 +109,9 @@ export const submitOrder = createServerFn({ method: "POST" })
         deliveryFee: priced.delivery_fee,
         total: priced.total,
       });
-    } catch (emailError) {
-      console.error("Falha ao enviar aviso de novo pedido:", emailError);
-    }
+    })();
+    for (const result of await Promise.allSettled([pushNotice, emailNotice]))
+      if (result.status === "rejected") console.error("Falha ao enviar aviso de novo pedido:", result.reason);
     return { id: saved.id, number: saved.number };
   });
 export const listOrders = createServerFn({ method: "POST" })
