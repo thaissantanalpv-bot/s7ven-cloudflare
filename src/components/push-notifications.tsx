@@ -238,18 +238,18 @@ export function PushNotificationsCard() {
 /** Compact button for the orders board; hidden once this device already receives notifications. */
 export function PushQuickButton() {
   const push = usePushNotifications();
+  // The compact button has no room for text on phones, so problems are shown in a dialog box.
+  useEffect(() => {
+    if (push.error) window.alert(push.error);
+  }, [push.error]);
   if (push.state !== "off" && push.state !== "denied") return null;
   return (
     <Button
       variant="outline"
       disabled={push.busy}
-      onClick={push.enable}
-      title={
-        push.error ||
-        (push.state === "denied"
-          ? stateText.denied
-          : "Receber aviso no celular quando chegar pedido")
-      }
+      aria-label="Ativar avisos no celular"
+      onClick={() => (push.state === "denied" ? window.alert(stateText.denied) : void push.enable())}
+      title="Receber aviso no celular quando chegar pedido"
     >
       <BellRing className="size-4" />
       <span className="hidden sm:inline">
