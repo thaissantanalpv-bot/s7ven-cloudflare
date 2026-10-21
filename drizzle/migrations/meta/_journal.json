@@ -211,6 +211,13 @@
       "when": 1792532399269,
       "tag": "0029_harden_tracking_quotes_profiles_photos",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792546768029,
+      "tag": "0030_admin_push_subscriptions",
+      "breakpoints": true
     }
   ]
 }
