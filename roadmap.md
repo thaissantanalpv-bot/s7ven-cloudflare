@@ -1,3 +1,7 @@
+# Aviso de pedido novo no celular (Thais, 21/10/2026 01:36 UTC)
+- [x] Notificação estilo WhatsApp no Android para cada pedido novo do catálogo, mesmo com o painel fechado; botão em Pedidos e cartão em Configurações (ativar, testar, desativar). Teste real: aparelho ativado e aviso de teste aceito pelo serviço do Google; aparelho de teste removido. 137 testes OK.
+- [ ] Publicar e ativar no celular da loja: depende de Thais pedir a publicação e tocar em "Ativar avisos" no celular.
+
 # Melhorias solicitadas em 16/10/2026
 - [x] Relatório de vendas hoje/semana/mês, mais vendidos, ticket médio e cancelamentos. Leitura administrativa limitada ao período; vendas reais conferidas.
 - [x] Previsão de entrega: 30–45 minutos de preparo + duração da rota de moto; duração persistida nas cotações. Rua Joaquim Cândido, 2282: R$ 11,10 / 7,02 km / estimativa 47–62 min.
