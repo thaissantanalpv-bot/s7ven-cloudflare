@@ -34,6 +34,22 @@ const time = (value: string) =>
     minute: "2-digit",
   }).format(new Date(value));
 
+function elapsed(created: string): string {
+  const diff = Math.max(0, Date.now() - new Date(created).getTime());
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}min`;
+  const hrs = Math.floor(mins / 60);
+  const rem = mins % 60;
+  return `${hrs}h${rem > 0 ? String(rem).padStart(2, "0") : ""}`;
+}
+
+function elapsedColor(created: string): string {
+  const mins = Math.floor(Math.max(0, Date.now() - new Date(created).getTime()) / 60000);
+  if (mins < 10) return "text-emerald-500";
+  if (mins < 20) return "text-amber-500";
+  return "text-red-500";
+}
+
 // Tom duplo característico estilo WhatsApp + vibração de mensagem
 function playWhatsAppAlert() {
   try {
@@ -94,6 +110,13 @@ export function OrderBoard() {
   const [drag, setDrag] = useState<string | null>(null);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const [pendingMessage, setPendingMessage] = useState<Order | null>(null);
+  const [, setTick] = useState(0);
+
+  // Tick every 30s to update elapsed timers
+  useEffect(() => {
+    const iv = setInterval(() => setTick((t) => t + 1), 30000);
+    return () => clearInterval(iv);
+  }, []);
   const [, setNotificationPermission] = useState<NotificationPermission>(
     typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default",
   );
@@ -376,23 +399,41 @@ export function OrderBoard() {
         <p className="py-16 text-muted-foreground">Carregando pedidos…</p>
       ) : (
         <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {ORDER_STAGES.map((stage, index) => (
+          {ORDER_STAGES.map((stage, index) => {
+            const KANBAN_LABELS: Record<string, string> = {
+              received: "Novos / Pendente",
+              preparing: "Em preparo / Separação",
+              delivering: "Saiu p/ entrega / Pronto retirada",
+              delivered: "Concluídos hoje",
+            };
+            const kanbanLabel = KANBAN_LABELS[stage.id] ?? stage.label;
+            const KANBAN_COLORS: Record<string, string> = {
+              received: "border-red-500",
+              preparing: "border-amber-500",
+              delivering: "border-blue-500",
+              delivered: "border-emerald-500",
+            };
+            const colBorder = KANBAN_COLORS[stage.id] ?? "border-border";
+            const count = visible.filter((o) => o.status === stage.id).length;
+            return (
             <section
               key={stage.id}
-              aria-label={stage.label}
+              aria-label={kanbanLabel}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
                 const order = all.find((o) => o.id === drag);
                 if (order) void move(order, stage.id);
               }}
-              className={`min-w-0 border-t-2 pt-4 ${drag ? "border-primary" : "border-border"}`}
+              className={`min-w-0 border-t-2 pt-4 ${drag ? "border-primary" : colBorder}`}
             >
               <div className="mb-4 flex items-center gap-2">
-                <span className={`size-2 rounded-full bg-current ${stage.tone}`} />
-                <h2 className="text-sm font-semibold">{stage.label}</h2>
-                <span className="ml-auto grid size-6 place-items-center rounded-md bg-secondary text-xs">
-                  {visible.filter((o) => o.status === stage.id).length}
+                <span className={`size-2.5 rounded-full bg-current ${stage.tone}`} />
+                <h2 className="text-sm font-semibold">{kanbanLabel}</h2>
+                <span className={`ml-auto grid size-6 place-items-center rounded-full text-xs font-bold ${
+                  count > 0 ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                }`}>
+                  {count}
                 </span>
               </div>
               <div className="space-y-3">
@@ -404,37 +445,76 @@ export function OrderBoard() {
                       draggable={!busy}
                       onDragStart={() => setDrag(order.id)}
                       onDragEnd={() => setDrag(null)}
-                      className="rounded-lg border bg-card p-4"
+                      className="rounded-lg border bg-card p-3 shadow-sm"
                     >
-                      <div className="flex justify-between gap-2">
+                      {/* Top bar: badges + timer */}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          order.fulfillment === "pickup"
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                            : "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
+                        }`}>
+                          {order.fulfillment === "pickup" ? "Balcão" : "Delivery"}
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          {order.payment}
+                        </span>
+                        <span className={`ml-auto inline-flex items-center gap-1 text-[11px] font-semibold ${elapsedColor(order.created_at)}`}>
+                          <Clock className="size-3" />
+                          {elapsed(order.created_at)}
+                        </span>
+                      </div>
+                      {/* Order number + time */}
+                      <div className="mt-2 flex justify-between gap-2">
                         <Button
                           variant="link"
-                          className="h-auto p-0 font-mono text-sm text-foreground"
+                          className="h-auto p-0 font-mono text-sm font-bold text-foreground"
                           onClick={() => setSelected(order.id)}
                         >
                           #{order.number}
                         </Button>
-                        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                          <Clock className="size-3" />
+                        <span className="text-[11px] text-muted-foreground">
                           {time(order.created_at)}
                         </span>
                       </div>
-                      <h3 className="mt-3 break-words font-semibold">{order.customer_name}</h3>
+                      <h3 className="mt-1.5 break-words text-sm font-semibold">{order.customer_name}</h3>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {order.items.reduce((n, i) => n + i.qty, 0)} itens · {order.payment}
+                        {order.items.reduce((n, i) => n + i.qty, 0)} itens
                       </p>
-                      <p className="mt-3 line-clamp-2 break-words text-xs text-muted-foreground">
+                      <p className="mt-1 line-clamp-1 break-words text-[11px] text-muted-foreground">
                         {order.fulfillment === "pickup" ? "Retirada na loja" : order.address}
                       </p>
-                      <div className="my-4 flex items-center justify-between border-t pt-3">
-                        <span className={`text-xs ${stage.tone}`}>{stage.label}</span>
+                      <div className="my-2 flex items-center justify-between border-t pt-2">
+                        <span className={`text-xs font-medium ${stage.tone}`}>{stage.label}</span>
                         <strong className="text-sm">{brl(order.total)}</strong>
                       </div>
-                      <div className="flex gap-2">
+                      {/* Quick action buttons */}
+                      <div className="flex gap-1.5">
+                        {ORDER_STAGES[index + 1] ? (
+                          <Button
+                            disabled={!!busy}
+                            className="min-w-0 flex-1 text-xs"
+                            size="sm"
+                            onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id)}
+                          >
+                            {busy === order.id ? "…" : stage.id === "received" ? "Aceitar" : ORDER_STAGES[index + 1]?.label}
+                            <ArrowRight />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="min-w-0 flex-1 text-xs"
+                            onClick={() => setSelected(order.id)}
+                          >
+                            <Package />
+                            Detalhes
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="icon"
-                          className="size-8"
+                          className="size-8 shrink-0"
                           title="Imprimir pedido"
                           aria-label={`Imprimir pedido ${order.number}`}
                           onClick={() => setPrintOrder(order)}
@@ -442,54 +522,33 @@ export function OrderBoard() {
                           <Printer />
                         </Button>
                         <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => setSelected(order.id)}
-                        >
-                          <Package />
-                          Detalhes
-                        </Button>
-                        <Button
                           asChild
                           variant="outline"
                           size="icon"
-                          className="size-8 text-whatsapp"
-                          title={`Avisar cliente: ${stage.label}`}
+                          className="size-8 shrink-0 text-whatsapp"
+                          title={`Avisar cliente no WhatsApp`}
                         >
                           <a
                             href={orderWhatsApp(order)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            aria-label={`Avisar cliente do pedido ${order.number}: ${stage.label}`}
+                            aria-label={`Avisar cliente do pedido ${order.number} no WhatsApp`}
                           >
                             <MessageCircle />
                           </a>
                         </Button>
                       </div>
                       {ORDER_STAGES[index + 1] && (
-                        <div className="mt-2 flex gap-2">
-                          <Button
-                            disabled={!!busy}
-                            className="min-w-0 flex-1 text-xs"
-                            size="sm"
-                            onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id)}
-                          >
-                            {busy === order.id ? "Salvando…" : ORDER_STAGES[index + 1]?.label}
-                            <ArrowRight />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="size-8 shrink-0 text-whatsapp"
-                            disabled={!!busy}
-                            title={`${ORDER_STAGES[index + 1]?.label} e avisar no WhatsApp`}
-                            aria-label={`${ORDER_STAGES[index + 1]?.label} e avisar pedido ${order.number} no WhatsApp`}
-                            onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id, true)}
-                          >
-                            <MessageCircle />
-                          </Button>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="mt-1 w-full text-[11px] text-whatsapp"
+                          disabled={!!busy}
+                          onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id, true)}
+                        >
+                          <MessageCircle className="size-3" />
+                          {stage.id === "received" ? "Aceitar" : ORDER_STAGES[index + 1]?.label} + WhatsApp
+                        </Button>
                       )}
                     </article>
                   ))}
@@ -501,7 +560,8 @@ export function OrderBoard() {
                 )}
               </div>
             </section>
-          ))}
+          );
+          })}
         </div>
       )}
       {visible.some((o) => o.status === "cancelled") && (
