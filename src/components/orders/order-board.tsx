@@ -33,6 +33,43 @@ const time = (value: string) =>
     minute: "2-digit",
   }).format(new Date(value));
 
+// Tom duplo característico estilo WhatsApp + vibração de mensagem
+function playWhatsAppAlert() {
+  try {
+    if (typeof window !== "undefined" && "navigator" in window && "vibrate" in navigator) {
+      navigator.vibrate([120, 80, 120]);
+    }
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(880, now); // A5
+    gain1.gain.setValueAtTime(0.3, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.12);
+
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(1318.51, now + 0.12); // E6
+    gain2.gain.setValueAtTime(0.35, now + 0.12);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.12);
+    osc2.stop(now + 0.32);
+  } catch {
+    // Ignora quando contexto bloqueado
+  }
+}
+
 export function OrderBoard() {
   const fetchOrders = useServerFn(listOrders);
   const update = useServerFn(updateOrderStatus);
@@ -56,6 +93,9 @@ export function OrderBoard() {
   const [drag, setDrag] = useState<string | null>(null);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const [pendingMessage, setPendingMessage] = useState<Order | null>(null);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default",
+  );
   const audio = useRef<HTMLAudioElement | null>(null);
   const seen = useRef<Set<string> | null>(null);
 
@@ -79,6 +119,15 @@ export function OrderBoard() {
     }
   };
 
+  const requestNotification = async () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      try {
+        const perm = await Notification.requestPermission();
+        setNotificationPermission(perm);
+      } catch {}
+    }
+  };
+
   const toggleSound = () => {
     if (sound && audioReady) {
       setSound(false);
@@ -86,6 +135,7 @@ export function OrderBoard() {
     }
     setSound(true);
     unlock();
+    void requestNotification();
   };
 
   useEffect(() => {
@@ -116,6 +166,19 @@ export function OrderBoard() {
       setNotice(
         `${newOrders.length} ${newOrders.length === 1 ? "novo pedido recebido" : "novos pedidos recebidos"}`,
       );
+      playWhatsAppAlert();
+      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+        newOrders.forEach((o) => {
+          try {
+            new Notification(`🔔 Novo Pedido #${o.number} — ${o.customer_name}`, {
+              body: `${o.items.map((i) => `${i.qty}x ${i.name}`).join(", ")} · Total: ${brl(o.total)}`,
+              icon: "/icons/s7ven-192.png",
+              badge: "/icons/s7ven-192.png",
+              tag: `order-${o.id}`,
+            });
+          } catch {}
+        });
+      }
     }
     seen.current = new Set(orders.data.map((o) => o.id));
   }, [orders.data]);
@@ -230,8 +293,14 @@ export function OrderBoard() {
             aria-pressed={sound && audioReady}
           >
             {sound && audioReady ? <Volume2 /> : <VolumeX />}
-            {!sound ? "Ativar som" : audioReady ? "Som ativo" : "Toque na tela para ativar o som"}
+            {!sound ? "Ativar som" : audioReady ? "Som ativo (WhatsApp)" : "Toque na tela para ativar o som"}
           </Button>
+          {notificationPermission !== "granted" && typeof window !== "undefined" && "Notification" in window && (
+            <Button variant="outline" onClick={requestNotification} title="Receber aviso no celular ao chegar pedido">
+              <BellRing className="size-4" />
+              <span className="hidden sm:inline">Ativar avisos no celular</span>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="icon"
