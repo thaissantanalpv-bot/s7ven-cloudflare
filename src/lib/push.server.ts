@@ -13,12 +13,18 @@ function privateJwk(): JsonWebKey & { x: string; y: string } {
 }
 
 function b64urlToBytes(value: string) {
-  const b64 = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  const b64 = value
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .padEnd(Math.ceil(value.length / 4) * 4, "=");
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 }
 
 function bytesToB64url(bytes: Uint8Array) {
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
 /** Uncompressed P-256 public key (0x04 || x || y) the browser needs to subscribe. */
@@ -37,18 +43,32 @@ export function vapidPublicKey() {
 }
 
 /** Sends to each device independently; returns the ids the push service reported as gone. */
-export async function sendPush(subscriptions: StoredSubscription[], payload: PushPayload, send: typeof fetch = fetch) {
+export async function sendPush(
+  subscriptions: StoredSubscription[],
+  payload: PushPayload,
+  send: typeof fetch = fetch,
+) {
   const jwk = privateJwk();
   const results = await Promise.allSettled(
     subscriptions.map(async (s) => {
       const { endpoint, headers, body } = await buildPushHTTPRequest({
         privateJWK: jwk,
         subscription: { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-        message: { payload, adminContact: "https://s7venlounge.shop", options: { ttl: 4 * 3600, urgency: "high" } },
+        message: {
+          payload,
+          adminContact: "https://s7venlounge.shop",
+          options: { ttl: 4 * 3600, urgency: "high" },
+        },
       });
-      const response = await send(endpoint, { method: "POST", headers, body, signal: AbortSignal.timeout(6000) });
+      const response = await send(endpoint, {
+        method: "POST",
+        headers,
+        body,
+        signal: AbortSignal.timeout(6000),
+      });
       if (response.status === 404 || response.status === 410) return { id: s.id, gone: true };
-      if (!response.ok) throw new Error(`Push failed [${response.status}]: ${await response.text()}`);
+      if (!response.ok)
+        throw new Error(`Push failed [${response.status}]: ${await response.text()}`);
       return { id: s.id, gone: false };
     }),
   );
@@ -75,7 +95,8 @@ export async function notifyAdminsPush(payload: PushPayload) {
     if (error) throw error;
     if (!data?.length) return;
     const { expired } = await sendPush(data, payload);
-    if (expired.length) await supabaseAdmin.from("admin_push_subscriptions").delete().in("id", expired);
+    if (expired.length)
+      await supabaseAdmin.from("admin_push_subscriptions").delete().in("id", expired);
   } catch (error) {
     console.error("Falha ao enviar aviso no celular:", error);
   }

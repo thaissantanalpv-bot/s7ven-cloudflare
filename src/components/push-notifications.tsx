@@ -2,17 +2,30 @@ import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { BellRing, BellOff, CheckCircle, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getPushPublicKey, removePushSubscription, savePushSubscription, sendTestPush } from "@/lib/push.functions";
+import {
+  getPushPublicKey,
+  removePushSubscription,
+  savePushSubscription,
+  sendTestPush,
+} from "@/lib/push.functions";
 import { PUSH_WORKER_SCOPE, PUSH_WORKER_URL, deviceLabelFromAgent } from "@/lib/push";
 
 type PushState = "checking" | "unsupported" | "embedded" | "denied" | "off" | "on";
 
 function supported() {
-  return typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  return (
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window
+  );
 }
 
 function keyBytes(key: string) {
-  const b64 = key.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(key.length / 4) * 4, "=");
+  const b64 = key
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .padEnd(Math.ceil(key.length / 4) * 4, "=");
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 }
 
@@ -22,7 +35,9 @@ async function activeRegistration() {
   const worker = reg.installing ?? reg.waiting;
   if (worker)
     await new Promise<void>((resolve) => {
-      const check = () => { if (worker.state === "activated") resolve(); };
+      const check = () => {
+        if (worker.state === "activated") resolve();
+      };
       worker.addEventListener("statechange", check);
       check();
     });
@@ -68,17 +83,24 @@ export function usePushNotifications() {
         } else setState("off");
       })
       .catch(() => alive && setState("off"));
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [save]);
 
   const enable = useCallback(async () => {
-    setError(""); setMessage("");
+    setError("");
+    setMessage("");
     if (!supported()) return setState("unsupported");
     if (window.self !== window.top) return setState("embedded");
     setBusy(true);
     try {
-      const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
-      if (permission !== "granted") { setState(permission === "denied" ? "denied" : "off"); return; }
+      const permission =
+        Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+      if (permission !== "granted") {
+        setState(permission === "denied" ? "denied" : "off");
+        return;
+      }
       const { publicKey } = await getKey();
       const reg = await activeRegistration();
       let sub = await reg.pushManager.getSubscription();
@@ -87,19 +109,28 @@ export function usePushNotifications() {
         await sub.unsubscribe();
         sub = null;
       }
-      sub ??= await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(publicKey) });
+      sub ??= await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: keyBytes(publicKey),
+      });
       await save({ data: toInput(sub) });
       setState("on");
       setMessage("Avisos ativados neste aparelho.");
     } catch (e) {
-      setError(e instanceof Error && e.message.length < 120 ? e.message : "Não foi possível ativar os avisos. Tente novamente.");
+      setError(
+        e instanceof Error && e.message.length < 120
+          ? e.message
+          : "Não foi possível ativar os avisos. Tente novamente.",
+      );
     } finally {
       setBusy(false);
     }
   }, [getKey, save]);
 
   const disable = useCallback(async () => {
-    setError(""); setMessage(""); setBusy(true);
+    setError("");
+    setMessage("");
+    setBusy(true);
     try {
       const sub = await existingSubscription();
       if (sub) {
@@ -116,14 +147,23 @@ export function usePushNotifications() {
   }, [remove]);
 
   const sendTest = useCallback(async () => {
-    setError(""); setMessage(""); setBusy(true);
+    setError("");
+    setMessage("");
+    setBusy(true);
     try {
       const sub = await existingSubscription();
-      if (!sub) { setState("off"); throw new Error("Ative os avisos neste aparelho antes de testar."); }
+      if (!sub) {
+        setState("off");
+        throw new Error("Ative os avisos neste aparelho antes de testar.");
+      }
       await test({ data: { endpoint: sub.endpoint } });
       setMessage("Aviso de teste enviado. Ele chega em alguns segundos.");
     } catch (e) {
-      setError(e instanceof Error && e.message.length < 120 ? e.message : "O aviso de teste não foi enviado.");
+      setError(
+        e instanceof Error && e.message.length < 120
+          ? e.message
+          : "O aviso de teste não foi enviado.",
+      );
     } finally {
       setBusy(false);
     }
@@ -135,8 +175,10 @@ export function usePushNotifications() {
 const stateText: Record<PushState, string> = {
   checking: "Conferindo este aparelho...",
   unsupported: "Este navegador não recebe avisos. No celular, use o Google Chrome.",
-  embedded: "Abra o painel em s7venlounge.shop/painel (ou pelo ícone S7VEN do celular) para ativar.",
-  denied: "Os avisos foram bloqueados. Toque no cadeado ao lado do endereço do site, em Permissões > Notificações, escolha Permitir e volte aqui.",
+  embedded:
+    "Abra o painel em s7venlounge.shop/painel (ou pelo ícone S7VEN do celular) para ativar.",
+  denied:
+    "Os avisos foram bloqueados. Toque no cadeado ao lado do endereço do site, em Permissões > Notificações, escolha Permitir e volte aqui.",
   off: "Desativado neste aparelho.",
   on: "Ativado: o aviso chega mesmo com o painel fechado e a tela bloqueada.",
 };
@@ -152,9 +194,12 @@ export function PushNotificationsCard() {
             Aviso de pedido novo no celular
           </div>
           <p className="text-xs text-muted-foreground">
-            Chega na tela do celular como uma mensagem do WhatsApp, com som e vibração. Ative em cada celular ou computador que deve receber.
+            Chega na tela do celular como uma mensagem do WhatsApp, com som e vibração. Ative em
+            cada celular ou computador que deve receber.
           </p>
-          <p className={`text-xs font-medium ${push.state === "on" ? "text-primary" : push.state === "denied" ? "text-destructive" : "text-muted-foreground"}`}>
+          <p
+            className={`text-xs font-medium ${push.state === "on" ? "text-primary" : push.state === "denied" ? "text-destructive" : "text-muted-foreground"}`}
+          >
             {stateText[push.state]}
           </p>
         </div>
@@ -171,7 +216,8 @@ export function PushNotificationsCard() {
           </>
         ) : push.state === "off" || push.state === "denied" ? (
           <Button disabled={push.busy} onClick={push.enable}>
-            <BellRing className="size-4" /> {push.busy ? "Ativando..." : "Ativar avisos neste aparelho"}
+            <BellRing className="size-4" />{" "}
+            {push.busy ? "Ativando..." : "Ativar avisos neste aparelho"}
           </Button>
         ) : null}
       </div>
@@ -180,7 +226,11 @@ export function PushNotificationsCard() {
           <CheckCircle className="size-3.5" /> {push.message}
         </p>
       )}
-      {push.error && <p className="text-xs text-destructive" role="alert">{push.error}</p>}
+      {push.error && (
+        <p className="text-xs text-destructive" role="alert">
+          {push.error}
+        </p>
+      )}
     </div>
   );
 }
@@ -194,10 +244,17 @@ export function PushQuickButton() {
       variant="outline"
       disabled={push.busy}
       onClick={push.enable}
-      title={push.error || (push.state === "denied" ? stateText.denied : "Receber aviso no celular quando chegar pedido")}
+      title={
+        push.error ||
+        (push.state === "denied"
+          ? stateText.denied
+          : "Receber aviso no celular quando chegar pedido")
+      }
     >
       <BellRing className="size-4" />
-      <span className="hidden sm:inline">{push.busy ? "Ativando..." : "Ativar avisos no celular"}</span>
+      <span className="hidden sm:inline">
+        {push.busy ? "Ativando..." : "Ativar avisos no celular"}
+      </span>
     </Button>
   );
 }

@@ -8,10 +8,22 @@ export const PUSH_WORKER_SCOPE = "/avisos-painel/";
 export const OPEN_ORDERS_MESSAGE = "s7ven-open-orders";
 
 export const pushSubscriptionSchema = z.object({
-  endpoint: z.string().url().max(2048).refine((u) => u.startsWith("https://"), "Endereço de aviso inválido."),
+  endpoint: z
+    .string()
+    .url()
+    .max(2048)
+    .refine((u) => u.startsWith("https://"), "Endereço de aviso inválido."),
   keys: z.object({
-    p256dh: z.string().regex(/^[A-Za-z0-9_-]+=*$/).min(40).max(200),
-    auth: z.string().regex(/^[A-Za-z0-9_-]+=*$/).min(8).max(64),
+    p256dh: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]+=*$/)
+      .min(40)
+      .max(200),
+    auth: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]+=*$/)
+      .min(8)
+      .max(64),
   }),
   deviceLabel: z.string().trim().max(80).default(""),
 });
@@ -27,7 +39,9 @@ export function newOrderPush(order: {
   fulfillment: "delivery" | "pickup";
   items: { qty: number; name: string; option?: string }[];
 }): PushPayload {
-  const items = order.items.map((i) => `${i.qty}x ${i.name}${i.option ? ` (${i.option})` : ""}`).join(", ");
+  const items = order.items
+    .map((i) => `${i.qty}x ${i.name}${i.option ? ` (${i.option})` : ""}`)
+    .join(", ");
   const summary = `${order.customerName} · ${brl(order.total)} · ${order.fulfillment === "pickup" ? "Retirada" : "Entrega"}`;
   const body = `${summary}\n${items}`;
   return {
