@@ -3,9 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { ArrowUp, ChartNoAxesCombined, MessageCircle, RefreshCw, Square } from "lucide-react";
+import { ArrowUp, ChartNoAxesCombined, FileDown, MessageCircle, RefreshCw, Square } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { loadAssistantConversation } from "@/lib/assistant.functions";
+import { adminCatalogQuery } from "@/lib/catalog.query";
+import { generateCatalogPdf } from "@/lib/catalog-pdf";
 import type { AssistantConversation } from "@/lib/assistant";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,6 +99,17 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
     input.current?.focus();
     await sendMessage({ text: text.trim() });
   };
+  const catalog = useQuery(adminCatalogQuery);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const handleDownloadPdf = () => {
+    if (!catalog.data || !catalog.data.length) return;
+    setGeneratingPdf(true);
+    try {
+      generateCatalogPdf(catalog.data);
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
   const suggestions = [
     "Como estão as visitas e os pedidos hoje?",
     "Onde estamos perdendo compras?",
@@ -110,7 +123,20 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
       <div className="flex items-center gap-3 border-b pb-4">
         <MessageCircle className="size-5 text-primary" />
         <span className="font-display font-semibold">Assistente S7VEN</span>
-        <span className="ml-auto text-xs text-muted-foreground">Minha loja</span>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={generatingPdf || !catalog.data?.length}
+            onClick={handleDownloadPdf}
+            className="h-8 gap-1.5 text-xs"
+            title="Exportar catálogo completo em PDF com fotos, preços e variações"
+          >
+            <FileDown className="size-3.5 text-primary" />
+            {generatingPdf ? "Gerando PDF…" : "Gerar PDF do Catálogo"}
+          </Button>
+          <span className="text-xs text-muted-foreground">Minha loja</span>
+        </div>
       </div>
       <Conversation className="min-h-0" aria-label="Conversa com a assistente">
         <ConversationContent className="gap-6 px-0 py-6 sm:px-2">
