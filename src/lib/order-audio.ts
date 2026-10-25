@@ -4,12 +4,14 @@ export interface NotificationSettings {
   soundEnabled: boolean;
   soundType: "whatsapp" | "classic";
   browserEnabled: boolean;
+  volume: number; // 0 a 100
 }
 
 export const DEFAULT_NOTIF_SETTINGS: NotificationSettings = {
   soundEnabled: true,
   soundType: "whatsapp",
   browserEnabled: false,
+  volume: 80,
 };
 
 export function getNotificationSettings(): NotificationSettings {
@@ -29,7 +31,7 @@ export function saveNotificationSettings(next: NotificationSettings) {
 }
 
 // Web Audio API para tocar o bip característico duplo estilo WhatsApp
-export function playWhatsAppChime() {
+export function playWhatsAppChime(volumePercent?: number) {
   if (typeof window === "undefined") return;
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -38,6 +40,7 @@ export function playWhatsAppChime() {
     if (ctx.state === "suspended") void ctx.resume();
 
     const now = ctx.currentTime;
+    const vol = Math.max(0, Math.min(100, volumePercent ?? getNotificationSettings().volume ?? 80)) / 100;
 
     // Primeiro tom (alto, curto)
     const osc1 = ctx.createOscillator();
@@ -45,8 +48,8 @@ export function playWhatsAppChime() {
     osc1.type = "sine";
     osc1.frequency.setValueAtTime(850, now);
     osc1.frequency.exponentialRampToValueAtTime(1150, now + 0.08);
-    gain1.gain.setValueAtTime(0.3, now);
-    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+    gain1.gain.setValueAtTime(Math.max(0.0001, 0.3 * vol), now);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
     osc1.connect(gain1);
     gain1.connect(ctx.destination);
     osc1.start(now);
@@ -58,8 +61,8 @@ export function playWhatsAppChime() {
     osc2.type = "triangle";
     osc2.frequency.setValueAtTime(1150, now + 0.11);
     osc2.frequency.exponentialRampToValueAtTime(1550, now + 0.22);
-    gain2.gain.setValueAtTime(0.35, now + 0.11);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+    gain2.gain.setValueAtTime(Math.max(0.0001, 0.35 * vol), now + 0.11);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
     osc2.connect(gain2);
     gain2.connect(ctx.destination);
     osc2.start(now + 0.11);

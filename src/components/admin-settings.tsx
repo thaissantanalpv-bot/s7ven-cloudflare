@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Bell, Volume2, CheckCircle } from "lucide-react";
+import { Bell, Volume2, VolumeX, Volume1, CheckCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Button as UiButton } from "@/components/ui/button";
 import { PushNotificationsCard } from "@/components/push-notifications";
 import {
@@ -20,12 +21,14 @@ export function AdminSettings() {
     saveNotificationSettings(next);
   };
 
-  const testAlert = () => {
+  const testAlert = (volOverride?: number) => {
     if (settings.soundEnabled) {
+      const vol = volOverride ?? settings.volume ?? 80;
       if (settings.soundType === "whatsapp") {
-        playWhatsAppChime();
+        playWhatsAppChime(vol);
       } else {
         const audio = new Audio("/sounds/new-order-alert.mp3");
+        audio.volume = Math.max(0, Math.min(1, vol / 100));
         void audio.play().catch(() => {});
       }
     }
@@ -66,6 +69,45 @@ export function AdminSettings() {
               onCheckedChange={(checked) => update({ soundEnabled: checked })}
             />
           </div>
+
+          {/* Controle de Volume */}
+          {settings.soundEnabled && (
+            <div className="rounded-xl border bg-muted/40 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {(settings.volume ?? 80) === 0 ? (
+                    <VolumeX className="size-4 text-muted-foreground" />
+                  ) : (settings.volume ?? 80) < 50 ? (
+                    <Volume1 className="size-4 text-primary" />
+                  ) : (
+                    <Volume2 className="size-4 text-primary" />
+                  )}
+                  <span className="text-sm font-medium">Volume do alerta sonoro</span>
+                </div>
+                <span className="text-xs font-mono font-semibold text-primary">
+                  {settings.volume ?? 80}%
+                </span>
+              </div>
+              <Slider
+                aria-label="Ajustar volume"
+                min={0}
+                max={100}
+                step={5}
+                value={[settings.volume ?? 80]}
+                onValueChange={(val) => {
+                  const vol = val[0] ?? 80;
+                  update({ volume: vol });
+                }}
+                onValueCommit={(val) => {
+                  const vol = val[0] ?? 80;
+                  if (vol > 0) testAlert(vol);
+                }}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Arraste para aumentar ou diminuir. Solte o controle para ouvir a prévia.
+              </p>
+            </div>
+          )}
 
           {/* Estilo do som */}
           {settings.soundEnabled && (
