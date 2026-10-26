@@ -1173,12 +1173,15 @@ function ProductCard({
   const optionOut = hasOpts && !!option && !available(p, option);
 
   return (
-    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-lg bg-card">
+    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border/70 bg-card/85 shadow-lg shadow-black/40 transition-all duration-200 hover:border-primary/50 hover:shadow-primary/10">
       <ProductCardPhotos product={p} option={option} onEnlarge={() => setGalleryOpen(true)} />
-      <div className="flex min-w-0 flex-1 flex-col px-1 py-3 sm:px-2">
-        <span className="truncate text-[10px] uppercase text-muted-foreground">{p.category}</span>
-        <h2 className="mt-1 font-display text-sm font-semibold leading-snug sm:text-base"><Button variant="link" onClick={() => setGalleryOpen(true)} className="h-auto w-full justify-start whitespace-normal break-words p-0 text-left text-sm text-foreground sm:text-base">{p.name}</Button></h2>
-        {!available(p) && <p className="mt-2 inline-flex w-fit rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">{p.active ? "Esgotado" : "Indisponível"}</p>}
+      <div className="flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
+        <div className="flex items-center justify-between gap-1">
+          <span className="truncate text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">{p.category}</span>
+          {p.featured && <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300">Destaque</span>}
+        </div>
+        <h2 className="mt-1 font-display text-sm font-semibold leading-snug sm:text-base"><Button variant="link" onClick={() => setGalleryOpen(true)} className="h-auto w-full justify-start whitespace-normal break-words p-0 text-left text-sm text-foreground transition-colors hover:text-primary sm:text-base">{p.name}</Button></h2>
+        {!available(p) && <p className="mt-2 inline-flex w-fit rounded-md bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">{p.active ? "Esgotado" : "Indisponível"}</p>}
         {hasOpts ? (
           <div className="mt-2">
             <p className="text-[11px] font-medium uppercase text-muted-foreground">
