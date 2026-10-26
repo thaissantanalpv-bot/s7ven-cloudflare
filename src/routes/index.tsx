@@ -697,7 +697,17 @@ function Catalog() {
             )}
           </div>
         )}
+        <div className="mt-3 rounded-lg border border-primary/30 bg-primary/10 px-3.5 py-2.5 text-xs text-foreground sm:text-sm">
+          <span className="flex items-center gap-2 font-medium">
+            <Truck className="size-4 text-primary shrink-0" />
+            <span><strong>Horário das entregas:</strong> das 16:00 às 23:00</span>
+          </span>
+        </div>
         <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 border-b pb-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-2 font-medium text-foreground">
+            <Clock className="size-4 text-primary" />
+            Entregas das 16:00 às 23:00
+          </span>
           <span className="flex items-center gap-2">
             <Truck className="size-4 text-primary" />
             Consultar taxa de entrega para o seu bairro
