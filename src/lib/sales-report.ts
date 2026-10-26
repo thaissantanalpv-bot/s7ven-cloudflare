@@ -1,7 +1,7 @@
 import type { Order } from "./orders";
 
 export type SalesPeriod = "today" | "week" | "month";
-export type SalesRow = Pick<Order, "created_at" | "status" | "total" | "items">;
+export type SalesRow = Pick<Order, "created_at" | "status" | "total" | "items"> & Partial<Pick<Order, "payment">>;
 const localDate = (date: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
 export function salesPeriodRange(period: SalesPeriod, now = new Date()) {
   const today = localDate(now);
@@ -26,5 +26,22 @@ export function summarizeSales(rows: SalesRow[]) {
       products.set(item.productId, current);
     }
   }
-  return { revenue: revenueCents / 100, cancelledTotal: cancelledCents / 100, orderCount: count, cancelledCount, averageTicket: count ? Math.round(revenueCents / count) / 100 : 0, bestSellers: [...products.values()].sort((a, b) => b.quantity - a.quantity || b.cents - a.cents || a.id.localeCompare(b.id)).slice(0, 10).map(({ cents, ...p }) => ({ ...p, revenue: cents / 100 })) };
+  const paymentMethods: Record<string, { count: number; total: number }> = {};
+  for (const row of rows) {
+    if (row.status === "cancelled") continue;
+    const method = row.payment || "Não especificado";
+    const prev = paymentMethods[method] ?? { count: 0, total: 0 };
+    prev.count += 1;
+    prev.total = Math.round((prev.total + row.total) * 100) / 100;
+    paymentMethods[method] = prev;
+  }
+  return {
+    revenue: revenueCents / 100,
+    cancelledTotal: cancelledCents / 100,
+    orderCount: count,
+    cancelledCount,
+    averageTicket: count ? Math.round(revenueCents / count) / 100 : 0,
+    paymentMethods,
+    bestSellers: [...products.values()].sort((a, b) => b.quantity - a.quantity || b.cents - a.cents || a.id.localeCompare(b.id)).slice(0, 10).map(({ cents, ...p }) => ({ ...p, revenue: cents / 100 }))
+  };
 }

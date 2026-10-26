@@ -7,6 +7,7 @@ import { OrderCancellation } from "@/components/orders/order-cancellation";
 import { brl } from "@/lib/products";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Download } from "lucide-react";
 
 const day = (value: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date(value));
 const timestamp = (value: string) => new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" }).format(new Date(value));
@@ -18,12 +19,43 @@ export function SalesHistory() {
   const [date, setDate] = useState("");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
-  const filtered = (orders.data ?? []).filter(o => (source === "all" || (o.source ?? "catalog") === source) && (!date || day(o.created_at) === date) && `${o.number} ${o.customer_name} ${o.payment}`.toLowerCase().includes(search.toLowerCase()));
+  const filtered = (orders.data ?? []).filter(o => (source === "all" || (o.source ?? "catalog") === source) && (!date || day(o.created_at) === date) && `${o.number} ${o.customer_name} ${o.customer_phone ?? ""} ${o.payment}`.toLowerCase().includes(search.toLowerCase()));
   const current = Math.min(page, Math.max(0, Math.ceil(filtered.length / 25) - 1));
   const detail = orders.data?.find(o => o.id === selected);
+
+  const exportCsv = () => {
+    if (!filtered.length) return;
+    const headers = ["Venda", "Data", "Origem", "Cliente", "Telefone", "Pagamento", "Situação", "Subtotal", "Taxa_Entrega", "Total"];
+    const rows = filtered.map(o => [
+      `#${o.number}`,
+      timestamp(o.created_at),
+      o.source === "counter" ? "Balcão" : "Catálogo",
+      `"${(o.customer_name || "").replace(/"/g, '""')}"`,
+      `"${(o.customer_phone || "").replace(/"/g, '""')}"`,
+      `"${(o.payment || "").replace(/"/g, '""')}"`,
+      o.status === "cancelled" ? "Cancelado" : o.source === "counter" ? "Concluída" : orderStatusLabel(o.status),
+      o.subtotal.toFixed(2),
+      o.delivery_fee.toFixed(2),
+      o.total.toFixed(2),
+    ]);
+    const csvContent = "\uFEFF" + [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `historico-vendas-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   return <section className="py-7">
-    <div className="flex flex-wrap gap-8 border-b pb-6"><div><p className="text-sm text-muted-foreground">Vendas e pedidos</p><strong className="text-3xl font-display">{filtered.length}</strong></div><div><p className="text-sm text-muted-foreground">Valor registrado</p><strong className="text-3xl font-display text-primary">{brl(recordedSalesTotal(filtered))}</strong></div></div>
-    <div className="my-5 flex flex-wrap gap-3"><input className="field min-w-48 flex-1" aria-label="Buscar venda" placeholder="Número, cliente ou pagamento" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} /><select className="field w-auto" aria-label="Origem da venda" value={source} onChange={e => { setSource(e.target.value); setPage(0); }}><option value="all">Todas as origens</option><option value="counter">Balcão</option><option value="catalog">Catálogo</option></select><input type="date" className="field w-auto" aria-label="Data da venda" value={date} onChange={e => { setDate(e.target.value); setPage(0); }} /></div>
+    <div className="flex flex-wrap items-center justify-between gap-6 border-b pb-6">
+      <div className="flex flex-wrap gap-8">
+        <div><p className="text-sm text-muted-foreground">Vendas e pedidos</p><strong className="text-3xl font-display">{filtered.length}</strong></div>
+        <div><p className="text-sm text-muted-foreground">Valor registrado</p><strong className="text-3xl font-display text-primary">{brl(recordedSalesTotal(filtered))}</strong></div>
+      </div>
+      <Button variant="outline" className="gap-2" disabled={!filtered.length} onClick={exportCsv}><Download className="size-4" />Exportar CSV</Button>
+    </div>
+    <div className="my-5 flex flex-wrap gap-3"><input className="field min-w-48 flex-1" aria-label="Buscar venda" placeholder="Buscar por cliente, fone, número ou pagamento…" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} /><select className="field w-auto" aria-label="Origem da venda" value={source} onChange={e => { setSource(e.target.value); setPage(0); }}><option value="all">Todas as origens</option><option value="counter">Balcão</option><option value="catalog">Catálogo</option></select><input type="date" className="field w-auto" aria-label="Data da venda" value={date} onChange={e => { setDate(e.target.value); setPage(0); }} /></div>
     {orders.isPending ? <p>Carregando vendas…</p> : orders.error ? <div role="alert">Não foi possível carregar as vendas. <Button variant="outline" onClick={() => orders.refetch()}>Tentar novamente</Button></div> : !filtered.length ? <p className="py-10 text-muted-foreground">Nenhuma venda encontrada.</p> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="text-muted-foreground"><tr>{["Venda", "Data", "Origem", "Cliente", "Pagamento", "Situação", "Total"].map(h => <th className="px-3 py-3 font-medium" key={h}>{h}</th>)}</tr></thead><tbody>{filtered.slice(current * 25, current * 25 + 25).map(o => <tr key={o.id} className="border-t"><td className="px-3 py-4"><Button variant="link" className="px-0" onClick={() => setSelected(o.id)}>#{o.number}</Button></td><td className="whitespace-nowrap px-3">{timestamp(o.created_at)}</td><td className="px-3">{o.source === "counter" ? "Balcão" : "Catálogo"}</td><td className="px-3">{o.customer_name}</td><td className="px-3">{o.payment}</td><td className="px-3">{o.status === "cancelled" ? "Cancelado" : o.source === "counter" ? "Concluída" : orderStatusLabel(o.status)}</td><td className="whitespace-nowrap px-3 font-semibold">{brl(o.total)}</td></tr>)}</tbody></table></div>}
     {filtered.length > 25 && <div className="mt-5 flex items-center justify-end gap-3"><Button variant="outline" disabled={current === 0} onClick={() => setPage(current - 1)}>Anterior</Button><span>{current + 1} / {Math.ceil(filtered.length / 25)}</span><Button variant="outline" disabled={(current + 1) * 25 >= filtered.length} onClick={() => setPage(current + 1)}>Próxima</Button></div>}
     <Dialog open={Boolean(detail)} onOpenChange={open => { if (!open) setSelected(null); }}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogTitle>Venda #{detail?.number}</DialogTitle><DialogDescription>{detail && timestamp(detail.created_at)} · {detail?.source === "counter" ? "Balcão" : "Catálogo"}</DialogDescription>{detail && <><p>{detail.customer_name} · {detail.payment}</p>{detail.source !== "counter" && <p>{detail.fulfillment === "pickup" ? "Retirada na loja · Sem taxa" : `Entrega · ${detail.address}`}</p>}{detail.items.map((i, n) => <div key={n} className="flex justify-between gap-4 border-b py-3"><span>{i.qty} × {i.name}{i.option && <small className="block text-muted-foreground">{i.optionLabel}: {i.option}</small>}</span><span className="shrink-0">{brl(i.price * i.qty)}</span></div>)}<p>Subtotal: {brl(detail.subtotal)}</p>{detail.delivery_fee > 0 && <p>Entrega: {brl(detail.delivery_fee)}</p>}<p className="text-xl font-semibold">Total: {brl(detail.total)}</p>{detail.cash_received != null && <><p>Recebido: {brl(detail.cash_received)}</p><p>Troco: {brl(detail.cash_change ?? 0)}</p></>}{detail.notes && <p className="break-words text-muted-foreground">{detail.notes}</p>}<OrderCancellation key={detail.id} order={detail} /></>}</DialogContent></Dialog>
