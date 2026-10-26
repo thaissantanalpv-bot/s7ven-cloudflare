@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Link2, Copy, Check, MessageCircle, Instagram } from "lucide-react";
+import { Link2, Copy, Check, MessageCircle, Instagram, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { QRCodeSVG } from "qrcode.react";
 
 export function SiteLinkCard() {
   const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const url = "https://s7venlounge.shop";
   const copy = async () => {
     try {
@@ -58,7 +60,26 @@ export function SiteLinkCard() {
             Abrir Instagram
           </a>
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowQr((prev) => !prev)}
+        >
+          <QrCode />
+          {showQr ? "Ocultar QR Code" : "QR Code para mesas"}
+        </Button>
       </div>
+      {showQr && (
+        <div className="mt-4 flex flex-col items-center justify-center rounded-xl border bg-background p-4 text-center">
+          <p className="mb-3 text-xs text-muted-foreground">
+            Aponte a câmera para abrir o catálogo ou imprima para colocar nas mesas e balcão:
+          </p>
+          <div className="rounded-lg bg-white p-3 shadow-xs">
+            <QRCodeSVG value={url} size={160} />
+          </div>
+          <p className="mt-2 font-mono text-xs text-muted-foreground">{url}</p>
+        </div>
+      )}
     </section>
   );
 }
