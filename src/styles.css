@@ -40,45 +40,45 @@
 }
 :root,
 .dark {
-  --radius: 0.5rem;
-  --background: #0a0a0c;
-  --foreground: #f4f4f5;
-  --card: #121216;
-  --primary: #9333ea;
+  --radius: 0.75rem;
+  --background: #09090b;
+  --foreground: #f8fafc;
+  --card: #111116;
+  --primary: #a855f7;
   --primary-foreground: #ffffff;
-  --gold: #d4af37;
-  --gold-light: #f5d77f;
-  --secondary: #16161c;
-  --muted: #181820;
-  --muted-foreground: #9ca3af;
-  --accent: #a855f7;
+  --gold: #e5b842;
+  --gold-light: #fbe28a;
+  --secondary: #181820;
+  --muted: #16161d;
+  --muted-foreground: #94a3b8;
+  --accent: #c084fc;
   --destructive: #ef4444;
-  --border: #23232b;
+  --border: #242432;
   --whatsapp: #22c55e;
   --whatsapp-foreground: #ffffff;
-  --photo: #ffffff;
-  --photo-foreground: #121216;
+  --photo: #181822;
+  --photo-foreground: #f8fafc;
   --order-preparing: #f59e0b;
   --order-delivery: #3b82f6;
-  --overlay: rgba(10, 10, 12, 0.85);
-  --shadow-soft-value: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --overlay: rgba(9, 9, 11, 0.9);
+  --shadow-soft-value: 0 14px 40px rgba(0, 0, 0, 0.65);
   --receipt-paper: #ffffff;
   --receipt-ink: #000000;
 }
 body:has(.catalog-theme) {
-  --background: #0a0a0c;
-  --foreground: #f4f4f5;
-  --card: #131318;
-  --primary: #9333ea;
+  --background: #09090b;
+  --foreground: #f8fafc;
+  --card: #121218;
+  --primary: #a855f7;
   --primary-foreground: #ffffff;
-  --secondary: #1c1c24;
-  --muted: #191922;
-  --muted-foreground: #9ca3af;
-  --accent: #a855f7;
-  --border: #23232d;
+  --secondary: #1a1a24;
+  --muted: #171720;
+  --muted-foreground: #94a3b8;
+  --accent: #c084fc;
+  --border: #252535;
   --destructive: #ef4444;
   --whatsapp: #22c55e;
-  --shadow-soft-value: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --shadow-soft-value: 0 16px 45px rgba(0, 0, 0, 0.7);
   color-scheme: dark;
 }
 .catalog-theme input,
