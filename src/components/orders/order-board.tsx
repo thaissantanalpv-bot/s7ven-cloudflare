@@ -486,6 +486,11 @@ export function OrderBoard() {
                       <p className="mt-1 line-clamp-1 break-words text-[11px] text-muted-foreground">
                         {order.fulfillment === "pickup" ? "Retirada na loja" : order.address}
                       </p>
+                      {order.notes && (
+                        <p className="mt-1.5 rounded bg-muted/60 px-2 py-1 text-xs text-foreground">
+                          <strong className="text-primary">Obs:</strong> {order.notes}
+                        </p>
+                      )}
                       <div className="my-2 flex items-center justify-between border-t pt-2">
                         <span className={`text-xs font-medium ${stage.tone}`}>{stage.label}</span>
                         <strong className="text-sm">{brl(order.total)}</strong>

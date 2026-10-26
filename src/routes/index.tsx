@@ -997,13 +997,17 @@ function Catalog() {
                   />
                 </Field>
               )}
-              <Field label="Observações (opcional)">
-                <input
-                  className="field"
+              <Field label="Observações do pedido (opcional)">
+                <textarea
+                  className="field min-h-20 resize-none py-2 text-sm"
                   maxLength={300}
+                  placeholder="Ex.: Deixar na portaria, Troco para R$ 50, Tocar interfone 12"
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
+                <span className="mt-1 block text-[11px] text-muted-foreground">
+                  Sai direto na impressão da entrega e no WhatsApp da loja.
+                </span>
               </Field>
             </div>
           </div>
