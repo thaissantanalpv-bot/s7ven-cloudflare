@@ -1,5 +1,51 @@
 export const DELIVERY_CITY = "Araçatuba, SP";
 
+export const SAVED_CUSTOMER_KEY = "s7ven-saved-customer";
+
+export type SavedCustomerAddress = {
+  name?: string;
+  phone?: string;
+  street: string;
+  number: string;
+  neighborhood?: string;
+};
+
+export function getSavedCustomerAddress(): SavedCustomerAddress | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(SAVED_CUSTOMER_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SavedCustomerAddress;
+    if (parsed && typeof parsed.street === "string" && parsed.street.trim() && typeof parsed.number === "string" && parsed.number.trim()) {
+      return {
+        name: typeof parsed.name === "string" ? parsed.name : "",
+        phone: typeof parsed.phone === "string" ? parsed.phone : "",
+        street: parsed.street.trim(),
+        number: parsed.number.trim(),
+        neighborhood: typeof parsed.neighborhood === "string" ? parsed.neighborhood.trim() : "",
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveCustomerAddress(data: SavedCustomerAddress): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (data.street.trim() && data.number.trim()) {
+      localStorage.setItem(SAVED_CUSTOMER_KEY, JSON.stringify({
+        name: data.name?.trim() || "",
+        phone: data.phone?.trim() || "",
+        street: data.street.trim(),
+        number: data.number.trim(),
+        neighborhood: data.neighborhood?.trim() || "",
+      }));
+    }
+  } catch {}
+}
+
 export function restoreDeliveryFields(saved: Record<string, unknown>) {
   const { address, street, number, neighborhood, ...rest } = saved;
   return {

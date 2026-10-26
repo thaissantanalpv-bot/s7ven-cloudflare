@@ -36,7 +36,8 @@ import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/l
 import { submitOrder, orderTracking } from "@/lib/orders.functions";
 import { startDeliverySession, quoteDelivery, suggestDeliveryAddress } from "@/lib/delivery.functions";
 import { estimatedDeliveryMinutes } from "@/lib/delivery-route";
-import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine } from "@/lib/delivery-address";
+import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine, getSavedCustomerAddress, saveCustomerAddress, type SavedCustomerAddress } from "@/lib/delivery-address";
+import { MapPin } from "lucide-react";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { available, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
@@ -209,6 +210,27 @@ function Catalog() {
     fulfillment: "delivery" as "delivery" | "pickup",
   });
   const [addressLine, setAddressLine] = useState("");
+
+  // Detecta endereço salvo anteriormente ao abrir o carrinho
+  useEffect(() => {
+    if (open) {
+      const found = getSavedCustomerAddress();
+      if (found) {
+        setSavedAddress(found);
+        setForm(f => ({
+          ...f,
+          name: f.name || found.name || "",
+          phone: f.phone || found.phone || "",
+          street: f.street || found.street,
+          number: f.number || found.number,
+          neighborhood: f.neighborhood || found.neighborhood || "",
+        }));
+        setAddressLine(prev => prev || joinAddressLine(found.street, found.number));
+        setUseSavedAddress(true);
+      }
+    }
+  }, [open]);
+
   const fullAddress = [form.street.trim(), form.number.trim(), form.neighborhood.trim()].filter(Boolean).join(", ");
   const addressComplete = deliveryFieldsComplete(form.street, form.number);
   const [error, setError] = useState("");
@@ -221,6 +243,8 @@ function Catalog() {
   const [building, setBuilding] = useState<CatalogProduct | null>(null);
   const [sharedProduct, setSharedProduct] = useState<CatalogProduct | null>(null);
   const [qrModalProduct, setQrModalProduct] = useState<CatalogProduct | null>(null);
+  const [savedAddress, setSavedAddress] = useState<SavedCustomerAddress | null>(null);
+  const [useSavedAddress, setUseSavedAddress] = useState(true);
   const [favorites, setFavorites] = useState<string[]>(() => {
     if (typeof window === "undefined") return [];
     try { return JSON.parse(localStorage.getItem("s7ven-favorites") || "[]"); } catch { return []; }
@@ -487,6 +511,9 @@ function Catalog() {
       const saved = await registerOrder({ data: validated.data });
       const url = checkoutWhatsApp(saved.number, lines, d.phone, couponResult && appliedCoupon ? { code: appliedCoupon.code, discount: couponResult.discount } : null);
       setReceipt({ id: saved.id, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery });
+      if (isDelivery && form.street && form.number) {
+        saveCustomerAddress({ name: d.name, phone: d.phone, street: form.street, number: form.number, neighborhood: form.neighborhood });
+      }
       try {
         const historyEntry = { id: saved.id, number: saved.number, date: new Date().toISOString(), total, items: inputItems, summary: items.map(i => `${i.qty}x ${i.product.name}`).join(", ") };
         const updatedHistory = [historyEntry, ...orderHistory.slice(0, 19)];
@@ -851,6 +878,31 @@ function Catalog() {
               {isDelivery && (
                 <fieldset className="space-y-2" aria-label="Endereço de entrega">
                   <legend className="text-sm">Endereço de entrega *</legend>
+                  {savedAddress && useSavedAddress && (
+                    <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs space-y-2">
+                      <div className="flex items-start gap-2.5">
+                        <MapPin className="size-4 text-primary shrink-0 mt-0.5" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-foreground text-sm">Entregar no mesmo endereço?</p>
+                          <p className="text-muted-foreground mt-0.5 break-words">
+                            {savedAddress.street}, {savedAddress.number}{savedAddress.neighborhood ? ` · ${savedAddress.neighborhood}` : ""}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <Button type="button" size="sm" variant="default" className="h-8 text-xs font-semibold px-3" onClick={() => void calculateDelivery()}>
+                          <Check className="size-3.5" /> Sim, confirmar
+                        </Button>
+                        <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => {
+                          setUseSavedAddress(false);
+                          setAddressLine("");
+                          setForm(f => ({ ...f, street: "", number: "", neighborhood: "" }));
+                        }}>
+                          Trocar endereço
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   <label className="relative block text-sm">Rua e número
                     <input
                       className="field mt-1"
