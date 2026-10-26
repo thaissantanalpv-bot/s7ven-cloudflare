@@ -41,42 +41,45 @@
 :root,
 .dark {
   --radius: 0.5rem;
-  --background: oklch(0.14 0.005 250);
-  --foreground: oklch(0.96 0.003 250);
-  --card: oklch(0.195 0.006 250);
-  --primary: oklch(0.84 0.18 125);
-  --primary-foreground: oklch(0.15 0.012 125);
-  --secondary: oklch(0.25 0.008 250);
-  --muted: oklch(0.21 0.006 250);
-  --muted-foreground: oklch(0.72 0.008 250);
-  --accent: oklch(0.84 0.18 125);
-  --destructive: oklch(0.72 0.18 25);
-  --border: oklch(0.31 0.006 250);
-  --whatsapp: oklch(0.78 0.18 150);
-  --photo: oklch(0.99 0 0);
-  --photo-foreground: oklch(0.12 0 0);
-  --order-preparing: oklch(0.8 0.13 75);
-  --order-delivery: oklch(0.76 0.12 230);
-  --overlay: oklch(0.08 0 0 / 0.8);
-  --shadow-soft-value: 0 8px 28px oklch(0.05 0 0 / 0.2);
+  --background: #0a0a0c;
+  --foreground: #f4f4f5;
+  --card: #121216;
+  --primary: #9333ea;
+  --primary-foreground: #ffffff;
+  --gold: #d4af37;
+  --gold-light: #f5d77f;
+  --secondary: #16161c;
+  --muted: #181820;
+  --muted-foreground: #9ca3af;
+  --accent: #a855f7;
+  --destructive: #ef4444;
+  --border: #23232b;
+  --whatsapp: #22c55e;
+  --whatsapp-foreground: #ffffff;
+  --photo: #ffffff;
+  --photo-foreground: #121216;
+  --order-preparing: #f59e0b;
+  --order-delivery: #3b82f6;
+  --overlay: rgba(10, 10, 12, 0.85);
+  --shadow-soft-value: 0 10px 30px rgba(0, 0, 0, 0.5);
   --receipt-paper: #ffffff;
   --receipt-ink: #000000;
 }
 body:has(.catalog-theme) {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.22 0 0);
-  --card: oklch(1 0 0);
-  --primary: oklch(0.2 0 0);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.94 0 0);
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.49 0 0);
-  --accent: oklch(0.25 0 0);
-  --border: oklch(0.88 0 0);
-  --destructive: oklch(0.52 0.19 25);
-  --whatsapp: oklch(0.49 0.14 150);
-  --shadow-soft-value: 0 5px 20px oklch(0.2 0 0 / 0.08);
-  color-scheme: light;
+  --background: #0a0a0c;
+  --foreground: #f4f4f5;
+  --card: #131318;
+  --primary: #9333ea;
+  --primary-foreground: #ffffff;
+  --secondary: #1c1c24;
+  --muted: #191922;
+  --muted-foreground: #9ca3af;
+  --accent: #a855f7;
+  --border: #23232d;
+  --destructive: #ef4444;
+  --whatsapp: #22c55e;
+  --shadow-soft-value: 0 8px 30px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 .catalog-theme input,
 .catalog-theme textarea,
