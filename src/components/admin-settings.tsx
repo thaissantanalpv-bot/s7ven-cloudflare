@@ -162,7 +162,7 @@ export function AdminSettings() {
             </div>
             <UiButton
               variant="outline"
-              onClick={testAlert}
+              onClick={() => testAlert()}
               className="flex items-center gap-2"
             >
               {tested ? <CheckCircle className="size-4 text-whatsapp" /> : <Volume2 className="size-4" />}
