@@ -14,6 +14,7 @@ import {
   Clock,
   X,
   CheckCircle2,
+  Check,
   Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -403,14 +404,14 @@ export function OrderBoard() {
             const KANBAN_LABELS: Record<string, string> = {
               received: "Novos / Pendente",
               preparing: "Em preparo / Separação",
-              delivering: "Saiu p/ entrega / Pronto retirada",
+              out_for_delivery: "Saiu p/ entrega / Pronto retirada",
               delivered: "Concluídos hoje",
             };
             const kanbanLabel = KANBAN_LABELS[stage.id] ?? stage.label;
             const KANBAN_COLORS: Record<string, string> = {
               received: "border-red-500",
               preparing: "border-amber-500",
-              delivering: "border-blue-500",
+              out_for_delivery: "border-blue-500",
               delivered: "border-emerald-500",
             };
             const colBorder = KANBAN_COLORS[stage.id] ?? "border-border";
@@ -418,7 +419,7 @@ export function OrderBoard() {
             return (
             <section
               key={stage.id}
-              aria-label={kanbanLabel}
+              aria-label={stage.label}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
@@ -504,7 +505,7 @@ export function OrderBoard() {
                             size="sm"
                             onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id)}
                           >
-                            {busy === order.id ? "Salvando…" : stage.id === "received" ? "✓ Aceitar Pedido" : `Avançar p/ ${ORDER_STAGES[index + 1]?.label}`}
+                            {busy === order.id ? "Salvando…" : stage.id === "received" ? <><Check className="size-3.5" aria-hidden="true" />Aceitar pedido</> : `Avançar p/ ${ORDER_STAGES[index + 1]?.label}`}
                             <ArrowRight className="size-3.5 ml-1" />
                           </Button>
                         ) : (
@@ -516,6 +517,18 @@ export function OrderBoard() {
                           >
                             <CheckCircle2 className="size-3.5 mr-1 text-emerald-500" />
                             Ver detalhes
+                          </Button>
+                        )}
+                        {ORDER_STAGES[index + 1] && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="size-8 shrink-0"
+                            title="Detalhes"
+                            aria-label="Detalhes"
+                            onClick={() => setSelected(order.id)}
+                          >
+                            <Package />
                           </Button>
                         )}
                         <Button
@@ -551,6 +564,7 @@ export function OrderBoard() {
                           size="sm"
                           className="mt-1 w-full text-[11px] text-whatsapp"
                           disabled={!!busy}
+                          aria-label={`${stage.id === "received" ? "Aceitar" : ORDER_STAGES[index + 1]?.label} e avisar pedido ${order.number} no WhatsApp`}
                           onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id, true)}
                         >
                           <MessageCircle className="size-3" />
