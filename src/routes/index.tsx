@@ -1087,7 +1087,7 @@ function Catalog() {
                       aria-controls="address-suggestions"
                       aria-autocomplete="list"
                       autoComplete="off"
-                      placeholder="Rua e número * (ex.: R. Marechal Deodoro, 1696)"
+                      placeholder="Rua e número * (ex.: Deodoro, 1696)"
                       value={addressLine}
                       onChange={(e) => {
                         const line = e.target.value;
