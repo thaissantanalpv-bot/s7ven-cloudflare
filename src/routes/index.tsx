@@ -1182,25 +1182,20 @@ function Catalog() {
               </div>
               {fieldErrors.payment?.[0] && <p id="payment-error" className="text-xs text-destructive">{fieldErrors.payment[0]}</p>}
               {form.payment === "Pix" && displayedTotal > 0 && (
-                <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2">
-                  <div className="flex items-center justify-between gap-2 text-xs">
-                    <span className="font-semibold">Pix — {brl(displayedTotal)}</span>
-                    <button type="button" className="font-medium text-primary underline-offset-2 hover:underline" aria-expanded={showPixQr} onClick={() => setShowPixQr((v) => !v)}>
-                      {showPixQr ? "Ocultar QR code" : "Ver QR code"}
-                    </button>
-                  </div>
+                <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-1.5">
                   {showPixQr && (
                     <div className="mx-auto w-fit rounded-md bg-photo p-1 text-photo-foreground">
                       <QRCodeSVG value={pixPayload} size={120} level="M" marginSize={1} />
                     </div>
                   )}
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-[1fr_1fr_auto] gap-1.5">
                     <Button variant="outline" type="button" size="sm" className="h-8 px-1 text-xs" onClick={() => copy(pixPayload, "codigo")}>
                       {copied === "codigo" ? "Código copiado!" : "Pix copia e cola"}
                     </Button>
                     <Button variant="outline" type="button" size="sm" className="h-8 px-1 text-xs" onClick={() => copy(PIX_KEY, "chave")}>
                       {copied === "chave" ? "Chave copiada!" : `Chave: ${PIX_KEY}`}
                     </Button>
+                    <Button variant="outline" type="button" size="sm" className="h-8 px-2 text-xs" aria-expanded={showPixQr} aria-label={showPixQr ? "Ocultar QR code" : "Ver QR code"} onClick={() => setShowPixQr((v) => !v)}>QR</Button>
                   </div>
                 </div>
               )}
@@ -1229,15 +1224,16 @@ function Catalog() {
               <dt className="text-muted-foreground">Produtos</dt>
               <dd className="text-right font-medium">{brl(displayedSubtotal)}</dd>
               <dt className="text-muted-foreground">{isDelivery ? "Entrega" : "Retirada"}</dt>
-              <dd className={`text-right font-semibold ${isDelivery && (validQuote || settings.fixed_delivery_fee !== null || zone) ? "text-primary" : "text-muted-foreground"}`}>
+              <dd className={`text-right font-semibold ${!isDelivery || (distanceMode ? validQuote : settings.fixed_delivery_fee !== null || zone) ? "text-primary" : "text-muted-foreground"}`}>
                 {!isDelivery ? "Grátis" : settings.delivery_enabled
                   ? distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : quoting ? "calculando…" : "calcule acima" : settings.fixed_delivery_fee !== null || zone
                     ? brl(displayedDeliveryFee)
                     : "selecione a região"
                   : "a confirmar"}
               </dd>
-              <dt className="border-t border-primary/20 pt-0.5 font-semibold">{isDelivery && distanceMode && !validQuote && items.length ? "Total (sem entrega)" : "Total"}</dt>
-              <dd className="border-t border-primary/20 pt-0.5 text-right font-display text-lg font-bold leading-tight">{brl(displayedTotal)}</dd>
+              <div className="col-span-2 my-0.5 border-t border-primary/20" />
+              <dt className="font-semibold">{isDelivery && distanceMode && !validQuote && items.length ? "Total (sem entrega)" : "Total"}</dt>
+              <dd className="text-right font-display text-lg font-bold leading-tight">{brl(displayedTotal)}</dd>
             </dl>
             {status.configured && !status.open && orderStatus.reason !== "paused" && (
               <p className="text-xs text-destructive">Loja fechada no momento. Confira os horários de atendimento.</p>
