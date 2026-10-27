@@ -178,7 +178,7 @@ function Catalog() {
   const autoQuote = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
-  const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean } | null>(null);
+  const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean; itemCount: number } | null>(null);
   const trackOrder = useServerFn(orderTracking);
   const tracking = useQuery({
     queryKey: ["order-tracking", receipt?.id],
@@ -535,7 +535,7 @@ function Catalog() {
     try {
       const saved = await registerOrder({ data: validated.data });
       const url = checkoutWhatsApp(saved.number, lines, d.phone, couponResult && appliedCoupon ? { code: appliedCoupon.code, discount: couponResult.discount } : null);
-      setReceipt({ id: saved.id, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery });
+      setReceipt({ id: saved.id, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery, itemCount: count });
       if (isDelivery && form.street && form.number) {
         saveCustomerAddress({ name: d.name, phone: d.phone, street: form.street, number: form.number, neighborhood: form.neighborhood });
       }
@@ -949,9 +949,44 @@ function Catalog() {
               {count} {count === 1 ? "item" : "itens"} no carrinho
             </SheetDescription>
           </div>
+          {receipt && !items.length ? (
+            <div className="flex flex-1 flex-col items-center overflow-y-auto px-6 py-8 text-center">
+              <img src="/logo-s7ven.png" alt="" width={360} height={312} className="h-20 w-auto" />
+              <CheckCircle2 className="mt-6 size-20 text-gold" strokeWidth={1.5} />
+              <h2 className="mt-4 font-display text-3xl font-extrabold uppercase text-gold">{tracking.data?.status === "cancelled" ? "Pedido cancelado" : "Pedido enviado!"}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Seu pedido #{receipt.number} foi registrado e enviado pelo WhatsApp. Em breve nossa equipe vai te responder.</p>
+              <div className="mt-5 w-full rounded-xl border bg-card p-4 text-left">
+                <p className="mb-2 font-semibold">Resumo do pedido</p>
+                <p className="flex justify-between text-sm"><span>{receipt.itemCount} {receipt.itemCount === 1 ? "item" : "itens"}</span><span className="font-semibold">{brl(receipt.total)}</span></p>
+              </div>
+              <div className="mt-4 w-full space-y-2">
+                <Button asChild className="h-11 w-full bg-whatsapp text-whatsapp-foreground"><a href={receipt.url} target="_blank" rel="noopener noreferrer"><MessageCircle />Abrir pedido no WhatsApp</a></Button>
+                {receipt.delivery && tracking.data?.trackingUrl && (
+                  <Button asChild className="h-11 w-full"><a href={tracking.data.trackingUrl} target="_blank" rel="noopener noreferrer"><Navigation />Acompanhar entrega em tempo real</a></Button>
+                )}
+                {receipt.delivery && tracking.data && !tracking.data.trackingUrl && tracking.data.status === "out_for_delivery" && <p className="text-sm text-primary">Seu pedido saiu para entrega!</p>}
+                <Button variant="outline" className="h-11 w-full border-primary text-primary" onClick={() => { setOpen(false); void navigate({ to: "/", search: {}, resetScroll: true }); }}><ShoppingCart />Ver catálogo novamente</Button>
+              </div>
+              <p className="mt-8 font-display text-2xl italic text-gold">Obrigado pela preferência!</p>
+              <ul className="mt-5 flex w-full justify-around text-xs text-gold">
+                <li className="flex flex-col items-center gap-1"><Gem className="size-5" />Qualidade</li>
+                <li className="flex flex-col items-center gap-1"><Truck className="size-5" />Agilidade</li>
+                <li className="flex flex-col items-center gap-1"><Heart className="size-5" />Sempre com você</li>
+              </ul>
+            </div>
+          ) : (<>
           <div className="flex-1 space-y-2.5 overflow-y-auto px-4 py-2.5">
+            <div role="status" className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 ${orderingBlocked || (status.configured && !status.open) ? "border-destructive/40 bg-destructive/10" : "border-primary/40 bg-primary/10"}`}>
+              <Clock className={`size-5 shrink-0 ${orderingBlocked || (status.configured && !status.open) ? "text-destructive" : "text-primary"}`} />
+              <p className="text-xs leading-tight">
+                {orderingBlocked || (status.configured && !status.open)
+                  ? <><span className="block font-semibold">{orderStatus.reason === "cutoff" ? "Pedidos encerrados por hoje" : "Loja fechada no momento"}</span><span className="text-muted-foreground">Você pode continuar explorando o catálogo.</span></>
+                  : <><span className="block font-semibold">Pedidos abertos!</span><span className="text-muted-foreground">Faça seu pedido e receba no conforto da sua casa.</span></>}
+              </p>
+            </div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Seus produtos</p>
             {items.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">Seu carrinho está vazio.</p>
+              <p className="py-3 text-center text-sm text-muted-foreground">Seu carrinho está vazio.</p>
             ) : (
               <ul className="max-h-32 space-y-2 overflow-y-auto pr-1">
                 {items.map((i) => (
@@ -969,12 +1004,14 @@ function Catalog() {
                       {!available(i.product, i.option, i.qty) && <p className="text-xs text-destructive">Indisponível: ajuste a quantidade.</p>}
                     </div>
                     <Qty qty={i.qty} onMinus={() => change(i.key, -1)} onPlus={() => change(i.key, 1)} />
+                    <Button variant="ghost" size="icon" className="size-8 shrink-0 text-primary" aria-label={`Remover ${i.product.name}`} onClick={() => change(i.key, -i.qty)}><Trash2 /></Button>
                   </li>
                 ))}
               </ul>
             )}
 
             <div className="space-y-2.5 border-t pt-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Seus dados</p>
               <div className="grid grid-cols-2 gap-2">
                 <label className="block text-xs font-medium">
                   Nome *
@@ -1170,28 +1207,6 @@ function Catalog() {
             {orderingBlocked && orderStatus.reason === "cutoff" && (
               <p className="text-xs text-destructive">Pedidos encerrados por hoje (até às {settings.order_cutoff}). O catálogo continua aberto para consulta.</p>
             )}
-            {receipt && (
-              <div role="status" className="space-y-2 text-sm text-primary">
-                <p>{tracking.data?.status === "cancelled" ? `Pedido #${receipt.number} cancelado pela loja.` : `Pedido #${receipt.number} recebido pela loja.`}</p>
-                <Button asChild variant="outline" className="w-full">
-                  <a href={receipt.url} target="_blank" rel="noopener noreferrer">
-                    <MessageCircle />
-                    Abrir pedido no WhatsApp
-                  </a>
-                </Button>
-                {receipt.delivery && tracking.data?.trackingUrl && (
-                  <Button asChild className="w-full">
-                    <a href={tracking.data.trackingUrl} target="_blank" rel="noopener noreferrer">
-                      <Navigation />
-                      Acompanhar entrega em tempo real
-                    </a>
-                  </Button>
-                )}
-                {receipt.delivery && tracking.data && !tracking.data.trackingUrl && tracking.data.status === "out_for_delivery" && (
-                  <p className="text-muted-foreground">Seu pedido saiu para entrega!</p>
-                )}
-              </div>
-            )}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button
               disabled={!online || sending || !items.length || orderingBlocked}
@@ -1201,6 +1216,7 @@ function Catalog() {
               <MessageCircle /> {!online ? "Conecte-se para enviar" : sending ? "Registrando pedido…" : "Enviar pedido pelo WhatsApp"}
             </Button>
           </div>
+          </>)}
         </SheetContent>
       </Sheet>
       {detail && <ProductDetail product={detail} onClose={closeDetail} cart={cart} sel={sel} typed={typed} onSel={(id, v) => setSel((x) => ({ ...x, [id]: v }))} onTyped={(id, v) => setTyped((x) => ({ ...x, [id]: v }))} onChange={change} onBuild={setBuilding} favorite={favorites.includes(detail.id)} onToggleFavorite={toggleFavorite} onShare={setQrModalProduct} />}

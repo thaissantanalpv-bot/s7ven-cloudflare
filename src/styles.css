@@ -30,6 +30,8 @@
   --color-input: var(--border);
   --color-ring: var(--primary);
   --color-whatsapp: var(--whatsapp);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
   --color-whatsapp-foreground: var(--primary-foreground);
   --color-photo: var(--photo);
   --color-photo-foreground: var(--photo-foreground);
@@ -48,6 +50,7 @@
   --primary-foreground: #ffffff;
   --gold: #e5b842;
   --gold-light: #fbe28a;
+  --gold-foreground: #1a1206;
   --secondary: #181820;
   --muted: #16161d;
   --muted-foreground: #94a3b8;
