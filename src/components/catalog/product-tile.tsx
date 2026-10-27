@@ -32,7 +32,7 @@ export function ProductTile({
   const qty = cart[key] ?? 0;
   const soldOut = !available(p);
   return (
-    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-soft transition hover:border-primary/60">
+    <article className={`group flex min-w-0 flex-col self-start overflow-hidden rounded-xl border border-border bg-card shadow-soft transition hover:border-primary/60 ${soldOut ? "opacity-80 grayscale" : ""}`}>
       <button type="button" onClick={onOpen} aria-label={`Ver detalhes de ${p.name}`} className="relative block aspect-square w-full overflow-hidden bg-photo">
         {photo ? (
           <img src={photo} alt={p.name} loading="lazy" decoding="async" className="size-full object-contain p-2 transition duration-300 group-hover:scale-105" />
@@ -47,7 +47,7 @@ export function ProductTile({
           <span className="absolute left-2 top-2 rounded-md bg-primary px-2 py-0.5 text-[10px] font-bold uppercase text-primary-foreground">Combo</span>
         ) : null}
       </button>
-      <div className="flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
+      <div className="flex min-w-0 flex-col p-2.5 sm:p-3">
         <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{p.category.replace("Narguiles > ", "")}</p>
         <button type="button" onClick={onOpen} className="mt-0.5 line-clamp-2 text-left text-sm font-medium leading-snug hover:text-primary">
           {p.name}
@@ -71,7 +71,7 @@ export function ProductTile({
             </div>
           </div>
         )}
-        <span className="mt-auto pt-2 font-display text-base font-bold text-foreground sm:text-lg">{brl(p.price)}</span>
+        <span className="pt-1.5 font-display text-base font-bold text-foreground sm:text-lg">{brl(p.price)}</span>
         {!soldOut && (
           <div className="pt-2">
             {isCombo ? (
