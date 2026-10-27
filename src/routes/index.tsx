@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { publicStoreSettingsQuery as storeSettingsQuery } from "@/lib/store-settings.query";
 import { savePublicSnapshot, readPublicSnapshot, cacheViewedCatalogPhotos, offlinePhotoUrls } from "@/lib/offline-catalog";
 import { ordersOpen, storeStatus, DAYS } from "@/lib/store-settings";
@@ -758,7 +759,7 @@ function Catalog() {
             <option value="name">Nome: A–Z</option>
           </select>
         </div>
-        <main className="grid grid-cols-2 items-stretch gap-x-3 gap-y-6 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
+        <main className="grid grid-cols-2 items-stretch gap-x-3 gap-y-6 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.length === 0 && (
             <div className="col-span-full py-16 text-center">
               <Search className="mx-auto mb-4 size-8 text-muted-foreground" />
@@ -788,6 +789,7 @@ function Catalog() {
             />
           ))}
         </main>
+        </div>
       </section>
       {sharedProduct && <ProductGallery product={sharedProduct} open onOpenChange={value => { if (!value) { setSharedProduct(null); const url = new URL(window.location.href); url.searchParams.delete("produto"); window.history.replaceState(null, "", url.href); } }} />}
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t px-4 py-6 text-xs text-muted-foreground sm:px-8">
