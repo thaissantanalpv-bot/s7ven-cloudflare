@@ -9,7 +9,7 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Keep product/cart logic on the public catalog route; preserve per-option keys for saved-cart compatibility.
+- Keep product/cart logic on the public catalog route, with sections as its validated `aba` search param; preserve per-option keys (`components/catalog/cart-keys`) for saved carts.
 - Track anonymous UUIDs with bounded writes and admin-only abandonment aggregates; record checkout conversion atomically via session upsert on order insertion, never infer contacts, never block checkout on telemetry, and fall back to in-memory identity when browser storage is blocked.
 - Store shared delivery and weekly hours in `store_settings`; validate writes through authenticated server functions and admin-only RLS so customers cannot change store operations.
 - Shared delivery pricing precedence: enabled distance tiers, then fixed fee, then regions; keep pickup free.
