@@ -64,6 +64,9 @@
   --shadow-soft-value: 0 14px 40px rgba(0, 0, 0, 0.65);
   --receipt-paper: #ffffff;
   --receipt-ink: #000000;
+  --search-bg: #ffffff;
+  --search-fg: #111114;
+  --search-placeholder: #6b7280;
 }
 body:has(.catalog-theme) {
   --background: #09090b;
@@ -119,6 +122,15 @@ body:has(.catalog-theme) [role="dialog"] select {
   outline: none;
   &:focus {
     box-shadow: 0 0 0 2px var(--primary);
+  }
+}
+@utility search-field {
+  background: var(--search-bg);
+  color: var(--search-fg);
+  border-color: var(--search-bg);
+  color-scheme: light;
+  &::placeholder {
+    color: var(--search-placeholder);
   }
 }
 @utility no-scrollbar {
