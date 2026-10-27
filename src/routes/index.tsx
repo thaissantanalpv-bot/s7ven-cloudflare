@@ -64,8 +64,8 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
   staticData: { sitemap: true },
   validateSearch: (search: Record<string, unknown>): { aba?: Exclude<Tab, "inicio">; produto?: string } => ({
-    ...(typeof search.aba === "string" && TABS.includes(search.aba as Tab) && search.aba !== "inicio" ? { aba: search.aba as Exclude<Tab, "inicio"> } : {}),
-    ...(typeof search.produto === "string" ? { produto: search.produto } : {}),
+    ...(typeof search["aba"] === "string" && TABS.includes(search["aba"] as Tab) && search["aba"] !== "inicio" ? { aba: search["aba"] as Exclude<Tab, "inicio"> } : {}),
+    ...(typeof search["produto"] === "string" ? { produto: search["produto"] } : {}),
   }),
   head: ({ loaderData }) => {
     const title = "S7VEN Lounge e Tabacaria em Araçatuba — Catálogo Digital";
