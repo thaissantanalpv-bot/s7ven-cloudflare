@@ -1139,9 +1139,13 @@ function Catalog() {
                 </fieldset>
               )}
               {!isDelivery && settings.pickup_address && (
-                <p className="border-l-2 border-primary pl-2.5 text-xs" role="status">
-                  <span className="font-semibold">Retirada:</span> <span className="text-muted-foreground">{settings.pickup_address}</span>
-                </p>
+                <div role="status" className="flex items-start gap-2 rounded-lg border border-gold/50 bg-gold/10 px-3 py-2">
+                  <MapPin className="mt-0.5 size-5 shrink-0 text-gold" />
+                  <p className="min-w-0 leading-snug">
+                    <span className="block text-xs font-semibold uppercase tracking-wider text-gold">Retire na loja</span>
+                    <span className="text-base font-semibold text-foreground">{settings.pickup_address}</span>
+                  </p>
+                </div>
               )}
               {isDelivery && fieldErrors.address?.[0] && <p id="address-error" className="text-xs text-destructive">{fieldErrors.address[0]}</p>}
               {isDelivery && distanceMode && (
