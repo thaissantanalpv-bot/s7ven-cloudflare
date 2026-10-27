@@ -39,3 +39,11 @@ d2("cupons", () => {
   i2("rejeita abaixo do mínimo", () => e2(ac(s, "SEXTOU10", 40)).toBeNull());
   i2("rejeita cupom inativo", () => e2(ac(s, "OFF", 100)).toBeNull());
 });
+
+import { ordersOpen } from "@/lib/store-settings";
+describe("pausa da loja", () => {
+  it("bloqueia pedidos quando a loja está pausada, mesmo sem horários", () => {
+    expect(ordersOpen({ ...EMPTY_SETTINGS, paused: true })).toMatchObject({ open: false, reason: "paused" });
+    expect(ordersOpen({ ...EMPTY_SETTINGS, paused: false }).open).toBe(true);
+  });
+});

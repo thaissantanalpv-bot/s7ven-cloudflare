@@ -498,7 +498,7 @@ function Catalog() {
     if (isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && !zone)
       return setError("Escolha o bairro ou região de entrega.");
     if (orderingBlocked)
-      return setError(orderStatus.reason === "cutoff"
+      return setError(orderStatus.reason === "paused" ? "A loja pausou os pedidos por alguns instantes. Tente novamente mais tarde." : orderStatus.reason === "cutoff"
         ? `Os pedidos de hoje encerraram às ${settings.order_cutoff}. O catálogo continua aberto para consulta.`
         : "A loja está fechada. Confira os horários de atendimento.");
     const r = customerSchema.safeParse({ ...form, address: fullAddress });
@@ -694,8 +694,8 @@ function Catalog() {
           <div role="status" aria-live="polite" className="mt-4 flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3">
             <Clock className="size-5 shrink-0 text-primary" aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">Loja fechada no momento</p>
-              <p className="text-xs text-muted-foreground">Você pode explorar o catálogo. Os pedidos voltam no horário de atendimento.</p>
+              <p className="text-sm font-semibold">{settings.paused ? "Pedidos pausados no momento" : "Loja fechada no momento"}</p>
+              <p className="text-xs text-muted-foreground">{settings.paused ? "Você pode explorar o catálogo. Os pedidos voltam em breve." : "Você pode explorar o catálogo. Os pedidos voltam no horário de atendimento."}</p>
             </div>
             <Button variant="link" size="sm" className="shrink-0 px-0" onClick={() => goTab("mais")}>Horários</Button>
           </div>
@@ -982,7 +982,7 @@ function Catalog() {
               <Clock className={`size-5 shrink-0 ${orderingBlocked || (status.configured && !status.open) ? "text-destructive" : "text-primary"}`} />
               <p className="text-xs leading-tight">
                 {orderingBlocked || (status.configured && !status.open)
-                  ? <><span className="block font-semibold">{orderStatus.reason === "cutoff" ? "Pedidos encerrados por hoje" : "Loja fechada no momento"}</span><span className="text-muted-foreground">Você pode continuar explorando o catálogo.</span></>
+                  ? <><span className="block font-semibold">{orderStatus.reason === "paused" ? "Pedidos pausados no momento" : orderStatus.reason === "cutoff" ? "Pedidos encerrados por hoje" : "Loja fechada no momento"}</span><span className="text-muted-foreground">Você pode continuar explorando o catálogo.</span></>
                   : <><span className="block font-semibold">Pedidos abertos!</span><span className="text-muted-foreground">Faça seu pedido e receba no conforto da sua casa.</span></>}
               </p>
             </div>
@@ -1230,8 +1230,11 @@ function Catalog() {
                 <span className="font-display text-lg font-semibold">{brl(displayedTotal)}</span>
               </p>
             </div>
-            {status.configured && !status.open && (
+            {status.configured && !status.open && orderStatus.reason !== "paused" && (
               <p className="text-xs text-destructive">Loja fechada no momento. Confira os horários de atendimento.</p>
+            )}
+            {orderingBlocked && orderStatus.reason === "paused" && (
+              <p className="text-xs text-destructive">Pedidos pausados no momento. Tente novamente mais tarde.</p>
             )}
             {orderingBlocked && orderStatus.reason === "cutoff" && (
               <p className="text-xs text-destructive">Pedidos encerrados por hoje (até às {settings.order_cutoff}). O catálogo continua aberto para consulta.</p>
