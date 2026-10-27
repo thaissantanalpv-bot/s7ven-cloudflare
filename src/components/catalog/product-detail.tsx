@@ -101,11 +101,6 @@ export function ProductDetail({
                       {o}
                     </Button>
                   ))}
-                  {p.allowOther && (
-                    <Button variant="outline" size="sm" type="button" onClick={() => onSel(p.id, OTHER)} aria-pressed={isOther} className={`h-auto min-h-8 rounded-lg border-dashed px-3 py-1.5 text-xs ${isOther ? "border-primary bg-primary text-primary-foreground hover:bg-primary" : "bg-background text-muted-foreground"}`}>
-                      Outro
-                    </Button>
-                  )}
                 </div>
                 {isOther && (
                   <input className="field mt-2" placeholder={`Qual ${p.optionLabel === "Cor" ? "cor" : "sabor"}?`} maxLength={40} value={typed[p.id] ?? ""} onChange={(e) => onTyped(p.id, e.target.value)} />

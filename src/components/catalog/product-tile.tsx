@@ -68,7 +68,6 @@ export function ProductTile({
                   {o}
                 </button>
               ))}
-              {p.allowOther && <button type="button" onClick={onOpen} className="rounded-md border border-dashed px-2 py-0.5 text-[11px] text-muted-foreground">Outro</button>}
             </div>
           </div>
         )}
