@@ -74,7 +74,7 @@ describe("Kanban order management", () => {
     mocks.update.mockImplementationOnce(() => new Promise(resolve => { finish = () => { row.status = "preparing"; resolve({ saved: true }); }; }));
     mount();
     await screen.findByText("Cliente teste");
-    fireEvent.click(screen.getByRole("button", { name: "Em preparo e avisar pedido 42 no WhatsApp" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aceitar e avisar pedido 42 no WhatsApp" }));
     expect(replace).not.toHaveBeenCalled();
     finish?.();
     await waitFor(() => expect(replace).toHaveBeenCalledTimes(1));
@@ -88,7 +88,7 @@ describe("Kanban order management", () => {
     mocks.update.mockRejectedValueOnce(new Error("Falha ao salvar"));
     mount();
     await screen.findByText("Cliente teste");
-    fireEvent.click(screen.getByRole("button", { name: "Em preparo e avisar pedido 42 no WhatsApp" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aceitar e avisar pedido 42 no WhatsApp" }));
     await screen.findByRole("alert");
     expect(replace).not.toHaveBeenCalled();
     expect(close).toHaveBeenCalledOnce();
@@ -157,14 +157,14 @@ describe("Kanban order management", () => {
   it("moves through every stage and builds matching customer updates", async () => {
     mount();
     await screen.findByText("Cliente teste");
-    for (const [label, next] of [
-      ["Recebido", "Em preparo"],
-      ["Em preparo", "Saiu para entrega"],
-      ["Saiu para entrega", "Entregue"],
+    for (const [label, action, next] of [
+      ["Recebido", "Aceitar pedido", "Em preparo"],
+      ["Em preparo", "Avançar p/ Saiu para entrega", "Saiu para entrega"],
+      ["Saiu para entrega", "Avançar p/ Entregue", "Entregue"],
     ] as const) {
       const column = screen.getByRole("region", { name: label });
       expect(within(column).getByText("Cliente teste")).toBeInTheDocument();
-      fireEvent.click(within(column).getByRole("button", { name: next }));
+      fireEvent.click(within(column).getByRole("button", { name: action }));
       await waitFor(() => expect(row.status).not.toBe(label));
       await waitFor(() =>
         expect(
@@ -191,7 +191,7 @@ describe("Kanban order management", () => {
     mocks.update.mockRejectedValueOnce(new Error("Falha ao salvar"));
     mount();
     await screen.findByText("Cliente teste");
-    fireEvent.click(screen.getByRole("button", { name: "Em preparo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aceitar pedido" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Falha ao salvar");
     expect(row.status).toBe("received");
   });
@@ -217,7 +217,7 @@ describe("Kanban order management", () => {
     // Ao aceitar o pedido (sai de "received"), o alerta contínuo para
     mocks.list.mockImplementation(async () => [{ ...row, status: "preparing" }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Saiu para entrega" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Avançar p/ Saiu para entrega" })).toBeInTheDocument());
     await waitFor(() => expect(pause.mock.calls.length).toBeGreaterThan(pausesBeforeAccept));
     vi.restoreAllMocks();
   });
