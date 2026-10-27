@@ -38,6 +38,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { storeSettingsQuery } from "@/lib/store-settings.query";
 import { checkStoreAdmin, saveStoreSettings } from "@/lib/store-settings.functions";
 import { OrderBoard } from "@/components/orders/order-board";
+import { NewOrderAlarm } from "@/components/orders/new-order-alarm";
 import { ProductManager } from "@/components/products/product-manager";
 import { DistanceTiersEditor } from "@/components/distance-tiers-editor";
 import { PointOfSale } from "@/components/pos/point-of-sale";
@@ -229,6 +230,7 @@ function Admin() {
                 {renderView(view)}
               </div>
             </div>
+            <NewOrderAlarm />
             <div className="md:hidden">
               {view === "home" ? <AdminHome onOpen={(v) => setView(v as ViewId)} /> : renderView(view)}
             </div>
