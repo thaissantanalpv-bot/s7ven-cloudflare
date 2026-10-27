@@ -617,8 +617,7 @@ function Catalog() {
         <div className="mx-auto grid max-w-7xl grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-4 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:px-8">
           <span aria-hidden className="sm:hidden" />
           <Link to="/" className="flex min-w-0 items-center justify-center gap-3 sm:justify-start" aria-label="S7VEN Lounge e Tabacaria">
-            <img src="/icons/s7ven-192.png" alt="S7VEN Lounge e Tabacaria" className="size-16 shrink-0 rounded-md object-contain sm:size-20" />
-            <span className="hidden min-w-0 font-display text-xl font-semibold sm:block">S7VEN <span className="block text-xs font-normal text-muted-foreground">Lounge e Tabacaria</span></span>
+            <img src="/logo-s7ven.png" alt="S7VEN Lounge e Tabacaria" width={360} height={312} className="h-14 w-auto shrink-0 object-contain sm:h-16" />
           </Link>
           <div className="relative hidden w-full max-w-md md:block">
             <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
@@ -627,7 +626,7 @@ function Catalog() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Digite sua busca…"
-              className="field bg-muted pl-10"
+              className="field search-field pl-10"
             />
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -647,7 +646,7 @@ function Catalog() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Digite sua busca…"
-            className="field bg-muted pl-10"
+            className="field search-field pl-10"
           />
         </div>
       </header>
