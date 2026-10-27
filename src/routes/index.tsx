@@ -1225,22 +1225,20 @@ function Catalog() {
             </div>
           </div>
           <div className="space-y-1.5 border-t px-4 py-2">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0 text-xs leading-tight text-muted-foreground">
-                <p className="truncate">
-                  Produtos {brl(displayedSubtotal)} · {isDelivery ? "Entrega " : "Retirada "}
-                  {!isDelivery ? "sem taxa" : settings.delivery_enabled
-                    ? distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : quoting ? "calculando…" : "a calcular" : settings.fixed_delivery_fee !== null || zone
-                      ? brl(displayedDeliveryFee)
-                      : "selecione a região"
-                    : "a confirmar"}
-                </p>
-              </div>
-              <p className="text-right">
-                <span className="block text-[11px] leading-tight text-muted-foreground">{isDelivery && distanceMode && !validQuote && items.length ? "Total dos produtos" : "Total"}</span>
-                <span className="font-display text-lg font-semibold leading-tight">{brl(displayedTotal)}</span>
-              </p>
-            </div>
+            <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-0.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm">
+              <dt className="text-muted-foreground">Produtos</dt>
+              <dd className="text-right font-medium">{brl(displayedSubtotal)}</dd>
+              <dt className="text-muted-foreground">{isDelivery ? "Entrega" : "Retirada"}</dt>
+              <dd className={`text-right font-semibold ${isDelivery && (validQuote || settings.fixed_delivery_fee !== null || zone) ? "text-primary" : "text-muted-foreground"}`}>
+                {!isDelivery ? "Grátis" : settings.delivery_enabled
+                  ? distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : quoting ? "calculando…" : "calcule acima" : settings.fixed_delivery_fee !== null || zone
+                    ? brl(displayedDeliveryFee)
+                    : "selecione a região"
+                  : "a confirmar"}
+              </dd>
+              <dt className="border-t border-primary/20 pt-0.5 font-semibold">{isDelivery && distanceMode && !validQuote && items.length ? "Total (sem entrega)" : "Total"}</dt>
+              <dd className="border-t border-primary/20 pt-0.5 text-right font-display text-lg font-bold leading-tight">{brl(displayedTotal)}</dd>
+            </dl>
             {status.configured && !status.open && orderStatus.reason !== "paused" && (
               <p className="text-xs text-destructive">Loja fechada no momento. Confira os horários de atendimento.</p>
             )}
