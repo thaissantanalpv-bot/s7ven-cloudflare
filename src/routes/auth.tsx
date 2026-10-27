@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/auth মহাস" as any)({
+export const Route = createFileRoute("/auth")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [
