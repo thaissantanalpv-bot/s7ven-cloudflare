@@ -1,0 +1,1 @@
+REVOKE ALL ON public.delivery_quote_attempts FROM PUBLIC, anon, authenticated;

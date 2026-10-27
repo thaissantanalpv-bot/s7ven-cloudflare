@@ -187,6 +187,24 @@ export type Database = {
           },
         ]
       }
+      delivery_quote_attempts: {
+        Row: {
+          client_hash: string
+          created_at: string
+          id: number
+        }
+        Insert: {
+          client_hash: string
+          created_at?: string
+          id?: never
+        }
+        Update: {
+          client_hash?: string
+          created_at?: string
+          id?: never
+        }
+        Relationships: []
+      }
       delivery_quotes: {
         Row: {
           address: string
@@ -482,6 +500,14 @@ export type Database = {
         Returns: Json
       }
       catalog_funnel_stats: { Args: { _period?: string }; Returns: Json }
+      claim_delivery_quote_attempt: {
+        Args: {
+          _client_hash: string
+          _client_limit: number
+          _global_limit: number
+        }
+        Returns: string
+      }
       ensure_admin_ai_conversation: { Args: never; Returns: Json }
       has_role: {
         Args: {

@@ -218,6 +218,20 @@
       "when": 1792546768029,
       "tag": "0030_admin_push_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793066517111,
+      "tag": "0031_delivery_quote_attempt_budget",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793066574181,
+      "tag": "0032_delivery_quote_attempts_server_only",
+      "breakpoints": true
     }
   ]
 }

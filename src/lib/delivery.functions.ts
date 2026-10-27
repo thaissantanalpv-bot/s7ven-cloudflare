@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { distanceFee, settingsSchema } from "./store-settings";
 import { deliveryAddress, deliveryLocation, deliveryNeighborhood } from "./delivery-address";
@@ -74,7 +75,7 @@ export const suggestDeliveryAddress = createServerFn({ method: "POST" })
 export const quoteDelivery = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ address: z.string().trim().min(8).max(300), token: z.string().max(200), autoNeighborhood: z.boolean().optional() }).parse(input))
   .handler(async ({ data }) => {
-    const { verifyDeliveryToken, deliverySettingsHash } = await import("./delivery.server");
+    const { verifyDeliveryToken, deliverySettingsHash, deliveryClientHash, DELIVERY_QUOTE_GLOBAL_HOURLY_LIMIT, DELIVERY_QUOTE_CLIENT_HOURLY_LIMIT } = await import("./delivery.server");
     const sessionId = await verifyDeliveryToken(data.token);
     if (!sessionId) throw new Error("DELIVERY_SESSION_EXPIRED");
     const session = { id: sessionId };
@@ -90,6 +91,13 @@ export const quoteDelivery = createServerFn({ method: "POST" })
     if (cached && cached.duration_seconds !== null) return { id: cached.id, address, km: Number(cached.distance_km), fee: Number(cached.fee), routeDurationSeconds: Number(cached.duration_seconds), neighborhood: "" };
     const { count, error: countError } = await supabaseAdmin.from("delivery_quotes").select("id", { head: true, count: "exact" }).eq("session_id", session.id).gte("created_at", since);
     if (countError || (count ?? 0) >= 10) throw new Error("Aguarde antes de calcular mais endereços.");
+    const ip = getRequestHeader("cf-connecting-ip") ?? getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const { data: claim, error: claimError } = await supabaseAdmin.rpc("claim_delivery_quote_attempt", {
+      _client_hash: await deliveryClientHash(ip),
+      _global_limit: DELIVERY_QUOTE_GLOBAL_HOURLY_LIMIT,
+      _client_limit: DELIVERY_QUOTE_CLIENT_HOURLY_LIMIT,
+    });
+    if (claimError || claim !== "ok") throw new Error("Muitos cálculos de entrega agora. Tente novamente em instantes ou escolha retirada na loja.");
     const apiKey = process.env["LOVABLE_API_KEY"];
     const mapsKey = process.env["GOOGLE_MAPS_API_KEY"];
     if (!apiKey || !mapsKey) throw new Error("Conecte o Google Maps para calcular as distâncias.");
