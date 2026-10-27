@@ -13,6 +13,7 @@ vi.mock("@/lib/orders.functions", () => ({
   cancelOrder: mocks.cancel,
 }));
 import { OrderBoard } from "@/components/orders/order-board";
+import { NewOrderAlarm } from "@/components/orders/new-order-alarm";
 let row: Order;
 beforeEach(() => {
   row = {
@@ -64,6 +65,7 @@ const mount = () =>
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
+      <NewOrderAlarm />
       <OrderBoard />
     </QueryClientProvider>,
   );

@@ -26,6 +26,7 @@ import { OrderPrinting } from "./order-printing";
 import { OrderCancellation } from "./order-cancellation";
 import { PushQuickButton } from "@/components/push-notifications";
 import { StorePauseButton } from "@/components/store-pause-button";
+import { useOrderAlarm } from "./new-order-alarm";
 
 const time = (value: string) =>
   new Intl.DateTimeFormat("pt-BR", {
@@ -52,43 +53,6 @@ function elapsedColor(created: string): string {
   return "text-red-500";
 }
 
-// Tom duplo característico estilo WhatsApp + vibração de mensagem
-function playWhatsAppAlert() {
-  try {
-    if (typeof window !== "undefined" && "navigator" in window && "vibrate" in navigator) {
-      navigator.vibrate([120, 80, 120]);
-    }
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const now = ctx.currentTime;
-
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = "sine";
-    osc1.frequency.setValueAtTime(880, now); // A5
-    gain1.gain.setValueAtTime(0.3, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.12);
-
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = "sine";
-    osc2.frequency.setValueAtTime(1318.51, now + 0.12); // E6
-    gain2.gain.setValueAtTime(0.35, now + 0.12);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(now + 0.12);
-    osc2.stop(now + 0.32);
-  } catch {
-    // Ignora quando contexto bloqueado
-  }
-}
-
 export function OrderBoard() {
   const fetchOrders = useServerFn(listOrders);
   const update = useServerFn(updateOrderStatus);
@@ -103,8 +67,7 @@ export function OrderBoard() {
   });
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState("all");
-  const [sound, setSound] = useState(true);
-  const [audioReady, setAudioReady] = useState(false);
+  const { sound, ready: audioReady, toggle: toggleSound } = useOrderAlarm();
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
@@ -119,69 +82,7 @@ export function OrderBoard() {
     const iv = setInterval(() => setTick((t) => t + 1), 30000);
     return () => clearInterval(iv);
   }, []);
-  const [, setNotificationPermission] = useState<NotificationPermission>(
-    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default",
-  );
-  const audio = useRef<HTMLAudioElement | null>(null);
   const seen = useRef<Set<string> | null>(null);
-
-  const unlock = () => {
-    const el = audio.current;
-    if (!el || audioReady) return;
-    el.muted = true;
-    try {
-      Promise.resolve(el.play())
-        .then(() => {
-          el.pause();
-          el.currentTime = 0;
-          el.muted = false;
-          setAudioReady(true);
-        })
-        .catch(() => {
-          el.muted = false;
-        });
-    } catch {
-      el.muted = false;
-    }
-  };
-
-  const requestNotification = async () => {
-    if (typeof window !== "undefined" && "Notification" in window) {
-      try {
-        const perm = await Notification.requestPermission();
-        setNotificationPermission(perm);
-      } catch {}
-    }
-  };
-
-  const toggleSound = () => {
-    if (sound && audioReady) {
-      setSound(false);
-      return;
-    }
-    setSound(true);
-    unlock();
-    void requestNotification();
-  };
-
-  useEffect(() => {
-    const el = new Audio("/sounds/new-order-alert.mp3");
-    el.loop = true;
-    el.volume = 1;
-    el.preload = "auto";
-    audio.current = el;
-    unlock();
-    const arm = () => unlock();
-    window.addEventListener("pointerdown", arm);
-    window.addEventListener("keydown", arm);
-    return () => {
-      window.removeEventListener("pointerdown", arm);
-      window.removeEventListener("keydown", arm);
-      el.pause();
-      audio.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (!orders.data) return;
@@ -192,39 +93,10 @@ export function OrderBoard() {
       setNotice(
         `${newOrders.length} ${newOrders.length === 1 ? "novo pedido recebido" : "novos pedidos recebidos"}`,
       );
-      playWhatsAppAlert();
-      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-        newOrders.forEach((o) => {
-          try {
-            new Notification(`🔔 Novo Pedido #${o.number} — ${o.customer_name}`, {
-              body: `${o.items.map((i) => `${i.qty}x ${i.name}`).join(", ")} · Total: ${brl(o.total)}`,
-              icon: "/icons/s7ven-192.png",
-              badge: "/icons/s7ven-192.png",
-              tag: `order-${o.id}`,
-            });
-          } catch {}
-        });
-      }
     }
     seen.current = new Set(orders.data.map((o) => o.id));
   }, [orders.data]);
 
-  const hasNew = (orders.data ?? []).some((o) => o.source !== "counter" && o.status === "received");
-
-  useEffect(() => {
-    const el = audio.current;
-    if (!el) return;
-    if (sound && audioReady && hasNew) {
-      try {
-        Promise.resolve(el.play()).catch(() => setAudioReady(false));
-      } catch {
-        setAudioReady(false);
-      }
-    } else {
-      el.pause();
-      el.currentTime = 0;
-    }
-  }, [sound, audioReady, hasNew]);
 
   const move = async (order: Order, status: OrderStatus, notify = false) => {
     if (busy || order.status === status || order.status === "cancelled") return;
