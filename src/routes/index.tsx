@@ -696,52 +696,49 @@ function Catalog() {
             )}
           </div>
         )}
-        <div className="mt-3 rounded-lg border border-primary/30 bg-primary/10 px-3.5 py-2.5 text-xs text-foreground sm:text-sm">
-          <span className="flex items-center gap-2 font-medium">
-            <Truck className="size-4 text-primary shrink-0" />
-            <span><strong>Horário das entregas:</strong> das 16:00 às 23:00</span>
+        <div className="mt-3 flex items-center justify-between gap-3 border-b pb-3 text-xs sm:text-sm">
+          <span className="flex min-w-0 items-center gap-2 font-medium text-foreground">
+            <Truck className="size-4 shrink-0 text-primary" />
+            <span className="truncate">Entregas das 16:00 às 23:00 · taxa calculada pelo endereço</span>
           </span>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 border-b pb-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-2 font-medium text-foreground">
-            <Clock className="size-4 text-primary" />
-            Entregas das 16:00 às 23:00
-          </span>
-          <span className="flex items-center gap-2">
-            <Truck className="size-4 text-primary" />
-            Consultar taxa de entrega para o seu bairro
-          </span>
-
-          <span className="flex items-center gap-2">
-            <MessageCircle className="size-4 text-primary" />
-            Pedido pelo WhatsApp
-          </span>
-          <span className="flex items-center gap-2">
-            <ShoppingBag className="size-4 text-primary" />
-            Pix, cartão ou dinheiro
-          </span>
-          <button type="button" onClick={() => setShowHistoryModal(true)} className="flex items-center gap-1.5 text-primary hover:underline cursor-pointer">
-            <RotateCcw className="size-3.5" /> Meus pedidos / Repetir compra
+          <button type="button" onClick={() => setShowHistoryModal(true)} className="flex shrink-0 items-center gap-1.5 text-xs text-primary hover:underline">
+            <RotateCcw className="size-3.5" /> Meus pedidos
           </button>
         </div>
       </section>
-      {cat === "Todos" && !query.trim() && featured.length > 0 && <section aria-label="Produtos em destaque" className="mx-auto max-w-7xl border-b px-4 py-5 sm:px-8">
-        <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-semibold"><Star className="size-5 text-primary" />Destaques</h2>
-        <div className="grid grid-cols-2 items-stretch gap-x-3 gap-y-6 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
-          {featured.map(p => <ProductCard key={p.id} p={p} cart={cart} sel={sel} typed={typed} onSel={(id, v) => setSel(s => ({ ...s, [id]: v }))} onTyped={(id, v) => setTyped(s => ({ ...s, [id]: v }))} onChange={change} onBuild={() => setBuilding(p)} />)}
-        </div>
-      </section>}
-      <section className="mx-auto max-w-7xl px-4 py-5 sm:px-8 sm:py-7">
-                <nav aria-label="Categorias" className="no-scrollbar mb-5 flex gap-2 overflow-x-auto pb-2">
-          <Button variant={filterFavorites ? "default" : "secondary"} onClick={() => { setFilterFavorites(!filterFavorites); if (!filterFavorites) setCat("Todos"); }} className="h-10 shrink-0 rounded-full px-5 text-destructive font-semibold">
-            <Heart className={`size-4 fill-current mr-1.5`} /> Favoritos ({favorites.length})
+      <section className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-8 sm:py-7 md:grid-cols-[200px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)]">
+        <nav aria-label="Categorias" className="no-scrollbar flex gap-2 overflow-x-auto pb-2 md:sticky md:top-28 md:max-h-[calc(100dvh-8rem)] md:flex-col md:self-start md:overflow-y-auto md:overflow-x-visible md:border-r md:pb-0 md:pr-4">
+          <p className="hidden px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:block">Categorias</p>
+          <Button variant={filterFavorites ? "default" : "secondary"} onClick={() => { setFilterFavorites(!filterFavorites); if (!filterFavorites) setCat("Todos"); }} className="h-10 shrink-0 rounded-full px-5 font-semibold text-destructive md:h-9 md:w-full md:justify-start md:rounded-lg md:px-3">
+            <Heart className="mr-1.5 size-4 fill-current" /> Favoritos ({favorites.length})
           </Button>
           {categories.map((c) => (
-            <Button key={c} variant={!filterFavorites && cat === c ? "default" : "secondary"} onClick={() => { setCat(c); setFilterFavorites(false); }} className="h-10 shrink-0 rounded-full px-5" aria-pressed={!filterFavorites && cat === c}>
+            <Button key={c} variant={!filterFavorites && cat === c ? "default" : "ghost"} onClick={() => { setCat(c); setFilterFavorites(false); }} className="h-10 shrink-0 rounded-full bg-secondary px-5 md:h-9 md:w-full md:justify-start md:whitespace-normal md:rounded-lg md:bg-transparent md:px-3 md:text-left" aria-pressed={!filterFavorites && cat === c}>
               {c.replace("Narguiles > ", "")}
             </Button>
           ))}
         </nav>
+        <div className="min-w-0">
+        {cat === "Todos" && !query.trim() && !filterFavorites && featured.length > 0 && (
+          <section aria-label="Produtos em destaque" className="mb-6 border-b pb-6">
+            <Carousel opts={{ align: "start", loop: featured.length > 4 }} className="w-full">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="flex items-center gap-2 font-display text-xl font-semibold"><Star className="size-5 text-primary" />Destaques</h2>
+                <div className="flex gap-2">
+                  <CarouselPrevious className="static size-9 translate-y-0" />
+                  <CarouselNext className="static size-9 translate-y-0" />
+                </div>
+              </div>
+              <CarouselContent className="-ml-3 items-stretch">
+                {featured.map(p => (
+                  <CarouselItem key={p.id} className="basis-1/2 pl-3 sm:basis-1/3 xl:basis-1/4">
+                    <ProductCard p={p} cart={cart} sel={sel} typed={typed} onSel={(id, v) => setSel(s => ({ ...s, [id]: v }))} onTyped={(id, v) => setTyped(s => ({ ...s, [id]: v }))} onChange={change} onBuild={() => setBuilding(p)} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+          </section>
+        )}
         <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <div className="min-w-0">
             <h2 className="font-display text-xl font-semibold">
