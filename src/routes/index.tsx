@@ -40,6 +40,7 @@ import { estimatedDeliveryMinutes } from "@/lib/delivery-route";
 import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine, getSavedCustomerAddress, saveCustomerAddress, type SavedCustomerAddress } from "@/lib/delivery-address";
 import { MapPin, Menu, ArrowLeft, ArrowRight, ShoppingCart, Home, LayoutGrid, ClipboardList, MoreHorizontal, ShieldCheck, Headphones, Flame, Wallet, Trash2, Gem, CheckCircle2 } from "lucide-react";
 import heroImg from "@/assets/hero-narguile.jpg";
+import { pairSuggestions } from "@/lib/pair-suggestions";
 import { ProductTile } from "@/components/catalog/product-tile";
 import { ProductDetail } from "@/components/catalog/product-detail";
 import { keyOf, SEP, type Cart } from "@/components/catalog/cart-keys";
@@ -349,6 +350,7 @@ function Catalog() {
     [cart, products],
   );
   const count = items.reduce((s, i) => s + i.qty, 0);
+  const pairs = useMemo(() => pairSuggestions(items.map((i) => i.product), products), [items, products]);
   const subtotal = items.reduce((s, i) => s + i.qty * i.product.price, 0);
   const zone = settings.delivery_zones.find((z) => z.id === form.zone);
   const isDelivery = form.fulfillment === "delivery";
@@ -1010,6 +1012,33 @@ function Catalog() {
               </ul>
             )}
 
+            {pairs.length > 0 && (
+              <section aria-label="Peça junto" className="border-t pt-2">
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gold">Peça junto</p>
+                <ul className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+                  {pairs.map((p) => {
+                    const photo = productPhotos(p)[0];
+                    return (
+                      <li key={p.id} className="flex w-44 shrink-0 items-center gap-2 rounded-lg border bg-card p-1.5">
+                        {photo ? <img src={photo} alt="" loading="lazy" className="size-10 shrink-0 rounded-md bg-photo object-contain" /> : <span className="text-2xl">{p.emoji}</span>}
+                        <div className="min-w-0 flex-1 leading-tight">
+                          <p className="truncate text-xs font-medium">{p.name}</p>
+                          <p className="text-xs text-primary">{brl(p.price)}</p>
+                        </div>
+                        <Button
+                          size="icon"
+                          className="size-8 shrink-0 rounded-full"
+                          aria-label={p.options?.length ? `Escolher ${p.name}` : `Adicionar ${p.name}`}
+                          onClick={() => (p.options?.length ? setDetail(p) : change(keyOf(p.id), 1))}
+                        >
+                          <Plus />
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
             <div className="space-y-2.5 border-t pt-2.5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Seus dados</p>
               <div className="grid grid-cols-2 gap-2">
