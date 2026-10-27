@@ -88,18 +88,14 @@ function Auth() {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}/auth`,
       });
-      if (result && !result.error) {
-        if (!result.redirected) await navigate({ to: "/painel" });
+      if (result.error) {
+        setMessage("Não foi possível entrar com Google. Tente novamente.");
         return;
       }
-      const { error: supaErr } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/painel` },
-      });
-      if (supaErr) setMessage(supaErr.message || "Não foi possível entrar com Google.");
-    } catch (err) {
-      const text = err instanceof Error ? err.message : "Não foi possível conectar ao Google.";
-      setMessage(text);
+      if (result.redirected) return;
+      await navigate({ to: "/painel" });
+    } catch {
+      setMessage("Não foi possível conectar ao Google. Tente novamente.");
     } finally {
       setBusy(false);
     }
