@@ -947,8 +947,8 @@ function Catalog() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent className="flex h-full w-full flex-col gap-0 p-0 sm:max-w-md">
           <div className="border-b px-4 py-2.5 pr-12">
-            <SheetTitle className="font-display text-lg font-semibold leading-tight">Seu pedido</SheetTitle>
-            <SheetDescription className="text-xs">
+            <SheetTitle className="inline font-display text-lg font-semibold leading-tight">Seu pedido</SheetTitle>
+            <SheetDescription className="ml-2 inline text-xs">
               {count} {count === 1 ? "item" : "itens"} no carrinho
             </SheetDescription>
           </div>
@@ -1053,7 +1053,7 @@ function Catalog() {
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                   />
                 </label>
-                <PhoneField compact label="WhatsApp *" value={form.phone} submitted={submitted} onChange={(phone) => setForm({ ...form, phone })} />
+                <PhoneField compact hiddenLabel placeholder="WhatsApp *" label="WhatsApp *" value={form.phone} submitted={submitted} onChange={(phone) => setForm({ ...form, phone })} />
               </div>
               {fieldErrors.name?.[0] && <p id="name-error" role="alert" className="text-xs text-destructive">{fieldErrors.name[0]}</p>}
               <div role="group" aria-label="Recebimento do pedido" className="grid grid-cols-2 gap-2">
@@ -1076,7 +1076,7 @@ function Catalog() {
                       }}>Trocar</Button>
                     </div>
                   )}
-                  <label className="relative block text-xs font-medium">Rua e número *
+                  <label className="relative block text-xs font-medium"><span className="sr-only">Rua e número *</span>
                     <input
                       className="field mt-1 py-2"
                       required
@@ -1086,7 +1086,7 @@ function Catalog() {
                       aria-controls="address-suggestions"
                       aria-autocomplete="list"
                       autoComplete="off"
-                      placeholder="Ex.: Rua Marechal Deodoro, 1696"
+                      placeholder="Rua e número * (ex.: R. Marechal Deodoro, 1696)"
                       value={addressLine}
                       onChange={(e) => {
                         const line = e.target.value;
@@ -1140,10 +1140,10 @@ function Catalog() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <div className="min-w-0 flex-1 text-xs leading-tight">
-                      <p>
+                      <p className="truncate">
                         <span className="text-muted-foreground">Bairro:</span>{" "}
-                        <span className="font-medium">{form.neighborhood.trim() || "aparece automaticamente"}</span>
-                        <span className="text-muted-foreground"> · {DELIVERY_CITY}</span>
+                        <span className="font-medium">{form.neighborhood.trim() || "automático"}</span>
+                        <span className="text-muted-foreground"> · {DELIVERY_CITY.replace(/, ?SP$/, "")}</span>
                       </p>
                       {validQuote && <p role="status" className="font-semibold text-primary">{brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km de moto</p>}
                     </div>
@@ -1162,7 +1162,7 @@ function Catalog() {
                 </select>
               )}
               <div>
-                <span className="mb-1 block text-xs font-medium">Forma de pagamento</span>
+
                 <div className="grid grid-cols-4 gap-1.5" role="group" aria-label="Forma de pagamento" aria-describedby={fieldErrors.payment?.length ? "payment-error" : undefined}>
                   {PAYMENT_METHODS.map((m) => (
                     <Button
