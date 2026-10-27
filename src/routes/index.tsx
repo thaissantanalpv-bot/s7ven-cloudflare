@@ -443,6 +443,13 @@ function Catalog() {
     if (isDelivery && distanceMode && addressComplete) void calculateDelivery();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fullAddress]);
+  // Ao terminar de digitar rua e número, a entrega é calculada sozinha (sem precisar tocar no botão).
+  useEffect(() => {
+    if (!isDelivery || !distanceMode || !addressComplete || validQuote || !online) return;
+    const timer = setTimeout(() => void calculateDelivery(), 1200);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fullAddress, isDelivery, distanceMode, addressComplete, online]);
   const couponResult = appliedCoupon ? applyCoupon(settings, appliedCoupon.code, subtotal) : null;
   const couponDiscount = couponResult?.discount ?? 0;
   const total = Math.round((subtotal + deliveryFee - couponDiscount) * 100) / 100;
@@ -1182,25 +1189,20 @@ function Catalog() {
               </div>
               {fieldErrors.payment?.[0] && <p id="payment-error" className="text-xs text-destructive">{fieldErrors.payment[0]}</p>}
               {form.payment === "Pix" && displayedTotal > 0 && (
-                <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2">
-                  <div className="flex items-center justify-between gap-2 text-xs">
-                    <span className="font-semibold">Pix — {brl(displayedTotal)}</span>
-                    <button type="button" className="font-medium text-primary underline-offset-2 hover:underline" aria-expanded={showPixQr} onClick={() => setShowPixQr((v) => !v)}>
-                      {showPixQr ? "Ocultar QR code" : "Ver QR code"}
-                    </button>
-                  </div>
+                <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-1.5">
                   {showPixQr && (
                     <div className="mx-auto w-fit rounded-md bg-photo p-1 text-photo-foreground">
                       <QRCodeSVG value={pixPayload} size={120} level="M" marginSize={1} />
                     </div>
                   )}
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-[1fr_1fr_auto] gap-1.5">
                     <Button variant="outline" type="button" size="sm" className="h-8 px-1 text-xs" onClick={() => copy(pixPayload, "codigo")}>
                       {copied === "codigo" ? "Código copiado!" : "Pix copia e cola"}
                     </Button>
                     <Button variant="outline" type="button" size="sm" className="h-8 px-1 text-xs" onClick={() => copy(PIX_KEY, "chave")}>
                       {copied === "chave" ? "Chave copiada!" : `Chave: ${PIX_KEY}`}
                     </Button>
+                    <Button variant="outline" type="button" size="sm" className="h-8 px-2 text-xs" aria-expanded={showPixQr} aria-label={showPixQr ? "Ocultar QR code" : "Ver QR code"} onClick={() => setShowPixQr((v) => !v)}>QR</Button>
                   </div>
                 </div>
               )}
@@ -1225,22 +1227,21 @@ function Catalog() {
             </div>
           </div>
           <div className="space-y-1.5 border-t px-4 py-2">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0 text-xs leading-tight text-muted-foreground">
-                <p className="truncate">
-                  Produtos {brl(displayedSubtotal)} · {isDelivery ? "Entrega " : "Retirada "}
-                  {!isDelivery ? "sem taxa" : settings.delivery_enabled
-                    ? distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : quoting ? "calculando…" : "a calcular" : settings.fixed_delivery_fee !== null || zone
-                      ? brl(displayedDeliveryFee)
-                      : "selecione a região"
-                    : "a confirmar"}
-                </p>
-              </div>
-              <p className="text-right">
-                <span className="block text-[11px] leading-tight text-muted-foreground">{isDelivery && distanceMode && !validQuote && items.length ? "Total dos produtos" : "Total"}</span>
-                <span className="font-display text-lg font-semibold leading-tight">{brl(displayedTotal)}</span>
-              </p>
-            </div>
+            <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-0.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm">
+              <dt className="text-muted-foreground">Produtos</dt>
+              <dd className="text-right font-medium">{brl(displayedSubtotal)}</dd>
+              <dt className="text-muted-foreground">{isDelivery ? "Entrega" : "Retirada"}</dt>
+              <dd className={`text-right font-semibold ${!isDelivery || (distanceMode ? validQuote : settings.fixed_delivery_fee !== null || zone) ? "text-primary" : "text-muted-foreground"}`}>
+                {!isDelivery ? "Grátis" : settings.delivery_enabled
+                  ? distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : quoting ? "calculando…" : "calcule acima" : settings.fixed_delivery_fee !== null || zone
+                    ? brl(displayedDeliveryFee)
+                    : "selecione a região"
+                  : "a confirmar"}
+              </dd>
+              <div className="col-span-2 my-0.5 border-t border-primary/20" />
+              <dt className="font-semibold">{isDelivery && distanceMode && !validQuote && items.length ? "Total (sem entrega)" : "Total"}</dt>
+              <dd className="text-right font-display text-lg font-bold leading-tight">{brl(displayedTotal)}</dd>
+            </dl>
             {status.configured && !status.open && orderStatus.reason !== "paused" && (
               <p className="text-xs text-destructive">Loja fechada no momento. Confira os horários de atendimento.</p>
             )}
