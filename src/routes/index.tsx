@@ -806,7 +806,7 @@ function Catalog() {
                 ].map((c) => (
                   <button key={c.value} type="button" onClick={() => openCategory(c.value)} className="group relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-xl border bg-photo text-left transition hover:border-primary">
                     {c.cover ? (
-                      <img src={c.cover} alt="" loading="lazy" className="absolute inset-0 size-full object-contain p-3 pb-12 transition duration-300 group-hover:scale-105" />
+                      <img src={c.cover} alt="" loading="lazy" className="absolute inset-0 size-full object-cover transition duration-300 group-hover:scale-105" />
                     ) : (
                       <span className="absolute inset-0 grid place-items-center pb-10">
                         {c.value === FAVORITES ? <Heart className="size-10 fill-destructive text-destructive" /> : <LayoutGrid className="size-10 text-primary" />}
