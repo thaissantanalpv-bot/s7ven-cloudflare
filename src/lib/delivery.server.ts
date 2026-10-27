@@ -32,3 +32,12 @@ export async function deliverySettingsHash(settings: StoreSettings) {
   const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(["aracatuba-v1", DELIVERY_TRAVEL_MODE, settings.delivery_origin, settings.delivery_distance_tiers, settings.delivery_enabled, settings.delivery_distance_enabled])));
   return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, "0")).join("");
 }
+
+/** New paid Maps calculations allowed per hour, store-wide and per network. */
+export const DELIVERY_QUOTE_GLOBAL_HOURLY_LIMIT = 200;
+export const DELIVERY_QUOTE_CLIENT_HOURLY_LIMIT = 20;
+
+/** Pseudonymous per-network key (HMAC of the caller IP); the raw IP is never stored. */
+export async function deliveryClientHash(ip: string) {
+  return toHex(await crypto.subtle.sign("HMAC", await signingKey(), encoder.encode(`delivery-client:${ip}`)));
+}
