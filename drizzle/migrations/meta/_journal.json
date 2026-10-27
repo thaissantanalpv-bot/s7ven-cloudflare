@@ -232,6 +232,13 @@
       "when": 1793066574181,
       "tag": "0032_delivery_quote_attempts_server_only",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793138630626,
+      "tag": "0033_store_paused",
+      "breakpoints": true
     }
   ]
 }

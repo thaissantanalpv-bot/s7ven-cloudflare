@@ -433,6 +433,7 @@ export type Database = {
           id: string
           opening_hours: Json
           order_cutoff: string
+          paused: boolean
           pickup_address: string
           promoBanner: Json
           updated_at: string
@@ -449,6 +450,7 @@ export type Database = {
           id?: string
           opening_hours?: Json
           order_cutoff?: string
+          paused?: boolean
           pickup_address?: string
           promoBanner?: Json
           updated_at?: string
@@ -465,6 +467,7 @@ export type Database = {
           id?: string
           opening_hours?: Json
           order_cutoff?: string
+          paused?: boolean
           pickup_address?: string
           promoBanner?: Json
           updated_at?: string
