@@ -25,6 +25,7 @@ import { brl } from "@/lib/products";
 import { OrderPrinting } from "./order-printing";
 import { OrderCancellation } from "./order-cancellation";
 import { PushQuickButton } from "@/components/push-notifications";
+import { StorePauseButton } from "@/components/store-pause-button";
 
 const time = (value: string) =>
   new Intl.DateTimeFormat("pt-BR", {
@@ -320,6 +321,7 @@ export function OrderBoard() {
             {sound && audioReady ? <Volume2 /> : <VolumeX />}
             {!sound ? "Ativar som" : audioReady ? "Som ativo (WhatsApp)" : "Toque na tela para ativar o som"}
           </Button>
+          <StorePauseButton />
           <PushQuickButton />
           <Button
             variant="outline"

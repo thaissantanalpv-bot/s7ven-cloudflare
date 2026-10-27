@@ -694,8 +694,8 @@ function Catalog() {
           <div role="status" aria-live="polite" className="mt-4 flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3">
             <Clock className="size-5 shrink-0 text-primary" aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">Loja fechada no momento</p>
-              <p className="text-xs text-muted-foreground">Você pode explorar o catálogo. Os pedidos voltam no horário de atendimento.</p>
+              <p className="text-sm font-semibold">{settings.paused ? "Pedidos pausados no momento" : "Loja fechada no momento"}</p>
+              <p className="text-xs text-muted-foreground">{settings.paused ? "Você pode explorar o catálogo. Os pedidos voltam em breve." : "Você pode explorar o catálogo. Os pedidos voltam no horário de atendimento."}</p>
             </div>
             <Button variant="link" size="sm" className="shrink-0 px-0" onClick={() => goTab("mais")}>Horários</Button>
           </div>
