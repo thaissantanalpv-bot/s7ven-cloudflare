@@ -70,7 +70,7 @@ export const Route = createFileRoute("/")({
   }),
   head: ({ loaderData }) => {
     const title = "S7VEN Lounge e Tabacaria em Araçatuba — Catálogo Digital";
-    const description = "Tabacaria em Araçatuba, SP: veja os produtos, monte seu carrinho e peça pelo WhatsApp com entrega ou retirada.";
+    const description = "Essências, narguilés, pods e bebidas em Araçatuba, SP. Escolha no catálogo e peça pelo WhatsApp, com entrega de moto ou retirada.";
     const products = (loaderData?.[1] ?? []).filter((p) => p.active && !p.comboGroups?.length).slice(0, 100);
     return {
       meta: [
