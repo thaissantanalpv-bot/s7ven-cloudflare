@@ -11,9 +11,13 @@ export function ProductTile({
   onOpen,
   onChange,
   onBuild,
+  sel,
+  onSel,
 }: {
   p: CatalogProduct;
   cart: Cart;
+  sel: Record<string, string>;
+  onSel: (id: string, v: string) => void;
   onOpen: () => void;
   onChange: (key: string, d: number) => void;
   onBuild: () => void;
@@ -21,7 +25,10 @@ export function ProductTile({
   const photo = productPhotos(p)[0];
   const hasOpts = Boolean(p.options?.length);
   const isCombo = Boolean(p.comboGroups?.length);
-  const key = keyOf(p.id);
+  const chosen = hasOpts ? (sel[p.id] ?? "") : "";
+  const option = chosen && chosen !== "__outro__" ? chosen : "";
+  const key = keyOf(p.id, option || undefined);
+  const ready = (!hasOpts || !!option) && available(p, option);
   const qty = cart[key] ?? 0;
   const soldOut = !available(p);
   return (
@@ -45,22 +52,45 @@ export function ProductTile({
         <button type="button" onClick={onOpen} className="mt-0.5 line-clamp-2 text-left text-sm font-medium leading-snug hover:text-primary">
           {p.name}
         </button>
-        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-          <span className="font-display text-base font-bold text-foreground sm:text-lg">{brl(p.price)}</span>
-          {soldOut ? null : isCombo ? (
-            <Button size="sm" onClick={onBuild} className="h-8 px-2.5 text-xs">Montar</Button>
-          ) : hasOpts ? (
-            <Button size="sm" onClick={onOpen} className="h-8 px-2.5 text-xs">Escolher</Button>
-          ) : qty > 0 ? (
-            <div className="flex items-center rounded-full border bg-background">
-              <Button variant="ghost" size="icon" className="size-8" aria-label={`Diminuir ${p.name}`} onClick={() => onChange(key, -1)}><Minus /></Button>
-              <span className="w-5 text-center text-sm font-semibold" aria-label="Quantidade no carrinho">{qty}</span>
-              <Button variant="ghost" size="icon" className="size-8" aria-label={`Aumentar ${p.name}`} disabled={p.stock !== null && qty >= p.stock} onClick={() => onChange(key, 1)}><Plus /></Button>
+        {hasOpts && !soldOut && (
+          <div className="mt-2">
+            <p className="text-[10px] font-medium uppercase text-muted-foreground">{p.optionLabel}</p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {p.options?.map((o) => (
+                <button
+                  key={o}
+                  type="button"
+                  disabled={!available(p, o)}
+                  aria-pressed={chosen === o}
+                  onClick={() => onSel(p.id, o)}
+                  className={`rounded-md border px-2 py-0.5 text-[11px] transition disabled:opacity-40 ${chosen === o ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:border-primary"}`}
+                >
+                  {o}
+                </button>
+              ))}
+              {p.allowOther && <button type="button" onClick={onOpen} className="rounded-md border border-dashed px-2 py-0.5 text-[11px] text-muted-foreground">Outro</button>}
             </div>
-          ) : (
-            <Button size="icon" onClick={() => onChange(key, 1)} aria-label={`Adicionar ${p.name}`} className="size-9 rounded-full"><Plus /></Button>
-          )}
-        </div>
+          </div>
+        )}
+        <span className="mt-auto pt-2 font-display text-base font-bold text-foreground sm:text-lg">{brl(p.price)}</span>
+        {!soldOut && (
+          <div className="pt-2">
+            {isCombo ? (
+              <Button onClick={onBuild} className="h-9 w-full rounded-full text-sm font-semibold">Montar combo</Button>
+            ) : qty > 0 ? (
+              <div className="mx-auto flex w-fit items-center rounded-full border bg-background">
+                <Button variant="ghost" size="icon" className="size-9" aria-label={`Diminuir ${p.name}`} onClick={() => onChange(key, -1)}><Minus /></Button>
+                <span className="w-6 text-center text-sm font-semibold" aria-label="Quantidade no carrinho">{qty}</span>
+                <Button variant="ghost" size="icon" className="size-9" aria-label={`Aumentar ${p.name}`} disabled={p.stock !== null && qty >= p.stock} onClick={() => onChange(key, 1)}><Plus /></Button>
+              </div>
+            ) : (
+              <Button onClick={() => onChange(key, 1)} disabled={!ready} aria-label={`Adicionar ${p.name}`} className="h-9 w-full rounded-full text-sm font-semibold">
+                <Plus />Adicionar
+              </Button>
+            )}
+            {hasOpts && !option && <p className="pt-1 text-center text-[10px] text-muted-foreground">Escolha {p.optionLabel === "Cor" ? "uma cor" : "um sabor"}</p>}
+          </div>
+        )}
       </div>
     </article>
   );
