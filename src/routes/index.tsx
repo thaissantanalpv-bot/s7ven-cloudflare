@@ -1041,9 +1041,10 @@ function Catalog() {
             <div className="space-y-2 border-t pt-2">
               <div className="grid grid-cols-2 gap-2">
                 <label className="block text-xs font-medium">
-                  Nome *
+                  <span className="sr-only">Nome *</span>
                   <input
-                    className="field mt-1 py-2"
+                    className="field py-2"
+                    placeholder="Nome *"
                     required
                     autoComplete="name"
                     aria-invalid={Boolean(fieldErrors.name?.length)}
@@ -1078,7 +1079,7 @@ function Catalog() {
                   )}
                   <label className="relative block text-xs font-medium"><span className="sr-only">Rua e número *</span>
                     <input
-                      className="field mt-1 py-2"
+                      className="field py-2"
                       required
                       maxLength={120}
                       aria-invalid={Boolean(fieldErrors.address?.length)}
