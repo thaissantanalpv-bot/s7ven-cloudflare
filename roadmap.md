@@ -228,4 +228,4 @@
 - [x] Publicado em https://s7venlounge.shop.
 - [ ] Confirmar no celular da Thais: abrir s7venlounge.shop/painel na aba Pedidos, tocar na tela uma vez e ver o alerta tocar em loop com um pedido novo real.
 - [ ] Pendências que seguem abertas: conferir no aparelho a reabertura sem internet, confirmar a chegada do primeiro aviso real nos dois e-mails e recriar o atalho da tela inicial no celular para o ícone dourado.
-- [ ] Calcular entrega automaticamente ao informar o endereço
+- [x] Calcular entrega automaticamente ao informar o endereço
