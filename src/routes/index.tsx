@@ -576,7 +576,7 @@ function Catalog() {
   });
   const categoryTitle = cat === FEATURED ? "Destaques" : cat === FAVORITES ? "Favoritos" : cat === "Todos" ? "Todos os produtos" : cat.replace("Narguiles > ", "");
   const tile = (p: CatalogProduct) => (
-    <ProductTile key={p.id} p={p} cart={cart} onOpen={() => setDetail(p)} onChange={change} onBuild={() => setBuilding(p)} />
+    <ProductTile key={p.id} p={p} cart={cart} sel={sel} onSel={(id, v) => setSel((x) => ({ ...x, [id]: v }))} onOpen={() => setDetail(p)} onChange={change} onBuild={() => setBuilding(p)} />
   );
   const productGrid = (list: CatalogProduct[]) => (
     <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
