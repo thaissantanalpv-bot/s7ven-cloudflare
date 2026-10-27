@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { cloneElement, isValidElement, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -38,9 +38,13 @@ import { submitOrder, orderTracking } from "@/lib/orders.functions";
 import { startDeliverySession, quoteDelivery, suggestDeliveryAddress } from "@/lib/delivery.functions";
 import { estimatedDeliveryMinutes } from "@/lib/delivery-route";
 import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine, getSavedCustomerAddress, saveCustomerAddress, type SavedCustomerAddress } from "@/lib/delivery-address";
-import { MapPin } from "lucide-react";
+import { MapPin, Menu, ArrowLeft, ArrowRight, ShoppingCart, Home, LayoutGrid, ClipboardList, MoreHorizontal, ShieldCheck, Headphones, Flame, Wallet, Trash2, Gem, CheckCircle2 } from "lucide-react";
+import heroImg from "@/assets/hero-narguile.jpg";
+import { ProductTile } from "@/components/catalog/product-tile";
+import { ProductDetail } from "@/components/catalog/product-detail";
+import { keyOf, SEP, type Cart } from "@/components/catalog/cart-keys";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
-import { available, type CatalogProduct } from "@/lib/catalog";
+import { available, productPhotos, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
 import { ProductCardPhotos } from "@/components/products/product-card-photos";
 import { ComboBuilder } from "@/components/products/combo-builder";
@@ -49,6 +53,7 @@ import { comboOption, parseComboOption, comboSummary, type ComboSelection } from
 import {
   PAYMENT_METHODS,
   STORE_NAME,
+  WHATSAPP_NUMBER,
   brl,
 } from "@/lib/products";
 import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
@@ -58,6 +63,10 @@ import { applyCoupon } from "@/lib/store-settings";
 export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
   staticData: { sitemap: true },
+  validateSearch: (search: Record<string, unknown>): { aba?: Exclude<Tab, "inicio">; produto?: string } => ({
+    ...(typeof search.aba === "string" && TABS.includes(search.aba as Tab) && search.aba !== "inicio" ? { aba: search.aba as Exclude<Tab, "inicio"> } : {}),
+    ...(typeof search.produto === "string" ? { produto: search.produto } : {}),
+  }),
   head: ({ loaderData }) => {
     const title = "S7VEN Lounge e Tabacaria em Araçatuba — Catálogo Digital";
     const description = "Tabacaria em Araçatuba, SP: veja os produtos, monte seu carrinho e peça pelo WhatsApp com entrega ou retirada.";
@@ -98,16 +107,19 @@ export const Route = createFileRoute("/")({
   notFoundComponent: () => <div className="p-8 text-center">Catálogo não encontrado.</div>,
 });
 
-type Cart = Record<string, number>;
 type Line = { product: CatalogProduct; key: string; qty: number; option: string; components: ComboSelection[] | undefined };
 
 const KEY = "catalogo-carrinho";
-const SEP = "::";
-const OTHER = "__outro__";
-const keyOf = (id: string, opt?: string) => (opt ? `${id}${SEP}${opt}` : id);
+const FEATURED = "__destaques__";
+const FAVORITES = "__favoritos__";
+type Tab = "inicio" | "categorias" | "pedidos" | "mais";
+const TABS: Tab[] = ["inicio", "categorias", "pedidos", "mais"];
 
 function Catalog() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const search = Route.useSearch();
+  const tab: Tab = search.aba ?? "inicio";
   const { data: catalogProducts } = useSuspenseQuery(catalogQuery);
   const [online, setOnline] = useState(true);
   const [photoUrls, setPhotoUrls] = useState<Map<string, string>>(new Map());
@@ -242,7 +254,12 @@ function Catalog() {
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; label: string } | null>(null);
   const [couponError, setCouponError] = useState("");
   const [building, setBuilding] = useState<CatalogProduct | null>(null);
-  const [sharedProduct, setSharedProduct] = useState<CatalogProduct | null>(null);
+  const [detail, setDetail] = useState<CatalogProduct | null>(null);
+  const closeDetail = () => {
+    setDetail(null);
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("produto")) { url.searchParams.delete("produto"); window.history.replaceState(window.history.state, "", url.href); }
+  };
   const [qrModalProduct, setQrModalProduct] = useState<CatalogProduct | null>(null);
   const [savedAddress, setSavedAddress] = useState<SavedCustomerAddress | null>(null);
   const [useSavedAddress, setUseSavedAddress] = useState(true);
@@ -267,7 +284,7 @@ function Catalog() {
 
   useEffect(() => {
     const id = new URL(window.location.href).searchParams.get("produto");
-    if (id) setSharedProduct(products.find(p => p.id === id) ?? null);
+    if (id) setDetail(products.find(p => p.id === id) ?? null);
   }, [products]);
   const featured = products.filter(p => p.featured && available(p));
   const customerValidation = customerSchema.safeParse({ ...form, address: fullAddress });
@@ -303,14 +320,21 @@ function Catalog() {
     const q = query.trim().toLowerCase();
     const list = products.filter(
       (p) =>
-        (cat === "Todos" || p.category === cat) &&
+        (cat === "Todos" || p.category === cat || (cat === FEATURED && p.featured) || (cat === FAVORITES && favorites.includes(p.id))) &&
         (!q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)),
     );
     if (sort === "low") list.sort((a, b) => a.price - b.price);
     if (sort === "high") list.sort((a, b) => b.price - a.price);
     if (sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
-   }, [query, cat, sort, products]);
+   }, [query, cat, sort, products, favorites]);
+  const allProducts = useMemo(() => {
+    const list = [...products];
+    if (sort === "low") list.sort((a, b) => a.price - b.price);
+    if (sort === "high") list.sort((a, b) => b.price - a.price);
+    if (sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
+    return list;
+  }, [sort, products]);
 
   const items: Line[] = useMemo(
     () =>
@@ -536,8 +560,65 @@ function Catalog() {
     }
   };
 
+  const goTab = (next: Tab) => {
+    void navigate({ to: "/", search: next === "inicio" ? {} : { aba: next }, resetScroll: true });
+  };
+  const openCategory = (value: string) => {
+    setCat(value);
+    setQuery("");
+    goTab("categorias");
+  };
+  const searching = query.trim().length > 0;
+  const categoryCards = categories.filter((c) => c !== "Todos").map((c) => {
+    const list = products.filter((p) => p.category === c);
+    const cover = list.map((p) => productPhotos(p)[0]).find(Boolean);
+    return { value: c, label: c.replace("Narguiles > ", ""), count: list.length, cover };
+  });
+  const categoryTitle = cat === FEATURED ? "Destaques" : cat === FAVORITES ? "Favoritos" : cat === "Todos" ? "Todos os produtos" : cat.replace("Narguiles > ", "");
+  const tile = (p: CatalogProduct) => (
+    <ProductTile key={p.id} p={p} cart={cart} onOpen={() => setDetail(p)} onChange={change} onBuild={() => setBuilding(p)} />
+  );
+  const productGrid = (list: CatalogProduct[]) => (
+    <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {list.length === 0 && (
+        <div className="col-span-full py-14 text-center">
+          <Search className="mx-auto mb-3 size-8 text-muted-foreground" />
+          <p>Nenhum produto encontrado.</p>
+          <Button variant="link" onClick={() => { setQuery(""); setCat("Todos"); }}>Limpar filtros</Button>
+        </div>
+      )}
+      {list.map(tile)}
+    </div>
+  );
+  const sortSelect = (
+    <select aria-label="Ordenar produtos" value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-md border bg-card px-3 py-2 text-xs">
+      <option value="catalog">Ordem do catálogo</option>
+      <option value="low">Menor preço</option>
+      <option value="high">Maior preço</option>
+      <option value="name">Nome: A–Z</option>
+    </select>
+  );
+  const hoursList = settings.hours_enabled ? (
+    <div className="grid gap-1.5 text-sm sm:grid-cols-2">
+      {settings.opening_hours.map((h) => (
+        <p key={h.day} className="flex justify-between gap-4">
+          <span className="text-muted-foreground">{DAYS[h.day]}</span>
+          <span>{h.enabled ? `${h.open} – ${h.close}${h.open > h.close ? " (+1 dia)" : ""}` : "Fechado"}</span>
+        </p>
+      ))}
+    </div>
+  ) : (
+    <p className="text-sm text-muted-foreground">Confirme os horários pelo WhatsApp.</p>
+  );
+  const navItems: { id: Tab; label: string; icon: typeof Home }[] = [
+    { id: "inicio", label: "Início", icon: Home },
+    { id: "categorias", label: "Categorias", icon: LayoutGrid },
+    { id: "pedidos", label: "Pedidos", icon: ClipboardList },
+    { id: "mais", label: "Mais", icon: MoreHorizontal },
+  ];
+
   return (
-    <div className="catalog-theme min-h-screen bg-background pb-28 text-foreground lg:pb-10">
+    <div className="catalog-theme min-h-screen bg-background pb-36 text-foreground md:pb-10">
       {!online && <div role="status" className="border-b bg-muted px-4 py-2 text-center text-sm text-muted-foreground">Sem conexão · Exibindo o último catálogo salvo. Pedidos disponíveis ao reconectar.</div>}
       {settings.promoBanner?.enabled && settings.promoBanner.text && (
         <div className="bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground">
@@ -546,65 +627,26 @@ function Catalog() {
           ) : settings.promoBanner.text}
         </div>
       )}
-      {/* Reorder / Repeat Order Modal */}
-      <Sheet open={showHistoryModal} onOpenChange={setShowHistoryModal}>
-        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-          <SheetTitle>Meus Pedidos Anteriores</SheetTitle>
-          <SheetDescription>Repita um pedido favorito em 1 clique sem precisar procurar item por item.</SheetDescription>
-          <div className="mt-4 space-y-4">
-            {orderHistory.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">Você ainda não realizou pedidos neste dispositivo.</p>
-            ) : (
-              orderHistory.map((h, i) => (
-                <div key={h.id || i} className="rounded-lg border p-4 space-y-2 bg-card">
-                  <div className="flex justify-between items-center text-xs text-muted-foreground">
-                    <span className="font-mono font-bold text-foreground">Pedido #{h.number}</span>
-                    <span>{new Date(h.date).toLocaleDateString("pt-BR")}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{h.summary}</p>
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <span className="font-bold text-sm text-primary">{brl(h.total)}</span>
-                    <Button size="sm" onClick={() => {
-                      const newCart: Cart = { ...cart };
-                      h.items.forEach((it: any) => {
-                        const k = keyOf(it.productId, it.option);
-                        newCart[k] = (newCart[k] || 0) + it.qty;
-                      });
-                      setCart(newCart);
-                      setShowHistoryModal(false);
-                      setOpen(true);
-                    }}><RotateCcw className="size-3.5" /> Repetir pedido</Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
 
-      {/* Individual Product Share & QR Code Modal */}
       {qrModalProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setQrModalProduct(null)}>
-          <div className="w-full max-w-sm rounded-xl border bg-background p-6 shadow-xl space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-start">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay p-4" onClick={() => setQrModalProduct(null)}>
+          <div className="w-full max-w-sm space-y-4 rounded-xl border bg-background p-6 shadow-soft" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-semibold text-base line-clamp-1">{qrModalProduct.name}</h3>
-                <p className="text-xs text-muted-foreground">Compartilhe link direto ou QR Code no impresso</p>
+                <h3 className="line-clamp-1 text-base font-semibold">{qrModalProduct.name}</h3>
+                <p className="text-xs text-muted-foreground">Compartilhe o link direto ou o QR Code</p>
               </div>
-              <Button variant="ghost" size="icon" className="size-7" onClick={() => setQrModalProduct(null)}><X className="size-4" /></Button>
+              <Button variant="ghost" size="icon" className="size-7" aria-label="Fechar" onClick={() => setQrModalProduct(null)}><X className="size-4" /></Button>
             </div>
-            <div className="flex justify-center p-4 bg-white rounded-lg">
+            <div className="flex justify-center rounded-lg bg-photo p-4 text-photo-foreground">
               <QRCodeSVG value={`${window.location.origin}/?produto=${encodeURIComponent(qrModalProduct.id)}`} size={180} level="M" includeMargin />
             </div>
             <div className="space-y-2">
               <Button className="w-full" onClick={() => {
                 const shareUrl = `${window.location.origin}/?produto=${encodeURIComponent(qrModalProduct.id)}`;
-                if (navigator.share) {
-                  navigator.share({ title: qrModalProduct.name, url: shareUrl }).catch(() => {});
-                } else {
-                  copy(shareUrl, "link");
-                }
-              }}><Share2 className="size-4" /> {copied === "link" ? "Link copiado!" : "Copiar Link / Compartilhar"}</Button>
+                if (navigator.share) navigator.share({ title: qrModalProduct.name, url: shareUrl }).catch(() => {});
+                else copy(shareUrl, "link");
+              }}><Share2 className="size-4" /> {copied === "link" ? "Link copiado!" : "Copiar link / Compartilhar"}</Button>
               <Button variant="outline" className="w-full" onClick={() => {
                 const msg = `Confira ${qrModalProduct.name} na ${STORE_NAME}: ${window.location.origin}/?produto=${encodeURIComponent(qrModalProduct.id)}`;
                 window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, "_blank");
@@ -614,185 +656,269 @@ function Catalog() {
         </div>
       )}
 
-      <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur-lg">
-        <div className="mx-auto grid max-w-7xl grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-4 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:px-8">
-          <span aria-hidden className="sm:hidden" />
-          <Link to="/" className="flex min-w-0 items-center justify-center gap-3 sm:justify-start" aria-label="S7VEN Lounge e Tabacaria">
-            <img src="/logo-s7ven.png" alt="S7VEN Lounge e Tabacaria" width={360} height={312} className="h-16 w-auto shrink-0 object-contain sm:h-20" />
+      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur-lg">
+        <div className="mx-auto grid max-w-7xl grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-3 px-3 py-2 md:flex md:justify-between md:px-8">
+          <Button variant="ghost" size="icon" className="md:hidden" aria-label={tab === "inicio" ? "Abrir menu" : "Voltar ao início"} onClick={() => goTab(tab === "inicio" ? "mais" : "inicio")}>
+            {tab === "inicio" ? <Menu /> : <ArrowLeft />}
+          </Button>
+          <Link to="/" className="flex justify-center md:justify-start" aria-label="S7VEN Lounge e Tabacaria — início">
+            <img src="/logo-s7ven.png" alt="S7VEN Lounge e Tabacaria" width={360} height={312} className="h-14 w-auto object-contain md:h-16" />
           </Link>
-          <div className="relative hidden w-full max-w-md md:block">
+          <nav aria-label="Seções do catálogo" className="hidden items-center gap-1 md:flex">
+            {navItems.map(({ id, label, icon: Icon }) => (
+              <Button key={id} variant="ghost" onClick={() => { if (id === "categorias") setCat("Todos"); goTab(id); }} aria-current={tab === id ? "page" : undefined} className={tab === id ? "text-primary" : "text-muted-foreground"}>
+                <Icon />{label}
+              </Button>
+            ))}
+          </nav>
+          <div className="relative hidden w-full max-w-sm lg:block">
             <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
-            <input
-              aria-label="Buscar produto"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Digite sua busca…"
-              className="field search-field pl-10"
-            />
+            <input aria-label="Buscar produto" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="O que você está procurando?" className="field search-field pl-10" />
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button variant="ghost" onClick={() => setOpen(true)} aria-label={`Meu carrinho, ${count} itens`} className="relative h-11 px-2 sm:px-3">
-              <ShoppingBag />
-              <span className="hidden sm:inline">Meu carrinho</span>
-              <span className="absolute -right-1 top-0 grid size-5 place-items-center rounded-full bg-primary text-xs text-primary-foreground sm:static">
-                {count}
-              </span>
-            </Button>
-          </div>
+          <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label={`Meu carrinho, ${count} itens`} className="relative size-11 justify-self-end md:w-auto md:px-3">
+            <ShoppingCart className="size-6" />
+            <span className="hidden md:inline">Carrinho</span>
+            <span className="absolute -right-0.5 top-0.5 grid size-5 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground md:static">{count}</span>
+          </Button>
         </div>
-        <div className="relative mx-4 mb-4 md:hidden">
+        <div className="relative mx-3 mb-3 lg:hidden md:mx-8">
           <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
-          <input
-            aria-label="Buscar produto"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Digite sua busca…"
-            className="field search-field pl-10"
-          />
+          <input aria-label="Buscar produto" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="O que você está procurando?" className="field search-field pl-10" />
         </div>
       </header>
-      <section className="mx-auto max-w-7xl px-4 pt-4 sm:px-8 sm:pt-6">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-          <div className="min-w-0">
-            <h1 className="font-display text-sm font-semibold sm:text-xl">
-              S7VEN Lounge e Tabacaria <span className="text-muted-foreground">· Araçatuba</span>
-            </h1>
-          </div>
-          <Button variant="outline" aria-expanded={hoursOpen} aria-controls="catalog-opening-hours" onClick={() => setHoursOpen(!hoursOpen)} className="h-9 shrink-0 px-2 text-xs sm:px-4">
-            <span
-              className={`size-2 rounded-full ${status.open && status.configured ? "bg-whatsapp" : "bg-muted-foreground"}`}
-            />
-            {status.label}
-            <Clock className="ml-2" />
-          </Button>
-        </div>
+
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
         {status.configured && !status.open && (
-          <div role="status" aria-live="polite" className="mt-4 flex items-start gap-3 border-l-4 border-primary bg-muted px-4 py-3">
-            <Clock className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+          <div role="status" aria-live="polite" className="mt-4 flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3">
+            <Clock className="size-5 shrink-0 text-primary" aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">Loja fechada no momento</p>
-              <p className="mt-1 text-sm text-muted-foreground">Os pedidos estarão disponíveis durante o horário de atendimento.</p>
-              <Button variant="link" onClick={() => setHoursOpen(true)} aria-controls="catalog-opening-hours" className="mt-1 h-auto px-0 py-1 text-sm">Ver horários de funcionamento</Button>
+              <p className="text-sm font-semibold">Loja fechada no momento</p>
+              <p className="text-xs text-muted-foreground">Você pode explorar o catálogo. Os pedidos voltam no horário de atendimento.</p>
             </div>
+            <Button variant="link" size="sm" className="shrink-0 px-0" onClick={() => goTab("mais")}>Horários</Button>
           </div>
         )}
-        {hoursOpen && (
-          <div id="catalog-opening-hours" className="mt-5 border-y py-4">
-            <h2 className="mb-3 text-sm font-semibold">Horários de atendimento · Brasília</h2>
-            {settings.hours_enabled ? (
-              <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
-                {settings.opening_hours.map((h) => (
-                  <p key={h.day} className="flex justify-between gap-4 pr-4">
-                    <span className="text-muted-foreground">{DAYS[h.day]}</span>
-                    <span>
-                      {h.enabled
-                        ? `${h.open} – ${h.close}${h.open > h.close ? " (+1 dia)" : ""}`
-                        : "Fechado"}
+
+        {searching ? (
+          <section aria-label="Resultados da busca" className="py-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h1 className="font-display text-xl font-semibold">Resultados para “{query.trim()}”</h1>
+                <p className="text-xs text-muted-foreground">{filtered.length} produtos</p>
+              </div>
+              {sortSelect}
+            </div>
+            {productGrid(filtered)}
+          </section>
+        ) : tab === "inicio" ? (
+          <>
+            <section aria-label="Boas-vindas" className="relative mt-4 overflow-hidden rounded-2xl border border-primary/30 bg-photo">
+              <img src={heroImg} alt="" width={1600} height={720} className="absolute inset-0 size-full object-cover object-right" />
+              <div className="relative max-w-[70%] px-5 py-8 sm:px-8 sm:py-14 md:max-w-lg">
+                <p className="font-display text-sm font-semibold uppercase tracking-wide text-foreground sm:text-lg">Seu pedido favorito</p>
+                <h1 className="font-display text-3xl font-extrabold uppercase leading-none text-gold sm:text-5xl">Agora online!</h1>
+                <p className="mt-3 text-sm text-foreground/85 sm:text-base">Tabacaria, bebidas, acessórios e muito mais.</p>
+                <Button onClick={() => goTab("categorias")} className="mt-5 h-11 rounded-full px-5 font-bold uppercase tracking-wide">
+                  Ver catálogo <ArrowRight />
+                </Button>
+              </div>
+            </section>
+
+            <ul aria-label="Vantagens" className="grid grid-cols-4 gap-2 py-5 text-center">
+              {[
+                { icon: Truck, label: "Entrega rápida" },
+                { icon: MessageCircle, label: "Pagamento no WhatsApp" },
+                { icon: ShieldCheck, label: "Loja segura" },
+              ].map(({ icon: Icon, label }) => (
+                <li key={label} className="flex flex-col items-center gap-1.5 text-[11px] leading-tight text-muted-foreground sm:text-sm">
+                  <Icon className="size-6 text-primary" />{label}
+                </li>
+              ))}
+              <li>
+                <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1.5 text-[11px] leading-tight text-muted-foreground hover:text-primary sm:text-sm">
+                  <Headphones className="size-6 text-primary" />Atendimento
+                </a>
+              </li>
+            </ul>
+
+            <p className="flex items-center gap-2 border-y py-2.5 text-xs font-medium sm:text-sm">
+              <Truck className="size-4 shrink-0 text-primary" />
+              <span className="truncate">Entregas das 16:00 às 23:00</span>
+            </p>
+
+            {featured.length > 0 && (
+              <section aria-label="Produtos em destaque" className="py-6">
+                <Carousel opts={{ align: "start", loop: featured.length > 4 }}>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h2 className="flex items-center gap-2 font-display text-xl font-semibold">Destaques <Flame className="size-5 text-gold" /></h2>
+                    <div className="flex items-center gap-2">
+                      <Button variant="link" size="sm" className="px-0" onClick={() => openCategory(FEATURED)}>Ver todos <ChevronRight /></Button>
+                      <CarouselPrevious className="static hidden size-8 translate-y-0 sm:inline-flex" />
+                      <CarouselNext className="static hidden size-8 translate-y-0 sm:inline-flex" />
+                    </div>
+                  </div>
+                  <CarouselContent className="-ml-3 items-stretch">
+                    {featured.map((p) => (
+                      <CarouselItem key={p.id} className="basis-[42%] pl-3 sm:basis-1/3 md:basis-1/4 xl:basis-1/5">{tile(p)}</CarouselItem>
+                    ))}
+                  </CarouselContent>
+                </Carousel>
+              </section>
+            )}
+
+            <section aria-label="Categorias" className="pb-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="font-display text-xl font-semibold">Categorias</h2>
+                <Button variant="link" size="sm" className="px-0" onClick={() => { setCat("Todos"); goTab("categorias"); }}>Ver todas <ChevronRight /></Button>
+              </div>
+              <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+                {categoryCards.map((c) => (
+                  <button key={c.value} type="button" onClick={() => openCategory(c.value)} className="flex w-24 shrink-0 flex-col items-center gap-1.5 text-center">
+                    <span className="grid size-20 place-items-center overflow-hidden rounded-2xl border bg-photo">
+                      {c.cover ? <img src={c.cover} alt="" loading="lazy" className="size-full object-contain p-1.5" /> : <LayoutGrid className="text-primary" />}
                     </span>
-                  </p>
+                    <span className="line-clamp-2 text-xs font-medium">{c.label}</span>
+                  </button>
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Confirme os horários pelo WhatsApp.</p>
-            )}
-          </div>
-        )}
-        <div className="mt-3 flex items-center justify-between gap-3 border-b pb-3 text-xs sm:text-sm">
-          <span className="flex min-w-0 items-center gap-2 font-medium text-foreground">
-            <Truck className="size-4 shrink-0 text-primary" />
-            <span className="truncate">Entregas das 16:00 às 23:00</span>
-          </span>
-          <button type="button" onClick={() => setShowHistoryModal(true)} className="flex shrink-0 items-center gap-1.5 text-xs text-primary hover:underline">
-            <RotateCcw className="size-3.5" /> Meus pedidos
-          </button>
-        </div>
-      </section>
-      <section className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-8 sm:py-7 md:grid-cols-[200px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)]">
-        <nav aria-label="Categorias" className="no-scrollbar flex gap-2 overflow-x-auto pb-2 md:sticky md:top-28 md:max-h-[calc(100dvh-8rem)] md:flex-col md:self-start md:overflow-y-auto md:overflow-x-visible md:border-r md:pb-0 md:pr-4">
-          <p className="hidden px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:block">Categorias</p>
-          <Button variant={filterFavorites ? "default" : "secondary"} onClick={() => { setFilterFavorites(!filterFavorites); if (!filterFavorites) setCat("Todos"); }} className="h-10 shrink-0 rounded-full px-5 font-semibold text-destructive md:h-9 md:w-full md:justify-start md:rounded-lg md:px-3">
-            <Heart className="mr-1.5 size-4 fill-current" /> Favoritos ({favorites.length})
-          </Button>
-          {categories.map((c) => (
-            <Button key={c} variant={!filterFavorites && cat === c ? "default" : "ghost"} onClick={() => { setCat(c); setFilterFavorites(false); }} className="h-10 shrink-0 rounded-full bg-secondary px-5 md:h-9 md:w-full md:justify-start md:whitespace-normal md:rounded-lg md:bg-transparent md:px-3 md:text-left" aria-pressed={!filterFavorites && cat === c}>
-              {c.replace("Narguiles > ", "")}
-            </Button>
-          ))}
-        </nav>
-        <div className="min-w-0">
-        {cat === "Todos" && !query.trim() && !filterFavorites && featured.length > 0 && (
-          <section aria-label="Produtos em destaque" className="mb-6 border-b pb-6">
-            <Carousel opts={{ align: "start", loop: featured.length > 4 }} className="w-full">
+            </section>
+
+            <section aria-label="Todos os produtos" className="border-t py-6">
               <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="flex items-center gap-2 font-display text-xl font-semibold"><Star className="size-5 text-primary" />Destaques</h2>
-                <div className="flex gap-2">
-                  <CarouselPrevious className="static size-9 translate-y-0" />
-                  <CarouselNext className="static size-9 translate-y-0" />
+                <div>
+                  <h2 className="font-display text-xl font-semibold">Todos os produtos</h2>
+                  <p className="text-xs text-muted-foreground">{allProducts.length} produtos</p>
+                </div>
+                {sortSelect}
+              </div>
+              {productGrid(allProducts)}
+            </section>
+          </>
+        ) : tab === "categorias" ? (
+          cat === "Todos" ? (
+            <section aria-label="Categorias" className="py-5">
+              <h1 className="mb-4 font-display text-2xl font-semibold">Categorias</h1>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                {[
+                  ...(featured.length ? [{ value: FEATURED, label: "Destaques", count: featured.length, cover: productPhotos(featured[0]!)[0] }] : []),
+                  ...(favorites.length ? [{ value: FAVORITES, label: "Favoritos", count: favorites.length, cover: undefined }] : []),
+                  ...categoryCards,
+                ].map((c) => (
+                  <button key={c.value} type="button" onClick={() => openCategory(c.value)} className="group relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-xl border bg-photo text-left transition hover:border-primary">
+                    {c.cover ? (
+                      <img src={c.cover} alt="" loading="lazy" className="absolute inset-0 size-full object-contain p-3 pb-12 transition duration-300 group-hover:scale-105" />
+                    ) : (
+                      <span className="absolute inset-0 grid place-items-center pb-10">
+                        {c.value === FAVORITES ? <Heart className="size-10 fill-destructive text-destructive" /> : <LayoutGrid className="size-10 text-primary" />}
+                      </span>
+                    )}
+                    <span className="relative flex items-end justify-between gap-2 bg-gradient-to-t from-background via-background/90 to-transparent px-3 pb-2.5 pt-6">
+                      <span className="min-w-0">
+                        <span className="line-clamp-2 text-sm font-semibold leading-tight">{c.label}</span>
+                        <span className="text-[11px] text-muted-foreground">{c.count} produtos</span>
+                      </span>
+                      <ChevronRight className="size-4 shrink-0 text-primary" />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : (
+            <section aria-label={categoryTitle} className="py-5">
+              <Button variant="ghost" size="sm" className="-ml-2 mb-2 text-muted-foreground" onClick={() => setCat("Todos")}><ArrowLeft />Categorias</Button>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h1 className="truncate font-display text-2xl font-semibold">{categoryTitle}</h1>
+                  <p className="text-xs text-muted-foreground">{filtered.length} produtos</p>
+                </div>
+                {sortSelect}
+              </div>
+              {productGrid(filtered)}
+            </section>
+          )
+        ) : tab === "pedidos" ? (
+          <section aria-label="Meus pedidos" className="mx-auto max-w-2xl py-5">
+            <h1 className="font-display text-2xl font-semibold">Meus pedidos</h1>
+            <p className="mb-4 text-sm text-muted-foreground">Pedidos feitos neste aparelho. Repita um favorito em um toque.</p>
+            {receipt && (
+              <div className="mb-4 space-y-2 rounded-xl border border-primary/40 bg-primary/10 p-4">
+                <p className="font-semibold">Pedido #{receipt.number} · {tracking.data?.status === "cancelled" ? "cancelado pela loja" : "recebido pela loja"}</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild size="sm" variant="outline"><a href={receipt.url} target="_blank" rel="noopener noreferrer"><MessageCircle />Abrir no WhatsApp</a></Button>
+                  {receipt.delivery && tracking.data?.trackingUrl && (
+                    <Button asChild size="sm"><a href={tracking.data.trackingUrl} target="_blank" rel="noopener noreferrer"><Navigation />Acompanhar entrega</a></Button>
+                  )}
                 </div>
               </div>
-              <CarouselContent className="-ml-3 items-stretch">
-                {featured.map(p => (
-                  <CarouselItem key={p.id} className="basis-1/2 pl-3 sm:basis-1/3 xl:basis-1/4">
-                    <ProductCard p={p} cart={cart} sel={sel} typed={typed} onSel={(id, v) => setSel(s => ({ ...s, [id]: v }))} onTyped={(id, v) => setTyped(s => ({ ...s, [id]: v }))} onChange={change} onBuild={() => setBuilding(p)} />
-                  </CarouselItem>
+            )}
+            {orderHistory.length === 0 ? (
+              <div className="rounded-xl border bg-card py-12 text-center">
+                <ClipboardList className="mx-auto mb-3 size-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Você ainda não fez pedidos neste aparelho.</p>
+                <Button className="mt-4" onClick={() => goTab("inicio")}>Ver catálogo</Button>
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {orderHistory.map((h, i) => (
+                  <li key={h.id || i} className="space-y-2 rounded-xl border bg-card p-4">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="font-mono font-bold text-foreground">Pedido #{h.number}</span>
+                      <span>{new Date(h.date).toLocaleDateString("pt-BR")}</span>
+                    </div>
+                    <p className="line-clamp-2 text-xs text-muted-foreground">{h.summary}</p>
+                    <div className="flex items-center justify-between border-t pt-2">
+                      <span className="text-sm font-bold text-primary">{brl(h.total)}</span>
+                      <Button size="sm" onClick={() => {
+                        const newCart: Cart = { ...cart };
+                        h.items.forEach((it: { productId: string; option?: string; qty: number }) => {
+                          const k = keyOf(it.productId, it.option);
+                          newCart[k] = (newCart[k] || 0) + it.qty;
+                        });
+                        setCart(newCart);
+                        setOpen(true);
+                      }}><RotateCcw className="size-3.5" /> Repetir pedido</Button>
+                    </div>
+                  </li>
                 ))}
-              </CarouselContent>
-            </Carousel>
+              </ul>
+            )}
+          </section>
+        ) : (
+          <section aria-label="Mais informações" className="mx-auto max-w-2xl space-y-4 py-5">
+            <h1 className="font-display text-2xl font-semibold">Mais</h1>
+            <div className="rounded-xl border bg-card p-4">
+              <h2 className="mb-1 flex items-center gap-2 font-semibold"><Clock className="size-4 text-primary" />Horários de atendimento</h2>
+              <p className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
+                <span className={`size-2 rounded-full ${status.open && status.configured ? "bg-whatsapp" : "bg-muted-foreground"}`} />{status.label} · horário de Brasília
+              </p>
+              {hoursList}
+            </div>
+            <div className="rounded-xl border bg-card p-4 text-sm">
+              <h2 className="mb-2 flex items-center gap-2 font-semibold"><Truck className="size-4 text-primary" />Entrega e retirada</h2>
+              <p>Entregas das 16:00 às 23:00 em {DELIVERY_CITY}. A taxa é calculada pelo endereço no carrinho.</p>
+              {settings.pickup_address && <p className="mt-1 text-muted-foreground">Retirada: {settings.pickup_address}</p>}
+            </div>
+            <div className="rounded-xl border bg-card p-4 text-sm">
+              <h2 className="mb-2 flex items-center gap-2 font-semibold"><Wallet className="size-4 text-primary" />Pagamento</h2>
+              <p className="text-muted-foreground">Pix, cartão de crédito, cartão de débito ou dinheiro.</p>
+              <Button variant="outline" size="sm" className="mt-2" onClick={() => copy(PIX_KEY, "chave-mais")}><Copy />{copied === "chave-mais" ? "Chave copiada!" : `Chave Pix: ${PIX_KEY}`}</Button>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button asChild className="h-12 bg-whatsapp text-whatsapp-foreground"><a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer"><Headphones />Falar com a loja</a></Button>
+              <Button variant="outline" className="h-12" onClick={() => {
+                const url = window.location.origin;
+                if (navigator.share) navigator.share({ title: STORE_NAME, url }).catch(() => {});
+                else copy(url, "site");
+              }}><Share2 />{copied === "site" ? "Link copiado!" : "Compartilhar catálogo"}</Button>
+              <Button variant="outline" className="h-12" onClick={() => openCategory(FAVORITES)}><Heart className="text-destructive" />Meus favoritos ({favorites.length})</Button>
+              <Button variant="outline" className="h-12" onClick={() => goTab("pedidos")}><RotateCcw />Repetir um pedido</Button>
+            </div>
+            <p className="text-center text-xs text-muted-foreground">Venda de bebidas e produtos de tabacaria somente para maiores de 18 anos.</p>
           </section>
         )}
-        <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-          <div className="min-w-0">
-            <h2 className="font-display text-xl font-semibold">
-              {cat === "Todos" ? "Todos os produtos" : cat.replace("Narguiles > ", "")}
-            </h2>
-            <span className="text-xs text-muted-foreground">{filtered.length} produtos</span>
-          </div>
-          <select
-            aria-label="Ordenar produtos"
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="rounded-md border bg-card px-3 py-2 text-xs"
-          >
-            <option value="catalog">Ordem do catálogo</option>
-            <option value="low">Menor preço</option>
-            <option value="high">Maior preço</option>
-            <option value="name">Nome: A–Z</option>
-          </select>
-        </div>
-        <main className="grid grid-cols-2 items-stretch gap-x-3 gap-y-6 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.length === 0 && (
-            <div className="col-span-full py-16 text-center">
-              <Search className="mx-auto mb-4 size-8 text-muted-foreground" />
-              <p>Nenhum produto encontrado.</p>
-              <Button
-                variant="link"
-                onClick={() => {
-                  setQuery("");
-                  setCat("Todos");
-                }}
-              >
-                Limpar filtros
-              </Button>
-            </div>
-          )}
-          {filtered.map((p) => (
-            <ProductCard
-              key={p.id}
-              p={p}
-              cart={cart}
-              sel={sel}
-              typed={typed}
-              onSel={(id, v) => setSel((s) => ({ ...s, [id]: v }))}
-              onTyped={(id, v) => setTyped((s) => ({ ...s, [id]: v }))}
-              onChange={change}
-              onBuild={() => setBuilding(p)}
-            />
-          ))}
-        </main>
-        </div>
-      </section>
-      {sharedProduct && <ProductGallery product={sharedProduct} open onOpenChange={value => { if (!value) { setSharedProduct(null); const url = new URL(window.location.href); url.searchParams.delete("produto"); window.history.replaceState(null, "", url.href); } }} />}
-      <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t px-4 py-6 text-xs text-muted-foreground sm:px-8">
+      </div>
+
+      <footer className="mx-auto mt-6 hidden max-w-7xl flex-wrap items-center justify-between gap-3 border-t px-8 py-6 text-xs text-muted-foreground md:flex">
         <span>{STORE_NAME}</span>
         <span>Venda de bebidas e produtos de tabacaria somente para maiores de 18 anos.</span>
       </footer>
@@ -800,14 +926,20 @@ function Catalog() {
       {count > 0 && !open && (
         <Button
           onClick={() => setOpen(true)}
-          className="fixed inset-x-4 bottom-4 z-20 h-14 flex items-center justify-between rounded-2xl bg-primary px-5 py-4 text-primary-foreground shadow-soft lg:hidden"
+          className="fixed inset-x-3 bottom-[4.75rem] z-30 flex h-13 items-center justify-between rounded-2xl px-5 py-3.5 shadow-soft md:bottom-6 md:left-auto md:right-6 md:w-96"
         >
-          <span>
-            {count} {count === 1 ? "item" : "itens"} · Ver carrinho
-          </span>
+          <span className="flex items-center gap-2"><ShoppingCart />{count} {count === 1 ? "item" : "itens"} · Finalizar pedido</span>
           <span className="font-semibold">{brl(total)}</span>
         </Button>
       )}
+
+      <nav aria-label="Navegação principal" className="admin-bottom-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t bg-background/95 backdrop-blur-lg md:hidden">
+        {navItems.map(({ id, label, icon: Icon }) => (
+          <button key={id} type="button" onClick={() => { if (id === "categorias") setCat("Todos"); goTab(id); }} aria-current={tab === id ? "page" : undefined} className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${tab === id ? "text-primary" : "text-muted-foreground"}`}>
+            <Icon className="size-5" />{label}
+          </button>
+        ))}
+      </nav>
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent className="flex h-full w-full flex-col gap-0 p-0 sm:max-w-md">
@@ -1071,189 +1203,9 @@ function Catalog() {
           </div>
         </SheetContent>
       </Sheet>
+      {detail && <ProductDetail product={detail} onClose={closeDetail} cart={cart} sel={sel} typed={typed} onSel={(id, v) => setSel((x) => ({ ...x, [id]: v }))} onTyped={(id, v) => setTyped((x) => ({ ...x, [id]: v }))} onChange={change} onBuild={setBuilding} favorite={favorites.includes(detail.id)} onToggleFavorite={toggleFavorite} onShare={setQrModalProduct} />}
       {building && <ComboBuilder key={building.id} product={building} products={products} open onOpenChange={value => { if (!value) setBuilding(null); }} onAdd={selections => { const key = keyOf(building.id, comboOption(selections)); const next = { ...cart, [key]: (cart[key] ?? 0) + 1 }; validateCartAvailability(cartInputs(next), products); setCart(next); setBuilding(null); }} />}
     </div>
-  );
-}
-
-function ProductCard({
-  p,
-  cart,
-  sel,
-  typed,
-  onSel,
-  onTyped,
-  onChange,
-  onBuild,
-}: {
-  p: CatalogProduct;
-  cart: Cart;
-  sel: Record<string, string>;
-  typed: Record<string, string>;
-  onSel: (id: string, v: string) => void;
-  onTyped: (id: string, v: string) => void;
-  onChange: (key: string, d: number) => void;
-  onBuild: () => void;
-}) {
-  const hasOpts = Boolean(p.options?.length);
-  const [galleryOpen, setGalleryOpen] = useState(false);
-  const [addQty, setAddQty] = useState(1);
-  const chosen = sel[p.id] ?? "";
-  const isOther = chosen === OTHER;
-  const text = (typed[p.id] ?? "").trim();
-  const option = hasOpts ? (isOther ? text : chosen) : "";
-  const key = keyOf(p.id, option || undefined);
-  const qty = cart[key] ?? 0;
-  const ready = (!hasOpts || (isOther ? !!text : !!chosen)) && available(p, option);
-  const outOfStock = p.active && p.stock === 0;
-  const optionOut = hasOpts && !!option && !available(p, option);
-
-  return (
-    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border/70 bg-card/85 shadow-lg shadow-black/40 transition-all duration-200 hover:border-primary/50 hover:shadow-primary/10">
-      <ProductCardPhotos product={p} option={option} onEnlarge={() => setGalleryOpen(true)} />
-      <div className="flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
-        <div className="flex items-center justify-between gap-1">
-          <span className="truncate text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">{p.category}</span>
-          {p.featured && <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300">Destaque</span>}
-        </div>
-        <h2 className="mt-1 font-display text-sm font-semibold leading-snug sm:text-base"><Button variant="link" onClick={() => setGalleryOpen(true)} className="h-auto w-full justify-start whitespace-normal break-words p-0 text-left text-sm text-foreground transition-colors hover:text-primary sm:text-base">{p.name}</Button></h2>
-        {!available(p) && <p className="mt-2 inline-flex w-fit rounded-md bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">{p.active ? "Esgotado" : "Indisponível"}</p>}
-        {hasOpts ? (
-          <div className="mt-2">
-            <p className="text-[11px] font-medium uppercase text-muted-foreground">
-              {p.optionLabel}
-            </p>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {p.options?.map((o) => (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  key={o}
-                  type="button"
-                  disabled={!available(p, o)}
-                  onClick={() => onSel(p.id, o)}
-                  aria-pressed={chosen === o}
-                  className={`h-auto min-h-7 whitespace-normal rounded-md border px-2.5 py-1 text-xs transition ${
-                    chosen === o
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "bg-background hover:border-primary"
-                  }`}
-                >
-                  {o}
-                </Button>
-              ))}
-              {p.allowOther && <Button
-                variant="ghost"
-                size="sm"
-                type="button"
-                onClick={() => onSel(p.id, OTHER)}
-                aria-pressed={isOther}
-                className={`h-auto min-h-7 rounded-md border border-dashed px-2.5 py-1 text-xs transition ${
-                  isOther
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "bg-background text-muted-foreground"
-                }`}
-              >
-                Outro
-              </Button>}
-            </div>
-            {isOther && (
-              <input
-                className="field mt-2"
-                placeholder={`Qual ${p.optionLabel === "Cor" ? "cor" : "sabor"}?`}
-                maxLength={40}
-                value={typed[p.id] ?? ""}
-                onChange={(e) => onTyped(p.id, e.target.value)}
-              />
-            )}
-          </div>
-        ) : (
-          p.description && (
-            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
-          )
-        )}
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
-          <span className="text-base font-bold text-primary sm:text-lg">{brl(p.price)}</span>
-          {p.comboGroups?.length ? <Button disabled={!available(p)} onClick={onBuild} className="h-9 px-2 text-xs"><Plus />Montar combo</Button> : null}
-        </div>
-        {!p.comboGroups?.length && (
-          <div className="flex flex-col items-stretch gap-2 pt-3">
-            {outOfStock ? (
-              <Button
-                disabled
-                aria-label={`${p.name} esgotado`}
-                className="h-11 w-full rounded-full text-base font-bold tracking-wide"
-              >
-                Esgotado
-              </Button>
-            ) : qty > 0 ? (
-              <div className="mx-auto flex shrink-0 items-center rounded-full border bg-card">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10"
-                  aria-label="Diminuir quantidade"
-                  onClick={() => onChange(key, -1)}
-                >
-                  <Minus />
-                </Button>
-                <span className="w-8 text-center text-base font-semibold" aria-label="Quantidade no carrinho">{qty}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10"
-                  aria-label="Aumentar quantidade"
-                  disabled={p.stock !== null && qty >= p.stock}
-                  onClick={() => onChange(key, 1)}
-                >
-                  <Plus />
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="mx-auto flex shrink-0 items-center rounded-full border bg-card">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    aria-label="Diminuir quantidade"
-                    disabled={addQty <= 1}
-                    onClick={() => setAddQty(q => Math.max(1, q - 1))}
-                  >
-                    <Minus />
-                  </Button>
-                  <span className="w-6 text-center text-sm font-semibold" aria-label="Quantidade a adicionar">{addQty}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    aria-label="Aumentar quantidade"
-                    onClick={() => setAddQty(q => Math.min(99, q + 1))}
-                  >
-                    <Plus />
-                  </Button>
-                </div>
-                <Button
-                  onClick={() => onChange(key, addQty)}
-                  disabled={!ready}
-                  aria-label={`Adicionar ${addQty} ${addQty > 1 ? "unidades" : "unidade"} de ${p.name}`}
-                  title={`Adicionar ${p.name}`}
-                  className="h-11 w-full rounded-full bg-primary text-base font-bold tracking-wide text-primary-foreground shadow-md transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Adicionar
-                </Button>
-              </>
-            )}
-          </div>
-        )}
-        {hasOpts && !ready && !outOfStock && (
-          <p className={`pt-1 text-right text-[11px] ${optionOut ? "font-semibold text-destructive" : "text-muted-foreground"}`}>
-            {optionOut ? "Esgotado" : `Escolha ${p.optionLabel === "Cor" ? "uma cor" : "um sabor"} para adicionar`}
-          </p>
-        )}
-      </div>
-      <ProductGallery product={p} open={galleryOpen} onOpenChange={setGalleryOpen} />
-    </article>
   );
 }
 
