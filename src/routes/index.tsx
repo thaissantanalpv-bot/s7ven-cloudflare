@@ -618,7 +618,7 @@ function Catalog() {
         <div className="mx-auto grid max-w-7xl grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-4 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:px-8">
           <span aria-hidden className="sm:hidden" />
           <Link to="/" className="flex min-w-0 items-center justify-center gap-3 sm:justify-start" aria-label="S7VEN Lounge e Tabacaria">
-            <img src="/logo-s7ven.png" alt="S7VEN Lounge e Tabacaria" width={360} height={312} className="h-14 w-auto shrink-0 object-contain sm:h-16" />
+            <img src="/logo-s7ven.png" alt="S7VEN Lounge e Tabacaria" width={360} height={312} className="h-16 w-auto shrink-0 object-contain sm:h-20" />
           </Link>
           <div className="relative hidden w-full max-w-md md:block">
             <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
@@ -700,7 +700,7 @@ function Catalog() {
         <div className="mt-3 flex items-center justify-between gap-3 border-b pb-3 text-xs sm:text-sm">
           <span className="flex min-w-0 items-center gap-2 font-medium text-foreground">
             <Truck className="size-4 shrink-0 text-primary" />
-            <span className="truncate">Entregas das 16:00 às 23:00 · taxa calculada pelo endereço</span>
+            <span className="truncate">Entregas das 16:00 às 23:00</span>
           </span>
           <button type="button" onClick={() => setShowHistoryModal(true)} className="flex shrink-0 items-center gap-1.5 text-xs text-primary hover:underline">
             <RotateCcw className="size-3.5" /> Meus pedidos
