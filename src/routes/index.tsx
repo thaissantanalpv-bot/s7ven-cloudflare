@@ -443,6 +443,13 @@ function Catalog() {
     if (isDelivery && distanceMode && addressComplete) void calculateDelivery();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fullAddress]);
+  // Ao terminar de digitar rua e número, a entrega é calculada sozinha (sem precisar tocar no botão).
+  useEffect(() => {
+    if (!isDelivery || !distanceMode || !addressComplete || validQuote || !online) return;
+    const timer = setTimeout(() => void calculateDelivery(), 1200);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fullAddress, isDelivery, distanceMode, addressComplete, online]);
   const couponResult = appliedCoupon ? applyCoupon(settings, appliedCoupon.code, subtotal) : null;
   const couponDiscount = couponResult?.discount ?? 0;
   const total = Math.round((subtotal + deliveryFee - couponDiscount) * 100) / 100;
