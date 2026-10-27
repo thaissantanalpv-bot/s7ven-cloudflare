@@ -251,6 +251,7 @@ function Catalog() {
   const [sel, setSel] = useState<Record<string, string>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState("");
+  const [showPixQr, setShowPixQr] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; label: string } | null>(null);
   const [couponError, setCouponError] = useState("");
@@ -946,8 +947,8 @@ function Catalog() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent className="flex h-full w-full flex-col gap-0 p-0 sm:max-w-md">
           <div className="border-b px-4 py-2.5 pr-12">
-            <SheetTitle className="font-display text-lg font-semibold leading-tight">Seu pedido</SheetTitle>
-            <SheetDescription className="text-xs">
+            <SheetTitle className="inline font-display text-lg font-semibold leading-tight">Seu pedido</SheetTitle>
+            <SheetDescription className="ml-2 inline text-xs">
               {count} {count === 1 ? "item" : "itens"} no carrinho
             </SheetDescription>
           </div>
@@ -977,15 +978,13 @@ function Catalog() {
               </ul>
             </div>
           ) : (<>
-          <div className="flex-1 space-y-2.5 overflow-y-auto px-4 py-2.5">
-            <div role="status" className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 ${orderingBlocked || (status.configured && !status.open) ? "border-destructive/40 bg-destructive/10" : "border-primary/40 bg-primary/10"}`}>
-              <Clock className={`size-5 shrink-0 ${orderingBlocked || (status.configured && !status.open) ? "text-destructive" : "text-primary"}`} />
-              <p className="text-xs leading-tight">
-                {orderingBlocked || (status.configured && !status.open)
-                  ? <><span className="block font-semibold">{orderStatus.reason === "paused" ? "Pedidos pausados no momento" : orderStatus.reason === "cutoff" ? "Pedidos encerrados por hoje" : "Loja fechada no momento"}</span><span className="text-muted-foreground">Você pode continuar explorando o catálogo.</span></>
-                  : <><span className="block font-semibold">Pedidos abertos!</span><span className="text-muted-foreground">Faça seu pedido e receba no conforto da sua casa.</span></>}
-              </p>
-            </div>
+          <div className="flex-1 space-y-1.5 overflow-y-auto px-4 pb-1.5 pt-2">
+            <p role="status" className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs ${orderingBlocked || (status.configured && !status.open) ? "border-destructive/40 bg-destructive/10" : "border-primary/40 bg-primary/10"}`}>
+              <Clock className={`size-4 shrink-0 ${orderingBlocked || (status.configured && !status.open) ? "text-destructive" : "text-primary"}`} />
+              {orderingBlocked || (status.configured && !status.open)
+                ? <span className="min-w-0 truncate"><span className="font-semibold">{orderStatus.reason === "paused" ? "Pedidos pausados" : orderStatus.reason === "cutoff" ? "Pedidos encerrados por hoje" : "Loja fechada"}</span><span className="text-muted-foreground"> · explore o catálogo</span></span>
+                : <span className="min-w-0 truncate"><span className="font-semibold">Pedidos abertos!</span><span className="text-muted-foreground"> · receba no conforto da sua casa</span></span>}
+            </p>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Seus produtos</p>
             {items.length === 0 ? (
               <p className="py-3 text-center text-sm text-muted-foreground">Seu carrinho está vazio.</p>
@@ -1014,13 +1013,13 @@ function Catalog() {
 
             {pairs.length > 0 && (
               <section aria-label="Peça junto" className="border-t pt-2">
-                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gold">Peça junto</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-gold">Peça junto</p>
                 <ul className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
                   {pairs.map((p) => {
                     const photo = productPhotos(p)[0];
                     return (
-                      <li key={p.id} className="flex w-44 shrink-0 items-center gap-2 rounded-lg border bg-card p-1.5">
-                        {photo ? <img src={photo} alt="" loading="lazy" className="size-10 shrink-0 rounded-md bg-photo object-contain" /> : <span className="text-2xl">{p.emoji}</span>}
+                      <li key={p.id} className="flex w-44 shrink-0 items-center gap-2 rounded-lg border bg-card p-1">
+                        {photo ? <img src={photo} alt="" loading="lazy" className="size-9 shrink-0 rounded-md bg-photo object-contain" /> : <span className="text-2xl">{p.emoji}</span>}
                         <div className="min-w-0 flex-1 leading-tight">
                           <p className="truncate text-xs font-medium">{p.name}</p>
                           <p className="text-xs text-primary">{brl(p.price)}</p>
@@ -1039,13 +1038,13 @@ function Catalog() {
                 </ul>
               </section>
             )}
-            <div className="space-y-2.5 border-t pt-2.5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Seus dados</p>
+            <div className="space-y-1.5 border-t pt-2">
               <div className="grid grid-cols-2 gap-2">
                 <label className="block text-xs font-medium">
-                  Nome *
+                  <span className="sr-only">Nome *</span>
                   <input
-                    className="field mt-1 py-2"
+                    className="field py-2"
+                    placeholder="Nome *"
                     required
                     autoComplete="name"
                     aria-invalid={Boolean(fieldErrors.name?.length)}
@@ -1055,7 +1054,7 @@ function Catalog() {
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                   />
                 </label>
-                <PhoneField compact label="WhatsApp *" value={form.phone} submitted={submitted} onChange={(phone) => setForm({ ...form, phone })} />
+                <PhoneField compact hiddenLabel placeholder="WhatsApp *" label="WhatsApp *" value={form.phone} submitted={submitted} onChange={(phone) => setForm({ ...form, phone })} />
               </div>
               {fieldErrors.name?.[0] && <p id="name-error" role="alert" className="text-xs text-destructive">{fieldErrors.name[0]}</p>}
               <div role="group" aria-label="Recebimento do pedido" className="grid grid-cols-2 gap-2">
@@ -1078,9 +1077,9 @@ function Catalog() {
                       }}>Trocar</Button>
                     </div>
                   )}
-                  <label className="relative block text-xs font-medium">Rua e número *
+                  <label className="relative block text-xs font-medium"><span className="sr-only">Rua e número *</span>
                     <input
-                      className="field mt-1 py-2"
+                      className="field py-2"
                       required
                       maxLength={120}
                       aria-invalid={Boolean(fieldErrors.address?.length)}
@@ -1088,7 +1087,7 @@ function Catalog() {
                       aria-controls="address-suggestions"
                       aria-autocomplete="list"
                       autoComplete="off"
-                      placeholder="Ex.: Rua Marechal Deodoro, 1696"
+                      placeholder="Rua e número * (ex.: Deodoro, 1696)"
                       value={addressLine}
                       onChange={(e) => {
                         const line = e.target.value;
@@ -1123,11 +1122,13 @@ function Catalog() {
                       </ul>
                     )}
                   </label>
-                  <p className="text-xs">
-                    <span className="text-muted-foreground">Bairro:</span>{" "}
-                    <span className="font-medium">{form.neighborhood.trim() || "aparece automaticamente"}</span>
-                    <span className="text-muted-foreground"> · {DELIVERY_CITY}</span>
-                  </p>
+                  {!distanceMode && (
+                    <p className="text-xs">
+                      <span className="text-muted-foreground">Bairro:</span>{" "}
+                      <span className="font-medium">{form.neighborhood.trim() || "aparece automaticamente"}</span>
+                      <span className="text-muted-foreground"> · {DELIVERY_CITY}</span>
+                    </p>
+                  )}
                 </fieldset>
               )}
               {!isDelivery && settings.pickup_address && (
@@ -1138,9 +1139,16 @@ function Catalog() {
               {isDelivery && fieldErrors.address?.[0] && <p id="address-error" className="text-xs text-destructive">{fieldErrors.address[0]}</p>}
               {isDelivery && distanceMode && (
                 <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button size="sm" variant="outline" disabled={quoting || !addressComplete || fullAddress.trim().length < 8 || Boolean(validQuote)} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : validQuote ? "Entrega calculada" : "Calcular entrega"}</Button>
-                    {validQuote && <p role="status" className="text-xs font-semibold text-primary">{brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km de moto</p>}
+                  <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1 text-xs leading-tight">
+                      <p className="truncate">
+                        <span className="text-muted-foreground">Bairro:</span>{" "}
+                        <span className="font-medium">{form.neighborhood.trim() || "automático"}</span>
+                        <span className="text-muted-foreground"> · {DELIVERY_CITY.replace(/, ?SP$/, "")}</span>
+                      </p>
+                      {validQuote && <p role="status" className="font-semibold text-primary">{brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km de moto</p>}
+                    </div>
+                    <Button size="sm" variant="outline" className="h-8 shrink-0 px-2.5 text-xs" disabled={quoting || !addressComplete || fullAddress.trim().length < 8 || Boolean(validQuote)} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : validQuote ? "Calculada" : "Calcular entrega"}</Button>
                   </div>
                   {validQuote && deliveryEstimate && <p role="status" className="flex items-center gap-1.5 text-xs text-muted-foreground"><Clock className="size-3.5 shrink-0 text-primary" />Entrega estimada: {deliveryEstimate.min}–{deliveryEstimate.max} min (aproximado)</p>}
                   {deliveryError && <p role="alert" className="text-xs text-destructive">{deliveryError}</p>}
@@ -1155,7 +1163,7 @@ function Catalog() {
                 </select>
               )}
               <div>
-                <span className="mb-1 block text-xs font-medium">Forma de pagamento</span>
+
                 <div className="grid grid-cols-4 gap-1.5" role="group" aria-label="Forma de pagamento" aria-describedby={fieldErrors.payment?.length ? "payment-error" : undefined}>
                   {PAYMENT_METHODS.map((m) => (
                     <Button
@@ -1174,16 +1182,23 @@ function Catalog() {
               </div>
               {fieldErrors.payment?.[0] && <p id="payment-error" className="text-xs text-destructive">{fieldErrors.payment[0]}</p>}
               {form.payment === "Pix" && displayedTotal > 0 && (
-                <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-2">
-                  <div className="shrink-0 rounded-md bg-photo p-1 text-photo-foreground">
-                    <QRCodeSVG value={pixPayload} size={84} level="M" marginSize={1} />
+                <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-semibold">Pix — {brl(displayedTotal)}</span>
+                    <button type="button" className="font-medium text-primary underline-offset-2 hover:underline" aria-expanded={showPixQr} onClick={() => setShowPixQr((v) => !v)}>
+                      {showPixQr ? "Ocultar QR code" : "Ver QR code"}
+                    </button>
                   </div>
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <p className="text-xs font-semibold">Pix — {brl(displayedTotal)}</p>
-                    <Button variant="outline" type="button" size="sm" className="h-7 w-full text-xs" onClick={() => copy(pixPayload, "codigo")}>
+                  {showPixQr && (
+                    <div className="mx-auto w-fit rounded-md bg-photo p-1 text-photo-foreground">
+                      <QRCodeSVG value={pixPayload} size={120} level="M" marginSize={1} />
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <Button variant="outline" type="button" size="sm" className="h-8 px-1 text-xs" onClick={() => copy(pixPayload, "codigo")}>
                       {copied === "codigo" ? "Código copiado!" : "Pix copia e cola"}
                     </Button>
-                    <Button variant="outline" type="button" size="sm" className="h-7 w-full text-xs" onClick={() => copy(PIX_KEY, "chave")}>
+                    <Button variant="outline" type="button" size="sm" className="h-8 px-1 text-xs" onClick={() => copy(PIX_KEY, "chave")}>
                       {copied === "chave" ? "Chave copiada!" : `Chave: ${PIX_KEY}`}
                     </Button>
                   </div>
@@ -1199,25 +1214,21 @@ function Catalog() {
                   onChange={(e) => setForm({ ...form, change: e.target.value })}
                 />
               )}
-              <label className="block text-xs font-medium">
-                Observação do pedido (opcional)
-                <textarea
-                  rows={2}
-                  className="field mt-1 resize-none py-2 text-sm"
-                  maxLength={300}
-                  placeholder="Ex.: Deixar na portaria, tocar interfone 12"
-                  value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                />
-              </label>
+              <input
+                aria-label="Observação do pedido (opcional)"
+                className="field py-2 text-sm"
+                maxLength={300}
+                placeholder="Observação (opcional): portaria, interfone…"
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              />
             </div>
           </div>
-          <div className="space-y-2 border-t px-4 py-2.5">
-            <div className="flex items-end justify-between gap-3">
-              <div className="text-xs text-muted-foreground">
-                <p>Produtos {brl(displayedSubtotal)}</p>
-                <p>
-                  {isDelivery ? "Entrega " : "Retirada "}
+          <div className="space-y-1.5 border-t px-4 py-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 text-xs leading-tight text-muted-foreground">
+                <p className="truncate">
+                  Produtos {brl(displayedSubtotal)} · {isDelivery ? "Entrega " : "Retirada "}
                   {!isDelivery ? "sem taxa" : settings.delivery_enabled
                     ? distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : quoting ? "calculando…" : "a calcular" : settings.fixed_delivery_fee !== null || zone
                       ? brl(displayedDeliveryFee)
@@ -1226,8 +1237,8 @@ function Catalog() {
                 </p>
               </div>
               <p className="text-right">
-                <span className="block text-xs text-muted-foreground">{isDelivery && distanceMode && !validQuote && items.length ? "Total dos produtos" : "Total"}</span>
-                <span className="font-display text-lg font-semibold">{brl(displayedTotal)}</span>
+                <span className="block text-[11px] leading-tight text-muted-foreground">{isDelivery && distanceMode && !validQuote && items.length ? "Total dos produtos" : "Total"}</span>
+                <span className="font-display text-lg font-semibold leading-tight">{brl(displayedTotal)}</span>
               </p>
             </div>
             {status.configured && !status.open && orderStatus.reason !== "paused" && (
