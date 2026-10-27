@@ -31,6 +31,7 @@ export const settingsSchema = z.object({
   hours_enabled: z.boolean(),
   opening_hours: z.array(z.object({ day: z.number().int().min(0).max(6), enabled: z.boolean(), open: time, close: time })).length(7),
   order_cutoff: time.default("23:00"),
+  paused: z.boolean().default(false),
 }).superRefine((s, ctx) => {
   if (s.delivery_enabled && !s.delivery_distance_enabled && s.fixed_delivery_fee === null && !s.delivery_zones.length) ctx.addIssue({ code: "custom", message: "Cadastre pelo menos uma região antes de ativar as taxas." });
   if (s.delivery_distance_enabled && (s.delivery_origin.length < 8 || !s.delivery_distance_tiers.length)) ctx.addIssue({ code: "custom", message: "Informe o endereço completo de saída e pelo menos uma faixa de km." });
@@ -48,6 +49,7 @@ export const EMPTY_SETTINGS: StoreSettings = {
   delivery_distance_enabled: false, delivery_origin: "", delivery_distance_tiers: [],
   opening_hours: DAYS.map((_, day) => ({ day, enabled: false, open: "18:00", close: "23:00" })),
   order_cutoff: "23:00",
+  paused: false,
 };
 
 export function applyCoupon(settings: StoreSettings, code: string, subtotal: number): { discount: number; label: string } | null {
@@ -66,6 +68,7 @@ export function distanceFee(settings: StoreSettings, distanceKm: number) {
   return tier.fee;
 }
 export function storeStatus(settings: StoreSettings, now = new Date()) {
+  if (settings.paused) return { open: false, configured: true, label: "Pedidos pausados" };
   if (!settings.hours_enabled) return { open: true, configured: false, label: "Horários a confirmar" };
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
   const part = (name: string) => parts.find(p => p.type === name)?.value ?? "";
@@ -80,6 +83,7 @@ export function storeStatus(settings: StoreSettings, now = new Date()) {
 
 /** Pedidos só são aceitos enquanto a loja está aberta e antes do horário limite (ex.: entregas até 23:00). */
 export function ordersOpen(settings: StoreSettings, now = new Date()) {
+  if (settings.paused) return { open: false as const, configured: true, reason: "paused" as const };
   const status = storeStatus(settings, now);
   if (!status.open) return { open: false as const, configured: status.configured, reason: "closed" as const };
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);

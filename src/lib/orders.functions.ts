@@ -41,6 +41,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     if (settingsError) throw new Error("Não foi possível conferir a entrega. Tente novamente.");
     const settings = row ? settingsSchema.parse(row) : EMPTY_SETTINGS;
     const orderStatus = ordersOpen(settings);
+    if (!orderStatus.open && orderStatus.reason === "paused") throw new Error("A loja pausou os pedidos por alguns instantes. O catálogo continua aberto para consulta.");
     if (!orderStatus.open && orderStatus.reason === "cutoff") throw new Error(`Os pedidos de hoje encerraram às ${settings.order_cutoff}. O catálogo continua aberto para consulta.`);
     if (!orderStatus.open) throw new Error("A loja está fechada. Confira os horários.");
     const { data: catalogRows, error: catalogError } = await supabaseAdmin.from("catalog_products").select("id,data,updated_at").in("id", [...new Set(data.items.flatMap(i => [i.productId, ...(i.components ?? []).map(c => c.productId)]))]);
