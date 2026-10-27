@@ -978,7 +978,7 @@ function Catalog() {
               </ul>
             </div>
           ) : (<>
-          <div className="flex-1 space-y-2 overflow-y-auto px-4 py-2">
+          <div className="flex-1 space-y-1.5 overflow-y-auto px-4 py-2">
             <p role="status" className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs ${orderingBlocked || (status.configured && !status.open) ? "border-destructive/40 bg-destructive/10" : "border-primary/40 bg-primary/10"}`}>
               <Clock className={`size-4 shrink-0 ${orderingBlocked || (status.configured && !status.open) ? "text-destructive" : "text-primary"}`} />
               {orderingBlocked || (status.configured && !status.open)
@@ -1038,7 +1038,7 @@ function Catalog() {
                 </ul>
               </section>
             )}
-            <div className="space-y-2 border-t pt-2">
+            <div className="space-y-1.5 border-t pt-2">
               <div className="grid grid-cols-2 gap-2">
                 <label className="block text-xs font-medium">
                   <span className="sr-only">Nome *</span>
@@ -1227,9 +1227,8 @@ function Catalog() {
           <div className="space-y-1.5 border-t px-4 py-2">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 text-xs leading-tight text-muted-foreground">
-                <p>Produtos {brl(displayedSubtotal)}</p>
-                <p>
-                  {isDelivery ? "Entrega " : "Retirada "}
+                <p className="truncate">
+                  Produtos {brl(displayedSubtotal)} · {isDelivery ? "Entrega " : "Retirada "}
                   {!isDelivery ? "sem taxa" : settings.delivery_enabled
                     ? distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : quoting ? "calculando…" : "a calcular" : settings.fixed_delivery_fee !== null || zone
                       ? brl(displayedDeliveryFee)
