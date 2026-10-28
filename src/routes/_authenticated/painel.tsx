@@ -169,7 +169,7 @@ function Admin() {
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
           <Link to="/" className="font-display text-2xl font-bold">
-            S<span className="text-primary">7</span>VEN.
+            <img src="/logo-s7ven.png" alt="S7VEN Lounge e Tabacaria" width={360} height={312} className="h-12 w-auto object-contain" />
           </Link>
           <div className="flex gap-2">
             <AdminAppAccess />

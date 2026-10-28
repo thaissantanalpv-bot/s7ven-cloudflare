@@ -111,7 +111,7 @@ function Auth() {
       </Button>
       <main className="mx-auto mt-16 max-w-sm">
         <p className="font-display text-4xl font-extrabold">
-          S<span className="text-primary">7</span>VEN.
+          <img src="/logo-s7ven.png" alt="S7VEN Lounge e Tabacaria" width={360} height={312} className="h-12 w-auto object-contain" />
         </p>
         <div className="mb-7 mt-10 flex items-start gap-3">
           <LockKeyhole className="mt-1 text-primary" />
