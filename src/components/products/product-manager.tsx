@@ -116,12 +116,14 @@ function ProductEditor({ initial, preview, galleryPreview, categories, busy, mes
     else { setDraft(d => ({ ...remapPhoto(d, selected.path, path), images: d.images.map((p,i) => i === aiPhoto-1 ? path : p) })); setExtraPreviews(p => p.map((url,i) => i === aiPhoto-1 ? data.signedUrl : url)); }
     setAiPhoto(-1);
   };
-  const upload = async (files: File[]) => {
-    if (!files.length) return;
-    if (files.length + draft.images.length + (draft.image ? 1 : 0) > 10) { setError("Use até 10 fotos por produto."); return; }
+  const upload = async (picked: File[]) => {
+    if (!picked.length) return;
+    if (picked.length + draft.images.length + (draft.image ? 1 : 0) > 10) { setError("Use até 10 fotos por produto."); return; }
     const extensions: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
-    if (files.some(file => !extensions[file.type] || file.size > 5 * 1024 * 1024)) { setError("Escolha fotos JPG, PNG ou WebP de até 5 MB cada."); return; }
     setUploading(true); setError("");
+    let files: File[];
+    try { files = await Promise.all(picked.map(f => shrinkImage(f))); }
+    catch (e) { setError(e instanceof Error ? e.message : "Não foi possível preparar a foto."); setUploading(false); return; }
     try {
       let hasCover = Boolean(draft.image);
       for (const file of files) {
