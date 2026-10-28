@@ -110,9 +110,9 @@ function Auth() {
         </a>
       </Button>
       <main className="mx-auto mt-16 max-w-sm">
-        <p className="font-display text-4xl font-extrabold">
-          <img src="/logo-s7ven.png" alt="S7VEN Lounge e Tabacaria" width={360} height={312} className="h-12 w-auto object-contain" />
-        </p>
+        <div>
+          <img src="/logo-s7ven.png" alt="S7VEN Lounge e Tabacaria" width={360} height={312} className="h-20 w-auto object-contain" />
+        </div>
         <div className="mb-7 mt-10 flex items-start gap-3">
           <LockKeyhole className="mt-1 text-primary" />
           <div>
