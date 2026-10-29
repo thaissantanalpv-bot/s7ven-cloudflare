@@ -45,7 +45,7 @@ import { ProductTile } from "@/components/catalog/product-tile";
 import { ProductDetail } from "@/components/catalog/product-detail";
 import { keyOf, SEP, type Cart } from "@/components/catalog/cart-keys";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
-import { available, productPhotos, visibleProducts, type CatalogProduct } from "@/lib/catalog";
+import { available, discountPercent, productPhotos, visibleProducts, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
 import { ProductCardPhotos } from "@/components/products/product-card-photos";
 import { ComboBuilder } from "@/components/products/combo-builder";
@@ -113,6 +113,7 @@ type Line = { product: CatalogProduct; key: string; qty: number; option: string;
 const KEY = "catalogo-carrinho";
 const FEATURED = "__destaques__";
 const FAVORITES = "__favoritos__";
+const PROMOS = "__promocoes__";
 type Tab = "inicio" | "categorias" | "pedidos" | "mais";
 const TABS: Tab[] = ["inicio", "categorias", "pedidos", "mais"];
 
@@ -291,6 +292,7 @@ function Catalog() {
     if (id) setDetail(shown.find(p => p.id === id) ?? null);
   }, [shown]);
   const featured = shown.filter(p => p.featured && available(p));
+  const promos = shown.filter(p => discountPercent(p) !== null && available(p));
   const customerValidation = customerSchema.safeParse({ ...form, address: fullAddress });
   const fieldErrors = submitted && !customerValidation.success
     ? customerValidation.error.flatten().fieldErrors
@@ -324,7 +326,7 @@ function Catalog() {
     const q = query.trim().toLowerCase();
     const list = shown.filter(
       (p) =>
-        (cat === "Todos" || p.category === cat || (cat === FEATURED && p.featured) || (cat === FAVORITES && favorites.includes(p.id))) &&
+        (cat === "Todos" || p.category === cat || (cat === FEATURED && p.featured) || (cat === PROMOS && discountPercent(p) !== null) || (cat === FAVORITES && favorites.includes(p.id))) &&
         (!q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)),
     );
     if (sort === "low") list.sort((a, b) => a.price - b.price);
@@ -586,7 +588,7 @@ function Catalog() {
     const cover = list.map((p) => productPhotos(p)[0]).find(Boolean);
     return { value: c, label: c.replace("Narguiles > ", ""), count: list.length, cover };
   });
-  const categoryTitle = cat === FEATURED ? "Destaques" : cat === FAVORITES ? "Favoritos" : cat === "Todos" ? "Todos os produtos" : cat.replace("Narguiles > ", "");
+  const categoryTitle = cat === FEATURED ? "Destaques" : cat === PROMOS ? "Promoções" : cat === FAVORITES ? "Favoritos" : cat === "Todos" ? "Todos os produtos" : cat.replace("Narguiles > ", "");
   const tile = (p: CatalogProduct) => (
     <ProductTile key={p.id} p={p} cart={cart} sel={sel} onSel={(id, v) => setSel((x) => ({ ...x, [id]: v }))} onOpen={() => setDetail(p)} onChange={change} onBuild={() => setBuilding(p)} />
   );
@@ -758,6 +760,26 @@ function Catalog() {
               <span className="truncate">Entregas das 16:00 às 23:00</span>
             </p>
 
+            {promos.length > 0 && (
+              <section aria-label="Produtos em promoção" className="pt-6">
+                <Carousel opts={{ align: "start", loop: promos.length > 4 }}>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h2 className="flex items-center gap-2 font-display text-xl font-semibold">Promoções <span className="rounded-md bg-destructive px-2 py-0.5 text-xs font-bold uppercase text-destructive-foreground">Oferta</span></h2>
+                    <div className="flex items-center gap-2">
+                      <Button variant="link" size="sm" className="px-0" onClick={() => openCategory(PROMOS)}>Ver todas <ChevronRight /></Button>
+                      <CarouselPrevious className="static hidden size-8 translate-y-0 sm:inline-flex" />
+                      <CarouselNext className="static hidden size-8 translate-y-0 sm:inline-flex" />
+                    </div>
+                  </div>
+                  <CarouselContent className="-ml-3 items-stretch">
+                    {promos.map((p) => (
+                      <CarouselItem key={p.id} className="basis-[42%] pl-3 sm:basis-1/3 md:basis-1/4 xl:basis-1/5">{tile(p)}</CarouselItem>
+                    ))}
+                  </CarouselContent>
+                </Carousel>
+              </section>
+            )}
+
             {featured.length > 0 && (
               <section aria-label="Produtos em destaque" className="py-6">
                 <Carousel opts={{ align: "start", loop: featured.length > 4 }}>
@@ -812,6 +834,7 @@ function Catalog() {
               <h1 className="mb-4 font-display text-2xl font-semibold">Categorias</h1>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {[
+                  ...(promos.length ? [{ value: PROMOS, label: "Promoções", count: promos.length, cover: productPhotos(promos[0]!)[0] }] : []),
                   ...(featured.length ? [{ value: FEATURED, label: "Destaques", count: featured.length, cover: productPhotos(featured[0]!)[0] }] : []),
                   ...(favorites.length ? [{ value: FAVORITES, label: "Favoritos", count: favorites.length, cover: undefined }] : []),
                   ...categoryCards,
