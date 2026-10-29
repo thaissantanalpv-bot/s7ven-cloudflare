@@ -29,7 +29,7 @@
 - Keep the admin assistant in one account-scoped transcript (admin-only reads, server-managed writes); authenticate streaming independently, send only allowlisted dashboard aggregates to AI, use bounded leases and durable terminal blocks against duplicate paid requests; analysis never writes operations.
 - WhatsApp photos use public galleries, never expiring URLs; checkout waits for validated insertion.
 - Delivery tracking links are admin-set per catalog delivery order and exposed publicly only as stage + link by order id, because customers must never read other order data.
-- Admin sales reports read period-bounded order fields and return aggregates, excluding cancelled sales and avoiding combo component revenue duplication.
+- Admin sales reports and frequent-customer rankings read period-bounded order fields and return aggregates (customers keyed by normalized phone), excluding cancelled sales and avoiding combo component revenue duplication.
 - New catalog orders notify admin devices by Web Push via a dedicated-scope worker apart from the offline one; admin-owned subscriptions, sent server-side after insertion without blocking checkout.
 - Subdirectories have their own AGENTS.md; read before editing there.
 - Ratings: public only via per-order token link, one per order, server-written, admin reads.
