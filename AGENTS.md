@@ -32,4 +32,4 @@
 - Admin reports (sales, frequent customers by normalized phone) read period-bounded order fields, return aggregates, exclude cancelled sales and never double-count combo components.
 - New catalog orders notify admin devices by Web Push via a dedicated-scope worker apart from the offline one; admin-owned subscriptions, sent server-side after insertion without blocking checkout.
 - Subdirectories have their own AGENTS.md; read before editing there.
-- Ratings: public only via per-order token link, one per order, server-written, admin reads.
+- Ratings: public via per-order token link only, one per order, server-written.
