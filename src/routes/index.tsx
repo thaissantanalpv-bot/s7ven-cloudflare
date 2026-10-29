@@ -327,7 +327,7 @@ function Catalog() {
     const q = query.trim().toLowerCase();
     const list = shown.filter(
       (p) =>
-        (cat === "Todos" || p.category === cat || (cat === FEATURED && p.featured) || (cat === PROMOS && discountPercent(p) !== null) || (cat === FAVORITES && favorites.includes(p.id))) &&
+        (cat === "Todos" || p.category === cat || (cat === FEATURED && (p.featured || discountPercent(p) !== null)) || (cat === PROMOS && discountPercent(p) !== null) || (cat === FAVORITES && favorites.includes(p.id))) &&
         (!q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)),
     );
     if (sort === "low") list.sort((a, b) => a.price - b.price);
@@ -589,7 +589,7 @@ function Catalog() {
     const cover = list.map((p) => productPhotos(p)[0]).find(Boolean);
     return { value: c, label: c.replace("Narguiles > ", ""), count: list.length, cover };
   });
-  const categoryTitle = cat === FEATURED ? "Destaques" : cat === PROMOS ? "Promoções" : cat === FAVORITES ? "Favoritos" : cat === "Todos" ? "Todos os produtos" : cat.replace("Narguiles > ", "");
+  const categoryTitle = cat === FEATURED ? "Promoções e destaques" : cat === PROMOS ? "Promoções" : cat === FAVORITES ? "Favoritos" : cat === "Todos" ? "Todos os produtos" : cat.replace("Narguiles > ", "");
   const tile = (p: CatalogProduct) => (
     <ProductTile key={p.id} p={p} cart={cart} sel={sel} onSel={(id, v) => setSel((x) => ({ ...x, [id]: v }))} onOpen={() => setDetail(p)} onChange={change} onBuild={() => setBuilding(p)} />
   );
@@ -815,8 +815,7 @@ function Catalog() {
               <h1 className="mb-4 font-display text-2xl font-semibold">Categorias</h1>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {[
-                  ...(promos.length ? [{ value: PROMOS, label: "Promoções", count: promos.length, cover: productPhotos(promos[0]!)[0] }] : []),
-                  ...(featured.length ? [{ value: FEATURED, label: "Destaques", count: featured.length, cover: productPhotos(featured[0]!)[0] }] : []),
+                  ...(highlights.length ? [{ value: FEATURED, label: "Promoções e destaques", count: highlights.length, cover: productPhotos(highlights[0]!)[0] }] : []),
                   ...(favorites.length ? [{ value: FAVORITES, label: "Favoritos", count: favorites.length, cover: undefined }] : []),
                   ...categoryCards,
                 ].map((c) => (
