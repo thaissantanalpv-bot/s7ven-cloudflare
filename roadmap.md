@@ -229,3 +229,6 @@
 - [ ] Confirmar no celular da Thais: abrir s7venlounge.shop/painel na aba Pedidos, tocar na tela uma vez e ver o alerta tocar em loop com um pedido novo real.
 - [ ] Pendências que seguem abertas: conferir no aparelho a reabertura sem internet, confirmar a chegada do primeiro aviso real nos dois e-mails e recriar o atalho da tela inicial no celular para o ícone dourado.
 - [x] Calcular entrega automaticamente ao informar o endereço
+# Visitas por aparelho + lembrete de cliente inativo (Thais, 29/10/2026 23:29 UTC)
+- [ ] Contar cada aparelho uma vez só no catálogo, mesmo entrando várias vezes.
+- [ ] Botão de lembrete no WhatsApp para cliente sem comprar há 1 mês (Clientes frequentes).
