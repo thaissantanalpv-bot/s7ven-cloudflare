@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { supabase } from "@/integrations/supabase/client";
 import { adminCatalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { deleteCatalogProduct, saveCatalogProduct } from "@/lib/catalog.functions";
-import { available, catalogProductSchema, lowStockItems, toDraft, type CatalogProduct, type ProductDraft } from "@/lib/catalog";
+import { available, catalogProductSchema, discountPercent, lowStockItems, toDraft, type CatalogProduct, type ProductDraft } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { ComboGroupsEditor } from "./combo-groups-editor";
 import { AiPhotoEditor } from "./ai-photo-editor";

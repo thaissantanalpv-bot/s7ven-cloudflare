@@ -126,7 +126,9 @@ function Catalog() {
   const [photoUrls, setPhotoUrls] = useState<Map<string, string>>(new Map());
   const products = useMemo<CatalogProduct[]>(() => online ? catalogProducts : catalogProducts.map(product => ({ ...product, ...(product.image ? { image: photoUrls.get(product.image) ?? product.image } : {}), ...(product.images ? { images: product.images.map(url => photoUrls.get(url) ?? url) } : {}) })), [catalogProducts, online, photoUrls]);
   useCatalogUpdates();
-  const categories = ["Todos", ...new Set(products.map(p => p.category))];
+  // Paused products never appear to customers; `products` stays complete for saved-cart checks.
+  const shown = useMemo(() => visibleProducts(products), [products]);
+  const categories = ["Todos", ...new Set(shown.map(p => p.category))];
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
   useEffect(() => {
     const update = () => {
@@ -286,9 +288,9 @@ function Catalog() {
 
   useEffect(() => {
     const id = new URL(window.location.href).searchParams.get("produto");
-    if (id) setDetail(products.find(p => p.id === id) ?? null);
-  }, [products]);
-  const featured = products.filter(p => p.featured && available(p));
+    if (id) setDetail(shown.find(p => p.id === id) ?? null);
+  }, [shown]);
+  const featured = shown.filter(p => p.featured && available(p));
   const customerValidation = customerSchema.safeParse({ ...form, address: fullAddress });
   const fieldErrors = submitted && !customerValidation.success
     ? customerValidation.error.flatten().fieldErrors
@@ -320,7 +322,7 @@ function Catalog() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = products.filter(
+    const list = shown.filter(
       (p) =>
         (cat === "Todos" || p.category === cat || (cat === FEATURED && p.featured) || (cat === FAVORITES && favorites.includes(p.id))) &&
         (!q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)),
@@ -329,14 +331,14 @@ function Catalog() {
     if (sort === "high") list.sort((a, b) => b.price - a.price);
     if (sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
-   }, [query, cat, sort, products, favorites]);
+   }, [query, cat, sort, shown, favorites]);
   const allProducts = useMemo(() => {
-    const list = [...products];
+    const list = [...shown];
     if (sort === "low") list.sort((a, b) => a.price - b.price);
     if (sort === "high") list.sort((a, b) => b.price - a.price);
     if (sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
-  }, [sort, products]);
+  }, [sort, shown]);
 
   const items: Line[] = useMemo(
     () =>
@@ -351,7 +353,7 @@ function Catalog() {
     [cart, products],
   );
   const count = items.reduce((s, i) => s + i.qty, 0);
-  const pairs = useMemo(() => pairSuggestions(items.map((i) => i.product), products), [items, products]);
+  const pairs = useMemo(() => pairSuggestions(items.map((i) => i.product), shown), [items, shown]);
   const subtotal = items.reduce((s, i) => s + i.qty * i.product.price, 0);
   const zone = settings.delivery_zones.find((z) => z.id === form.zone);
   const isDelivery = form.fulfillment === "delivery";
@@ -580,7 +582,7 @@ function Catalog() {
   };
   const searching = query.trim().length > 0;
   const categoryCards = categories.filter((c) => c !== "Todos").map((c) => {
-    const list = products.filter((p) => p.category === c);
+    const list = shown.filter((p) => p.category === c);
     const cover = list.map((p) => productPhotos(p)[0]).find(Boolean);
     return { value: c, label: c.replace("Narguiles > ", ""), count: list.length, cover };
   });
