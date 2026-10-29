@@ -32,3 +32,4 @@
 - Admin sales reports read period-bounded order fields and return aggregates, excluding cancelled sales and avoiding combo component revenue duplication.
 - New catalog orders notify admin devices by Web Push via a dedicated-scope worker apart from the offline one; admin-owned subscriptions, sent server-side after insertion without blocking checkout.
 - Subdirectories have their own AGENTS.md; read it before changing files there.
+- Customer ratings are public only through a per-order random token sent in the delivered WhatsApp message; one rating per order, written server-side, admin-only reads.
