@@ -579,6 +579,7 @@ export type Database = {
         Args: { _id: string; _request_id: string }
         Returns: Json
       }
+      store_day_start: { Args: { _at?: string }; Returns: string }
       track_catalog_session: {
         Args: {
           _cart: boolean
