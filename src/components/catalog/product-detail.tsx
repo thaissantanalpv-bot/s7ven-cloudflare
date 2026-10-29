@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { ProductCardPhotos } from "@/components/products/product-card-photos";
 import { ProductGallery } from "@/components/products/product-gallery";
-import { available, type CatalogProduct } from "@/lib/catalog";
+import { available, discountPercent, type CatalogProduct } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { keyOf, OTHER, type Cart } from "./cart-keys";
 
@@ -52,6 +52,7 @@ export function ProductDetail({
   const soldOut = !available(p);
   const ready = (!hasOpts || (isOther ? !!text : !!chosen)) && available(p, option);
   const optionOut = hasOpts && !!option && !available(p, option);
+  const off = discountPercent(p);
   const kind = p.optionLabel === "Cor" ? "uma cor" : "um sabor";
   const add = () => {
     onChange(key, qty);
@@ -79,7 +80,11 @@ export function ProductDetail({
               </div>
             </div>
             <SheetDescription asChild>
-              <p className="font-display text-2xl font-bold text-primary">{brl(p.price)}</p>
+              <p className="flex flex-wrap items-baseline gap-x-2">
+                {off !== null && <span className="text-sm text-muted-foreground line-through">De {brl(p.compareAtPrice ?? 0)}</span>}
+                <span className="font-display text-2xl font-bold text-primary">{off !== null && <span className="sr-only">Por </span>}{brl(p.price)}</span>
+                {off !== null && <span className="rounded-md bg-destructive px-2 py-0.5 text-xs font-bold text-destructive-foreground">-{off}%</span>}
+              </p>
             </SheetDescription>
             {soldOut && <p className="inline-flex rounded-md bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">{p.active ? "Esgotado" : "Indisponível"}</p>}
             {p.description && <p className="whitespace-pre-line break-words text-sm text-muted-foreground">{p.description}</p>}
