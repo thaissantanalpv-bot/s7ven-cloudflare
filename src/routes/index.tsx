@@ -293,6 +293,7 @@ function Catalog() {
   }, [shown]);
   const featured = shown.filter(p => p.featured && available(p));
   const promos = shown.filter(p => discountPercent(p) !== null && available(p));
+  const highlights = [...promos, ...featured.filter(p => discountPercent(p) === null)];
   const customerValidation = customerSchema.safeParse({ ...form, address: fullAddress });
   const fieldErrors = submitted && !customerValidation.success
     ? customerValidation.error.flatten().fieldErrors
@@ -760,31 +761,11 @@ function Catalog() {
               <span className="truncate">Entregas das 16:00 às 23:00</span>
             </p>
 
-            {promos.length > 0 && (
-              <section aria-label="Produtos em promoção" className="pt-6">
-                <Carousel opts={{ align: "start", loop: promos.length > 4 }}>
+            {highlights.length > 0 && (
+              <section aria-label="Promoções e destaques" className="py-6">
+                <Carousel opts={{ align: "start", loop: highlights.length > 4 }}>
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <h2 className="flex items-center gap-2 font-display text-xl font-semibold">Promoções <span className="rounded-md bg-destructive px-2 py-0.5 text-xs font-bold uppercase text-destructive-foreground">Oferta</span></h2>
-                    <div className="flex items-center gap-2">
-                      <Button variant="link" size="sm" className="px-0" onClick={() => openCategory(PROMOS)}>Ver todas <ChevronRight /></Button>
-                      <CarouselPrevious className="static hidden size-8 translate-y-0 sm:inline-flex" />
-                      <CarouselNext className="static hidden size-8 translate-y-0 sm:inline-flex" />
-                    </div>
-                  </div>
-                  <CarouselContent className="-ml-3 items-stretch">
-                    {promos.map((p) => (
-                      <CarouselItem key={p.id} className="basis-[42%] pl-3 sm:basis-1/3 md:basis-1/4 xl:basis-1/5">{tile(p)}</CarouselItem>
-                    ))}
-                  </CarouselContent>
-                </Carousel>
-              </section>
-            )}
-
-            {featured.length > 0 && (
-              <section aria-label="Produtos em destaque" className="py-6">
-                <Carousel opts={{ align: "start", loop: featured.length > 4 }}>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <h2 className="flex items-center gap-2 font-display text-xl font-semibold">Destaques <Flame className="size-5 text-gold" /></h2>
+                    <h2 className="flex items-center gap-2 font-display text-xl font-semibold">Promoções e destaques <Flame className="size-5 text-gold" /></h2>
                     <div className="flex items-center gap-2">
                       <Button variant="link" size="sm" className="px-0" onClick={() => openCategory(FEATURED)}>Ver todos <ChevronRight /></Button>
                       <CarouselPrevious className="static hidden size-8 translate-y-0 sm:inline-flex" />
@@ -792,7 +773,7 @@ function Catalog() {
                     </div>
                   </div>
                   <CarouselContent className="-ml-3 items-stretch">
-                    {featured.map((p) => (
+                    {highlights.map((p) => (
                       <CarouselItem key={p.id} className="basis-[42%] pl-3 sm:basis-1/3 md:basis-1/4 xl:basis-1/5">{tile(p)}</CarouselItem>
                     ))}
                   </CarouselContent>
