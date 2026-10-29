@@ -182,13 +182,13 @@ function Catalog() {
   const autoQuote = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
-  const [receipt, setReceipt] = useState<{ id: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean; itemCount: number } | null>(null);
+  const [receipt, setReceipt] = useState<{ id: string; requestId: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean; itemCount: number } | null>(null);
   const trackOrder = useServerFn(orderTracking);
   const tracking = useQuery({
     queryKey: ["order-tracking", receipt?.id],
     queryFn: () => {
       if (!receipt) throw new Error("Pedido não encontrado.");
-      return trackOrder({ data: { id: receipt.id } });
+      return trackOrder({ data: { id: receipt.id, requestId: receipt.requestId } });
     },
     enabled: Boolean(receipt),
     refetchInterval: (q) => (["delivered", "cancelled"].includes(q.state.data?.status ?? "") ? false : 30000),
@@ -550,7 +550,7 @@ function Catalog() {
     try {
       const saved = await registerOrder({ data: validated.data });
       const url = checkoutWhatsApp(saved.number, lines, d.phone, couponResult && appliedCoupon ? { code: appliedCoupon.code, discount: couponResult.discount } : null);
-      setReceipt({ id: saved.id, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery, itemCount: count });
+      setReceipt({ id: saved.id, requestId, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery, itemCount: count });
       if (isDelivery && form.street && form.number) {
         saveCustomerAddress({ name: d.name, phone: d.phone, street: form.street, number: form.number, neighborhood: form.neighborhood });
       }
@@ -884,12 +884,20 @@ function Catalog() {
                     <div className="flex items-center justify-between border-t pt-2">
                       <span className="text-sm font-bold text-primary">{brl(h.total)}</span>
                       <Button size="sm" onClick={() => {
-                        const newCart: Cart = { ...cart };
-                        h.items.forEach((it: { productId: string; option?: string; qty: number }) => {
-                          const k = keyOf(it.productId, it.option);
-                          newCart[k] = (newCart[k] || 0) + it.qty;
+                        let newCart: Cart = { ...cart };
+                        let skipped = 0;
+                        h.items.forEach((it: { productId: string; option?: string; qty: number; components?: ComboSelection[] }) => {
+                          const k = keyOf(it.productId, it.components?.length ? comboOption(it.components) : it.option);
+                          const next = { ...newCart, [k]: (newCart[k] || 0) + it.qty };
+                          // Paused, removed or sold-out items are left out instead of blocking the whole repeat.
+                          try {
+                            if (!shown.some(p => p.id === it.productId)) throw new Error();
+                            validateCartAvailability(cartInputs(next), products);
+                            newCart = next;
+                          } catch { skipped += 1; }
                         });
                         setCart(newCart);
+                        setError(skipped ? `${skipped} ${skipped === 1 ? "item do pedido anterior não está disponível agora e ficou de fora" : "itens do pedido anterior não estão disponíveis agora e ficaram de fora"}.` : "");
                         setOpen(true);
                       }}><RotateCcw className="size-3.5" /> Repetir pedido</Button>
                     </div>

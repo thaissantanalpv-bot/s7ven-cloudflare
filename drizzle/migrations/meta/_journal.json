@@ -246,6 +246,13 @@
       "when": 1793308437587,
       "tag": "0034_catalog_compare_at_price_projection",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793312712501,
+      "tag": "0035_order_ratings",
+      "breakpoints": true
     }
   ]
 }

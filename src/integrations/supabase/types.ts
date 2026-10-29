@@ -282,6 +282,35 @@ export type Database = {
           },
         ]
       }
+      order_ratings: {
+        Row: {
+          comment: string
+          created_at: string
+          order_id: string
+          rating: number
+        }
+        Insert: {
+          comment?: string
+          created_at?: string
+          order_id: string
+          rating: number
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          order_id?: string
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_ratings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           address: string
@@ -310,6 +339,7 @@ export type Database = {
           notes: string
           number: number
           payment: string
+          rating_token: string
           request_id: string
           source: string
           status: string
@@ -347,6 +377,7 @@ export type Database = {
           notes?: string
           number?: never
           payment: string
+          rating_token?: string
           request_id: string
           source?: string
           status?: string
@@ -384,6 +415,7 @@ export type Database = {
           notes?: string
           number?: never
           payment?: string
+          rating_token?: string
           request_id?: string
           source?: string
           status?: string
