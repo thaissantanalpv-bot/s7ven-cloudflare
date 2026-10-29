@@ -45,7 +45,7 @@ import { ProductTile } from "@/components/catalog/product-tile";
 import { ProductDetail } from "@/components/catalog/product-detail";
 import { keyOf, SEP, type Cart } from "@/components/catalog/cart-keys";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
-import { available, productPhotos, type CatalogProduct } from "@/lib/catalog";
+import { available, productPhotos, visibleProducts, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
 import { ProductCardPhotos } from "@/components/products/product-card-photos";
 import { ComboBuilder } from "@/components/products/combo-builder";
