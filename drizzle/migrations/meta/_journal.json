@@ -260,6 +260,13 @@
       "when": 1793316698328,
       "tag": "0036_catalog_device_visitor_merge",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793317273851,
+      "tag": "0037_catalog_visits_store_day",
+      "breakpoints": true
     }
   ]
 }
