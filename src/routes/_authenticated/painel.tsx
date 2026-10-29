@@ -41,7 +41,6 @@ import { OrderBoard } from "@/components/orders/order-board";
 import { NewOrderAlarm } from "@/components/orders/new-order-alarm";
 import { ProductManager } from "@/components/products/product-manager";
 import { DistanceTiersEditor } from "@/components/distance-tiers-editor";
-import { PointOfSale } from "@/components/pos/point-of-sale";
 import { SalesReport } from "@/components/pos/sales-report";
 import { SalesHistory } from "@/components/pos/sales-history";
 import { CatalogAnalytics } from "@/components/catalog-analytics";
@@ -59,15 +58,15 @@ export const Route = createFileRoute("/_authenticated/painel")({ staticData: { s
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(adminCatalogQuery)]),
   head: () => ({
     meta: [
-      { title: "Caixa, vendas e operação — S7VEN" },
+      { title: "Pedidos, vendas e operação — S7VEN" },
       {
         name: "description",
-        content: "Frente de caixa, histórico de vendas, produtos, estoque e pedidos da S7VEN Lounge e Tabacaria.",
+        content: "Pedidos, histórico de vendas, produtos e estoque da S7VEN Lounge e Tabacaria.",
       },
-      { property: "og:title", content: "Caixa e operação da loja — S7VEN" },
+      { property: "og:title", content: "Operação da loja — S7VEN" },
       {
         property: "og:description",
-        content: "Vendas de balcão e catálogo, estoque, pedidos, taxas e horários da S7VEN.",
+        content: "Pedidos do catálogo, estoque, taxas e horários da S7VEN.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -77,7 +76,7 @@ export const Route = createFileRoute("/_authenticated/painel")({ staticData: { s
   component: Admin,
 });
 
-type ViewId = "home" | "analytics" | "assistant" | "orders" | "products" | "combos" | "pos" | "report" | "history" | "settings" | "app-settings";
+type ViewId = "home" | "analytics" | "assistant" | "orders" | "products" | "combos" | "report" | "history" | "settings" | "app-settings";
 
 function Admin() {
   const [view, setView] = useState<ViewId>("home");
@@ -102,7 +101,6 @@ function Admin() {
     assistant: "Assistente da loja",
     analytics: "Movimento do catálogo",
     combos: "Combos",
-    pos: "Frente de caixa",
     history: "Histórico de vendas",
     orders: "Pedidos e Acompanhamento",
     products: "Produtos e estoque",
@@ -117,7 +115,6 @@ function Admin() {
     { id: "products", label: "Produtos", Icon: Package, color: "text-sky-400" },
 
     { id: "combos", label: "Combos", Icon: Layers, color: "text-pink-400" },
-    { id: "pos", label: "Caixa / Balcão", Icon: Receipt, color: "text-yellow-400" },
     { id: "report", label: "Relatório", Icon: Receipt, color: "text-teal-400" },
     { id: "history", label: "Histórico", Icon: History, color: "text-indigo-400" },
     { id: "settings", label: "Taxas e horários", Icon: Clock, color: "text-amber-400" },
@@ -147,8 +144,6 @@ function Admin() {
         return <AnalyticsAssistant />;
       case "combos":
         return <ProductManager key="combos" combos />;
-      case "pos":
-        return <PointOfSale />;
       case "history":
         return <SalesHistory />;
       case "orders":
@@ -234,11 +229,10 @@ function Admin() {
             <div className="md:hidden">
               {view === "home" ? <AdminHome onOpen={(v) => setView(v as ViewId)} /> : renderView(view)}
             </div>
-            <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background md:hidden" aria-label="Navegação do aplicativo">
+            <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-background md:hidden" aria-label="Navegação do aplicativo">
               {([
                 { id: "home" as ViewId, label: "Início", Icon: Home },
                 { id: "orders" as ViewId, label: "Pedidos", Icon: ShoppingBag },
-                { id: "pos" as ViewId, label: "Caixa", Icon: Receipt },
                 { id: "products" as ViewId, label: "Produtos", Icon: Package },
               ]).map(({ id, label, Icon }) => <Button key={id} variant="ghost" aria-current={view === id ? "page" : undefined} className={`h-16 min-w-0 flex-col gap-1 rounded-none px-1 text-[11px] ${view === id ? "text-primary" : "text-muted-foreground"}`} onClick={() => setView(id)}><Icon className="size-5" />{label}</Button>)}
               <Button variant="ghost" className={`h-16 flex-col gap-1 rounded-none px-1 text-[11px] ${mobileMenuIds.includes(view) ? "text-primary" : "text-muted-foreground"}`} onClick={() => setMenuOpen(true)}><Menu className="size-5" />Menu</Button>
