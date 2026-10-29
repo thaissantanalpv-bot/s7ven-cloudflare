@@ -42,6 +42,8 @@ export function ProductTile({
         )}
         {soldOut ? (
           <span className="absolute left-2 top-2 rounded-md bg-destructive px-2 py-0.5 text-[10px] font-bold uppercase text-destructive-foreground">{p.active ? "Esgotado" : "Indisponível"}</span>
+        ) : off !== null ? (
+          <span className="absolute left-2 top-2 rounded-md bg-destructive px-2 py-0.5 text-[10px] font-bold uppercase text-destructive-foreground">Promoção</span>
         ) : p.featured ? (
           <span className="absolute left-2 top-2 rounded-md bg-gold px-2 py-0.5 text-[10px] font-bold uppercase text-gold-foreground">Destaque</span>
         ) : isCombo ? (
