@@ -293,6 +293,7 @@ function Catalog() {
   }, [shown]);
   const featured = shown.filter(p => p.featured && available(p));
   const promos = shown.filter(p => discountPercent(p) !== null && available(p));
+  const highlights = [...promos, ...featured.filter(p => discountPercent(p) === null)];
   const customerValidation = customerSchema.safeParse({ ...form, address: fullAddress });
   const fieldErrors = submitted && !customerValidation.success
     ? customerValidation.error.flatten().fieldErrors
@@ -326,7 +327,7 @@ function Catalog() {
     const q = query.trim().toLowerCase();
     const list = shown.filter(
       (p) =>
-        (cat === "Todos" || p.category === cat || (cat === FEATURED && p.featured) || (cat === PROMOS && discountPercent(p) !== null) || (cat === FAVORITES && favorites.includes(p.id))) &&
+        (cat === "Todos" || p.category === cat || (cat === FEATURED && (p.featured || discountPercent(p) !== null)) || (cat === PROMOS && discountPercent(p) !== null) || (cat === FAVORITES && favorites.includes(p.id))) &&
         (!q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)),
     );
     if (sort === "low") list.sort((a, b) => a.price - b.price);
@@ -588,7 +589,7 @@ function Catalog() {
     const cover = list.map((p) => productPhotos(p)[0]).find(Boolean);
     return { value: c, label: c.replace("Narguiles > ", ""), count: list.length, cover };
   });
-  const categoryTitle = cat === FEATURED ? "Destaques" : cat === PROMOS ? "Promoções" : cat === FAVORITES ? "Favoritos" : cat === "Todos" ? "Todos os produtos" : cat.replace("Narguiles > ", "");
+  const categoryTitle = cat === FEATURED ? "Promoções e destaques" : cat === PROMOS ? "Promoções" : cat === FAVORITES ? "Favoritos" : cat === "Todos" ? "Todos os produtos" : cat.replace("Narguiles > ", "");
   const tile = (p: CatalogProduct) => (
     <ProductTile key={p.id} p={p} cart={cart} sel={sel} onSel={(id, v) => setSel((x) => ({ ...x, [id]: v }))} onOpen={() => setDetail(p)} onChange={change} onBuild={() => setBuilding(p)} />
   );
@@ -760,31 +761,11 @@ function Catalog() {
               <span className="truncate">Entregas das 16:00 às 23:00</span>
             </p>
 
-            {promos.length > 0 && (
-              <section aria-label="Produtos em promoção" className="pt-6">
-                <Carousel opts={{ align: "start", loop: promos.length > 4 }}>
+            {highlights.length > 0 && (
+              <section aria-label="Promoções e destaques" className="py-6">
+                <Carousel opts={{ align: "start", loop: highlights.length > 4 }}>
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <h2 className="flex items-center gap-2 font-display text-xl font-semibold">Promoções <span className="rounded-md bg-destructive px-2 py-0.5 text-xs font-bold uppercase text-destructive-foreground">Oferta</span></h2>
-                    <div className="flex items-center gap-2">
-                      <Button variant="link" size="sm" className="px-0" onClick={() => openCategory(PROMOS)}>Ver todas <ChevronRight /></Button>
-                      <CarouselPrevious className="static hidden size-8 translate-y-0 sm:inline-flex" />
-                      <CarouselNext className="static hidden size-8 translate-y-0 sm:inline-flex" />
-                    </div>
-                  </div>
-                  <CarouselContent className="-ml-3 items-stretch">
-                    {promos.map((p) => (
-                      <CarouselItem key={p.id} className="basis-[42%] pl-3 sm:basis-1/3 md:basis-1/4 xl:basis-1/5">{tile(p)}</CarouselItem>
-                    ))}
-                  </CarouselContent>
-                </Carousel>
-              </section>
-            )}
-
-            {featured.length > 0 && (
-              <section aria-label="Produtos em destaque" className="py-6">
-                <Carousel opts={{ align: "start", loop: featured.length > 4 }}>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <h2 className="flex items-center gap-2 font-display text-xl font-semibold">Destaques <Flame className="size-5 text-gold" /></h2>
+                    <h2 className="flex items-center gap-2 font-display text-xl font-semibold">Promoções e destaques <Flame className="size-5 text-gold" /></h2>
                     <div className="flex items-center gap-2">
                       <Button variant="link" size="sm" className="px-0" onClick={() => openCategory(FEATURED)}>Ver todos <ChevronRight /></Button>
                       <CarouselPrevious className="static hidden size-8 translate-y-0 sm:inline-flex" />
@@ -792,7 +773,7 @@ function Catalog() {
                     </div>
                   </div>
                   <CarouselContent className="-ml-3 items-stretch">
-                    {featured.map((p) => (
+                    {highlights.map((p) => (
                       <CarouselItem key={p.id} className="basis-[42%] pl-3 sm:basis-1/3 md:basis-1/4 xl:basis-1/5">{tile(p)}</CarouselItem>
                     ))}
                   </CarouselContent>
@@ -834,8 +815,7 @@ function Catalog() {
               <h1 className="mb-4 font-display text-2xl font-semibold">Categorias</h1>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {[
-                  ...(promos.length ? [{ value: PROMOS, label: "Promoções", count: promos.length, cover: productPhotos(promos[0]!)[0] }] : []),
-                  ...(featured.length ? [{ value: FEATURED, label: "Destaques", count: featured.length, cover: productPhotos(featured[0]!)[0] }] : []),
+                  ...(highlights.length ? [{ value: FEATURED, label: "Promoções e destaques", count: highlights.length, cover: productPhotos(highlights[0]!)[0] }] : []),
                   ...(favorites.length ? [{ value: FAVORITES, label: "Favoritos", count: favorites.length, cover: undefined }] : []),
                   ...categoryCards,
                 ].map((c) => (
