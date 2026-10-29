@@ -6,6 +6,7 @@ import { available, type CatalogProduct } from "./catalog";
 import { applyCoupon, type StoreSettings } from "./store-settings";
 import { comboSelectionsSchema, type ComboSelection } from "./combos";
 import { analyticsIdentitySchema } from "./catalog-analytics";
+import { ratingLink } from "./ratings";
 export const ORDER_STAGES = [
   {
     id: "received",
@@ -110,6 +111,7 @@ export type Order = {
   total: number;
   status: OrderStatus;
   tracking_url?: string | null;
+  rating_token?: string | null;
   cancellation_reason?: string | null;
   cancelled_at?: string | null;
   cancelled_by?: string | null;
@@ -218,14 +220,18 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
   };
 }
 export function orderWhatsApp(
-  order: Pick<Order, "number" | "customer_name" | "customer_phone" | "status" | "tracking_url"> & { cancellation_reason?: string | null },
+  order: Pick<Order, "number" | "customer_name" | "customer_phone" | "status" | "tracking_url"> & { cancellation_reason?: string | null; id?: string; rating_token?: string | null },
 ) {
   const stage = ORDER_STAGES.find((s) => s.id === order.status);
   const tracking =
     order.status === "out_for_delivery" && order.tracking_url
       ? `\nAcompanhe a entrega em tempo real: ${order.tracking_url}`
       : "";
+  const rating =
+    order.status === "delivered" && order.id && order.rating_token
+      ? `\n\nConte como foi! Avalie seu pedido em 1 toque: ${ratingLink({ id: order.id, rating_token: order.rating_token })}`
+      : "";
   const reason = order.cancellation_reason?.trim();
   const cancelled = `seu pedido foi cancelado${reason ? `. Motivo: ${reason}` : ""}. Qualquer dúvida, estamos à disposição.`;
-  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${order.status === "cancelled" ? cancelled : stage?.message ?? ""}\nPedido #${order.number} — ${STORE_NAME}${tracking}`)}`;
+  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${order.status === "cancelled" ? cancelled : stage?.message ?? ""}\nPedido #${order.number} — ${STORE_NAME}${tracking}${rating}`)}`;
 }
