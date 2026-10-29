@@ -46,3 +46,13 @@ describe("Catalog analytics", () => {
     } finally { blocked.mockRestore(); }
   });
 });
+import { shouldTrackHost } from "@/lib/catalog-analytics";
+describe("visit tracking hosts", () => {
+  it("counts the published site but not the editor preview or local tests", () => {
+    expect(shouldTrackHost("s7venlounge.shop")).toBe(true);
+    expect(shouldTrackHost("www.s7venlounge.shop")).toBe(true);
+    expect(shouldTrackHost("s7venloungeetabacaria.lovable.app")).toBe(true);
+    expect(shouldTrackHost("id-preview--fcfc2475-32b1-57f6-92d6-9455b8a8095f.lovable.app")).toBe(false);
+    expect(shouldTrackHost("localhost")).toBe(false);
+  });
+});
