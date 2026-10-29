@@ -20,7 +20,7 @@ export const trackCatalogVisit = createServerFn({ method: "POST" })
     const rateKey = Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, "0")).join("");
     const deviceKey = await deviceKeyFor(ip, getRequestHeader("user-agent") ?? "", data.device ?? "");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.rpc("track_catalog_session", { _id: data.sessionId, _visitor: data.visitorId, _cart: data.hasCart, _rate_key: rateKey, _device: deviceKey ?? undefined });
+    const { error } = await supabaseAdmin.rpc("track_catalog_session", { _id: data.sessionId, _visitor: data.visitorId, _cart: data.hasCart, _rate_key: rateKey, ...(deviceKey ? { _device: deviceKey } : {}) });
     return { recorded: !error };
   });
 
