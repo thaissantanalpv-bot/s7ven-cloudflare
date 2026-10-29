@@ -32,3 +32,24 @@ export function rankFrequentCustomers(rows: CustomerOrderRow[], limit = 20): Fre
     .slice(0, limit)
     .map(({ cents, ...c }) => ({ ...c, spent: cents / 100 }));
 }
+
+export const INACTIVE_AFTER_DAYS = 30;
+const DAY = 86_400_000;
+export function daysSinceLastOrder(lastOrderAt: string, now = new Date()) {
+  return Math.floor((now.getTime() - new Date(lastOrderAt).getTime()) / DAY);
+}
+/** Reminder is offered only after a full month without buying. */
+export function canSendReminder(lastOrderAt: string, now = new Date()) {
+  return daysSinceLastOrder(lastOrderAt, now) >= INACTIVE_AFTER_DAYS;
+}
+export function reminderMessage(name: string) {
+  const first = name.trim().split(/\s+/)[0] ?? "";
+  return [
+    `Oi${first ? `, ${first}` : ""}! Tudo bem? Aqui é da S7VEN Lounge e Tabacaria.`,
+    "Faz um tempinho que você não pede com a gente. Está precisando de alguma coisa?",
+    "Estamos à disposição! Veja nosso catálogo e faça seu pedido: https://s7venlounge.shop",
+  ].join("\n\n");
+}
+export function reminderLink(customer: Pick<FrequentCustomer, "phone" | "name">) {
+  return `https://wa.me/${customer.phone}?text=${encodeURIComponent(reminderMessage(customer.name))}`;
+}

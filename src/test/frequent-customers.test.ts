@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { customerKey, rankFrequentCustomers, type CustomerOrderRow } from "@/lib/frequent-customers";
+import { canSendReminder, customerKey, rankFrequentCustomers, reminderLink, type CustomerOrderRow } from "@/lib/frequent-customers";
 
 const row = (phone: string, total: number, created_at: string, name = "Ana", status: CustomerOrderRow["status"] = "delivered"): CustomerOrderRow => ({ customer_name: name, customer_phone: phone, total, status, created_at });
 
@@ -37,5 +37,20 @@ describe("frequent customers", () => {
     expect(ranked).toHaveLength(1);
     expect(ranked[0]?.name).toBe("Ana Paula");
     expect(ranked[0]?.lastOrderAt).toBe("2026-10-05T10:00:00Z");
+  });
+});
+
+describe("inactive customer reminder", () => {
+  const now = new Date("2026-10-29T12:00:00Z");
+  it("is offered after 30 days without buying, not before", () => {
+    expect(canSendReminder("2026-09-29T12:00:00Z", now)).toBe(true);
+    expect(canSendReminder("2026-09-30T13:00:00Z", now)).toBe(false);
+  });
+  it("opens the customer's WhatsApp with the reminder already written", () => {
+    const link = reminderLink({ phone: "5518991511004", name: "Ana Paula" });
+    expect(link.startsWith("https://wa.me/5518991511004?text=")).toBe(true);
+    const text = decodeURIComponent(link.split("text=")[1] ?? "");
+    expect(text).toContain("Oi, Ana!");
+    expect(text).toContain("https://s7venlounge.shop");
   });
 });
