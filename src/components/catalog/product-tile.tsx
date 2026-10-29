@@ -1,6 +1,6 @@
 import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { available, productPhotos, type CatalogProduct } from "@/lib/catalog";
+import { available, discountPercent, productPhotos, type CatalogProduct } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { keyOf, type Cart } from "./cart-keys";
 
@@ -31,6 +31,7 @@ export function ProductTile({
   const ready = (!hasOpts || !!option) && available(p, option);
   const qty = cart[key] ?? 0;
   const soldOut = !available(p);
+  const off = discountPercent(p);
   return (
     <article className={`group flex min-w-0 flex-col self-start overflow-hidden rounded-xl border border-border bg-card shadow-soft transition hover:border-primary/60 ${soldOut ? "opacity-80 grayscale" : ""}`}>
       <button type="button" onClick={onOpen} aria-label={`Ver detalhes de ${p.name}`} className="relative block aspect-square w-full overflow-hidden bg-photo">
@@ -46,6 +47,9 @@ export function ProductTile({
         ) : isCombo ? (
           <span className="absolute left-2 top-2 rounded-md bg-primary px-2 py-0.5 text-[10px] font-bold uppercase text-primary-foreground">Combo</span>
         ) : null}
+        {off !== null && !soldOut && (
+          <span className="absolute right-2 top-2 rounded-md bg-destructive px-2 py-0.5 text-[11px] font-bold text-destructive-foreground">-{off}%</span>
+        )}
       </button>
       <div className="flex min-w-0 flex-col p-2.5 sm:p-3">
         <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{p.category.replace("Narguiles > ", "")}</p>
@@ -71,7 +75,10 @@ export function ProductTile({
             </div>
           </div>
         )}
-        <span className="pt-1.5 font-display text-base font-bold text-foreground sm:text-lg">{brl(p.price)}</span>
+        <div className="flex flex-wrap items-baseline gap-x-1.5 pt-1.5">
+          {off !== null && <span className="text-xs text-muted-foreground line-through" aria-label={`De ${brl(p.compareAtPrice ?? 0)}`}>{brl(p.compareAtPrice ?? 0)}</span>}
+          <span className="font-display text-base font-bold text-foreground sm:text-lg">{off !== null && <span className="sr-only">Por </span>}{brl(p.price)}</span>
+        </div>
         {!soldOut && (
           <div className="pt-2">
             {isCombo ? (

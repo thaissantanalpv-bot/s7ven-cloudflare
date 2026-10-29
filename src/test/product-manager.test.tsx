@@ -50,14 +50,25 @@ describe("Product manager", () => {
     setup();
     fireEvent.click(screen.getByRole("button", { name: "Editar Gin Invictus" }));
     const dialog = screen.getByRole("dialog");
-    fireEvent.change(within(dialog).getByLabelText("Preço (R$)"), { target: { value: "21.90" } });
+    fireEvent.change(within(dialog).getByLabelText("Preço normal (R$)"), { target: { value: "21.90" } });
     fireEvent.click(within(dialog).getByRole("switch", { name: "Controlar estoque da variação 1" }));
     fireEvent.change(within(dialog).getByRole("spinbutton", { name: "Estoque da variação 1" }), { target: { value: "5" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Salvar produto" }));
     await waitFor(() => expect(mocks.save).toHaveBeenCalled());
-    expect(mocks.save.mock.calls[0]?.[0].data.product).toMatchObject({ id: "p4", price: 21.9, allowOther: false });
+    expect(mocks.save.mock.calls[0]?.[0].data.product).toMatchObject({ id: "p4", price: 21.9, compareAtPrice: null, allowOther: false });
     expect(mocks.save.mock.calls[0]?.[0].data.product.variations[0]).toMatchObject({ stock: 5 });
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+  it("saves a discounted price charging the discount and keeping the normal price struck through", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Editar Gin Invictus" }));
+    const dialog = screen.getByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText("Preço normal (R$)"), { target: { value: "40" } });
+    fireEvent.change(within(dialog).getByLabelText(/Preço com desconto/), { target: { value: "30" } });
+    expect(within(dialog).getByText("-25%")).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Salvar produto" }));
+    await waitFor(() => expect(mocks.save).toHaveBeenCalled());
+    expect(mocks.save.mock.calls[0]?.[0].data.product).toMatchObject({ price: 30, compareAtPrice: 40 });
   });
   it("creates products with uploaded photos and pauses existing products", async () => {
     setup();
