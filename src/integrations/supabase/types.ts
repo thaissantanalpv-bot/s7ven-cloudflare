@@ -129,6 +129,7 @@ export type Database = {
         Row: {
           cart_started_at: string | null
           checkout_at: string | null
+          device_key: string | null
           id: string
           last_seen_at: string
           rate_key: string
@@ -138,6 +139,7 @@ export type Database = {
         Insert: {
           cart_started_at?: string | null
           checkout_at?: string | null
+          device_key?: string | null
           id: string
           last_seen_at?: string
           rate_key: string
@@ -147,6 +149,7 @@ export type Database = {
         Update: {
           cart_started_at?: string | null
           checkout_at?: string | null
+          device_key?: string | null
           id?: string
           last_seen_at?: string
           rate_key?: string
@@ -535,6 +538,16 @@ export type Database = {
         Returns: Json
       }
       catalog_funnel_stats: { Args: { _period?: string }; Returns: Json }
+      catalog_sessions_by_person: {
+        Args: { _since: string }
+        Returns: {
+          cart_started_at: string
+          checkout_at: string
+          last_seen_at: string
+          person: string
+          started_at: string
+        }[]
+      }
       claim_delivery_quote_attempt: {
         Args: {
           _client_hash: string
@@ -569,6 +582,7 @@ export type Database = {
       track_catalog_session: {
         Args: {
           _cart: boolean
+          _device?: string
           _id: string
           _rate_key: string
           _visitor: string
