@@ -52,6 +52,7 @@ import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 import { lowStockItems } from "@/lib/catalog";
 import { AdminSettings } from "@/components/admin-settings";
 import { PromotionsEditor } from "@/components/promotions-editor";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/painel")({ staticData: { sitemap: false },
 
@@ -76,7 +77,7 @@ export const Route = createFileRoute("/_authenticated/painel")({ staticData: { s
   component: Admin,
 });
 
-type ViewId = "home" | "analytics" | "assistant" | "orders" | "products" | "combos" | "report" | "history" | "settings" | "app-settings";
+type ViewId = "home" | "analytics" | "orders" | "products" | "combos" | "report" | "history" | "app-settings";
 
 function Admin() {
   const [view, setView] = useState<ViewId>("home");
@@ -98,37 +99,31 @@ function Admin() {
   const viewTitle: Record<ViewId, string> = {
     home: "Minha loja",
     report: "Relatório de vendas",
-    assistant: "Assistente da loja",
     analytics: "Movimento do catálogo",
     combos: "Combos",
     history: "Histórico de vendas",
     orders: "Pedidos e Acompanhamento",
     products: "Produtos e estoque",
-    "app-settings": "Configurações (Banner, Cupons, Sons)",
-    settings: "Taxas e horários",
+    "app-settings": "Configurações",
   };
 
   const sidebarItems: { id: ViewId; label: string; Icon: typeof Home; color: string }[] = [
     { id: "analytics", label: "Movimento", Icon: Activity, color: "text-emerald-400" },
-    { id: "assistant", label: "Assistente", Icon: MessageCircle, color: "text-violet-400" },
     { id: "orders", label: "Pedidos", Icon: ShoppingBag, color: "text-orange-400" },
     { id: "products", label: "Produtos", Icon: Package, color: "text-sky-400" },
 
     { id: "combos", label: "Combos", Icon: Layers, color: "text-pink-400" },
     { id: "report", label: "Relatório", Icon: Receipt, color: "text-teal-400" },
     { id: "history", label: "Histórico", Icon: History, color: "text-indigo-400" },
-    { id: "settings", label: "Taxas e horários", Icon: Clock, color: "text-amber-400" },
     { id: "app-settings", label: "Configurações", Icon: Settings, color: "text-slate-400" },
   ];
 
   const mobileMenuItems: { id: ViewId; label: string; Icon: typeof Home }[] = [
-    { id: "app-settings", label: "Configurações (Banner, Cupons, Sons)", Icon: Settings },
+    { id: "app-settings", label: "Configurações (Taxas, Horários, Assistente)", Icon: Settings },
     { id: "analytics", label: "Movimento do catálogo", Icon: Activity },
     { id: "report", label: "Relatório de vendas", Icon: Receipt },
-    { id: "assistant", label: "Assistente", Icon: MessageCircle },
     { id: "combos", label: "Combos", Icon: Layers },
     { id: "history", label: "Histórico de vendas", Icon: History },
-    { id: "settings", label: "Taxas e horários", Icon: Clock },
   ];
 
   const mobileMenuIds = mobileMenuItems.map((i) => i.id);
@@ -140,8 +135,6 @@ function Admin() {
         return <><CatalogAnalytics /><SiteLinkCard /></>;
       case "report":
         return <SalesReport />;
-      case "assistant":
-        return <AnalyticsAssistant />;
       case "combos":
         return <ProductManager key="combos" combos />;
       case "history":
@@ -151,11 +144,19 @@ function Admin() {
       case "products":
         return <ProductManager key="products" />;
       case "app-settings":
-        return <AdminSettings />;
-      case "settings":
-        return <SettingsEditor initial={settings} />;
       default:
-        return <SettingsEditor initial={settings} />;
+        return (
+          <Tabs defaultValue="fees" className="mt-6">
+            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
+              <TabsTrigger value="fees" className="gap-1.5"><Clock className="size-4" />Taxas e horários</TabsTrigger>
+              <TabsTrigger value="assistant" className="gap-1.5"><MessageCircle className="size-4" />Assistente</TabsTrigger>
+              <TabsTrigger value="alerts" className="gap-1.5"><Bell className="size-4" />Avisos e sons</TabsTrigger>
+            </TabsList>
+            <TabsContent value="fees"><SettingsEditor initial={settings} /></TabsContent>
+            <TabsContent value="assistant"><AnalyticsAssistant /></TabsContent>
+            <TabsContent value="alerts"><AdminSettings /></TabsContent>
+          </Tabs>
+        );
     }
   }
 
