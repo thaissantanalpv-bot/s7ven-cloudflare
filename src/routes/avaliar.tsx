@@ -10,6 +10,7 @@ import { ratingInfo, submitRating } from "@/lib/ratings.functions";
 const LABELS = ["", "Muito ruim", "Ruim", "Regular", "Bom", "Excelente"];
 
 export const Route = createFileRoute("/avaliar")({
+  staticData: { sitemap: false },
   validateSearch: z.object({ pedido: z.string().optional(), k: z.string().optional() }),
   head: () => ({
     meta: [
