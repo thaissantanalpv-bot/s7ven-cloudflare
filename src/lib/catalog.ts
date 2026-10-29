@@ -15,6 +15,8 @@ export const catalogProductSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome do produto.").max(150),
   description: z.string().trim().max(2000),
   price: z.number().min(0).max(1000000).multipleOf(0.01),
+  // Optional pre-discount price shown struck through; `price` is always what the customer pays.
+  compareAtPrice: z.number().min(0.01).max(1000000).multipleOf(0.01).nullable().default(null),
   category: z.string().trim().min(1, "Informe a categoria.").max(100),
   emoji: z.string().max(10).default("🛍️"),
   image: z.string().max(1000).refine(v => !v || /^\/produtos\/p\d+\.jpg$/.test(v) || /^uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v), "Foto inválida."),
@@ -28,12 +30,14 @@ export const catalogProductSchema = z.object({
   allowOther: z.boolean(),
   comboGroups: z.array(comboGroupSchema).max(8).default([]),
   variations: z.array(variationSchema).max(100).refine(v => new Set(v.map(o => o.name.toLowerCase())).size === v.length, "Não repita variações."),
-}).refine(p => !(p.allowOther && p.variations.some(v => v.stock !== null)), "Desative Outro ao controlar estoque por variação.")
+}).refine(p => p.compareAtPrice === null || p.compareAtPrice > p.price, "O preço com desconto precisa ser menor que o preço normal.")
+  .refine(p => !(p.allowOther && p.variations.some(v => v.stock !== null)), "Desative Outro ao controlar estoque por variação.")
   .refine(p => !p.comboGroups.length || (!p.variations.length && !p.allowOther), "Combos usam os sabores dos itens, não variações próprias.")
   .refine(p => new Set(p.comboGroups.map(g => g.id)).size === p.comboGroups.length, "Não repita grupos.")
   .refine(p => !p.comboGroups.some(g => g.productIds.includes(p.id)), "Um combo não pode conter a si mesmo.");
 export type CatalogProduct = Product & {
   featured?: boolean;
+  compareAtPrice?: number | null;
   active: boolean;
   stock: number | null;
   minStock?: number | null;
@@ -48,7 +52,7 @@ export type CatalogProduct = Product & {
 };
 export type ProductDraft = z.infer<typeof catalogProductSchema>;
 export function mergeCatalog(rows: { id: string; data: unknown; updated_at: string }[]): CatalogProduct[] {
-  const base: CatalogProduct[] = PRODUCTS.map(p => ({ ...p, active: true, stock: null, minStock: null, allowOther: Boolean(p.options?.length), variations: (p.options ?? []).map(name => ({ name, active: true, stock: null, minStock: null })), updatedAt: null }));
+  const base: CatalogProduct[] = PRODUCTS.map(p => ({ ...p, compareAtPrice: null, active: true, stock: null, minStock: null, allowOther: Boolean(p.options?.length), variations: (p.options ?? []).map(name => ({ name, active: true, stock: null, minStock: null })), updatedAt: null }));
   const map = new Map(base.map(p => [p.id, p]));
   for (const row of rows) {
     const p = catalogProductSchema.parse(row.data);
@@ -65,7 +69,7 @@ export function available(p: Product | CatalogProduct, option = "", qty = 1) {
   return v ? v.active && (v.stock === null || v.stock >= qty) : p.allowOther;
 }
 export function toDraft(p: CatalogProduct): ProductDraft {
-  return { id: p.id, name: p.name, description: p.description, price: p.price, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], variationPhotos: p.variationPhotos ?? {}, active: p.active, featured: p.featured ?? false, stock: p.stock, minStock: p.minStock ?? null, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations.map(v => ({ ...v, minStock: v.minStock ?? null })), comboGroups: p.comboGroups ?? [] };
+  return { id: p.id, name: p.name, description: p.description, price: p.price, compareAtPrice: p.compareAtPrice ?? null, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], variationPhotos: p.variationPhotos ?? {}, active: p.active, featured: p.featured ?? false, stock: p.stock, minStock: p.minStock ?? null, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations.map(v => ({ ...v, minStock: v.minStock ?? null })), comboGroups: p.comboGroups ?? [] };
 }
 // Low-stock alerts: items whose tracked stock reached the minimum set by the store.
 export function lowStockItems(p: CatalogProduct): { label: string; stock: number; min: number }[] {
@@ -79,4 +83,15 @@ export function productPhotos(p: Pick<CatalogProduct, "image" | "images">) {
 }
 export function variationPhoto(p: Pick<CatalogProduct, "variationPhotos">, option: string) {
   return option ? p.variationPhotos?.[option] ?? "" : "";
+}
+/** Whole-number discount percentage when a valid struck-through price exists, otherwise null. */
+export function discountPercent(p: Pick<CatalogProduct, "price" | "compareAtPrice">): number | null {
+  const old = p.compareAtPrice;
+  if (old == null || !(old > p.price) || p.price < 0) return null;
+  const pct = Math.round((1 - p.price / old) * 100);
+  return pct > 0 ? pct : null;
+}
+/** Products customers may browse: paused items stay out of every catalog list. */
+export function visibleProducts<T extends { active: boolean }>(products: T[]): T[] {
+  return products.filter(p => p.active);
 }
