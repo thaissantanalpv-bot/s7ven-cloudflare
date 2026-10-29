@@ -7,6 +7,7 @@ import { getSalesReport } from "@/lib/sales-report.functions";
 import type { SalesPeriod } from "@/lib/sales-report";
 import { brl } from "@/lib/products";
 import { RatingsCard } from "./ratings-card";
+import { FrequentCustomersCard } from "./frequent-customers-card";
 
 export function SalesReport() {
   const [period, setPeriod] = useState<SalesPeriod>("today");
@@ -142,6 +143,7 @@ export function SalesReport() {
           )}
         </>
       ) : null}
+      <FrequentCustomersCard />
       <RatingsCard />
     </section>
   );
