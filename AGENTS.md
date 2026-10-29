@@ -27,7 +27,7 @@
 - The store uses an external POS, so the panel has no counter-sale screen; legacy `source = counter` orders stay readable in history/reports and out of delivery stages and new-order alerts.
 - Manifest start URL `/painel`, online admin auth. Offline cache only public catalog HTML/assets, products/settings, viewed photos — never admin/auth/API; online checkout.
 - Keep the admin assistant in one account-scoped transcript (admin-only reads, server-managed writes); authenticate streaming independently, send only allowlisted dashboard aggregates to AI, use bounded leases and durable terminal blocks against duplicate paid requests; analysis never writes operations.
-- WhatsApp photos use public galleries, never expiring URLs.
+- WhatsApp photos use public galleries, not expiring URLs.
 - Delivery tracking links are admin-set per delivery order; public reads return only stage + link so customers never see other order data.
 - Admin reports (sales, frequent customers by normalized phone) read period-bounded order fields, return aggregates, exclude cancelled sales and never double-count combo components.
 - New catalog orders notify admin devices by Web Push via a dedicated-scope worker apart from the offline one; admin-owned subscriptions, sent server-side after insertion without blocking checkout.
