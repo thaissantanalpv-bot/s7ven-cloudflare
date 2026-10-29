@@ -15,8 +15,8 @@ describe("frequent customers", () => {
       row("(18) 99151-1004", 20.5, "2026-10-02T10:00:00Z"),
       row("18991511004", 100, "2026-10-03T10:00:00Z", "Ana", "cancelled"),
     ]);
-    expect(ana.orders).toBe(2);
-    expect(ana.spent).toBe(50.5);
+    expect(ana?.orders).toBe(2);
+    expect(ana?.spent).toBe(50.5);
   });
   it("ranks by number of orders first, then by amount spent", () => {
     const ranked = rankFrequentCustomers([
@@ -35,7 +35,7 @@ describe("frequent customers", () => {
       row("", 50, "2026-10-05T10:00:00Z", "Balcão"),
     ]);
     expect(ranked).toHaveLength(1);
-    expect(ranked[0].name).toBe("Ana Paula");
-    expect(ranked[0].lastOrderAt).toBe("2026-10-05T10:00:00Z");
+    expect(ranked[0]?.name).toBe("Ana Paula");
+    expect(ranked[0]?.lastOrderAt).toBe("2026-10-05T10:00:00Z");
   });
 });

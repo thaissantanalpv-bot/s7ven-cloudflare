@@ -25,11 +25,11 @@
 - Reserve stock under sorted row locks; reject stale prices. Admin cancellation is terminal: snapshot product/variation/component control flags at insertion (current flags for legacy orders), restore once, record missing/untracked items without recreating them. Exclude cancelled sales from revenue, retaining totals and conversion events.
 - Represent fixed-price combos as catalog products with comboGroups and structured order components; encode choices in separate option keys to preserve legacy carts, validate group membership server-side, and reserve all quantities together in sorted row-lock order.
 - The store uses an external POS, so the panel has no counter-sale screen; legacy `source = counter` orders stay readable in history/reports and out of delivery stages and new-order alerts.
-- Keep manifest identity/start URL `/painel` and online admin auth. Cache offline only public catalog HTML/assets, products/settings and viewed photos — never admin/auth/API; refresh on reconnect and require online checkout.
+- Manifest start URL `/painel`, online admin auth. Offline cache only public catalog HTML/assets, products/settings, viewed photos — never admin/auth/API; online checkout.
 - Keep the admin assistant in one account-scoped transcript (admin-only reads, server-managed writes); authenticate streaming independently, send only allowlisted dashboard aggregates to AI, use bounded leases and durable terminal blocks against duplicate paid requests; analysis never writes operations.
-- WhatsApp photos use public galleries, never expiring URLs; checkout waits for validated insertion.
+- WhatsApp photos use public galleries, never expiring URLs.
 - Delivery tracking links are admin-set per catalog delivery order and exposed publicly only as stage + link by order id, because customers must never read other order data.
-- Admin sales reports and frequent-customer rankings read period-bounded order fields and return aggregates (customers keyed by normalized phone), excluding cancelled sales and avoiding combo component revenue duplication.
+- Admin reports (sales, frequent customers by normalized phone) read period-bounded order fields, return aggregates, exclude cancelled sales and never double-count combo components.
 - New catalog orders notify admin devices by Web Push via a dedicated-scope worker apart from the offline one; admin-owned subscriptions, sent server-side after insertion without blocking checkout.
 - Subdirectories have their own AGENTS.md; read before editing there.
 - Ratings: public only via per-order token link, one per order, server-written, admin reads.
