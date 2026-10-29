@@ -13,9 +13,9 @@ export const getSalesReport = createServerFn({ method: "POST" })
     const range = salesPeriodRange(period);
     const rows: SalesRow[] = [];
     for (let offset = 0; ; offset += 500) {
-      const { data, error } = await context.supabase.from("orders").select("id,created_at,status,total,items").gte("created_at", range.from).lt("created_at", range.until).order("created_at").order("id").range(offset, offset + 499);
+      const { data, error } = await context.supabase.from("orders").select("id,created_at,status,total,items,payment").gte("created_at", range.from).lt("created_at", range.until).order("created_at").order("id").range(offset, offset + 499);
       if (error) throw new Error("Não foi possível carregar o relatório de vendas.");
-      rows.push(...data.map(row => ({ created_at: row.created_at, status: statusSchema.parse(row.status), total: Number(row.total), items: row.items as OrderItem[] })));
+      rows.push(...data.map(row => ({ created_at: row.created_at, status: statusSchema.parse(row.status), total: Number(row.total), items: row.items as OrderItem[], payment: row.payment })));
       if (data.length < 500) break;
     }
     return { ...summarizeSales(rows), start: range.start, end: range.end };
