@@ -2,7 +2,7 @@ import { shrinkImage } from "@/lib/shrink-image";
 import { useState, useId, type ReactNode } from "react";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Pencil, Pause, Play, Search, Save, Upload, Trash2, Package, Star } from "lucide-react";
+import { Plus, Pencil, Pause, Play, Search, Save, Upload, Trash2, Package, Star, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -13,6 +13,8 @@ import { available, catalogProductSchema, discountPercent, lowStockItems, toDraf
 import { brl } from "@/lib/products";
 import { ComboGroupsEditor } from "./combo-groups-editor";
 import { AiPhotoEditor } from "./ai-photo-editor";
+import { BulkPriceDialog } from "./bulk-price-dialog";
+import { ProductVideoField } from "./product-video-field";
 
 export function ProductManager({ combos = false }: { combos?: boolean }) {
   const { data: products } = useSuspenseQuery(adminCatalogQuery);
@@ -27,6 +29,7 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   const [editing, setEditing] = useState<{ draft: ProductDraft; expected: string | null; preview: string } | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const categories = [...new Set(products.map(p => p.category))];
   const managed = products.filter(p => combos ? Boolean(p.comboGroups?.length) : !p.comboGroups?.length);
   const lowCount = managed.reduce((n, p) => n + lowStockItems(p).length, 0);
@@ -54,8 +57,9 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   return <section className="py-7">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div className="flex gap-6 text-sm"><span><strong>{managed.length}</strong> {combos ? "combos" : "produtos"}</span><span className="text-muted-foreground">{managed.filter(p => !available(p)).length} indisponíveis</span>{lowCount > 0 && <span className="text-destructive"><strong>{lowCount}</strong> para repor</span>}</div>
-      <Button onClick={() => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, compareAtPrice: null, category: combos ? "Combos" : "", emoji: "🛍️", image: "", images: [], variationPhotos: {}, active: true, featured: false, stock: null, minStock: null, optionLabel: "Sabor", allowOther: false, variations: [], comboGroups: combos ? [{ id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }] : [] }, expected: null, preview: "" }); }}><Plus /> {combos ? "Novo combo" : "Novo produto"}</Button>
+      <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setBulkOpen(true)}><Percent />Mudar preços em lote</Button><Button onClick={() => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, compareAtPrice: null, category: combos ? "Combos" : "", emoji: "🛍️", image: "", images: [], variationPhotos: {}, video: "", youtube: "", active: true, featured: false, stock: null, minStock: null, optionLabel: "Sabor", allowOther: false, variations: [], comboGroups: combos ? [{ id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }] : [] }, expected: null, preview: "" }); }}><Plus /> {combos ? "Novo combo" : "Novo produto"}</Button></div>
     </div>
+    <BulkPriceDialog key={bulkOpen ? "open" : "closed"} open={bulkOpen} onOpenChange={setBulkOpen} products={visible} />
     <div className="mb-5 flex flex-wrap gap-3">
       <div className="relative min-w-48 flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><input className="field pl-10" aria-label="Buscar produtos no painel" placeholder="Buscar produtos" value={query} onChange={e => setQuery(e.target.value)} /></div>
       <select className="field w-auto" aria-label="Filtrar categoria" value={category} onChange={e => setCategory(e.target.value)}><option value="">Todas as categorias</option>{categories.map(c => <option key={c}>{c}</option>)}</select>
@@ -75,7 +79,7 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
     <Dialog open={Boolean(editing)} onOpenChange={open => { if (!open && !busy) setEditing(null); }}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
         <DialogTitle>{editing?.draft.name || "Novo produto"}</DialogTitle><DialogDescription>S7VEN · Produtos e estoque</DialogDescription>
-        {editing && <ProductEditor combos={combos} products={products.filter(p => p.id !== editing.draft.id)} initial={editing.draft} preview={editing.preview} galleryPreview={products.find(p => p.id === editing.draft.id)?.images ?? []} categories={categories} busy={busy} message={message} onSave={p => persist(p, editing.expected)} />}
+        {editing && <ProductEditor combos={combos} products={products.filter(p => p.id !== editing.draft.id)} initial={editing.draft} preview={editing.preview} galleryPreview={products.find(p => p.id === editing.draft.id)?.images ?? []} videoPreview={products.find(p => p.id === editing.draft.id)?.video ?? ""} categories={categories} busy={busy} message={message} onSave={p => persist(p, editing.expected)} />}
       </DialogContent>
     </Dialog>
     <Dialog open={Boolean(deleting)} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
@@ -91,12 +95,13 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   </section>;
 }
 
-function ProductEditor({ initial, preview, galleryPreview, categories, busy, message, onSave, combos, products }: { initial: ProductDraft; preview: string; galleryPreview: string[]; categories: string[]; busy: boolean; message: string; onSave: (p: ProductDraft) => void; combos: boolean; products: CatalogProduct[] }) {
+function ProductEditor({ initial, preview, galleryPreview, videoPreview, categories, busy, message, onSave, combos, products }: { initial: ProductDraft; preview: string; galleryPreview: string[]; videoPreview: string; categories: string[]; busy: boolean; message: string; onSave: (p: ProductDraft) => void; combos: boolean; products: CatalogProduct[] }) {
   const [draft, setDraft] = useState(initial);
   const [photo, setPhoto] = useState(preview);
   const [extraPreviews, setExtraPreviews] = useState(galleryPreview);
   const [uploading, setUploading] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
+  const [videoBusy, setVideoBusy] = useState(false);
   const [aiPhoto, setAiPhoto] = useState(-1);
   const [error, setError] = useState("");
   const categoryId = useId();
@@ -140,8 +145,9 @@ function ProductEditor({ initial, preview, galleryPreview, categories, busy, mes
     finally { setUploading(false); }
   };
   return <form className="space-y-5" onSubmit={e => { e.preventDefault(); if (combos && !draft.comboGroups.length) { setError("Cadastre pelo menos um grupo."); return; } const parsed = catalogProductSchema.safeParse(draft); if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Confira os campos."); return; } setError(""); onSave(parsed.data); }}>
-    <fieldset disabled={busy || uploading || aiBusy} className="space-y-5">
+    <fieldset disabled={busy || uploading || aiBusy || videoBusy} className="space-y-5">
       <div><div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Fotos do produto</h3><label className="inline-flex cursor-pointer items-center gap-2 text-sm text-primary"><Upload className="size-4" />{uploading ? "Enviando…" : "Adicionar fotos"}<input aria-label="Enviar foto do produto" type="file" multiple accept="image/*" className="sr-only" onChange={e => { const files = Array.from(e.target.files ?? []); e.target.value = ""; void upload(files); }} /></label></div><p className="mt-2 text-xs text-muted-foreground">Até 10 fotos · qualquer tamanho (a foto é ajustada sozinha)</p><div className="mt-3 flex flex-wrap gap-3">{[...(draft.image ? [{ path: draft.image, preview: photo }] : []), ...draft.images.map((path, i) => ({ path, preview: extraPreviews[i] ?? "" }))].map((item, index) => <div key={item.path} className="w-24"><div className="grid size-24 place-items-center overflow-hidden rounded border bg-photo">{item.preview ? <img src={item.preview} alt={`Foto ${index + 1} do produto`} className="size-full object-contain" /> : <Package className="text-photo-foreground" />}</div><div className="mt-1 flex items-center justify-between"><Button type="button" variant={index === 0 ? "secondary" : "ghost"} size="sm" className="h-7 px-1 text-xs" disabled={index === 0} onClick={() => { const extra = index - 1; const next = draft.images[extra]; if (!next) return; setDraft(d => ({ ...d, image: next, images: d.images.map((path, i) => i === extra ? d.image : path) })); setPhoto(item.preview); setExtraPreviews(prev => prev.map((url, i) => i === extra ? photo : url)); }}>{index === 0 ? "Capa" : "Usar capa"}</Button><Button type="button" variant="ghost" size="icon" className="size-7" title="Remover foto" aria-label={`Remover foto ${index + 1}`} onClick={() => { if (index === 0) { setDraft(d => ({ ...unlinkPhoto(d, item.path), image: d.images[0] ?? "", images: d.images.slice(1) })); setPhoto(extraPreviews[0] ?? ""); setExtraPreviews(prev => prev.slice(1)); } else { setDraft(d => ({ ...unlinkPhoto(d, item.path), images: d.images.filter((_, i) => i !== index - 1) })); setExtraPreviews(prev => prev.filter((_, i) => i !== index - 1)); } }}><Trash2 /></Button></div>{draft.variations.length > 0 && <select aria-label={`Variação da foto ${index + 1}`} title="Variação que usa esta foto" className="mt-1 w-full rounded border bg-background px-1 py-0.5 text-[11px]" value={Object.entries(draft.variationPhotos ?? {}).find(([, v]) => v === item.path)?.[0] ?? ""} onChange={e => { const name = e.target.value; setDraft(d => { const vp: Record<string, string> = {}; for (const [k, v] of Object.entries(d.variationPhotos ?? {})) if (v !== item.path) vp[k] = v; if (name) vp[name] = item.path; return { ...d, variationPhotos: vp }; }); }}><option value="">Foto comum</option>{draft.variations.map(v => <option key={v.name} value={v.name}>{v.name}</option>)}</select>}</div>)}</div><p className="mt-2 text-xs text-muted-foreground">{draft.variations.length > 0 ? "Dica: escolha a variação abaixo de uma foto para mostrá-la quando o cliente selecionar essa variação." : ""}</p></div>
+      <ProductVideoField draft={draft} preview={videoPreview} onBusy={setVideoBusy} onChange={patch => setDraft(d => ({ ...d, ...patch }))} />
       <label className="block text-sm">Nome<input className="field mt-1" required maxLength={150} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} /></label>
       <PriceFields draft={draft} onChange={setDraft} />
       <div className="grid gap-4"><label className="block text-sm">Categoria<input className="field mt-1" list={categoryId} required maxLength={100} value={draft.category} onChange={e => setDraft({ ...draft, category: e.target.value })} /><datalist id={categoryId}>{categories.map(c => <option key={c} value={c} />)}</datalist></label></div>

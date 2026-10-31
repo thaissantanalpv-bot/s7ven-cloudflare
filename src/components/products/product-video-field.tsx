@@ -67,7 +67,7 @@ export function ProductVideoField({ draft, preview, onChange, onBusy }: { draft:
         const id = youtubeId(text);
         if (!text.trim()) { setError(""); onChange({ youtube: "" }); }
         else if (id) { setError(""); onChange({ youtube: id }); }
-        else setError("Link do YouTube inválido. Copie o link pelo botão Compartilhar do vídeo.");
+        else { setError("Link do YouTube inválido. Copie o link pelo botão Compartilhar do vídeo."); onChange({ youtube: "" }); }
       }} />
     </label>
     {draft.youtube && <p className="text-xs text-muted-foreground">O vídeo do YouTube aparece dentro do produto. Pode ser “não listado”, mas não “privado”.</p>}
