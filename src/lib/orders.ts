@@ -117,6 +117,8 @@ export type Order = {
   cancelled_by?: string | null;
   stock_restored_at?: string | null;
   cancellation_stock_notes?: string[];
+  /** Which purchase this is for the customer (1 = first), counted by normalized phone. */
+  purchase_number?: number;
   created_at: string;
   updated_at: string;
 };
@@ -219,8 +221,28 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
     total: Math.round((subtotal + delivery_fee - couponDiscount) * 100) / 100,
   };
 }
+/** "1ª compra", "2ª compra"… — shown to customers instead of the store's internal order number. */
+export function purchaseLabel(purchase: number | null | undefined) {
+  return purchase && purchase > 0 ? `${purchase}ª compra` : "";
+}
+/**
+ * Numbers each order by how many purchases the customer (same normalized phone) had made up to it.
+ * Cancelled orders don't count as purchases for later orders.
+ */
+export function purchaseNumbers(orders: Pick<Order, "id" | "customer_phone" | "status" | "created_at">[]) {
+  const result = new Map<string, number>();
+  const counts = new Map<string, number>();
+  const sorted = [...orders].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
+  for (const order of sorted) {
+    const phone = normalizePhone(order.customer_phone ?? "");
+    const previous = phone === "55" ? 0 : counts.get(phone) ?? 0;
+    result.set(order.id, previous + 1);
+    if (phone !== "55" && order.status !== "cancelled") counts.set(phone, previous + 1);
+  }
+  return result;
+}
 export function orderWhatsApp(
-  order: Pick<Order, "number" | "customer_name" | "customer_phone" | "status" | "tracking_url"> & { cancellation_reason?: string | null; id?: string; rating_token?: string | null },
+  order: Pick<Order, "customer_name" | "customer_phone" | "status" | "tracking_url"> & { cancellation_reason?: string | null; id?: string; rating_token?: string | null; purchase_number?: number },
 ) {
   const stage = ORDER_STAGES.find((s) => s.id === order.status);
   const tracking =
@@ -233,5 +255,5 @@ export function orderWhatsApp(
       : "";
   const reason = order.cancellation_reason?.trim();
   const cancelled = `seu pedido foi cancelado${reason ? `. Motivo: ${reason}` : ""}. Qualquer dúvida, estamos à disposição.`;
-  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${order.status === "cancelled" ? cancelled : stage?.message ?? ""}\nPedido #${order.number} — ${STORE_NAME}${tracking}${rating}`)}`;
+  return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${order.status === "cancelled" ? cancelled : stage?.message ?? ""}\n${purchaseLabel(order.purchase_number) ? `Sua ${purchaseLabel(order.purchase_number)} — ` : ""}${STORE_NAME}${tracking}${rating}`)}`;
 }
