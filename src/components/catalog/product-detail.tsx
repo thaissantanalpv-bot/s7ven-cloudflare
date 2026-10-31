@@ -88,6 +88,23 @@ export function ProductDetail({
             </SheetDescription>
             {soldOut && <p className="inline-flex rounded-md bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">{p.active ? "Esgotado" : "Indisponível"}</p>}
             {p.description && <p className="whitespace-pre-line break-words text-sm text-muted-foreground">{p.description}</p>}
+            {(p.video || p.youtube) && (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">Vídeo do produto</p>
+                {p.video && <video src={p.video} controls playsInline preload="metadata" className="aspect-video w-full rounded-lg bg-photo" aria-label={`Vídeo de ${p.name}`} />}
+                {p.youtube && (
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(p.youtube)}?rel=0&playsinline=1`}
+                    title={`Vídeo de ${p.name} no YouTube`}
+                    loading="lazy"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    className="aspect-video w-full rounded-lg border-0 bg-photo"
+                  />
+                )}
+              </div>
+            )}
             {hasOpts && (
               <div>
                 <p className="text-sm font-semibold">{p.optionLabel}</p>
