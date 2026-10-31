@@ -857,7 +857,7 @@ function Catalog() {
             <p className="mb-4 text-sm text-muted-foreground">Pedidos feitos neste aparelho. Repita um favorito em um toque.</p>
             {receipt && (
               <div className="mb-4 space-y-2 rounded-xl border border-primary/40 bg-primary/10 p-4">
-                <p className="font-semibold">{receipt.purchase ? `Sua ${receipt.purchase}ª compra` : "Seu pedido"} · {tracking.data?.status === "cancelled" ? "cancelado pela loja" : "recebido pela loja"}</p>
+                <p className="font-semibold">Seu pedido{receipt.purchase ? ` · ${receipt.purchase}ª compra` : ""} · {tracking.data?.status === "cancelled" ? "cancelado pela loja" : "recebido pela loja"}</p>
                 <div className="flex flex-wrap gap-2">
                   <Button asChild size="sm" variant="outline"><a href={receipt.url} target="_blank" rel="noopener noreferrer"><MessageCircle />Abrir no WhatsApp</a></Button>
                   {receipt.delivery && tracking.data?.trackingUrl && (
@@ -977,7 +977,7 @@ function Catalog() {
               <img src="/logo-s7ven.png" alt="" width={360} height={312} className="h-20 w-auto" />
               <CheckCircle2 className="mt-6 size-20 text-gold" strokeWidth={1.5} />
               <h2 className="mt-4 font-display text-3xl font-extrabold uppercase text-gold">{tracking.data?.status === "cancelled" ? "Pedido cancelado" : "Pedido enviado!"}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{receipt.purchase ? `Sua ${receipt.purchase}ª compra` : "Seu pedido"} foi registrada e enviada pelo WhatsApp. Em breve nossa equipe vai te responder.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Seu pedido foi registrado e enviado pelo WhatsApp{receipt.purchase ? ` — é a sua ${receipt.purchase}ª compra com a gente` : ""}. Em breve nossa equipe vai te responder.</p>
               <div className="mt-5 w-full rounded-xl border bg-card p-4 text-left">
                 <p className="mb-2 font-semibold">Resumo do pedido</p>
                 <p className="flex justify-between text-sm"><span>{receipt.itemCount} {receipt.itemCount === 1 ? "item" : "itens"}</span><span className="font-semibold">{brl(receipt.total)}</span></p>
