@@ -3,7 +3,7 @@ import { Printer, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import type { Order } from "@/lib/orders";
-import { DEFAULT_PRINTER, PRINTER_STORAGE_KEY, parsePrinterPreferences, orderReceiptHtml, type PrinterPreferences } from "@/lib/order-print";
+import { DEFAULT_PRINTER, PRINTER_STORAGE_KEY, parsePrinterPreferences, parsePaperWidth, orderReceiptHtml, type PrinterPreferences } from "@/lib/order-print";
 export function OrderPrinting({ order, onClose }: { order: Order | null; onClose: () => void }) {
   const [preferences, setPreferences] = useState<PrinterPreferences>(DEFAULT_PRINTER);
   const [draft, setDraft] = useState<PrinterPreferences>(DEFAULT_PRINTER);
