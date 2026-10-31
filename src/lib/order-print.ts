@@ -7,7 +7,7 @@ export const PRINTER_STORAGE_KEY = "s7ven-order-printer";
 export const DEFAULT_PRINTER: PrinterPreferences = { name: "", paper: "70" };
 export const parsePaperWidth = (value: unknown): PaperWidth => PAPER_WIDTHS.find(width => width === value) ?? DEFAULT_PRINTER.paper;
 /** Printed body width: paper minus the printer's unprintable margins, so nothing is cut at the edges. */
-export const RECEIPT_WIDTH_MM: Record<PaperWidth, number> = { "58": 54, "70": 66, "80": 76 };
+export const RECEIPT_WIDTH_MM: Record<PaperWidth, number> = { "58": 50, "70": 62, "80": 72 };
 export function parsePrinterPreferences(value: string | null): PrinterPreferences {
   try {
     const saved = JSON.parse(value ?? "null");
@@ -22,13 +22,13 @@ export function orderReceiptHtml(order: Order, paper: PrinterPreferences["paper"
   :root { --paper: ${colors.paper}; --ink: ${colors.ink}; }
   @page { size: auto; margin: 0; } * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--paper); color: var(--ink); }
-  body { width: ${RECEIPT_WIDTH_MM[paper]}mm; max-width: 100%; padding: 3mm; font: 12px/1.45 Arial, sans-serif; overflow-wrap: anywhere; }
-  h1 { font-size: 16px; margin: 0; } h2 { font-size: 18px; margin: 8px 0; }
+  body { width: 100%; max-width: ${RECEIPT_WIDTH_MM[paper]}mm; padding: 2mm 4mm 2mm 2mm; font: 12px/1.45 Arial, sans-serif; overflow-wrap: anywhere; word-break: break-word; }
+  h1 { font-size: 15px; margin: 0; } h2 { font-size: 17px; margin: 8px 0; }
   header { text-align: center; } p { margin: 6px 0; white-space: pre-wrap; }
   section { border-top: 1px dashed var(--ink); margin-top: 10px; padding-top: 8px; }
   ul { list-style: none; padding: 0; margin: 0; } li { padding: 6px 0; break-inside: avoid; }
-  .amount { text-align: right; } .row { display: flex; justify-content: space-between; gap: 8px; } .row > span:first-child { min-width: 0; } .row > span:last-child { flex-shrink: 0; white-space: nowrap; }
-  .total { font-size: 16px; font-weight: bold; } footer { border-top: 1px dashed var(--ink); margin-top: 12px; padding-top: 8px; text-align: center; font-size: 10px; }
+  .amount { font-weight: bold; } .row { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 8px; } .row > span:last-child { white-space: nowrap; }
+  .total { font-size: 15px; font-weight: bold; } footer { border-top: 1px dashed var(--ink); margin-top: 12px; padding-top: 8px; text-align: center; font-size: 10px; }
   </style></head><body><header><h1>${escape(STORE_NAME)}</h1><h2>Pedido #${escape(order.number)}</h2><p>${escape(date)}</p><strong>${order.fulfillment === "pickup" ? "RETIRADA NA LOJA" : "VIA DO ENTREGADOR"}</strong></header>
   <section><p><strong>Cliente:</strong> ${escape(order.customer_name)}</p><p><strong>WhatsApp:</strong> ${escape(order.customer_phone)}</p>${order.fulfillment === "pickup" ? "<p><strong>Retirada na loja — sem entrega</strong></p>" : `<p><strong>Endereço de entrega:</strong><br>${escape(order.address)}</p>`}</section>
   ${order.status === "cancelled" ? `<section><strong>CANCELADO</strong><p>Motivo: ${escape(order.cancellation_reason)}</p></section>` : ""}<section><ul>${items}</ul></section><section><p class="row"><span>Produtos</span><span>${escape(brl(order.subtotal))}</span></p><p class="row"><span>${order.fulfillment === "pickup" ? "Retirada" : "Taxa de entrega"}</span><span>${order.fulfillment === "pickup" ? "Sem taxa" : order.delivery_confirmed ? escape(brl(order.delivery_fee)) : "A confirmar"}</span></p><p class="row total"><span>Total</span><span>${escape(brl(order.total))}</span></p></section>

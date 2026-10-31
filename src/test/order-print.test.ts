@@ -13,7 +13,8 @@ describe("thermal order receipts", () => {
     for (const paper of ["58", "70", "80"] as const) {
       const html = orderReceiptHtml(order, paper, colors);
       for (const text of ["VIA DO ENTREGADOR", order.address, order.customer_phone, "2× Combo", "100× Seda", "Troco para:", "Chamar no portão", "49,00"]) expect(html).toContain(text);
-      expect(html).toContain(`width: ${{ "58": 54, "70": 66, "80": 76 }[paper]}mm`);
+      expect(html).toContain(`max-width: ${{ "58": 50, "70": 62, "80": 72 }[paper]}mm`);
+      expect(html).toContain("width: 100%");
     }
   });
   it("escapes all customer and product content", () => {
