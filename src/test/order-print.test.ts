@@ -10,10 +10,10 @@ const order: Order = {
 const colors = { paper: "white", ink: "black" };
 describe("thermal order receipts", () => {
   it("includes delivery details, options, payment and totals on either paper width", () => {
-    for (const paper of ["58", "80"] as const) {
+    for (const paper of ["58", "70", "80"] as const) {
       const html = orderReceiptHtml(order, paper, colors);
       for (const text of ["VIA DO ENTREGADOR", order.address, order.customer_phone, "2× Combo", "100× Seda", "Troco para:", "Chamar no portão", "49,00"]) expect(html).toContain(text);
-      expect(html).toContain(paper === "58" ? "54mm" : "76mm");
+      expect(html).toContain(`width: ${{ "58": 54, "70": 66, "80": 76 }[paper]}mm`);
     }
   });
   it("escapes all customer and product content", () => {
@@ -29,7 +29,9 @@ describe("thermal order receipts", () => {
   });
   it("restores only safe local printer preferences", () => {
     expect(parsePrinterPreferences('{"name":"Balcão","paper":"58","address":"private"}')).toEqual({ name: "Balcão", paper: "58" });
-    expect(parsePrinterPreferences("broken")).toEqual({ name: "", paper: "80" });
-    expect(parsePrinterPreferences('{"paper":"200"}').paper).toBe("80");
+    expect(parsePrinterPreferences('{"paper":"70"}').paper).toBe("70");
+    expect(parsePrinterPreferences('{"paper":"80"}').paper).toBe("80");
+    expect(parsePrinterPreferences("broken")).toEqual({ name: "", paper: "70" });
+    expect(parsePrinterPreferences('{"paper":"200"}').paper).toBe("70");
   });
 });

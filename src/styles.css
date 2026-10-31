@@ -169,4 +169,5 @@ body:has(.catalog-theme) [role="dialog"] select {
 
 .receipt-preview { height: 360px; border: 0; background: var(--receipt-paper); }
 .receipt-preview-58 { width: 54mm; max-width: 100%; }
+.receipt-preview-70 { width: 66mm; max-width: 100%; }
 .receipt-preview-80 { width: 76mm; max-width: 100%; }
