@@ -12,9 +12,9 @@ async function uploadVideo(file: File, path: string, contentType: string, onProg
   if (!token) throw new Error("Entre novamente para enviar o vídeo.");
   await new Promise<void>((resolve, reject) => {
     const upload = new tus.Upload(file, {
-      endpoint: `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/upload/resumable`,
+      endpoint: `${import.meta.env['VITE_SUPABASE_URL']}/storage/v1/upload/resumable`,
       retryDelays: [0, 3000, 5000, 10000, 20000],
-      headers: { authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, "x-upsert": "false" },
+      headers: { authorization: `Bearer ${token}`, apikey: import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'], "x-upsert": "false" },
       uploadDataDuringCreation: true,
       removeFingerprintOnSuccess: true,
       metadata: { bucketName: "product-videos", objectName: path, contentType, cacheControl: "3600" },
