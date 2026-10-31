@@ -1,3 +1,5 @@
 - Saved photos remain navigable/enlargeable via ProductCardPhotos.
 - Keep product photo AI editing admin-authenticated, streaming original-image edits; applying a result replaces only the selected draft photo and requires the usual product save.
 - Validate variation-photo links (variationPhotos) as allowlisted photo paths and project them publicly only when already exposed via image/images; the catalog swaps the displayed photo while the matching variation is selected.
+- Product videos: uploads go to the private `product-videos` bucket via resumable (TUS) upload; `data.video` holds the storage path, `data.youtube` only an 11-char id. Anonymous reads are allowed only for videos referenced by active products; catalog gets signed URLs, never stored URLs.
+- Bulk price edits send only ids + change to the server, which re-reads each product and rewrites price fields with the usual updated_at conflict check.

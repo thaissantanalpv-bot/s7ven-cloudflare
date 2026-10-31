@@ -1,4 +1,4 @@
-import { Minus, Plus } from "lucide-react";
+import { Minus, Play, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { available, discountPercent, productPhotos, type CatalogProduct } from "@/lib/catalog";
 import { brl } from "@/lib/products";
@@ -49,6 +49,9 @@ export function ProductTile({
         ) : isCombo ? (
           <span className="absolute left-2 top-2 rounded-md bg-primary px-2 py-0.5 text-[10px] font-bold uppercase text-primary-foreground">Combo</span>
         ) : null}
+        {(p.video || p.youtube) && (
+          <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-md bg-background/85 px-1.5 py-0.5 text-[10px] font-bold uppercase text-foreground"><Play className="size-3 fill-current" />Vídeo</span>
+        )}
         {off !== null && !soldOut && (
           <span className="absolute right-2 top-2 rounded-md bg-destructive px-2 py-0.5 text-[11px] font-bold text-destructive-foreground">-{off}%</span>
         )}

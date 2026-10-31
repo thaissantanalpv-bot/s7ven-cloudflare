@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { catalogProductSchema, mergeCatalog, type CatalogProduct } from "./catalog";
+import { bulkPrice, bulkPriceChangeSchema, catalogProductSchema, mergeCatalog, toDraft, type CatalogProduct } from "./catalog";
 
 // Only the allowlisted, read-only sales projection is available to visitors.
 export const getCatalog = createServerFn({ method: "GET" }).handler(async () => {
@@ -72,6 +72,17 @@ async function resolveCatalogPhotos(products: CatalogProduct[], client: Supabase
       }
     }
   }
+  // Videos can be long, so their links stay valid for six hours of playback.
+  const videoPaths = [...new Set(products.map(p => p.video).filter((v): v is string => Boolean(v?.startsWith("uploads/"))))];
+  if (videoPaths.length) {
+    const { data: urls } = await client.storage.from("product-videos").createSignedUrls(videoPaths, 6 * 3600);
+    for (const p of products) {
+      if (!p.video?.startsWith("uploads/")) continue;
+      const signed = urls?.find(u => u.path === p.video)?.signedUrl;
+      p.videoPath = p.video;
+      p.video = signed ? signed.replace(new URL(signed).origin, new URL(import.meta.env['VITE_SUPABASE_URL']).origin) : "";
+    }
+  }
   return products;
 }
 
@@ -111,4 +122,37 @@ export const deleteCatalogProduct = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("catalog_products").delete().eq("id", data.id);
     if (error) throw new Error("Não foi possível excluir o produto.");
     return { id: data.id };
+  });
+// Bulk price edits only touch price fields; every other product field is re-read on the server.
+export const saveBulkPrices = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({
+    ids: z.array(z.string().regex(/^[a-zA-Z0-9_-]{1,30}$/)).min(1, "Escolha pelo menos um produto.").max(1000).refine(ids => new Set(ids).size === ids.length),
+    change: bulkPriceChangeSchema,
+  }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: admin, error: roleError } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (roleError || !admin) throw new Error("Acesso restrito à administração.");
+    const rows = [];
+    for (let i = 0; i < data.ids.length; i += 200) {
+      const { data: chunk, error } = await context.supabase.from("catalog_products").select("id,data,updated_at").in("id", data.ids.slice(i, i + 200));
+      if (error) throw new Error("Não foi possível carregar os produtos.");
+      rows.push(...chunk);
+    }
+    const catalog = new Map(mergeCatalog(rows).map(p => [p.id, p]));
+    let saved = 0;
+    const failed: string[] = [];
+    for (const id of data.ids) {
+      const current = catalog.get(id);
+      if (!current) { failed.push(id); continue; }
+      const parsed = catalogProductSchema.safeParse({ ...toDraft(current), ...bulkPrice(current, data.change) });
+      if (!parsed.success) { failed.push(current.name); continue; }
+      const row = { id, data: parsed.data, updated_at: new Date().toISOString() };
+      const query = current.updatedAt === null
+        ? context.supabase.from("catalog_products").insert(row)
+        : context.supabase.from("catalog_products").update(row).eq("id", id).eq("updated_at", current.updatedAt);
+      const { data: written, error } = await query.select("id").maybeSingle();
+      if (error || !written) failed.push(current.name); else saved++;
+    }
+    return { saved, failed };
   });

@@ -274,6 +274,13 @@
       "when": 1793317446446,
       "tag": "0038_catalog_visits_midnight_reset",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793485819098,
+      "tag": "0039_product_videos",
+      "breakpoints": true
     }
   ]
 }
