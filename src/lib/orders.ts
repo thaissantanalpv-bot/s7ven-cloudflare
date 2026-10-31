@@ -118,7 +118,7 @@ export type Order = {
   stock_restored_at?: string | null;
   cancellation_stock_notes?: string[];
   /** Which purchase this is for the customer (1 = first), counted by normalized phone. */
-  purchase_number?: number;
+  purchase_number?: number | undefined;
   created_at: string;
   updated_at: string;
 };
@@ -242,7 +242,7 @@ export function purchaseNumbers(orders: Pick<Order, "id" | "customer_phone" | "s
   return result;
 }
 export function orderWhatsApp(
-  order: Pick<Order, "customer_name" | "customer_phone" | "status" | "tracking_url"> & { cancellation_reason?: string | null; id?: string; rating_token?: string | null; purchase_number?: number },
+  order: Pick<Order, "customer_name" | "customer_phone" | "status" | "tracking_url"> & { number?: number; cancellation_reason?: string | null; id?: string; rating_token?: string | null; purchase_number?: number | undefined },
 ) {
   const stage = ORDER_STAGES.find((s) => s.id === order.status);
   const tracking =

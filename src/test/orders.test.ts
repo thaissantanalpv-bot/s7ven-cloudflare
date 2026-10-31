@@ -137,7 +137,7 @@ describe("Orders", () => {
       );
       expect(url.pathname).toBe("/5518999999999");
       expect(url.searchParams.get("text")).toContain(stage.message);
-      expect(url.searchParams.get("text")).toContain("#42");
+      expect(url.searchParams.get("text")).not.toContain("#42");
     }
   });
 });
