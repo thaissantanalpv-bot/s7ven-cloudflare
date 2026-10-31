@@ -17,7 +17,7 @@ export const ratingInfo = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin, order } = await findOrder(data.id, data.token);
     const { data: existing } = await supabaseAdmin.from("order_ratings").select("rating").eq("order_id", order.id).maybeSingle();
-    return { number: order.number, delivered: order.status === "delivered", rated: existing?.rating ?? null };
+    return { delivered: order.status === "delivered", rated: existing?.rating ?? null };
   });
 
 export const submitRating = createServerFn({ method: "POST" })

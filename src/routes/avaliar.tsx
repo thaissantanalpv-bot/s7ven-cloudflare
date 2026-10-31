@@ -78,11 +78,11 @@ function RatePage() {
             <p className="text-sm text-muted-foreground">Sua opinião ajuda a S7VEN a melhorar.</p>
           </div>
         ) : !info.data?.delivered ? (
-          <p className="text-sm text-muted-foreground">A avaliação do pedido #{info.data?.number} abre depois que ele for entregue.</p>
+          <p className="text-sm text-muted-foreground">A avaliação do seu pedido abre depois que ele for entregue.</p>
         ) : (
           <div className="space-y-4">
             <div>
-              <h1 className="font-display text-xl font-semibold">Como foi o pedido #{info.data.number}?</h1>
+              <h1 className="font-display text-xl font-semibold">Como foi o seu pedido?</h1>
               <p className="text-sm text-muted-foreground">Toque nas estrelas para avaliar.</p>
             </div>
             <div className="flex justify-center gap-1" role="radiogroup" aria-label="Nota">
