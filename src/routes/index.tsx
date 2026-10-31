@@ -182,7 +182,7 @@ function Catalog() {
   const autoQuote = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
-  const [receipt, setReceipt] = useState<{ id: string; requestId: string; number: number; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean; itemCount: number } | null>(null);
+  const [receipt, setReceipt] = useState<{ id: string; requestId: string; number: number; purchase: number | null; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean; itemCount: number } | null>(null);
   const trackOrder = useServerFn(orderTracking);
   const tracking = useQuery({
     queryKey: ["order-tracking", receipt?.id],
@@ -549,13 +549,13 @@ function Catalog() {
     if (popup) popup.opener = null;
     try {
       const saved = await registerOrder({ data: validated.data });
-      const url = checkoutWhatsApp(saved.number, lines, d.phone, couponResult && appliedCoupon ? { code: appliedCoupon.code, discount: couponResult.discount } : null);
-      setReceipt({ id: saved.id, requestId, number: saved.number, url, subtotal, deliveryFee, total, delivery: isDelivery, itemCount: count });
+      const url = checkoutWhatsApp(saved.purchase, lines, d.phone, couponResult && appliedCoupon ? { code: appliedCoupon.code, discount: couponResult.discount } : null);
+      setReceipt({ id: saved.id, requestId, number: saved.number, purchase: saved.purchase ?? null, url, subtotal, deliveryFee, total, delivery: isDelivery, itemCount: count });
       if (isDelivery && form.street && form.number) {
         saveCustomerAddress({ name: d.name, phone: d.phone, street: form.street, number: form.number, neighborhood: form.neighborhood });
       }
       try {
-        const historyEntry = { id: saved.id, number: saved.number, date: new Date().toISOString(), total, items: inputItems, summary: items.map(i => `${i.qty}x ${i.product.name}`).join(", ") };
+        const historyEntry = { id: saved.id, number: saved.number, purchase: saved.purchase ?? null, date: new Date().toISOString(), total, items: inputItems, summary: items.map(i => `${i.qty}x ${i.product.name}`).join(", ") };
         const updatedHistory = [historyEntry, ...orderHistory.slice(0, 19)];
         setOrderHistory(updatedHistory);
         localStorage.setItem("s7ven-order-history", JSON.stringify(updatedHistory));
@@ -857,7 +857,7 @@ function Catalog() {
             <p className="mb-4 text-sm text-muted-foreground">Pedidos feitos neste aparelho. Repita um favorito em um toque.</p>
             {receipt && (
               <div className="mb-4 space-y-2 rounded-xl border border-primary/40 bg-primary/10 p-4">
-                <p className="font-semibold">Pedido #{receipt.number} · {tracking.data?.status === "cancelled" ? "cancelado pela loja" : "recebido pela loja"}</p>
+                <p className="font-semibold">Seu pedido{receipt.purchase ? ` · ${receipt.purchase}ª compra` : ""} · {tracking.data?.status === "cancelled" ? "cancelado pela loja" : "recebido pela loja"}</p>
                 <div className="flex flex-wrap gap-2">
                   <Button asChild size="sm" variant="outline"><a href={receipt.url} target="_blank" rel="noopener noreferrer"><MessageCircle />Abrir no WhatsApp</a></Button>
                   {receipt.delivery && tracking.data?.trackingUrl && (
@@ -877,7 +877,7 @@ function Catalog() {
                 {orderHistory.map((h, i) => (
                   <li key={h.id || i} className="space-y-2 rounded-xl border bg-card p-4">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="font-mono font-bold text-foreground">Pedido #{h.number}</span>
+                      <span className="font-bold text-foreground">{h.purchase ? `${h.purchase}ª compra` : "Pedido"}</span>
                       <span>{new Date(h.date).toLocaleDateString("pt-BR")}</span>
                     </div>
                     <p className="line-clamp-2 text-xs text-muted-foreground">{h.summary}</p>
@@ -977,7 +977,7 @@ function Catalog() {
               <img src="/logo-s7ven.png" alt="" width={360} height={312} className="h-20 w-auto" />
               <CheckCircle2 className="mt-6 size-20 text-gold" strokeWidth={1.5} />
               <h2 className="mt-4 font-display text-3xl font-extrabold uppercase text-gold">{tracking.data?.status === "cancelled" ? "Pedido cancelado" : "Pedido enviado!"}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Seu pedido #{receipt.number} foi registrado e enviado pelo WhatsApp. Em breve nossa equipe vai te responder.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Seu pedido foi registrado e enviado pelo WhatsApp{receipt.purchase ? ` — é a sua ${receipt.purchase}ª compra com a gente` : ""}. Em breve nossa equipe vai te responder.</p>
               <div className="mt-5 w-full rounded-xl border bg-card p-4 text-left">
                 <p className="mb-2 font-semibold">Resumo do pedido</p>
                 <p className="flex justify-between text-sm"><span>{receipt.itemCount} {receipt.itemCount === 1 ? "item" : "itens"}</span><span className="font-semibold">{brl(receipt.total)}</span></p>

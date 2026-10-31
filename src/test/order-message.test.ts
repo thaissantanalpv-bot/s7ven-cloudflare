@@ -9,9 +9,10 @@ describe("WhatsApp product photos", () => {
     expect(message).toContain("30,00");
     expect(message).toContain("https://s7venlounge.lovable.app/?produto=p4");
     expect(message).not.toContain("token");
-    const url = new URL(checkoutWhatsApp(123, [message], "18999999999"));
+    const url = new URL(checkoutWhatsApp(2, [message], "18999999999"));
     expect(url.pathname).toBe("/5518991511004");
-    expect(url.searchParams.get("text")).toContain("Pedido #123");
+    expect(url.searchParams.get("text")).toContain("2ª compra");
+    expect(url.searchParams.get("text")).not.toContain("#");
   });
   it("omits missing photos and keeps combo choices", () => {
     const message = productMessage({ id: "x", name: "Combo", qty: 1, price: 20, option: "", hasPhoto: false, combo: "Bebida: 1× Gin" }, "https://s7venlounge.lovable.app");

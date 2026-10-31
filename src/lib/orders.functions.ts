@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { submitOrderSchema, priceOrder, statusSchema, workflowStatusSchema, cancelOrderSchema, trackingUrlSchema, type Order } from "./orders";
+import { submitOrderSchema, priceOrder, statusSchema, workflowStatusSchema, cancelOrderSchema, trackingUrlSchema, purchaseNumbers, type Order } from "./orders";
 import { EMPTY_SETTINGS, ordersOpen, settingsSchema } from "./store-settings";
 import { mergeCatalog } from "./catalog";
 import { deliveryAddress } from "./delivery-address";
@@ -12,17 +12,29 @@ export const submitOrder = createServerFn({ method: "POST" })
     // Public checkout is a narrowly scoped privileged write, never a public read of customer data.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Idempotent retries only replay an order placed with the same checkout key by the same customer.
+    // Which purchase this is for the customer: earlier non-cancelled orders with the same phone, plus this one.
+    const purchaseNumber = async (orderId: string, createdAt: string) => {
+      const national = data.customer.phone.slice(2);
+      const { count: earlier, error: countError } = await supabaseAdmin
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .in("customer_phone", [data.customer.phone, national])
+        .neq("status", "cancelled")
+        .neq("id", orderId)
+        .lte("created_at", createdAt);
+      return countError ? null : (earlier ?? 0) + 1;
+    };
     const replay = async () => {
       const { data: existing, error: existingError } = await supabaseAdmin
         .from("orders")
-        .select("id,number,customer_phone,customer_name")
+        .select("id,number,customer_phone,customer_name,created_at")
         .eq("request_id", data.requestId)
         .maybeSingle();
       if (existingError) throw new Error("Não foi possível registrar o pedido. Tente novamente.");
       if (!existing) return null;
       if (existing.customer_phone !== data.customer.phone || existing.customer_name !== data.customer.name)
         throw new Error("Não foi possível registrar o pedido. Atualize a página e tente novamente.");
-      return { id: existing.id, number: existing.number };
+      return { id: existing.id, number: existing.number, purchase: await purchaseNumber(existing.id, existing.created_at) };
     };
     const existing = await replay();
     if (existing) return existing;
@@ -71,7 +83,7 @@ export const submitOrder = createServerFn({ method: "POST" })
         notes: data.customer.notes,
         ...priced,
       })
-      .select("id,number")
+      .select("id,number,created_at")
       .single();
     if (error || !saved) {
       if (error?.code === "P0001") throw new Error("Estoque ou preço alterado. Atualize o catálogo e confira o carrinho.");
@@ -113,7 +125,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     })();
     for (const result of await Promise.allSettled([pushNotice, emailNotice]))
       if (result.status === "rejected") console.error("Falha ao enviar aviso de novo pedido:", result.reason);
-    return { id: saved.id, number: saved.number };
+    return { id: saved.id, number: saved.number, purchase: await purchaseNumber(saved.id, saved.created_at) };
   });
 export const listOrders = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -148,7 +160,8 @@ export const listOrders = createServerFn({ method: "POST" })
       );
       if (data.length < 500) break;
     }
-    return result;
+    const purchases = purchaseNumbers(result);
+    return result.map((order) => ({ ...order, purchase_number: purchases.get(order.id) }));
   });
 export const updateOrderStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

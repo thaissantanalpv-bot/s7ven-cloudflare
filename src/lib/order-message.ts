@@ -6,9 +6,11 @@ export function productPhotoLink(origin: string, id: string) {
   return url.href;
 }
 
-export function checkoutWhatsApp(number: number, lines: string[], phone: string, coupon?: { code: string; discount: number } | null) {
+// The store's internal order number stays in the admin panel; the customer only sees which purchase this is.
+export function checkoutWhatsApp(purchase: number | null | undefined, lines: string[], phone: string, coupon?: { code: string; discount: number } | null) {
   const couponLine = coupon && coupon.discount > 0 ? [`*Cupom ${coupon.code}: −${brl(coupon.discount)}*`] : [];
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent([`*Pedido #${number} — ${STORE_NAME}*`, ...lines, ...couponLine, `*WhatsApp do cliente:* ${phone}`].join("\n"))}`;
+  const header = purchase && purchase > 0 ? `*Novo pedido · ${purchase}ª compra — ${STORE_NAME}*` : `*Novo pedido — ${STORE_NAME}*`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent([header, ...lines, ...couponLine, `*WhatsApp do cliente:* ${phone}`].join("\n"))}`;
 }
 
 export function insertCouponLine(lines: string[], coupon: { code: string; discount: number; label: string }, newTotal: number): string[] {

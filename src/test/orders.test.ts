@@ -7,6 +7,8 @@ import {
   trackingUrlSchema,
   ORDER_STAGES,
   validateCartAvailability,
+  purchaseNumbers,
+  type Order,
 } from "@/lib/orders";
 import { EMPTY_SETTINGS } from "@/lib/store-settings";
 import { mergeCatalog } from "@/lib/catalog";
@@ -135,7 +137,7 @@ describe("Orders", () => {
       );
       expect(url.pathname).toBe("/5518999999999");
       expect(url.searchParams.get("text")).toContain(stage.message);
-      expect(url.searchParams.get("text")).toContain("#42");
+      expect(url.searchParams.get("text")).not.toContain("#42");
     }
   });
 });
@@ -162,9 +164,27 @@ describe("tracking link", () => {
     const base = { number: 9, customer_name: "Cliente", customer_phone: "18999999999", status: "cancelled" as const, tracking_url: null };
     const withReason = new URL(orderWhatsApp({ ...base, cancellation_reason: "Produto esgotado" }));
     expect(withReason.searchParams.get("text")).toContain("Motivo: Produto esgotado");
-    expect(withReason.searchParams.get("text")).toContain("#9");
+    expect(withReason.searchParams.get("text")).not.toContain("#9");
     const withoutReason = new URL(orderWhatsApp({ ...base, cancellation_reason: null }));
     expect(withoutReason.searchParams.get("text")).toContain("cancelado");
     expect(withoutReason.searchParams.get("text")).not.toContain("Motivo:");
+  });
+  it("tells the customer which purchase it is instead of the store's order number", () => {
+    const text = new URL(orderWhatsApp({ number: 19, purchase_number: 2, customer_name: "Ana", customer_phone: "18999999999", status: "preparing", tracking_url: null })).searchParams.get("text") ?? "";
+    expect(text).toContain("Sua 2ª compra");
+    expect(text).not.toContain("19");
+  });
+  it("counts purchases per customer phone, skipping cancelled earlier orders", () => {
+    const o = (id: string, phone: string, created_at: string, status: Order["status"] = "delivered") => ({ id, customer_phone: phone, status, created_at });
+    const ranks = purchaseNumbers([
+      o("a1", "5518999999999", "2026-10-01T10:00:00Z"),
+      o("b1", "5518988888888", "2026-10-02T10:00:00Z"),
+      o("a2", "(18) 99999-9999", "2026-10-03T10:00:00Z", "cancelled"),
+      o("a3", "5518999999999", "2026-10-04T10:00:00Z"),
+    ]);
+    expect(ranks.get("a1")).toBe(1);
+    expect(ranks.get("b1")).toBe(1);
+    expect(ranks.get("a2")).toBe(2);
+    expect(ranks.get("a3")).toBe(2);
   });
 });
