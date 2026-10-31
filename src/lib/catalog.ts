@@ -3,6 +3,10 @@ import { PRODUCTS, type Product } from "./products";
 
 const quantity = z.number().int().min(0).max(1000000).nullable();
 const photoPath = z.string().max(1000).refine(v => /^\/produtos\/p\d+\.jpg$/.test(v) || /^uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v), "Foto inválida.");
+export const VIDEO_PATTERN = /^uploads\/[a-zA-Z0-9_-]+\.(mp4|mov|webm|m4v)$/;
+export const MAX_VIDEO_BYTES = 1024 * 1024 * 1024;
+const videoPath = z.string().max(200).refine(v => !v || VIDEO_PATTERN.test(v), "Vídeo inválido.");
+const youtubeIdSchema = z.union([z.literal(""), z.string().regex(/^[a-zA-Z0-9_-]{11}$/, "Link do YouTube inválido.")]);
 export const variationSchema = z.object({ name: z.string().trim().min(1).max(40), active: z.boolean(), stock: quantity, minStock: quantity.default(null) });
 export const comboGroupSchema = z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]{1,40}$/),
@@ -22,6 +26,9 @@ export const catalogProductSchema = z.object({
   image: z.string().max(1000).refine(v => !v || /^\/produtos\/p\d+\.jpg$/.test(v) || /^uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v), "Foto inválida."),
   images: z.array(photoPath).max(9, "Use até 10 fotos por produto.").default([]),
   variationPhotos: z.record(z.string(), photoPath).default({}),
+  // Uploaded product video (storage path) and/or a YouTube video id; both optional.
+  video: videoPath.default(""),
+  youtube: youtubeIdSchema.default(""),
   active: z.boolean(),
   featured: z.boolean().default(false),
   stock: quantity,
@@ -48,6 +55,10 @@ export type CatalogProduct = Product & {
   images?: string[];
   imagePaths?: string[];
   variationPhotos?: Record<string, string>;
+  /** Playable video URL once resolved (storage path before resolution). */
+  video?: string;
+  videoPath?: string;
+  youtube?: string;
   comboGroups?: z.infer<typeof comboGroupSchema>[];
 };
 export type ProductDraft = z.infer<typeof catalogProductSchema>;
@@ -69,7 +80,7 @@ export function available(p: Product | CatalogProduct, option = "", qty = 1) {
   return v ? v.active && (v.stock === null || v.stock >= qty) : p.allowOther;
 }
 export function toDraft(p: CatalogProduct): ProductDraft {
-  return { id: p.id, name: p.name, description: p.description, price: p.price, compareAtPrice: p.compareAtPrice ?? null, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], variationPhotos: p.variationPhotos ?? {}, active: p.active, featured: p.featured ?? false, stock: p.stock, minStock: p.minStock ?? null, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations.map(v => ({ ...v, minStock: v.minStock ?? null })), comboGroups: p.comboGroups ?? [] };
+  return { id: p.id, name: p.name, description: p.description, price: p.price, compareAtPrice: p.compareAtPrice ?? null, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], variationPhotos: p.variationPhotos ?? {}, video: p.videoPath ?? (p.video && VIDEO_PATTERN.test(p.video) ? p.video : ""), youtube: p.youtube ?? "", active: p.active, featured: p.featured ?? false, stock: p.stock, minStock: p.minStock ?? null, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations.map(v => ({ ...v, minStock: v.minStock ?? null })), comboGroups: p.comboGroups ?? [] };
 }
 // Low-stock alerts: items whose tracked stock reached the minimum set by the store.
 export function lowStockItems(p: CatalogProduct): { label: string; stock: number; min: number }[] {
@@ -94,4 +105,46 @@ export function discountPercent(p: Pick<CatalogProduct, "price" | "compareAtPric
 /** Products customers may browse: paused items stay out of every catalog list. */
 export function visibleProducts<T extends { active: boolean }>(products: T[]): T[] {
   return products.filter(p => p.active);
+}
+
+/** Extracts the 11-character video id from any common YouTube link (watch, youtu.be, shorts, embed, live). */
+export function youtubeId(input: string): string | null {
+  const text = input.trim();
+  if (!text) return null;
+  if (/^[a-zA-Z0-9_-]{11}$/.test(text)) return text;
+  let url: URL;
+  try { url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`); } catch { return null; }
+  const host = url.hostname.replace(/^(www\.|m\.|music\.)/, "");
+  let id: string | null = null;
+  if (host === "youtu.be") id = url.pathname.split("/")[1] ?? null;
+  else if (host === "youtube.com" || host === "youtube-nocookie.com") {
+    if (url.pathname === "/watch") id = url.searchParams.get("v");
+    else { const [, kind, value] = url.pathname.split("/"); if (kind && ["shorts", "embed", "live", "v"].includes(kind)) id = value ?? null; }
+  }
+  return id && /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
+}
+export const VIDEO_TYPES: Record<string, string> = { "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm", "video/x-m4v": "m4v" };
+/** File extension for an accepted product video, or null when the format is not supported. */
+export function videoExtension(file: { name: string; type: string }): string | null {
+  const byType = VIDEO_TYPES[file.type];
+  if (byType) return byType;
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return ["mp4", "mov", "webm", "m4v"].includes(ext) ? ext : null;
+}
+
+export type BulkPriceChange = { mode: "percent"; percent: number } | { mode: "set"; price: number };
+export const bulkPriceChangeSchema = z.discriminatedUnion("mode", [
+  z.object({ mode: z.literal("percent"), percent: z.number().min(-90, "Use no mínimo -90%.").max(500, "Use no máximo 500%.").refine(v => v !== 0, "Informe a porcentagem.") }),
+  z.object({ mode: z.literal("set"), price: z.number().min(0.01, "Informe o novo preço.").max(1000000).multipleOf(0.01) }),
+]);
+const cents = (v: number) => Math.round(v * 100) / 100;
+/**
+ * New price for a bulk change. Percent changes also move the struck-through price so the discount stays;
+ * a struck-through price that is no longer above the new price is removed.
+ */
+export function bulkPrice(p: { price: number; compareAtPrice?: number | null }, change: BulkPriceChange): { price: number; compareAtPrice: number | null } {
+  const price = change.mode === "set" ? cents(change.price) : Math.max(0, cents(p.price * (1 + change.percent / 100)));
+  const old = p.compareAtPrice ?? null;
+  const compare = old === null ? null : change.mode === "percent" ? cents(old * (1 + change.percent / 100)) : old;
+  return { price, compareAtPrice: compare !== null && compare > price ? compare : null };
 }
