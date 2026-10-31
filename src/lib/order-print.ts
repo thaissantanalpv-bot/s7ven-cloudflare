@@ -22,15 +22,15 @@ export function orderReceiptHtml(order: Order, paper: PrinterPreferences["paper"
   :root { --paper: ${colors.paper}; --ink: ${colors.ink}; }
   @page { size: auto; margin: 0; } * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--paper); color: var(--ink); }
-  body { width: 100%; max-width: ${RECEIPT_WIDTH_MM[paper]}mm; padding: 2mm 4mm 2mm 2mm; font: 12px/1.45 Arial, sans-serif; overflow-wrap: anywhere; word-break: break-word; }
+  body { width: 100%; max-width: ${RECEIPT_WIDTH_MM[paper]}mm; padding: 2mm 8mm 2mm 2mm; font: 12px/1.45 Arial, sans-serif; overflow-wrap: anywhere; word-break: break-word; }
   h1 { font-size: 15px; margin: 0; } h2 { font-size: 17px; margin: 8px 0; }
   header { text-align: center; } p { margin: 6px 0; white-space: pre-wrap; }
   section { border-top: 1px dashed var(--ink); margin-top: 10px; padding-top: 8px; }
   ul { list-style: none; padding: 0; margin: 0; } li { padding: 6px 0; break-inside: avoid; }
   .amount { font-weight: bold; } .row { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 8px; } .row > span:last-child { white-space: nowrap; }
-  .total { font-size: 15px; font-weight: bold; } footer { border-top: 1px dashed var(--ink); margin-top: 12px; padding-top: 8px; text-align: center; font-size: 10px; }
+  .total { font-size: 17px; font-weight: bold; } footer { border-top: 1px dashed var(--ink); margin-top: 12px; padding-top: 8px; text-align: center; font-size: 10px; }
   </style></head><body><header><h1>${escape(STORE_NAME)}</h1><h2>Pedido #${escape(order.number)}</h2><p>${escape(date)}</p><strong>${order.fulfillment === "pickup" ? "RETIRADA NA LOJA" : "VIA DO ENTREGADOR"}</strong></header>
   <section><p><strong>Cliente:</strong> ${escape(order.customer_name)}</p><p><strong>WhatsApp:</strong> ${escape(order.customer_phone)}</p>${order.fulfillment === "pickup" ? "<p><strong>Retirada na loja — sem entrega</strong></p>" : `<p><strong>Endereço de entrega:</strong><br>${escape(order.address)}</p>`}</section>
-  ${order.status === "cancelled" ? `<section><strong>CANCELADO</strong><p>Motivo: ${escape(order.cancellation_reason)}</p></section>` : ""}<section><ul>${items}</ul></section><section><p class="row"><span>Produtos</span><span>${escape(brl(order.subtotal))}</span></p><p class="row"><span>${order.fulfillment === "pickup" ? "Retirada" : "Taxa de entrega"}</span><span>${order.fulfillment === "pickup" ? "Sem taxa" : order.delivery_confirmed ? escape(brl(order.delivery_fee)) : "A confirmar"}</span></p><p class="row total"><span>Total</span><span>${escape(brl(order.total))}</span></p></section>
+  ${order.status === "cancelled" ? `<section><strong>CANCELADO</strong><p>Motivo: ${escape(order.cancellation_reason)}</p></section>` : ""}<section><ul>${items}</ul></section><section class="values"><p><strong>Produtos:</strong> ${escape(brl(order.subtotal))}</p><p><strong>${order.fulfillment === "pickup" ? "Retirada:" : "Taxa de entrega:"}</strong> ${order.fulfillment === "pickup" ? "Sem taxa" : order.delivery_confirmed ? escape(brl(order.delivery_fee)) : "A confirmar"}</p><p class="total">TOTAL: ${escape(brl(order.total))}</p></section>
   <section><p><strong>Pagamento:</strong> ${escape(order.payment)}</p>${order.change_for ? `<p><strong>Troco para:</strong> ${escape(order.change_for)}</p>` : ""}${order.notes ? `<p><strong>Observações:</strong> ${escape(order.notes)}</p>` : ""}</section><footer>Via de pedido · Não é documento fiscal</footer></body></html>`;
 }
