@@ -39,7 +39,7 @@ export function OrderPrinting({ order, onClose }: { order: Order | null; onClose
         <DialogTitle>Impressora térmica</DialogTitle>
         <DialogDescription>A impressora é escolhida na janela de impressão do aparelho. Bluetooth pode exigir o aplicativo ou driver do fabricante.</DialogDescription>
         <label className="block text-sm">Nome da impressora (identificação)<input className="field mt-2" maxLength={80} placeholder="Minha impressora" value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} /></label>
-        <label className="block text-sm">Largura da bobina<select className="field mt-2" value={draft.paper} onChange={event => setDraft({ ...draft, paper: event.target.value === "58" ? "58" : "80" })}><option value="58">58 mm</option><option value="80">80 mm</option></select></label>
+        <label className="block text-sm">Largura da bobina<select className="field mt-2" value={draft.paper} onChange={event => setDraft({ ...draft, paper: parsePaperWidth(event.target.value) })}><option value="58">58 mm</option><option value="70">70 mm</option><option value="80">80 mm</option></select></label>
         {message && <p role="status" className="text-sm text-primary">{message}</p>}
         <Button onClick={save}><Save />Salvar preferências</Button>
       </DialogContent>
@@ -49,7 +49,7 @@ export function OrderPrinting({ order, onClose }: { order: Order | null; onClose
         <DialogTitle>Imprimir pedido #{order?.number}</DialogTitle>
         <DialogDescription>{preferences.name || "Impressora térmica"} · Bobina {preferences.paper} mm</DialogDescription>
         <div className="flex justify-center overflow-hidden rounded-md bg-photo py-3">
-          {html && <iframe ref={frame} title="Via impressa do pedido" className={`receipt-preview ${preferences.paper === "58" ? "receipt-preview-58" : "receipt-preview-80"}`} srcDoc={html} onLoad={() => setReady(true)} />}
+          {html && <iframe ref={frame} title="Via impressa do pedido" className={`receipt-preview receipt-preview-${preferences.paper}`} srcDoc={html} onLoad={() => setReady(true)} />}
         </div>
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <Button disabled={!ready} onClick={print}><Printer />Imprimir</Button>

@@ -1,12 +1,17 @@
 import type { Order } from "./orders";
 import { brl, STORE_NAME } from "./products";
-export type PrinterPreferences = { name: string; paper: "58" | "80" };
+export const PAPER_WIDTHS = ["58", "70", "80"] as const;
+export type PaperWidth = (typeof PAPER_WIDTHS)[number];
+export type PrinterPreferences = { name: string; paper: PaperWidth };
 export const PRINTER_STORAGE_KEY = "s7ven-order-printer";
-export const DEFAULT_PRINTER: PrinterPreferences = { name: "", paper: "80" };
+export const DEFAULT_PRINTER: PrinterPreferences = { name: "", paper: "70" };
+export const parsePaperWidth = (value: unknown): PaperWidth => PAPER_WIDTHS.find(width => width === value) ?? DEFAULT_PRINTER.paper;
+/** Printed body width: paper minus the printer's unprintable margins, so nothing is cut at the edges. */
+export const RECEIPT_WIDTH_MM: Record<PaperWidth, number> = { "58": 54, "70": 66, "80": 76 };
 export function parsePrinterPreferences(value: string | null): PrinterPreferences {
   try {
     const saved = JSON.parse(value ?? "null");
-    return { name: typeof saved?.name === "string" ? saved.name.slice(0, 80) : "", paper: saved?.paper === "58" ? "58" : "80" };
+    return { name: typeof saved?.name === "string" ? saved.name.slice(0, 80) : "", paper: parsePaperWidth(saved?.paper) };
   } catch { return { ...DEFAULT_PRINTER }; }
 }
 const escape = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char);
@@ -17,12 +22,12 @@ export function orderReceiptHtml(order: Order, paper: PrinterPreferences["paper"
   :root { --paper: ${colors.paper}; --ink: ${colors.ink}; }
   @page { size: auto; margin: 0; } * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--paper); color: var(--ink); }
-  body { width: ${paper === "58" ? "54" : "76"}mm; padding: 3mm; font: 12px/1.45 Arial, sans-serif; overflow-wrap: anywhere; }
+  body { width: ${RECEIPT_WIDTH_MM[paper]}mm; max-width: 100%; padding: 3mm; font: 12px/1.45 Arial, sans-serif; overflow-wrap: anywhere; }
   h1 { font-size: 16px; margin: 0; } h2 { font-size: 18px; margin: 8px 0; }
   header { text-align: center; } p { margin: 6px 0; white-space: pre-wrap; }
   section { border-top: 1px dashed var(--ink); margin-top: 10px; padding-top: 8px; }
   ul { list-style: none; padding: 0; margin: 0; } li { padding: 6px 0; break-inside: avoid; }
-  .amount { text-align: right; } .row { display: flex; justify-content: space-between; gap: 8px; }
+  .amount { text-align: right; } .row { display: flex; justify-content: space-between; gap: 8px; } .row > span:first-child { min-width: 0; } .row > span:last-child { flex-shrink: 0; white-space: nowrap; }
   .total { font-size: 16px; font-weight: bold; } footer { border-top: 1px dashed var(--ink); margin-top: 12px; padding-top: 8px; text-align: center; font-size: 10px; }
   </style></head><body><header><h1>${escape(STORE_NAME)}</h1><h2>Pedido #${escape(order.number)}</h2><p>${escape(date)}</p><strong>${order.fulfillment === "pickup" ? "RETIRADA NA LOJA" : "VIA DO ENTREGADOR"}</strong></header>
   <section><p><strong>Cliente:</strong> ${escape(order.customer_name)}</p><p><strong>WhatsApp:</strong> ${escape(order.customer_phone)}</p>${order.fulfillment === "pickup" ? "<p><strong>Retirada na loja — sem entrega</strong></p>" : `<p><strong>Endereço de entrega:</strong><br>${escape(order.address)}</p>`}</section>
