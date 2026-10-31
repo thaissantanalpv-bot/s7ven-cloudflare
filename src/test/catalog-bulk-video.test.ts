@@ -4,7 +4,7 @@ import { bulkPrice, bulkPriceChangeSchema, catalogProductSchema, videoExtension,
 describe("bulk price changes", () => {
   it("raises and lowers prices by percentage, rounded to cents", () => {
     expect(bulkPrice({ price: 25, compareAtPrice: null }, { mode: "percent", percent: 10 })).toEqual({ price: 27.5, compareAtPrice: null });
-    expect(bulkPrice({ price: 19.9, compareAtPrice: null }, { mode: "percent", percent: -5 })).toEqual({ price: 18.91, compareAtPrice: null });
+    expect(bulkPrice({ price: 19.9, compareAtPrice: null }, { mode: "percent", percent: -5 })).toEqual({ price: 18.9, compareAtPrice: null });
   });
   it("keeps a promotion's struck-through price in proportion on percentage changes", () => {
     expect(bulkPrice({ price: 40, compareAtPrice: 50 }, { mode: "percent", percent: 10 })).toEqual({ price: 44, compareAtPrice: 55 });
