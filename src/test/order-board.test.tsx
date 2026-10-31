@@ -127,7 +127,7 @@ describe("Kanban order management", () => {
     const receipt = await screen.findByTitle("Via impressa do pedido");
     expect(receipt.getAttribute("srcdoc")).toContain(row.address);
     expect(receipt.getAttribute("srcdoc")).toContain("Sabor: Melancia");
-    expect(receipt.getAttribute("srcdoc")).toContain("54mm");
+    expect(receipt.getAttribute("srcdoc")).toContain("max-width: 50mm");
     expect(mocks.update).not.toHaveBeenCalled();
     localStorage.removeItem("s7ven-order-printer");
   });
