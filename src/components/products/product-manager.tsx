@@ -89,7 +89,7 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
     </Dialog>
     <Dialog open={Boolean(deleting)} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
       <DialogContent className="sm:max-w-md">
-        <DialogTitle>{deleting?.length === 1 ? `Excluir ${deleting[0].name}?` : `Excluir ${deleting?.length ?? 0} produtos?`}</DialogTitle>
+        <DialogTitle>{deleting?.length === 1 ? `Excluir ${deleting[0]?.name}?` : `Excluir ${deleting?.length ?? 0} produtos?`}</DialogTitle>
         <DialogDescription>{deleting && deleting.length > 1 && <span className="mb-2 block max-h-32 overflow-y-auto">{deleting.map(p => p.name).join(", ")}</span>}Esta ação remove para sempre. Se quiser apenas escondê-lo do catálogo, use Pausar.</DialogDescription>
         <div className="flex justify-end gap-3 pt-4">
           <Button variant="outline" disabled={busy} onClick={() => setDeleting(null)}>Cancelar</Button>
