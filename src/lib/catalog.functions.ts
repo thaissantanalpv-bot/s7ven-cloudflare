@@ -111,16 +111,23 @@ export const saveCatalogProduct = createServerFn({ method: "POST" })
 
 export const deleteCatalogProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().regex(/^[a-zA-Z0-9_-]{1,30}$/) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ id: z.string().min(1).max(64) }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: admin, error: roleError } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (roleError || !admin) throw new Error("Acesso restrito à administração.");
     const { data: combos, error: comboError } = await context.supabase.from("catalog_products").select("id,data");
     if (comboError) throw new Error("Não foi possível conferir os combos.");
-    const usedBy = combos.filter(row => { const parsed = catalogProductSchema.safeParse(row.data); return parsed.success && parsed.data.comboGroups.some(g => g.productIds.includes(data.id)); });
+    const usedBy = combos.filter(row => {
+      if (row.id === data.id) return false;
+      const parsed = catalogProductSchema.safeParse(row.data);
+      return parsed.success && parsed.data.comboGroups.some(g => g.productIds.includes(data.id));
+    });
     if (usedBy.length) throw new Error("Este produto faz parte de um combo. Remova-o do combo antes de excluir.");
-    const { error } = await context.supabase.from("catalog_products").delete().eq("id", data.id);
-    if (error) throw new Error("Não foi possível excluir o produto.");
+    const { error: rpcError } = await context.supabase.rpc("admin_delete_catalog_product", { _product_id: data.id });
+    if (rpcError) {
+      const { error: deleteError } = await context.supabase.from("catalog_products").delete().eq("id", data.id);
+      if (deleteError) throw new Error(deleteError.message || "Não foi possível excluir o produto.");
+    }
     return { id: data.id };
   });
 // Bulk price edits only touch price fields; every other product field is re-read on the server.
