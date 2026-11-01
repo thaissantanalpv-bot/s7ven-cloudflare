@@ -561,13 +561,13 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-medium">Pedidos pelo site até</p>
+              <p className="text-sm font-medium">Entregas até</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Depois desse horário o catálogo continua aberto para consulta, mas o botão de pedido é bloqueado.
+                Depois desse horário o cliente ainda pode fazer o pedido, mas somente para retirada na loja, até o horário de fechamento.
               </p>
             </div>
             <input
-              aria-label="Horário limite para pedidos"
+              aria-label="Horário limite para entregas"
               type="time"
               className="field w-32"
               value={draft.order_cutoff}

@@ -204,8 +204,11 @@ function Catalog() {
   const status = now
     ? storeStatus(settings, now)
     : { open: true, configured: false, label: "Atendimento" };
-  const orderStatus = now ? ordersOpen(settings, now) : { open: true, configured: false, reason: null };
+  const orderStatus = now ? ordersOpen(settings, now) : { open: true, delivery: true, configured: false, reason: null, closesAt: null };
   const orderingBlocked = orderStatus.configured && !orderStatus.open;
+  /** Depois do horário das entregas: ainda dá para pedir, mas só para retirar até a loja fechar. */
+  const pickupOnly = orderStatus.open && !orderStatus.delivery;
+  const pickupUntil = orderStatus.closesAt ? ` até ${orderStatus.closesAt}` : "";
   const [hoursOpen, setHoursOpen] = useState(false);
   const [sort, setSort] = useState("catalog");
   const [cart, setCart] = useState<Cart>({});
@@ -360,6 +363,10 @@ function Catalog() {
   const subtotal = items.reduce((s, i) => s + i.qty * i.product.price, 0);
   const zone = settings.delivery_zones.find((z) => z.id === form.zone);
   const isDelivery = form.fulfillment === "delivery";
+  // Entregas encerradas: muda o carrinho para retirada automaticamente.
+  useEffect(() => {
+    if (pickupOnly && form.fulfillment === "delivery") setForm(f => ({ ...f, fulfillment: "pickup" }));
+  }, [pickupOnly, form.fulfillment]);
   const distanceMode = settings.delivery_enabled && settings.delivery_distance_enabled;
   const distanceConfig = JSON.stringify([settings.delivery_origin, settings.delivery_distance_tiers]);
   const validQuote = deliveryQuote?.address === deliveryAddress(fullAddress) && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
@@ -511,9 +518,9 @@ function Catalog() {
     if (isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && !zone)
       return setError("Escolha o bairro ou região de entrega.");
     if (orderingBlocked)
-      return setError(orderStatus.reason === "paused" ? "A loja pausou os pedidos por alguns instantes. Tente novamente mais tarde." : orderStatus.reason === "cutoff"
-        ? `Os pedidos de hoje encerraram às ${settings.order_cutoff}. O catálogo continua aberto para consulta.`
-        : "A loja está fechada. Confira os horários de atendimento.");
+      return setError(orderStatus.reason === "paused" ? "A loja pausou os pedidos por alguns instantes. Tente novamente mais tarde." : "A loja está fechada. Confira os horários de atendimento.");
+    if (isDelivery && pickupOnly)
+      return setError(`As entregas de hoje encerraram às ${settings.order_cutoff}. Escolha retirada na loja${pickupUntil}.`);
     const r = customerSchema.safeParse({ ...form, address: fullAddress });
     if (!r.success) return setError(r.error.issues[0]?.message ?? "Verifique os dados");
     const d = r.data;
@@ -1002,8 +1009,10 @@ function Catalog() {
             <p role="status" className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs ${orderingBlocked || (status.configured && !status.open) ? "border-destructive/40 bg-destructive/10" : "border-primary/40 bg-primary/10"}`}>
               <Clock className={`size-4 shrink-0 ${orderingBlocked || (status.configured && !status.open) ? "text-destructive" : "text-primary"}`} />
               {orderingBlocked || (status.configured && !status.open)
-                ? <span className="min-w-0 truncate"><span className="font-semibold">{orderStatus.reason === "paused" ? "Pedidos pausados" : orderStatus.reason === "cutoff" ? "Pedidos encerrados por hoje" : "Loja fechada"}</span><span className="text-muted-foreground"> · explore o catálogo</span></span>
-                : <span className="min-w-0 truncate"><span className="font-semibold">Pedidos abertos!</span><span className="text-muted-foreground"> · receba no conforto da sua casa</span></span>}
+                ? <span className="min-w-0 truncate"><span className="font-semibold">{orderStatus.reason === "paused" ? "Pedidos pausados" : "Loja fechada"}</span><span className="text-muted-foreground"> · explore o catálogo</span></span>
+                : pickupOnly
+                  ? <span className="min-w-0 truncate"><span className="font-semibold">Somente retirada{pickupUntil}</span><span className="text-muted-foreground"> · entregas encerradas por hoje</span></span>
+                  : <span className="min-w-0 truncate"><span className="font-semibold">Pedidos abertos!</span><span className="text-muted-foreground"> · receba no conforto da sua casa</span></span>}
             </p>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Seus produtos</p>
             {items.length === 0 ? (
@@ -1078,7 +1087,7 @@ function Catalog() {
               </div>
               {fieldErrors.name?.[0] && <p id="name-error" role="alert" className="text-xs text-destructive">{fieldErrors.name[0]}</p>}
               <div role="group" aria-label="Recebimento do pedido" className="grid grid-cols-2 gap-2">
-                <Button size="sm" variant={isDelivery ? "default" : "outline"} aria-pressed={isDelivery} onClick={() => { setForm({ ...form, fulfillment: "delivery" }); setError(""); }}><Truck />Entrega</Button>
+                <Button size="sm" variant={isDelivery ? "default" : "outline"} aria-pressed={isDelivery} disabled={pickupOnly} onClick={() => { setForm({ ...form, fulfillment: "delivery" }); setError(""); }}><Truck />{pickupOnly ? "Entrega encerrada" : "Entrega"}</Button>
                 <Button size="sm" variant={!isDelivery ? "default" : "outline"} aria-pressed={!isDelivery} onClick={() => { setForm({ ...form, fulfillment: "pickup" }); setError(""); }}><Store />Retirada na loja</Button>
               </div>
               {isDelivery && (
@@ -1265,8 +1274,8 @@ function Catalog() {
             {orderingBlocked && orderStatus.reason === "paused" && (
               <p className="text-xs text-destructive">Pedidos pausados no momento. Tente novamente mais tarde.</p>
             )}
-            {orderingBlocked && orderStatus.reason === "cutoff" && (
-              <p className="text-xs text-destructive">Pedidos encerrados por hoje (até às {settings.order_cutoff}). O catálogo continua aberto para consulta.</p>
+            {pickupOnly && (
+              <p className="text-xs text-destructive">As entregas encerraram às {settings.order_cutoff}. Você ainda pode fazer o pedido para retirar na loja{pickupUntil}.</p>
             )}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button

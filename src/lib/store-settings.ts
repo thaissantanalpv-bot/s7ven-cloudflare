@@ -81,17 +81,22 @@ export function storeStatus(settings: StoreSettings, now = new Date()) {
   return { open, configured: true, label: open ? "Aberto agora" : "Fechado agora" };
 }
 
-/** Pedidos só são aceitos enquanto a loja está aberta e antes do horário limite (ex.: entregas até 23:00). */
+/**
+ * Pedidos são aceitos enquanto a loja está aberta. Depois do horário limite das entregas
+ * (ex.: 23:00) o pedido continua possível, mas somente para retirada, até a loja fechar.
+ */
 export function ordersOpen(settings: StoreSettings, now = new Date()) {
-  if (settings.paused) return { open: false as const, configured: true, reason: "paused" as const };
+  if (settings.paused) return { open: false as const, delivery: false, configured: true, reason: "paused" as const, closesAt: null };
   const status = storeStatus(settings, now);
-  if (!status.open) return { open: false as const, configured: status.configured, reason: "closed" as const };
+  if (!status.open) return { open: false as const, delivery: false, configured: status.configured, reason: "closed" as const, closesAt: null };
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
   const part = (name: string) => parts.find(p => p.type === name)?.value ?? "";
   const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(part("weekday"));
   const current = `${part("hour")}:${part("minute")}`;
+  const today = settings.opening_hours.find(h => h.day === day);
   const yesterday = settings.opening_hours.find(h => h.day === (day + 6) % 7);
   const afterMidnight = !!(yesterday?.enabled && yesterday.open > yesterday.close && current < yesterday.close);
-  if (afterMidnight || current >= settings.order_cutoff) return { open: false as const, configured: status.configured, reason: "cutoff" as const };
-  return { open: true as const, configured: status.configured, reason: null };
+  const closesAt = !status.configured ? null : afterMidnight ? yesterday!.close : today?.close ?? null;
+  if (afterMidnight || current >= settings.order_cutoff) return { open: true as const, delivery: false, configured: status.configured, reason: "cutoff" as const, closesAt };
+  return { open: true as const, delivery: true, configured: status.configured, reason: null, closesAt };
 }
