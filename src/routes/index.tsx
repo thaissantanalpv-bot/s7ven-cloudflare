@@ -363,6 +363,10 @@ function Catalog() {
   const subtotal = items.reduce((s, i) => s + i.qty * i.product.price, 0);
   const zone = settings.delivery_zones.find((z) => z.id === form.zone);
   const isDelivery = form.fulfillment === "delivery";
+  // Entregas encerradas: muda o carrinho para retirada automaticamente.
+  useEffect(() => {
+    if (pickupOnly && form.fulfillment === "delivery") setForm(f => ({ ...f, fulfillment: "pickup" }));
+  }, [pickupOnly, form.fulfillment]);
   const distanceMode = settings.delivery_enabled && settings.delivery_distance_enabled;
   const distanceConfig = JSON.stringify([settings.delivery_origin, settings.delivery_distance_tiers]);
   const validQuote = deliveryQuote?.address === deliveryAddress(fullAddress) && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
