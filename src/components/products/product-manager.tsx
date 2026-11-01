@@ -22,7 +22,8 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   const client = useQueryClient();
   const save = useServerFn(saveCatalogProduct);
   const remove = useServerFn(deleteCatalogProduct);
-  const [deleting, setDeleting] = useState<CatalogProduct | null>(null);
+  const [deleting, setDeleting] = useState<CatalogProduct[] | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [category, setCategory] = useState("");
@@ -47,12 +48,14 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   const confirmDelete = async () => {
     if (!deleting) return;
     setBusy(true); setMessage("");
-    try {
-      await remove({ data: { id: deleting.id } });
-      await client.invalidateQueries({ queryKey: adminCatalogQuery.queryKey });
-      setDeleting(null); setMessage("Produto excluído.");
-    } catch (e) { setMessage(e instanceof Error ? e.message : "Não foi possível excluir."); setDeleting(null); }
-    finally { setBusy(false); }
+    const failed: string[] = []; let done = 0;
+    for (const p of deleting) {
+      try { await remove({ data: { id: p.id } }); done++; }
+      catch (e) { failed.push(`${p.name}: ${e instanceof Error ? e.message : "não foi possível excluir"}`); }
+    }
+    await client.invalidateQueries({ queryKey: adminCatalogQuery.queryKey });
+    setSelected(new Set()); setDeleting(null); setBusy(false);
+    setMessage([done ? `${done} ${done === 1 ? "produto excluído" : "produtos excluídos"}.` : "", ...failed].filter(Boolean).join(" "));
   };
   return <section className="py-7">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -65,14 +68,16 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
       <select className="field w-auto" aria-label="Filtrar categoria" value={category} onChange={e => setCategory(e.target.value)}><option value="">Todas as categorias</option>{categories.map(c => <option key={c}>{c}</option>)}</select>
       <select className="field w-auto" aria-label="Disponibilidade" value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos os produtos</option><option value="active">Disponíveis</option><option value="paused">Indisponíveis</option><option value="low">Estoque baixo</option></select>
     </div>
+    {visible.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-3 text-sm"><label className="inline-flex cursor-pointer items-center gap-2"><input type="checkbox" className="size-4 accent-primary" aria-label="Selecionar todos os produtos da lista" checked={visible.every(p => selected.has(p.id))} onChange={e => setSelected(e.target.checked ? new Set([...selected, ...visible.map(p => p.id)]) : new Set([...selected].filter(id => !visible.some(p => p.id === id))))} />Selecionar todos</label>{selected.size > 0 && <><span className="text-muted-foreground">{selected.size} selecionado(s)</span><Button size="sm" variant="destructive" disabled={busy} onClick={() => { setMessage(""); setDeleting(managed.filter(p => selected.has(p.id))); }}><Trash2 />Excluir selecionados</Button><Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Limpar</Button></>}</div>}
     {!editing && message && <p role="status" className="mb-4 text-sm text-primary">{message}</p>}
     <div className="divide-y border-y">
       {visible.map(p => <div key={p.id} className="flex flex-wrap items-center gap-4 py-4">
+        <input type="checkbox" className="size-5 shrink-0 accent-primary" aria-label={`Selecionar ${p.name}`} checked={selected.has(p.id)} onChange={e => setSelected(prev => { const n = new Set(prev); if (e.target.checked) n.add(p.id); else n.delete(p.id); return n; })} />
         <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded bg-photo">{p.image ? <img src={p.image} alt={p.name} className="size-full object-contain" /> : <Package className="text-photo-foreground" />}</div>
         <div className="min-w-0 flex-1"><h2 className="font-semibold">{p.name}</h2><p className="mt-1 text-xs text-muted-foreground">{p.category} · {p.variations.length ? `${p.variations.length} variações` : "Sem variações"}</p><p className={`mt-1 text-xs ${available(p) ? "text-whatsapp" : "text-destructive"}`}>{!p.active ? "Pausado" : !available(p) ? "Esgotado" : "Disponível"} · {p.stock === null ? "Sem limite de estoque" : `${p.stock} unidades`}</p>{lowStockItems(p).map(item => <p key={item.label} role="status" className="mt-1 text-xs font-medium text-destructive">Repor: {item.label} — restam {item.stock} (mínimo {item.min})</p>)}</div>
         {p.featured && <span className="flex items-center gap-1 text-xs text-primary"><Star className="size-3" />Destaque</span>}
         <span className="text-right font-mono text-sm">{discountPercent(p) !== null && <span className="block text-xs text-muted-foreground line-through">{brl(p.compareAtPrice ?? 0)}</span>}{brl(p.price)}{discountPercent(p) !== null && <span className="block text-xs font-semibold text-destructive">-{discountPercent(p)}%</span>}</span>
-        <div className="flex gap-1"><Button variant="outline" size="icon" title="Editar produto" aria-label={`Editar ${p.name}`} onClick={() => edit(p)}><Pencil /></Button><Button variant="ghost" size="icon" disabled={busy} title={p.active ? "Pausar produto" : "Reativar produto"} aria-label={`${p.active ? "Pausar" : "Reativar"} ${p.name}`} onClick={() => persist({ ...toDraft(p), active: !p.active }, p.updatedAt)}>{p.active ? <Pause /> : <Play />}</Button><Button variant="ghost" size="icon" disabled={busy} title="Excluir produto" aria-label={`Excluir ${p.name}`} onClick={() => { setMessage(""); setDeleting(p); }}><Trash2 /></Button></div>
+        <div className="flex gap-1"><Button variant="outline" size="icon" title="Editar produto" aria-label={`Editar ${p.name}`} onClick={() => edit(p)}><Pencil /></Button><Button variant="ghost" size="icon" disabled={busy} title={p.active ? "Pausar produto" : "Reativar produto"} aria-label={`${p.active ? "Pausar" : "Reativar"} ${p.name}`} onClick={() => persist({ ...toDraft(p), active: !p.active }, p.updatedAt)}>{p.active ? <Pause /> : <Play />}</Button><Button variant="ghost" size="icon" disabled={busy} title="Excluir produto" aria-label={`Excluir ${p.name}`} onClick={() => { setMessage(""); setDeleting([p]); }}><Trash2 /></Button></div>
       </div>)}
       {!visible.length && <p className="py-12 text-center text-muted-foreground">Nenhum produto encontrado.</p>}
     </div>
@@ -84,8 +89,8 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
     </Dialog>
     <Dialog open={Boolean(deleting)} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
       <DialogContent className="sm:max-w-md">
-        <DialogTitle>Excluir {deleting?.name}?</DialogTitle>
-        <DialogDescription>Esta ação remove o produto para sempre. Se quiser apenas escondê-lo do catálogo, use Pausar.</DialogDescription>
+        <DialogTitle>{deleting?.length === 1 ? `Excluir ${deleting[0].name}?` : `Excluir ${deleting?.length ?? 0} produtos?`}</DialogTitle>
+        <DialogDescription>{deleting && deleting.length > 1 && <span className="mb-2 block max-h-32 overflow-y-auto">{deleting.map(p => p.name).join(", ")}</span>}Esta ação remove para sempre. Se quiser apenas escondê-lo do catálogo, use Pausar.</DialogDescription>
         <div className="flex justify-end gap-3 pt-4">
           <Button variant="outline" disabled={busy} onClick={() => setDeleting(null)}>Cancelar</Button>
           <Button variant="destructive" disabled={busy} onClick={() => void confirmDelete()}>{busy ? "Excluindo…" : "Excluir para sempre"}</Button>
