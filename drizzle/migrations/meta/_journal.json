@@ -281,6 +281,13 @@
       "when": 1793485819098,
       "tag": "0039_product_videos",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1793500000000,
+      "tag": "0040_permanent_catalog_product_delete",
+      "breakpoints": true
     }
   ]
 }
