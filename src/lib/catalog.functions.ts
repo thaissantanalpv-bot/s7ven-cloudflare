@@ -123,11 +123,11 @@ export const deleteCatalogProduct = createServerFn({ method: "POST" })
       return parsed.success && parsed.data.comboGroups.some(g => g.productIds.includes(data.id));
     });
     if (usedBy.length) throw new Error("Este produto faz parte de um combo. Remova-o do combo antes de excluir.");
-    const { error: rpcError } = await (context.supabase.rpc as unknown as (_name: string, _args: Record<string, unknown>) => Promise<{ error: Error | null }>)(("admin_delete_catalog_product"), { _product_id: data.id });
+    const { error: rpcError } = await (context.supabase.rpc as unknown as (_name: string, _args: Record<string, unknown>) => Promise<{ error: { message?: string } | null }>)(("admin_delete_catalog_product"), { _product_id: data.id });
     if (rpcError) {
       const { error: deleteError } = await context.supabase.from("catalog_products").delete().eq("id", data.id);
       if (deleteError) {
-        const msg = rpcError.message || deleteError.message || "Não foi possível excluir o produto.";
+        const msg = rpcError?.message || deleteError?.message || "Não foi possível excluir o produto.";
         throw new Error(msg.includes("Acesso restrito") ? "Acesso restrito à administração." : msg);
       }
     }
