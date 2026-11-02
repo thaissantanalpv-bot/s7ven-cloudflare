@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Banknote, Download, Package, Receipt, ShoppingCart } from "lucide-react";
 import { listOrders } from "@/lib/orders.functions";
-import { orderStatusLabel } from "@/lib/orders";
+import { orderStatusLabel, type Order } from "@/lib/orders";
 import { dailySales, historyPeriodRange, inSalesRange, summarizeSales, type HistoryPeriod } from "@/lib/sales-report";
 import { OrderCancellation } from "@/components/orders/order-cancellation";
 import { brl } from "@/lib/products";
@@ -27,7 +27,7 @@ const chartConfig = {
   revenue: { label: "Faturamento", color: "var(--primary)" },
   count: { label: "Vendas", color: "var(--primary)" },
 } satisfies ChartConfig;
-const statusText = (o: { status: string; source?: string | null }) => o.status === "cancelled" ? "Cancelado" : o.source === "counter" ? "Concluída" : orderStatusLabel(o.status as never);
+const statusText = (o: Pick<Order, "status" | "source">) => o.status === "cancelled" ? "Cancelado" : o.source === "counter" ? "Concluída" : orderStatusLabel(o.status);
 
 export function SalesHistory() {
   const fetchOrders = useServerFn(listOrders);
