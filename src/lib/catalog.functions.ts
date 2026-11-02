@@ -115,23 +115,11 @@ export const deleteCatalogProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: admin, error: roleError } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (roleError || !admin) throw new Error("Acesso restrito à administração.");
-    const { data: combos, error: comboError } = await context.supabase.from("catalog_products").select("id,data");
-    if (comboError) throw new Error("Não foi possível conferir os combos.");
-    const usedBy = combos.filter(row => {
-      if (row.id === data.id) return false;
-      const parsed = catalogProductSchema.safeParse(row.data);
-      return parsed.success && parsed.data.comboGroups.some(g => g.productIds.includes(data.id));
-    });
-    if (usedBy.length) throw new Error("Este produto faz parte de um combo. Remova-o do combo antes de excluir.");
-    const { error: rpcError } = await (context.supabase.rpc as unknown as (_name: string, _args: Record<string, unknown>) => Promise<{ error: { message?: string } | null }>)(("admin_delete_catalog_product"), { _product_id: data.id });
-    if (rpcError) {
-      const { error: deleteError } = await context.supabase.from("catalog_products").delete().eq("id", data.id);
-      if (deleteError) {
-        const msg = rpcError?.message || deleteError?.message || "Não foi possível excluir o produto.";
-        throw new Error(msg.includes("Acesso restrito") ? "Acesso restrito à administração." : msg);
-      }
-    }
-    return { id: data.id };
+    // Permanent delete: the product is also taken out of any combo; combos left with an empty group are paused.
+    const { data: result, error } = await context.supabase.rpc("admin_remove_catalog_product", { _product_id: data.id });
+    if (error) throw new Error(error.message?.includes("administradores") ? "Acesso restrito à administração." : "Não foi possível excluir o produto. Tente novamente.");
+    const info = (result ?? {}) as { combos?: string[]; paused?: string[] };
+    return { id: data.id, combos: info.combos ?? [], paused: info.paused ?? [] };
   });
 // Bulk price edits only touch price fields; every other product field is re-read on the server.
 export const saveBulkPrices = createServerFn({ method: "POST" })
