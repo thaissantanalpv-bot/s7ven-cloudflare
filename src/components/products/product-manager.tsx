@@ -1,5 +1,5 @@
 import { shrinkImage } from "@/lib/shrink-image";
-import { useState, useId, type ReactNode } from "react";
+import { useRef, useState, useId, type ReactNode } from "react";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, Pencil, Pause, Play, Search, Save, Upload, Trash2, Package, Star, Percent } from "lucide-react";
@@ -23,6 +23,10 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   const save = useServerFn(saveCatalogProduct);
   const remove = useServerFn(deleteCatalogProduct);
   const [deleting, setDeleting] = useState<CatalogProduct[] | null>(null);
+  // Keeps the dialog text stable while it animates closed.
+  const lastDeleting = useRef<CatalogProduct[]>([]);
+  if (deleting) lastDeleting.current = deleting;
+  const shownDeleting = deleting ?? lastDeleting.current;
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -89,8 +93,8 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
     </Dialog>
     <Dialog open={Boolean(deleting)} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
       <DialogContent className="sm:max-w-md">
-        <DialogTitle>{deleting?.length === 1 ? `Excluir ${deleting[0]?.name}?` : `Excluir ${deleting?.length ?? 0} produtos?`}</DialogTitle>
-        <DialogDescription>{deleting && deleting.length > 1 && <span className="mb-2 block max-h-32 overflow-y-auto">{deleting.map(p => p.name).join(", ")}</span>}Esta ação remove para sempre, inclusive dos combos em que aparece. Se quiser apenas escondê-lo do catálogo, use Pausar.</DialogDescription>
+        <DialogTitle>{shownDeleting.length === 1 ? `Excluir ${shownDeleting[0]?.name}?` : `Excluir ${shownDeleting.length} produtos?`}</DialogTitle>
+        <DialogDescription>{shownDeleting.length > 1 && <span className="mb-2 block max-h-32 overflow-y-auto">{shownDeleting.map(p => p.name).join(", ")}</span>}Esta ação remove para sempre, inclusive dos combos em que aparece. Se quiser apenas escondê-lo do catálogo, use Pausar.</DialogDescription>
         <div className="flex justify-end gap-3 pt-4">
           <Button variant="outline" disabled={busy} onClick={() => setDeleting(null)}>Cancelar</Button>
           <Button variant="destructive" disabled={busy} onClick={() => void confirmDelete()}>{busy ? "Excluindo…" : "Excluir para sempre"}</Button>
