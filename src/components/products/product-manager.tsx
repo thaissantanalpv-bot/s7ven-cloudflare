@@ -48,14 +48,14 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   const confirmDelete = async () => {
     if (!deleting) return;
     setBusy(true); setMessage("");
-    const failed: string[] = []; let done = 0;
+    const failed: string[] = []; const paused = new Set<string>(); let done = 0;
     for (const p of deleting) {
-      try { await remove({ data: { id: p.id } }); done++; }
+      try { const r = await remove({ data: { id: p.id } }); r.paused.forEach(name => paused.add(name)); done++; }
       catch (e) { failed.push(`${p.name}: ${e instanceof Error ? e.message : "não foi possível excluir"}`); }
     }
     await client.invalidateQueries({ queryKey: adminCatalogQuery.queryKey });
     setSelected(new Set()); setDeleting(null); setBusy(false);
-    setMessage([done ? `${done} ${done === 1 ? "produto excluído" : "produtos excluídos"}.` : "", ...failed].filter(Boolean).join(" "));
+    setMessage([done ? `${done} ${done === 1 ? "produto excluído definitivamente" : "produtos excluídos definitivamente"}.` : "", paused.size ? `Combo pausado porque ficou sem opções num grupo: ${[...paused].join(", ")}.` : "", ...failed].filter(Boolean).join(" "));
   };
   return <section className="py-7">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -90,7 +90,7 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
     <Dialog open={Boolean(deleting)} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
       <DialogContent className="sm:max-w-md">
         <DialogTitle>{deleting?.length === 1 ? `Excluir ${deleting[0]?.name}?` : `Excluir ${deleting?.length ?? 0} produtos?`}</DialogTitle>
-        <DialogDescription>{deleting && deleting.length > 1 && <span className="mb-2 block max-h-32 overflow-y-auto">{deleting.map(p => p.name).join(", ")}</span>}Esta ação remove para sempre. Se quiser apenas escondê-lo do catálogo, use Pausar.</DialogDescription>
+        <DialogDescription>{deleting && deleting.length > 1 && <span className="mb-2 block max-h-32 overflow-y-auto">{deleting.map(p => p.name).join(", ")}</span>}Esta ação remove para sempre, inclusive dos combos em que aparece. Se quiser apenas escondê-lo do catálogo, use Pausar.</DialogDescription>
         <div className="flex justify-end gap-3 pt-4">
           <Button variant="outline" disabled={busy} onClick={() => setDeleting(null)}>Cancelar</Button>
           <Button variant="destructive" disabled={busy} onClick={() => void confirmDelete()}>{busy ? "Excluindo…" : "Excluir para sempre"}</Button>
