@@ -32,4 +32,26 @@ describe("sales report", () => {
     item.components = [{ groupId: "g", productId: "b", name: "Segundo", qty: 3, option: "", price: 20 }];
     expect(summarizeSales([combo]).bestSellers).toEqual([{ id: "a", name: "Produto", quantity: 1, revenue: 10 }]);
   });
+});import { dailySales, historyPeriodRange } from "@/lib/sales-report";
+describe("sales history period and chart", () => {
+  const now = new Date("2026-11-02T22:41:00Z");
+  it("builds 7/30 day, this month and last month ranges in Sao Paulo days", () => {
+    expect(historyPeriodRange("7d", now)).toEqual({ start: "2026-10-27", end: "2026-11-03" });
+    expect(historyPeriodRange("30d", now)).toEqual({ start: "2026-10-04", end: "2026-11-03" });
+    expect(historyPeriodRange("month", now)).toEqual({ start: "2026-11-01", end: "2026-11-03" });
+    expect(historyPeriodRange("lastMonth", now)).toEqual({ start: "2026-10-01", end: "2026-11-01" });
+  });
+  it("sums revenue per day, fills empty days with zero and ignores cancelled orders", () => {
+    const points = dailySales([
+      { created_at: "2026-10-30T15:00:00Z", status: "delivered", total: 20 },
+      { created_at: "2026-10-30T18:00:00Z", status: "received", total: 15.5 },
+      { created_at: "2026-10-31T02:00:00Z", status: "delivered", total: 10 },
+      { created_at: "2026-11-01T15:00:00Z", status: "cancelled", total: 99 },
+    ], { start: "2026-10-30", end: "2026-11-02" });
+    expect(points).toEqual([
+      { date: "2026-10-30", revenue: 45.5, count: 3 },
+      { date: "2026-10-31", revenue: 0, count: 0 },
+      { date: "2026-11-01", revenue: 0, count: 0 },
+    ]);
+  });
 });
