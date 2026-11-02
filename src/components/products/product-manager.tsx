@@ -173,7 +173,7 @@ function ProductEditor({ initial, preview, galleryPreview, videoPreview, categor
     </fieldset>
     {photos.length > 0 && <div className="space-y-3"><label className="block text-sm">Foto para editar com IA<select className="field mt-1" aria-label="Foto para editar com IA" value={aiPhoto} disabled={aiBusy || busy || uploading} onChange={e => setAiPhoto(Number(e.target.value))}><option value={-1}>Selecione uma foto</option>{photos.map((p,i) => <option key={p.path} value={i}>Foto {i+1}{i === 0 ? " · Capa" : ""}</option>)}</select></label>{photos[aiPhoto]?.preview && <AiPhotoEditor key={photos[aiPhoto]?.path} source={photos[aiPhoto]?.preview ?? ""} productName={draft.name} onApply={applyAiPhoto} onBusy={setAiBusy} />}</div>}
     {(error || message) && <p role="alert" className="text-sm text-destructive">{error || message}</p>}
-    <div className="flex justify-end border-t pt-4"><Button type="submit" disabled={busy || uploading || aiBusy}><Save />{busy ? "Salvando…" : combos ? "Salvar combo" : "Salvar produto"}</Button></div>
+    <div className="flex justify-end border-t pt-4"><Button type="submit" disabled={busy || uploading || aiBusy || descBusy}><Save />{busy ? "Salvando…" : combos ? "Salvar combo" : "Salvar produto"}</Button></div>
   </form>;
 }
 function StockField({ label, stock, minStock, onChange, onMinChange }: { label: string; stock: number | null; minStock?: number | null; onChange: (n: number | null) => void; onMinChange?: (n: number | null) => void }) {
