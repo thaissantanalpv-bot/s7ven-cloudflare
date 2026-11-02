@@ -38,3 +38,29 @@ describe("ordersOpen", () => {
     expect(ordersOpen(s, at("2026-10-14T21:45:00-03:00"))).toMatchObject({ open: true, delivery: false });
   });
 });
+
+describe("feriado (data especial)", () => {
+  // Segunda 02/11/2026: normalmente fechado; feriado das 20:00 à 01:00, entregas até 23:00.
+  const weekly = EMPTY_SETTINGS.opening_hours.map((h) => ({ ...h, enabled: h.day !== 1, open: "16:00", close: "02:00" }));
+  const holiday: StoreSettings = { ...EMPTY_SETTINGS, hours_enabled: true, order_cutoff: "23:00", opening_hours: weekly, special_days: [{ date: "2026-11-02", label: "Finados", enabled: true, open: "20:00", close: "01:00" }] };
+  it("segunda sem feriado continua fechada", () => {
+    expect(ordersOpen({ ...holiday, special_days: [] }, at("2026-11-02T21:00:00-03:00"))).toMatchObject({ open: false });
+  });
+  it("antes das 20:00 do feriado a loja está fechada", () => {
+    expect(ordersOpen(holiday, at("2026-11-02T19:30:00-03:00"))).toMatchObject({ open: false, reason: "closed" });
+  });
+  it("das 20:00 às 23:00 aceita entrega", () => {
+    expect(ordersOpen(holiday, at("2026-11-02T21:00:00-03:00"))).toMatchObject({ open: true, delivery: true, closesAt: "01:00" });
+  });
+  it("depois das 23:00 só retirada até 01:00, inclusive depois da meia-noite", () => {
+    expect(ordersOpen(holiday, at("2026-11-02T23:30:00-03:00"))).toMatchObject({ open: true, delivery: false, closesAt: "01:00" });
+    expect(ordersOpen(holiday, at("2026-11-03T00:30:00-03:00"))).toMatchObject({ open: true, delivery: false, closesAt: "01:00" });
+  });
+  it("fecha à 01:00 e não herda o horário normal da madrugada", () => {
+    expect(ordersOpen(holiday, at("2026-11-03T01:30:00-03:00"))).toMatchObject({ open: false });
+  });
+  it("feriado marcado como fechado fecha um dia normalmente aberto", () => {
+    const closed = { ...holiday, special_days: [{ date: "2026-11-04", label: "", enabled: false, open: "20:00", close: "01:00" }] };
+    expect(ordersOpen(closed, at("2026-11-04T20:00:00-03:00"))).toMatchObject({ open: false });
+  });
+});
