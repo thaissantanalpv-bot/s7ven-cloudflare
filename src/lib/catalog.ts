@@ -101,6 +101,7 @@ export function toDraft(p: CatalogProduct): ProductDraft {
 /** Tidies an AI-written description: plain text, no markdown/links/citation marks, within the field limit. */
 export function cleanAiDescription(text: string): string {
   return text
+    .replace(/\s*\(\s*\[[^\]]*\]\([^)]*\)\s*\)/g, "")
     .replace(/\[(\d+(,\s*\d+)*)\]/g, "")
     .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
     .replace(/https?:\/\/\S+/g, "")
