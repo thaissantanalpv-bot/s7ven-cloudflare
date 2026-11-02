@@ -47,7 +47,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       throw new Error("Aguarde um minuto antes de enviar outro pedido.");
     const { data: row, error: settingsError } = await supabaseAdmin
       .from("store_settings")
-      .select("delivery_enabled,fixed_delivery_fee,pickup_address,delivery_zones,hours_enabled,opening_hours,order_cutoff,delivery_distance_enabled,delivery_origin,delivery_distance_tiers,coupons,promoBanner,paused")
+      .select("delivery_enabled,fixed_delivery_fee,pickup_address,delivery_zones,hours_enabled,opening_hours,order_cutoff,special_days,delivery_distance_enabled,delivery_origin,delivery_distance_tiers,coupons,promoBanner,paused")
       .eq("id", "main")
       .maybeSingle();
     if (settingsError) throw new Error("Não foi possível conferir a entrega. Tente novamente.");

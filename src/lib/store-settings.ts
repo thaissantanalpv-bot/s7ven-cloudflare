@@ -18,6 +18,15 @@ const promoBannerSchema = z.object({
 });
 export type PromoBanner = z.infer<typeof promoBannerSchema>;
 
+const specialDaySchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  label: z.string().trim().max(60).default(""),
+  enabled: z.boolean(),
+  open: time,
+  close: time,
+});
+export type SpecialDay = z.infer<typeof specialDaySchema>;
+
 export const settingsSchema = z.object({
   promoBanner: promoBannerSchema.default({ enabled: false, text: "", link: "" }),
   coupons: z.array(couponSchema).max(100).default([]),
@@ -31,6 +40,7 @@ export const settingsSchema = z.object({
   hours_enabled: z.boolean(),
   opening_hours: z.array(z.object({ day: z.number().int().min(0).max(6), enabled: z.boolean(), open: time, close: time })).length(7),
   order_cutoff: time.default("23:00"),
+  special_days: z.array(specialDaySchema).max(60).default([]),
   paused: z.boolean().default(false),
 }).superRefine((s, ctx) => {
   if (s.delivery_enabled && !s.delivery_distance_enabled && s.fixed_delivery_fee === null && !s.delivery_zones.length) ctx.addIssue({ code: "custom", message: "Cadastre pelo menos uma região antes de ativar as taxas." });
@@ -40,6 +50,8 @@ export const settingsSchema = z.object({
   if (new Set(s.opening_hours.map(h => h.day)).size !== 7) ctx.addIssue({ code: "custom", message: "Informe os sete dias da semana." });
   if (s.hours_enabled && !s.opening_hours.some(h => h.enabled)) ctx.addIssue({ code: "custom", message: "Selecione pelo menos um dia de atendimento." });
   if (s.opening_hours.some(h => h.enabled && h.open === h.close)) ctx.addIssue({ code: "custom", message: "A abertura e o fechamento precisam ser diferentes." });
+  if (new Set(s.special_days.map(d => d.date)).size !== s.special_days.length) ctx.addIssue({ code: "custom", message: "Cada data especial só pode aparecer uma vez." });
+  if (s.special_days.some(d => d.enabled && d.open === d.close)) ctx.addIssue({ code: "custom", message: "Na data especial, a abertura e o fechamento precisam ser diferentes." });
 });
 export type StoreSettings = z.infer<typeof settingsSchema>;
 export const EMPTY_SETTINGS: StoreSettings = {
@@ -49,6 +61,7 @@ export const EMPTY_SETTINGS: StoreSettings = {
   delivery_distance_enabled: false, delivery_origin: "", delivery_distance_tiers: [],
   opening_hours: DAYS.map((_, day) => ({ day, enabled: false, open: "18:00", close: "23:00" })),
   order_cutoff: "23:00",
+  special_days: [],
   paused: false,
 };
 
@@ -67,36 +80,61 @@ export function distanceFee(settings: StoreSettings, distanceKm: number) {
   if (!tier) throw new Error("Endereço fora da área de entrega. Escolha retirada ou fale com a loja.");
   return tier.fee;
 }
+type Hours = { enabled: boolean; open: string; close: string };
+const shiftIsoDay = (isoDay: string, days: number) => {
+  const d = new Date(`${isoDay}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+/** Sao Paulo calendar date, weekday and HH:MM. */
+export function saoPauloClock(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
+  const part = (name: string) => parts.find(p => p.type === name)?.value ?? "";
+  return {
+    date: `${part("year")}-${part("month")}-${part("day")}`,
+    day: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(part("weekday")),
+    current: `${part("hour")}:${part("minute")}`,
+  };
+}
+/** Hours for one Sao Paulo date: a special day (holiday) replaces that weekday's regular hours. */
+export function hoursForDate(settings: StoreSettings, isoDate: string): Hours & { special?: SpecialDay } {
+  const special = settings.special_days.find(d => d.date === isoDate);
+  if (special) return { enabled: special.enabled, open: special.open, close: special.close, special };
+  const day = new Date(`${isoDate}T12:00:00Z`).getUTCDay();
+  return settings.opening_hours.find(h => h.day === day) ?? { enabled: false, open: "00:00", close: "00:00" };
+}
+function currentWindow(settings: StoreSettings, now: Date) {
+  const { date, current } = saoPauloClock(now);
+  const today = hoursForDate(settings, date);
+  const yesterday = hoursForDate(settings, shiftIsoDay(date, -1));
+  const afterMidnight = !!(yesterday.enabled && yesterday.open > yesterday.close && current < yesterday.close);
+  const todayOpen = !!(today.enabled && (today.open < today.close ? current >= today.open && current < today.close : current >= today.open));
+  return { current, today, yesterday, afterMidnight, open: afterMidnight || todayOpen };
+}
+/** Upcoming special days (today onward), sorted by date. */
+export function upcomingSpecialDays(settings: StoreSettings, now = new Date()) {
+  const today = saoPauloClock(now).date;
+  return settings.special_days.filter(d => d.date >= shiftIsoDay(today, -1)).sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export function storeStatus(settings: StoreSettings, now = new Date()) {
   if (settings.paused) return { open: false, configured: true, label: "Pedidos pausados" };
   if (!settings.hours_enabled) return { open: true, configured: false, label: "Horários a confirmar" };
-  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
-  const part = (name: string) => parts.find(p => p.type === name)?.value ?? "";
-  const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(part("weekday"));
-  const current = `${part("hour")}:${part("minute")}`;
-  const today = settings.opening_hours.find(h => h.day === day);
-  const yesterday = settings.opening_hours.find(h => h.day === (day + 6) % 7);
-  const afterMidnight = yesterday?.enabled && yesterday.open > yesterday.close && current < yesterday.close;
-  const open = !!(afterMidnight || (today?.enabled && (today.open < today.close ? current >= today.open && current < today.close : current >= today.open)));
+  const { open } = currentWindow(settings, now);
   return { open, configured: true, label: open ? "Aberto agora" : "Fechado agora" };
 }
 
 /**
  * Pedidos são aceitos enquanto a loja está aberta. Depois do horário limite das entregas
  * (ex.: 23:00) o pedido continua possível, mas somente para retirada, até a loja fechar.
+ * Datas especiais (feriados) usam o mesmo horário limite das entregas.
  */
 export function ordersOpen(settings: StoreSettings, now = new Date()) {
   if (settings.paused) return { open: false as const, delivery: false, configured: true, reason: "paused" as const, closesAt: null };
   const status = storeStatus(settings, now);
   if (!status.open) return { open: false as const, delivery: false, configured: status.configured, reason: "closed" as const, closesAt: null };
-  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
-  const part = (name: string) => parts.find(p => p.type === name)?.value ?? "";
-  const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(part("weekday"));
-  const current = `${part("hour")}:${part("minute")}`;
-  const today = settings.opening_hours.find(h => h.day === day);
-  const yesterday = settings.opening_hours.find(h => h.day === (day + 6) % 7);
-  const afterMidnight = !!(yesterday?.enabled && yesterday.open > yesterday.close && current < yesterday.close);
-  const closesAt = !status.configured ? null : afterMidnight ? yesterday!.close : today?.close ?? null;
+  const { current, today, yesterday, afterMidnight } = currentWindow(settings, now);
+  const closesAt = !status.configured ? null : afterMidnight ? yesterday.close : today.enabled ? today.close : null;
   if (afterMidnight || current >= settings.order_cutoff) return { open: true as const, delivery: false, configured: status.configured, reason: "cutoff" as const, closesAt };
   return { open: true as const, delivery: true, configured: status.configured, reason: null, closesAt };
 }
