@@ -537,6 +537,10 @@ export type Database = {
         Args: { _product_id: string }
         Returns: undefined
       }
+      admin_remove_catalog_product: {
+        Args: { _product_id: string }
+        Returns: Json
+      }
       cancel_store_order: {
         Args: { _expected_updated_at: string; _id: string; _reason: string }
         Returns: Json
