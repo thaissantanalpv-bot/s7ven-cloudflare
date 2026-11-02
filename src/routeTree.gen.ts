@@ -16,6 +16,7 @@ import { Route as AvaliarRouteImport } from './routes/avaliar'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as ApiAssistantRouteImport } from './routes/api/assistant'
+import { Route as ApiDescribeProductRouteImport } from './routes/api/describe-product'
 import { Route as ApiEditPhotoRouteImport } from './routes/api/edit-photo'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
@@ -53,6 +54,11 @@ const ApiAssistantRoute = ApiAssistantRouteImport.update({
   path: '/api/assistant',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDescribeProductRoute = ApiDescribeProductRouteImport.update({
+  id: '/api/describe-product',
+  path: '/api/describe-product',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiEditPhotoRoute = ApiEditPhotoRouteImport.update({
   id: '/api/edit-photo',
   path: '/api/edit-photo',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/api/assistant': typeof ApiAssistantRoute
+  '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/api/assistant': typeof ApiAssistantRoute
+  '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/api/assistant': typeof ApiAssistantRoute
+  '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/painel'
     | '/api/assistant'
+    | '/api/describe-product'
     | '/api/edit-photo'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/painel'
     | '/api/assistant'
+    | '/api/describe-product'
     | '/api/edit-photo'
     | '/lovable/email/transactional/preview'
   id:
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/painel'
     | '/api/assistant'
+    | '/api/describe-product'
     | '/api/edit-photo'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
@@ -138,6 +150,7 @@ export interface RootRouteChildren {
   AvaliarRoute: typeof AvaliarRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiAssistantRoute: typeof ApiAssistantRoute
+  ApiDescribeProductRoute: typeof ApiDescribeProductRoute
   ApiEditPhotoRoute: typeof ApiEditPhotoRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
@@ -193,6 +206,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/describe-product': {
+      id: '/api/describe-product'
+      path: '/api/describe-product'
+      fullPath: '/api/describe-product'
+      preLoaderRoute: typeof ApiDescribeProductRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/edit-photo': {
       id: '/api/edit-photo'
       path: '/api/edit-photo'
@@ -228,6 +248,7 @@ const rootRouteChildren: RootRouteChildren = {
   AvaliarRoute: AvaliarRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiAssistantRoute: ApiAssistantRoute,
+  ApiDescribeProductRoute: ApiDescribeProductRoute,
   ApiEditPhotoRoute: ApiEditPhotoRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }

@@ -63,6 +63,8 @@ async function resolveCatalogPhotos(products: CatalogProduct[], client: Supabase
         p.image = resolvePhoto(p.image);
       }
       if (p.variationPhotos) {
+        // Editing needs the stored paths; display needs the resolved links.
+        p.variationPhotoPaths = { ...p.variationPhotos };
         const resolvedVariationPhotos: Record<string, string> = {};
         for (const [name, path] of Object.entries(p.variationPhotos)) {
           const resolved = resolvePhoto(path);
