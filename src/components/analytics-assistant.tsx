@@ -111,9 +111,11 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
     }
   };
   const suggestions = [
-    "Como estão as visitas e os pedidos hoje?",
-    "Onde estamos perdendo compras?",
-    "Quais tendências aparecem nos últimos dias?",
+    "Crie uma estratégia para aumentar o faturamento deste mês",
+    "Planeje uma campanha para trazer novos clientes",
+    "Analise meus preços e me ajude a calcular a margem de lucro",
+    "Como posso melhorar meu catálogo digital?",
+    "Quais processos da tabacaria posso automatizar?",
   ];
   return (
     <section
@@ -122,7 +124,7 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
     >
       <div className="flex items-center gap-3 border-b pb-4">
         <MessageCircle className="size-5 text-primary" />
-        <span className="font-display font-semibold">Assistente S7VEN</span>
+        <span className="font-display font-semibold">Astra · Assistente S7VEN</span>
         <div className="ml-auto flex items-center gap-2">
           <Button
             variant="outline"
@@ -143,7 +145,8 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
           {!messages.length && (
             <ConversationEmptyState>
               <ChartNoAxesCombined className="size-9 text-primary" />
-              <h2 className="font-display text-xl font-semibold">O movimento da sua loja</h2>
+              <h2 className="font-display text-xl font-semibold">Como posso ajudar a sua loja hoje?</h2>
+              <p className="max-w-md text-sm text-muted-foreground">Estratégias de vendas, campanhas, preços e lucro, catálogo, projetos de sites e automações. Peça o que precisar.</p>
               <div className="mt-4 flex w-full max-w-lg flex-col gap-2">
                 {suggestions.map((text) => (
                   <Button
@@ -163,7 +166,7 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
           {messages.map((message, index) => (
             <Message key={message.id} from={message.role} data-message-role={message.role}>
               {message.role === "assistant" && (
-                <span className="text-xs font-medium text-primary">S7VEN</span>
+                <span className="text-xs font-medium text-primary">Astra</span>
               )}
               <MessageContent
                 className={
@@ -190,7 +193,7 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
                       isStreaming={busy && index === messages.length - 1}
                     >
                       <ReasoningTrigger>
-                        <span className="text-xs">Análise dos indicadores</span>
+                        <span className="text-xs">Raciocínio da Astra</span>
                       </ReasoningTrigger>
                       <ReasoningContent>{part.text}</ReasoningContent>
                     </Reasoning>
@@ -206,7 +209,7 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
                 (p) => p.type === "text" && messages.at(-1)?.role === "assistant" && p.text.trim(),
               ) && (
               <div role="status">
-                <Shimmer>Consultando os indicadores…</Shimmer>
+                <Shimmer>A Astra está pensando…</Shimmer>
               </div>
             )}
         </ConversationContent>
@@ -226,7 +229,7 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
         <PromptInputTextarea
           ref={input}
           aria-label="Pergunta para a assistente"
-          placeholder="Pergunte sobre visitas, carrinhos ou pedidos…"
+          placeholder="Peça uma estratégia, campanha, análise de preços…"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           maxLength={4000}
@@ -234,7 +237,7 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
           className="min-h-16"
         />
         <PromptInputFooter>
-          <span className="text-xs text-muted-foreground">S7VEN · IA</span>
+          <span className="text-xs text-muted-foreground">Astra · IA</span>
           <PromptInputSubmit
             status={status}
             aria-label={busy ? "Parar análise" : "Enviar pergunta"}
@@ -251,7 +254,7 @@ function AssistantChat({ initial }: { initial: AssistantConversation }) {
         </PromptInputFooter>
       </PromptInput>
       <p className="py-2 text-center text-[11px] text-muted-foreground">
-        Sugestões por IA podem conter erros. Confira os números no painel.
+        A Astra pode errar. Confira números e informações antes de usar.
       </p>
     </section>
   );
