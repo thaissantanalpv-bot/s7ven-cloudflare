@@ -92,7 +92,7 @@ export function SalesHistory() {
       <div className="flex flex-wrap gap-2" role="group" aria-label="Período">
         {PERIODS.map(p => <Button key={p.id} size="sm" variant={!day && period === p.id ? "default" : "outline"} aria-pressed={!day && period === p.id} onClick={() => { setPeriod(p.id); setDay(""); setPage(0); }}>{p.label}</Button>)}
       </div>
-      <input type="date" className="field h-9 w-auto" aria-label="Dia específico" value={day} onChange={e => { setDay(e.target.value); setPage(0); }} />
+      <input type="date" className="field w-auto" aria-label="Dia específico" value={day} onChange={e => { setDay(e.target.value); setPage(0); }} />
       <Button size="sm" className="gap-2 sm:ml-auto" disabled={!filtered.length} onClick={exportCsv}><Download className="size-4" />Gerar relatório</Button>
     </div>
 
@@ -102,7 +102,7 @@ export function SalesHistory() {
           <p className="flex items-center gap-2 text-sm text-muted-foreground"><span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="size-4" /></span>{label}</p>
           <p className="mt-3 break-words font-display text-2xl font-semibold">{value}</p>
         </div>)}
-        <div className="col-span-2 rounded-xl border bg-card p-4 lg:col-span-1">
+        <div className="min-w-0 rounded-xl border bg-card p-4">
           <p className="flex items-center gap-2 text-sm text-muted-foreground"><span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary"><Package className="size-4" /></span>Produto líder</p>
           {leader ? <><p className="mt-3 line-clamp-2 font-semibold">{leader.name}</p><p className="text-sm text-muted-foreground">{leader.quantity} un vendidas</p></> : <p className="mt-3 text-sm text-muted-foreground">Sem vendas no período</p>}
         </div>
@@ -113,7 +113,7 @@ export function SalesHistory() {
         <div className="rounded-xl border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">{metric === "revenue" ? "Faturamento" : "Vendas"}</h2>
-            <select className="field h-9 w-auto" aria-label="Valor do gráfico" value={metric} onChange={e => setMetric(e.target.value as "revenue" | "count")}>
+            <select className="field w-auto" aria-label="Valor do gráfico" value={metric} onChange={e => setMetric(e.target.value as "revenue" | "count")}>
               <option value="revenue">Faturamento (R$)</option>
               <option value="count">Número de vendas</option>
             </select>
