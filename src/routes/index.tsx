@@ -27,7 +27,7 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { publicStoreSettingsQuery as storeSettingsQuery } from "@/lib/store-settings.query";
 import { savePublicSnapshot, readPublicSnapshot, cacheViewedCatalogPhotos, offlinePhotoUrls } from "@/lib/offline-catalog";
-import { ordersOpen, storeStatus, DAYS } from "@/lib/store-settings";
+import { ordersOpen, storeStatus, upcomingSpecialDays, DAYS } from "@/lib/store-settings";
 import { QRCodeSVG } from "qrcode.react";
 import { useServerFn } from "@tanstack/react-start";
 import { PhoneField } from "@/components/orders/phone-field";
@@ -626,6 +626,12 @@ function Catalog() {
         <p key={h.day} className="flex justify-between gap-4">
           <span className="text-muted-foreground">{DAYS[h.day]}</span>
           <span>{h.enabled ? `${h.open} – ${h.close}${h.open > h.close ? " (+1 dia)" : ""}` : "Fechado"}</span>
+        </p>
+      ))}
+      {upcomingSpecialDays(settings, now ?? undefined).map((d) => (
+        <p key={d.date} className="flex justify-between gap-4 font-medium text-primary sm:col-span-2">
+          <span>{d.label || "Data especial"} · {d.date.slice(8, 10)}/{d.date.slice(5, 7)}</span>
+          <span>{d.enabled ? `${d.open} – ${d.close}${d.open > d.close ? " (+1 dia)" : ""}` : "Fechado"}</span>
         </p>
       ))}
     </div>
