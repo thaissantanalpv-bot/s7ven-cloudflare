@@ -122,6 +122,24 @@ export type Order = {
   created_at: string;
   updated_at: string;
 };
+
+const spDay = (date: Date) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(date);
+
+/**
+ * Cancelled orders stay on the board only on the Brasília day they were cancelled
+ * and until the admin clears them; they remain in history and reports.
+ */
+export function showCancelledOnBoard(
+  order: Pick<Order, "status" | "cancelled_at" | "updated_at" | "created_at">,
+  now: Date,
+  clearedAt: number | null,
+): boolean {
+  if (order.status !== "cancelled") return true;
+  const at = new Date(order.cancelled_at || order.updated_at || order.created_at);
+  if (spDay(at) !== spDay(now)) return false;
+  return clearedAt == null || at.getTime() > clearedAt;
+}
 export const trackingUrlSchema = z
   .string()
   .trim()
