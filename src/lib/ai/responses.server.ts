@@ -12,6 +12,7 @@ export function createResponsesCall(
   config: { baseURL: string; apiKey: string; model: string; fetch?: typeof fetch },
   messages: ModelMessage[],
   instructions?: string,
+  options?: { web_search?: boolean },
 ) {
   const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
   const provider = createOpenAI({
@@ -28,6 +29,8 @@ export function createResponsesCall(
     // AI SDK 6 lacks `instructions`: rename this key to `system` there.
     ...(instructions ? { instructions } : {}),
     messages,
+    // Built-in, provider-executed web search; no app-side tool round trip.
+    ...(options?.web_search ? { tools: { web_search: provider.tools.webSearch({}) } } : {}),
     abortSignal: request.signal,
     maxRetries: 0,
     providerOptions: {
