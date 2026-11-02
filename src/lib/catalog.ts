@@ -62,13 +62,20 @@ export type CatalogProduct = Product & {
   comboGroups?: z.infer<typeof comboGroupSchema>[];
 };
 export type ProductDraft = z.infer<typeof catalogProductSchema>;
-export function mergeCatalog(rows: { id: string; data: unknown; updated_at: string }[]): CatalogProduct[] {
+type CatalogRow = { id: string; data: unknown; updated_at: string };
+const fromRow = (row: CatalogRow): CatalogProduct => {
+  const p = catalogProductSchema.parse(row.data);
+  return { ...p, id: row.id, options: p.variations.map(v => v.name), updatedAt: row.updated_at };
+};
+/** The stored catalog is the only source of truth: a product deleted in the panel never comes back. */
+export function catalogFromRows(rows: CatalogRow[]): CatalogProduct[] {
+  return rows.map(fromRow);
+}
+/** Original imported list overlaid with stored rows; used by tests and fixtures, not by live reads. */
+export function mergeCatalog(rows: CatalogRow[]): CatalogProduct[] {
   const base: CatalogProduct[] = PRODUCTS.map(p => ({ ...p, compareAtPrice: null, active: true, stock: null, minStock: null, allowOther: Boolean(p.options?.length), variations: (p.options ?? []).map(name => ({ name, active: true, stock: null, minStock: null })), updatedAt: null }));
   const map = new Map(base.map(p => [p.id, p]));
-  for (const row of rows) {
-    const p = catalogProductSchema.parse(row.data);
-    map.set(row.id, { ...p, id: row.id, options: p.variations.map(v => v.name), updatedAt: row.updated_at });
-  }
+  for (const row of rows) map.set(row.id, fromRow(row));
   return [...map.values()];
 }
 export function available(p: Product | CatalogProduct, option = "", qty = 1) {

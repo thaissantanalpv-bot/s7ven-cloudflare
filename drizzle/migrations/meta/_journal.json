@@ -288,6 +288,13 @@
       "when": 1793500000000,
       "tag": "0040_permanent_catalog_product_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793584978922,
+      "tag": "0041_delete_any_catalog_product",
+      "breakpoints": true
     }
   ]
 }

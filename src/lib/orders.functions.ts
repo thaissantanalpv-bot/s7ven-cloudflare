@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { submitOrderSchema, priceOrder, statusSchema, workflowStatusSchema, cancelOrderSchema, trackingUrlSchema, purchaseNumbers, type Order } from "./orders";
 import { EMPTY_SETTINGS, ordersOpen, settingsSchema } from "./store-settings";
-import { mergeCatalog } from "./catalog";
+import { catalogFromRows } from "./catalog";
 import { deliveryAddress } from "./delivery-address";
 
 export const submitOrder = createServerFn({ method: "POST" })
@@ -68,7 +68,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       if (quoteError || !quote || quote.address !== deliveryAddress(data.customer.address) || quote.settings_hash !== await deliverySettingsHash(settings)) throw new Error("O endereço ou a taxa mudou. Calcule a entrega novamente.");
       verifiedDelivery = { fee: Number(quote.fee), km: Number(quote.distance_km) };
     }
-    const priced = priceOrder(data, settings, mergeCatalog(catalogRows), verifiedDelivery);
+    const priced = priceOrder(data, settings, catalogFromRows(catalogRows), verifiedDelivery);
     const { data: saved, error } = await supabaseAdmin
       .from("orders")
       .insert({
