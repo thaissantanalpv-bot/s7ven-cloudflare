@@ -628,7 +628,7 @@ function Catalog() {
           <span>{h.enabled ? `${h.open} – ${h.close}${h.open > h.close ? " (+1 dia)" : ""}` : "Fechado"}</span>
         </p>
       ))}
-      {upcomingSpecialDays(settings, now ?? undefined).map((d) => (
+      {(now ? upcomingSpecialDays(settings, now) : []).map((d) => (
         <p key={d.date} className="flex justify-between gap-4 font-medium text-primary sm:col-span-2">
           <span>{d.label || "Data especial"} · {d.date.slice(8, 10)}/{d.date.slice(5, 7)}</span>
           <span>{d.enabled ? `${d.open} – ${d.close}${d.open > d.close ? " (+1 dia)" : ""}` : "Fechado"}</span>
