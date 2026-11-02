@@ -16,11 +16,21 @@ import {
   CheckCircle2,
   Check,
   Printer,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { listOrders, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
-import { ORDER_STAGES, orderWhatsApp, isActiveOrder, type Order, type OrderStatus } from "@/lib/orders";
+import {
+  ORDER_STAGES,
+  orderWhatsApp,
+  isActiveOrder,
+  showCancelledOnBoard,
+  type Order,
+  type OrderStatus,
+} from "@/lib/orders";
+
+const CANCELLED_CLEARED_KEY = "s7ven-cancelled-cleared-at";
 import { brl } from "@/lib/products";
 import { OrderPrinting } from "./order-printing";
 import { OrderCancellation } from "./order-cancellation";
@@ -76,6 +86,27 @@ export function OrderBoard() {
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const [pendingMessage, setPendingMessage] = useState<Order | null>(null);
   const [, setTick] = useState(0);
+  const [cancelledClearedAt, setCancelledClearedAt] = useState<number | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = Number(window.localStorage.getItem(CANCELLED_CLEARED_KEY));
+      if (saved > 0) setCancelledClearedAt(saved);
+    } catch {
+      /* storage blocked: keep showing today's cancelled orders */
+    }
+  }, []);
+
+  const clearCancelled = () => {
+    const at = Date.now();
+    setCancelledClearedAt(at);
+    try {
+      window.localStorage.setItem(CANCELLED_CLEARED_KEY, String(at));
+    } catch {
+      /* storage blocked: cleared only until the page reloads */
+    }
+    setNotice("Cancelados limpos do quadro. Eles continuam em Histórico e no filtro Cancelados.");
+  };
 
   // Tick every 30s to update elapsed timers
   useEffect(() => {
@@ -153,8 +184,10 @@ export function OrderBoard() {
       (o.status !== "delivered" || isOrderFromToday(o.updated_at || o.created_at)),
   );
 
+  const now = new Date();
   const visible = all.filter(
     (o) =>
+      (period === "cancelled" || showCancelledOnBoard(o, now, cancelledClearedAt)) &&
       (period !== "today" || isOrderFromToday(o.created_at)) &&
       (period !== "active" || isActiveOrder(o.status)) &&
       (period !== "cancelled" || o.status === "cancelled") &&
@@ -461,7 +494,15 @@ export function OrderBoard() {
       )}
       {visible.some((o) => o.status === "cancelled") && (
         <section aria-label="Cancelados" className="mt-8 border-t pt-5">
-          <h2 className="mb-4 font-semibold text-destructive">Cancelados</h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-semibold text-destructive">Cancelados</h2>
+            {period !== "cancelled" && (
+              <Button variant="outline" size="sm" onClick={clearCancelled}>
+                <Trash2 />
+                Limpar cancelados
+              </Button>
+            )}
+          </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {visible
               .filter((o) => o.status === "cancelled")
