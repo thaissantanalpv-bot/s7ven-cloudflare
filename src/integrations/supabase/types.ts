@@ -533,6 +533,10 @@ export type Database = {
     }
     Functions: {
       admin_ai_dashboard_snapshot: { Args: never; Returns: Json }
+      admin_delete_catalog_product: {
+        Args: { _product_id: string }
+        Returns: undefined
+      }
       cancel_store_order: {
         Args: { _expected_updated_at: string; _id: string; _reason: string }
         Returns: Json
