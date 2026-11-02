@@ -55,9 +55,9 @@ export function SpecialDaysEditor({ draft, update }: { draft: StoreSettings; upd
               </label>
               {d.enabled && (
                 <div className="flex items-center gap-2">
-                  <input aria-label={`Abertura ${d.date}`} type="time" className="field w-28" value={d.open} onChange={e => setDay(d.date, { open: e.target.value })} />
+                  <input aria-label={`Abertura ${d.date}`} type="time" className="field w-32" value={d.open} onChange={e => setDay(d.date, { open: e.target.value })} />
                   <span className="text-xs text-muted-foreground">até</span>
-                  <input aria-label={`Fechamento ${d.date}`} type="time" className="field w-28" value={d.close} onChange={e => setDay(d.date, { close: e.target.value })} />
+                  <input aria-label={`Fechamento ${d.date}`} type="time" className="field w-32" value={d.close} onChange={e => setDay(d.date, { close: e.target.value })} />
                   {d.open > d.close && <span className="text-xs text-muted-foreground">(+1 dia)</span>}
                 </div>
               )}
