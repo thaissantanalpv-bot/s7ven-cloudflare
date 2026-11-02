@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { bulkPrice, bulkPriceChangeSchema, catalogProductSchema, mergeCatalog, toDraft, type CatalogProduct } from "./catalog";
+import { bulkPrice, bulkPriceChangeSchema, catalogFromRows, catalogProductSchema, toDraft, type CatalogProduct } from "./catalog";
 
 // Only the allowlisted, read-only sales projection is available to visitors.
 export const getCatalog = createServerFn({ method: "GET" }).handler(async () => {
@@ -26,7 +26,7 @@ export const getCatalog = createServerFn({ method: "GET" }).handler(async () => 
     rows.push(...data);
     if (data.length < 500) break;
   }
-  return resolveCatalogPhotos(mergeCatalog(rows), client);
+  return resolveCatalogPhotos(catalogFromRows(rows), client);
 });
 
 export const getAdminCatalog = createServerFn({ method: "POST" })
@@ -42,7 +42,7 @@ export const getAdminCatalog = createServerFn({ method: "POST" })
     rows.push(...data);
     if (data.length < 500) break;
   }
-  return resolveCatalogPhotos(mergeCatalog(rows), client);
+  return resolveCatalogPhotos(catalogFromRows(rows), client);
 });
 
 async function resolveCatalogPhotos(products: CatalogProduct[], client: SupabaseClient<Database>) {
@@ -96,7 +96,7 @@ export const saveCatalogProduct = createServerFn({ method: "POST" })
     if (componentIds.length) {
       const { data: components, error: componentError } = await context.supabase.from("catalog_products").select("id,data,updated_at").in("id", componentIds);
       if (componentError) throw new Error("Não foi possível conferir os itens do combo.");
-      const catalog = mergeCatalog(components);
+      const catalog = catalogFromRows(components);
       if (componentIds.some(id => { const p = catalog.find(p => p.id === id); return !p || p.comboGroups?.length; }))
         throw new Error("Escolha apenas produtos existentes, sem outros combos.");
     }
@@ -106,7 +106,7 @@ export const saveCatalogProduct = createServerFn({ method: "POST" })
       : context.supabase.from("catalog_products").update(row).eq("id", row.id).eq("updated_at", data.expected);
     const { data: saved, error } = await query.select("id,data,updated_at").maybeSingle();
     if (error || !saved) throw new Error("O produto mudou ou não foi salvo. Atualize a lista antes de tentar novamente.");
-    return mergeCatalog([saved]).find(p => p.id === saved.id);
+    return catalogFromRows([saved]).find(p => p.id === saved.id);
   });
 
 export const deleteCatalogProduct = createServerFn({ method: "POST" })
@@ -149,7 +149,7 @@ export const saveBulkPrices = createServerFn({ method: "POST" })
       if (error) throw new Error("Não foi possível carregar os produtos.");
       rows.push(...chunk);
     }
-    const catalog = new Map(mergeCatalog(rows).map(p => [p.id, p]));
+    const catalog = new Map(catalogFromRows(rows).map(p => [p.id, p]));
     let saved = 0;
     const failed: string[] = [];
     for (const id of data.ids) {
