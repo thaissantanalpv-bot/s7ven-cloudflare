@@ -1,5 +1,5 @@
 # Descrição com IA e erro de foto ao editar (Thais, 02/11/2026 05:01 UTC)
-- [x] Botão opcional "Sugerir descrição com IA" no cadastro: pesquisa o produto na internet (e usa a foto de capa) e só entra no campo ao tocar "Usar esta descrição". Teste real no painel com Rosh Simples; sem conta = recusado.
+- [x] Botão opcional "Sugerir descrição com IA" no cadastro: usa a inteligência Astra, pesquisa o produto na internet (e usa a foto de capa) e só entra no campo ao tocar "Usar esta descrição". Teste real no painel com Rosh Simples; sem conta = recusado.
 - [x] Corrigido "Foto inválida" ao editar/pausar/remover variação de produtos com foto ligada à variação; Rosh Simples salvo sem erro e ligações preservadas. 28 testes OK.
 - [ ] Publicar: depende de Thais pedir a publicação.
 
