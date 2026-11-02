@@ -39,7 +39,7 @@ describe("Product manager", () => {
     setup();
     fireEvent.click(screen.getByRole("button", { name: "Excluir Gin Invictus" }));
     const dialog = screen.getByRole("dialog");
-    expect(dialog).toHaveTextContent("remove o produto para sempre");
+    expect(dialog).toHaveTextContent("remove para sempre");
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancelar" }));
     expect(mocks.remove).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Excluir Gin Invictus" }));
