@@ -36,7 +36,7 @@ type CatalogRow = { id: string; data: unknown; updated_at: string };
 /** Compact, allowlisted product view for the assistant: store-owned fields only, never customer data. */
 export function catalogForAssistant(rows: CatalogRow[]) {
   return rows.flatMap((row) => {
-    const d = (row.data ?? {}) as Record<string, unknown>;
+    const d = (row.data ?? {}) as { name?: unknown; category?: unknown; price?: unknown; compareAtPrice?: unknown; active?: unknown; stock?: unknown; featured?: unknown; variations?: unknown; comboGroups?: unknown };
     if (typeof d.name !== "string" || typeof d.price !== "number") return [];
     const variations = Array.isArray(d.variations) ? d.variations.length : 0;
     const combo = Array.isArray(d.comboGroups) && d.comboGroups.length > 0;
