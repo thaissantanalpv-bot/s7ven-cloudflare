@@ -1,3 +1,8 @@
+# Descrição com IA e erro de foto ao editar (Thais, 02/11/2026 05:01 UTC)
+- [x] Botão opcional "Sugerir descrição com IA" no cadastro: pesquisa o produto na internet (e usa a foto de capa) e só entra no campo ao tocar "Usar esta descrição". Teste real no painel com Rosh Simples; sem conta = recusado.
+- [x] Corrigido "Foto inválida" ao editar/pausar/remover variação de produtos com foto ligada à variação; Rosh Simples salvo sem erro e ligações preservadas. 28 testes OK.
+- [ ] Publicar: depende de Thais pedir a publicação.
+
 # Aviso de pedido novo no celular (Thais, 21/10/2026 01:36 UTC)
 - [x] Notificação estilo WhatsApp no Android para cada pedido novo do catálogo, mesmo com o painel fechado; botão em Pedidos e cartão em Configurações (ativar, testar, desativar). Teste real: aparelho ativado e aviso de teste aceito pelo serviço do Google; aparelho de teste removido. 137 testes OK.
 - [ ] Publicar e ativar no celular da loja: depende de Thais pedir a publicação e tocar em "Ativar avisos" no celular.
