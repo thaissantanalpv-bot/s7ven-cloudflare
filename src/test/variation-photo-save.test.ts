@@ -33,6 +33,9 @@ describe("AI description cleanup", () => {
   it("removes markdown, links and citation marks", () => {
     expect(cleanAiDescription("**Essência** de menta [1]. Veja https://x.com e [site](https://y.com).")).toBe("Essência de menta . Veja e site.");
   });
+  it("removes web-search source citations in parentheses", () => {
+    expect(cleanAiDescription("Essência para narguilé. ([gov.br](https://www.gov.br/x?utm_source=openai))")).toBe("Essência para narguilé.");
+  });
   it("keeps within the 2000-character description limit", () => {
     expect(cleanAiDescription("a".repeat(2500)).length).toBe(2000);
   });

@@ -4,4 +4,4 @@
 - Product videos: uploads go to the private `product-videos` bucket via resumable (TUS) upload; `data.video` holds the storage path, `data.youtube` only an 11-char id. Anonymous reads are allowed only for videos referenced by active products; catalog gets signed URLs, never stored URLs.
 - Bulk price edits send only ids + change to the server, which re-reads each product and rewrites price fields with the usual updated_at conflict check.
 - Admin drafts are built with `toDraft`, which must use stored paths (`imagePath`/`imagePaths`/`variationPhotoPaths`), never resolved signed URLs, and prunes variation-photo links to existing variations/photos.
-- AI product descriptions (`/api/describe-product`) are admin-only suggestions via Gemini with Google Search grounding; they only fill the field after the admin taps "Usar", and share the photo-AI block state on 402/403.
+- AI product descriptions (`/api/describe-product`) are admin-only suggestions from the Astra model on Responses with built-in web search; they only fill the field after the admin taps "Usar", and share the photo-AI block state on 402/403.
