@@ -26,7 +26,7 @@
 - Represent fixed-price combos as catalog products with comboGroups and structured order components; encode choices in separate option keys to preserve legacy carts, validate group membership server-side, and reserve all quantities together in sorted row-lock order.
 - The store uses an external POS, so the panel has no counter-sale screen; legacy `source = counter` orders stay readable in history/reports and out of delivery stages and new-order alerts.
 - Manifest start URL `/painel`, online admin auth. Offline cache only public catalog HTML/assets, products/settings, viewed photos — never admin/auth/API; online checkout.
-- Keep the admin assistant in one account-scoped transcript (admin-only reads, server-managed writes); authenticate streaming independently, send AI only allowlisted aggregates and store-owned catalog fields, no customer records; bounded leases and durable blocks stop duplicate paid requests; it never writes operations.
+- Keep the admin assistant in one account transcript (admin-only reads, server-managed writes); authenticate streaming independently, send AI only allowlisted aggregates and store-owned catalog fields, no customer records; bounded leases and durable blocks stop duplicate paid requests; it never writes operations.
 - WhatsApp photos use public galleries, not expiring URLs.
 - Delivery tracking links are admin-set per delivery order; public reads return only stage + link so customers never see other order data.
 - Admin reports (sales, frequent customers by normalized phone) read period-bounded order fields, return aggregates, exclude cancelled sales and never double-count combo components.
