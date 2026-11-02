@@ -2,7 +2,8 @@ import { z } from "zod";
 import { PRODUCTS, type Product } from "./products";
 
 const quantity = z.number().int().min(0).max(1000000).nullable();
-const photoPath = z.string().max(1000).refine(v => /^\/produtos\/p\d+\.jpg$/.test(v) || /^uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v), "Foto inválida.");
+export const PHOTO_PATH_PATTERN = /^(\/produtos\/p\d+\.jpg|uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp))$/;
+const photoPath = z.string().max(1000).refine(v => PHOTO_PATH_PATTERN.test(v), "Foto inválida.");
 export const VIDEO_PATTERN = /^uploads\/[a-zA-Z0-9_-]+\.(mp4|mov|webm|m4v)$/;
 export const MAX_VIDEO_BYTES = 1024 * 1024 * 1024;
 const videoPath = z.string().max(200).refine(v => !v || VIDEO_PATTERN.test(v), "Vídeo inválido.");
@@ -55,6 +56,8 @@ export type CatalogProduct = Product & {
   images?: string[];
   imagePaths?: string[];
   variationPhotos?: Record<string, string>;
+  /** Stored variation-photo paths, kept when variationPhotos is resolved to display URLs. */
+  variationPhotoPaths?: Record<string, string>;
   /** Playable video URL once resolved (storage path before resolution). */
   video?: string;
   videoPath?: string;
@@ -86,8 +89,27 @@ export function available(p: Product | CatalogProduct, option = "", qty = 1) {
   const v = p.variations.find(v => v.name === option);
   return v ? v.active && (v.stock === null || v.stock >= qty) : p.allowOther;
 }
+/** Keeps only variation-photo links whose variation still exists and whose photo is still one of the product photos. */
+export function cleanVariationPhotos<T extends Pick<ProductDraft, "image" | "images" | "variations" | "variationPhotos">>(d: T): T {
+  const names = new Set(d.variations.map(v => v.name));
+  const photos = new Set([d.image, ...d.images].filter(Boolean));
+  return { ...d, variationPhotos: Object.fromEntries(Object.entries(d.variationPhotos ?? {}).filter(([name, path]) => names.has(name) && photos.has(path) && PHOTO_PATH_PATTERN.test(path))) };
+}
 export function toDraft(p: CatalogProduct): ProductDraft {
-  return { id: p.id, name: p.name, description: p.description, price: p.price, compareAtPrice: p.compareAtPrice ?? null, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], variationPhotos: p.variationPhotos ?? {}, video: p.videoPath ?? (p.video && VIDEO_PATTERN.test(p.video) ? p.video : ""), youtube: p.youtube ?? "", active: p.active, featured: p.featured ?? false, stock: p.stock, minStock: p.minStock ?? null, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations.map(v => ({ ...v, minStock: v.minStock ?? null })), comboGroups: p.comboGroups ?? [] };
+  return cleanVariationPhotos({ id: p.id, name: p.name, description: p.description, price: p.price, compareAtPrice: p.compareAtPrice ?? null, category: p.category, emoji: p.emoji, image: p.imagePath ?? p.image ?? "", images: p.imagePaths ?? p.images ?? [], variationPhotos: p.variationPhotoPaths ?? p.variationPhotos ?? {}, video: p.videoPath ?? (p.video && VIDEO_PATTERN.test(p.video) ? p.video : ""), youtube: p.youtube ?? "", active: p.active, featured: p.featured ?? false, stock: p.stock, minStock: p.minStock ?? null, optionLabel: p.optionLabel === "Cor" ? "Cor" : p.optionLabel === "Variação" ? "Variação" : "Sabor", allowOther: p.allowOther, variations: p.variations.map(v => ({ ...v, minStock: v.minStock ?? null })), comboGroups: p.comboGroups ?? [] });
+}
+/** Tidies an AI-written description: plain text, no markdown/links/citation marks, within the field limit. */
+export function cleanAiDescription(text: string): string {
+  return text
+    .replace(/\[(\d+(,\s*\d+)*)\]/g, "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/[*_#`>]+/g, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, 2000)
+    .trim();
 }
 // Low-stock alerts: items whose tracked stock reached the minimum set by the store.
 export function lowStockItems(p: CatalogProduct): { label: string; stock: number; min: number }[] {
