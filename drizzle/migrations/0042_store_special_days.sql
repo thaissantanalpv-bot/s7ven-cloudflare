@@ -1,0 +1,2 @@
+ALTER TABLE public.store_settings ADD COLUMN IF NOT EXISTS special_days jsonb NOT NULL DEFAULT '[]'::jsonb;
+COMMENT ON COLUMN public.store_settings.special_days IS 'Date-specific opening hours (holidays) that replace the weekly hours for that Sao Paulo date: [{date, enabled, open, close, label}]';

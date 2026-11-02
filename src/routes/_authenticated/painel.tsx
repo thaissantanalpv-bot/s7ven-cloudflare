@@ -53,6 +53,7 @@ import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 import { lowStockItems } from "@/lib/catalog";
 import { AdminSettings } from "@/components/admin-settings";
 import { PromotionsEditor } from "@/components/promotions-editor";
+import { SpecialDaysEditor } from "@/components/special-days-editor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/painel")({ staticData: { sitemap: false },
@@ -559,6 +560,7 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
               </div>
             ))}
           </div>
+          <SpecialDaysEditor draft={draft} update={update} />
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-medium">Entregas até</p>

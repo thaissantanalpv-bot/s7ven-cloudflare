@@ -11,7 +11,7 @@
 
 - Keep product/cart logic on the public catalog route, with sections as its validated `aba` search param; preserve per-option keys (`components/catalog/cart-keys`) for saved carts.
 - Anonymous catalog analytics: bounded writes, admin-only aggregates, people = browser ids merged by keyed device HMAC, preview hosts untracked; atomic checkout conversion upsert on order insert; never infer contacts or block checkout; in-memory fallback when storage is blocked.
-- Store shared delivery and weekly hours in `store_settings`; validate writes through authenticated server functions and admin-only RLS so customers cannot change store operations.
+- Store shared delivery, weekly hours and date-specific special days in `store_settings`; resolve hours per Sao Paulo date (special day replaces that weekday, incl. after-midnight carry-over) in shared client/server helpers, and validate writes through authenticated server functions and admin-only RLS so customers cannot change store operations.
 - Shared delivery pricing precedence: enabled distance tiers, then fixed fee, then regions; keep pickup free.
 - Centralize Maps routes: body HMAC, city validation, short-lived address/settings/travel-mode quotes, checkout revalidation, server-claimed hourly store/network budget before paid calls. Duration is informational.
 - Grant store administration through protected `user_roles` and a server-managed invite checked against confirmed auth email; never grant privileges from browser state or editable metadata.

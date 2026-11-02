@@ -471,6 +471,7 @@ export type Database = {
           paused: boolean
           pickup_address: string
           promoBanner: Json
+          special_days: Json
           updated_at: string
         }
         Insert: {
@@ -488,6 +489,7 @@ export type Database = {
           paused?: boolean
           pickup_address?: string
           promoBanner?: Json
+          special_days?: Json
           updated_at?: string
         }
         Update: {
@@ -505,6 +507,7 @@ export type Database = {
           paused?: boolean
           pickup_address?: string
           promoBanner?: Json
+          special_days?: Json
           updated_at?: string
         }
         Relationships: []

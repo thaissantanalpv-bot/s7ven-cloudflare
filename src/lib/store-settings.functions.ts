@@ -18,7 +18,7 @@ export const getStoreSettings = createServerFn({ method: "GET" }).handler(async 
       return fetch(input, { ...init, headers });
     } },
   });
-  const { data, error } = await client.from("store_settings").select("delivery_enabled,fixed_delivery_fee,pickup_address,delivery_zones,hours_enabled,opening_hours,order_cutoff,delivery_distance_enabled,delivery_origin,delivery_distance_tiers,coupons,promoBanner,paused").eq("id", "main").maybeSingle();
+  const { data, error } = await client.from("store_settings").select("delivery_enabled,fixed_delivery_fee,pickup_address,delivery_zones,hours_enabled,opening_hours,order_cutoff,special_days,delivery_distance_enabled,delivery_origin,delivery_distance_tiers,coupons,promoBanner,paused").eq("id", "main").maybeSingle();
   if (error) throw new Error("Não foi possível carregar as configurações da loja.");
   return data ? settingsSchema.parse(data) : EMPTY_SETTINGS;
 });
