@@ -847,15 +847,17 @@ function Catalog() {
                 ].map((c) => {
                   const Icon = categoryIcon(c.label);
                   return (
-                    <button key={c.value} type="button" onClick={() => openCategory(c.value)} className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary">
-                      <span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-primary/15 text-primary">
-                        {categoryImage(c.value) ? <img src={categoryImage(c.value)} alt="" loading="lazy" width={64} height={64} className="size-full object-cover" /> : <Icon className="size-6" strokeWidth={1.8} />}
+                    <button key={c.value} type="button" onClick={() => openCategory(c.value)} className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary">
+                      <span className="grid aspect-[4/3] w-full place-items-center overflow-hidden bg-primary/10 text-primary">
+                        {categoryImage(c.value) ? <img src={categoryImage(c.value)} alt="" loading="lazy" width={320} height={240} className="size-full object-cover transition duration-300 group-hover:scale-105" /> : <Icon className="size-10" strokeWidth={1.6} />}
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="line-clamp-2 text-[15px] font-bold leading-snug text-card-foreground">{c.label}</span>
-                        <span className="text-xs text-muted-foreground">{c.count} produtos</span>
+                      <span className="flex items-center gap-2 px-3 py-2.5">
+                        <span className="min-w-0 flex-1">
+                          <span className="line-clamp-2 text-[15px] font-bold leading-snug text-card-foreground">{c.label}</span>
+                          <span className="text-xs text-muted-foreground">{c.count} produtos</span>
+                        </span>
+                        <ChevronRight className="size-4 shrink-0 text-primary" />
                       </span>
-                      <ChevronRight className="size-4 shrink-0 text-primary" />
                     </button>
                   );
                 })}
