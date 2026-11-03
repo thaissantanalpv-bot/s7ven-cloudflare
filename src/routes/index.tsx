@@ -40,7 +40,7 @@ import { startDeliverySession, quoteDelivery, suggestDeliveryAddress } from "@/l
 import { estimatedDeliveryMinutes } from "@/lib/delivery-route";
 import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine, getSavedCustomerAddress, saveCustomerAddress, type SavedCustomerAddress } from "@/lib/delivery-address";
 import { MapPin, Menu, ArrowLeft, ArrowRight, ShoppingCart, Home, LayoutGrid, ClipboardList, MoreHorizontal, ShieldCheck, Headphones, Flame, Wallet, Trash2, Gem, CheckCircle2 } from "lucide-react";
-import { categoryIcon } from "@/components/catalog/category-icon";
+import { categoryIcon, categoryImage } from "@/components/catalog/category-icon";
 import heroImg from "@/assets/hero-narguile.jpg";
 import { pairSuggestions } from "@/lib/pair-suggestions";
 import { ProductTile } from "@/components/catalog/product-tile";
@@ -814,8 +814,8 @@ function Catalog() {
                   const Icon = categoryIcon(c.label);
                   return (
                     <button key={c.value} type="button" onClick={() => openCategory(c.value)} className="flex w-28 shrink-0 flex-col items-center gap-2 rounded-2xl border border-border/70 bg-card px-2 py-3 text-center shadow-sm transition hover:border-primary">
-                      <span className="grid size-12 place-items-center rounded-xl bg-primary/15 text-primary">
-                        <Icon className="size-6" strokeWidth={1.8} />
+                      <span className="grid size-16 place-items-center overflow-hidden rounded-xl bg-primary/15 text-primary">
+                        {categoryImage(c.value) ? <img src={categoryImage(c.value)} alt="" loading="lazy" width={64} height={64} className="size-full object-cover" /> : <Icon className="size-6" strokeWidth={1.8} />}
                       </span>
                       <span className="line-clamp-2 text-[13px] font-bold leading-tight text-card-foreground">{c.label}</span>
                     </button>
@@ -848,8 +848,8 @@ function Catalog() {
                   const Icon = categoryIcon(c.label);
                   return (
                     <button key={c.value} type="button" onClick={() => openCategory(c.value)} className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary">
-                      <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
-                        <Icon className="size-6" strokeWidth={1.8} />
+                      <span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-primary/15 text-primary">
+                        {categoryImage(c.value) ? <img src={categoryImage(c.value)} alt="" loading="lazy" width={64} height={64} className="size-full object-cover" /> : <Icon className="size-6" strokeWidth={1.8} />}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="line-clamp-2 text-[15px] font-bold leading-snug text-card-foreground">{c.label}</span>
