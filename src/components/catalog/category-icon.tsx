@@ -18,3 +18,22 @@ export function categoryIcon(label: string): LucideIcon {
   for (const [re, icon] of RULES) if (re.test(label)) return icon;
   return label ? Package : LayoutGrid;
 }
+
+const IMAGES = import.meta.glob("@/assets/categories/*.jpg", { eager: true, import: "default" }) as Record<string, string>;
+const img = (slug: string) => Object.entries(IMAGES).find(([k]) => k.endsWith(`/${slug}.jpg`))?.[1];
+
+/** AI-generated illustrative photo per category; matches on the full stored category name. */
+const CATEGORY_IMAGES: Record<string, string> = {
+  "Sedas": "sedas", "Headshop": "headshop", "Tabaco": "tabaco", "Narguiles > Caixa de Carvão": "caixa-carvao",
+  "Piteiras": "piteiras", "Narguiles > Essências": "essencias", "Narguiles": "narguiles", "Cases": "cases",
+  "Isqueiros/Maçarico": "isqueiros", "Narguiles > Vasos": "vasos", "Narguiles > Alumínio": "aluminio",
+  "Palheiros": "palheiros", "Narguiles > Piteira Para Narguile": "piteira-narguile", "Tesoura": "tesoura",
+  "Bebidas": "bebidas", "Tereré": "terere", "Narguiles > Rosh": "rosh", "Combos": "combos", "Fluido": "fluido",
+  "Narguiles > COMBOS DE ESSÊNCIAS": "combos-essencias", "Charuto": "charuto", "Juice": "juice",
+  "Narguiles > Abafadores": "abafadores",
+};
+
+export function categoryImage(category: string): string | undefined {
+  const slug = CATEGORY_IMAGES[category];
+  return slug ? img(slug) : undefined;
+}
