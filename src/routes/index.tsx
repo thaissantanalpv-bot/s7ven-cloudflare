@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { publicStoreSettingsQuery as storeSettingsQuery } from "@/lib/store-settings.query";
+import { appearanceCss, appearanceFontsHref, isLightColor, parseAppearance } from "@/lib/catalog-appearance";
 import { savePublicSnapshot, readPublicSnapshot, cacheViewedCatalogPhotos, offlinePhotoUrls } from "@/lib/offline-catalog";
 import { ordersOpen, storeStatus, upcomingSpecialDays, DAYS } from "@/lib/store-settings";
 import { QRCodeSVG } from "qrcode.react";
@@ -638,6 +639,7 @@ function Catalog() {
   ) : (
     <p className="text-sm text-muted-foreground">Confirme os horários pelo WhatsApp.</p>
   );
+  const look = parseAppearance(settings.catalog_appearance);
   const navItems: { id: Tab; label: string; icon: typeof Home }[] = [
     { id: "inicio", label: "Início", icon: Home },
     { id: "categorias", label: "Categorias", icon: LayoutGrid },
@@ -647,6 +649,10 @@ function Catalog() {
 
   return (
     <div className="catalog-theme min-h-screen bg-background pb-36 text-foreground md:pb-10">
+      <style>{appearanceCss(look)}</style>
+      {(look.fontDisplay !== "geist" && look.fontDisplay !== "dm-sans") || (look.fontBody !== "geist" && look.fontBody !== "dm-sans") ? (
+        <link rel="stylesheet" href={appearanceFontsHref(look)} precedence="default" />
+      ) : null}
       {!online && <div role="status" className="border-b bg-muted px-4 py-2 text-center text-sm text-muted-foreground">Sem conexão · Exibindo o último catálogo salvo. Pedidos disponíveis ao reconectar.</div>}
       {settings.promoBanner?.enabled && settings.promoBanner.text && (
         <div className="bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground">
@@ -742,12 +748,13 @@ function Catalog() {
           <>
             <section aria-label="Boas-vindas" className="relative mt-4 overflow-hidden rounded-2xl border border-primary/30 bg-photo">
               <img src={heroImg} alt="" width={1600} height={720} className="absolute inset-0 size-full object-cover object-right" />
+              {isLightColor(look.background) && <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />}
               <div className="relative max-w-[70%] px-5 py-8 sm:px-8 sm:py-14 md:max-w-lg">
-                <p className="font-display text-sm font-semibold uppercase tracking-wide text-foreground sm:text-lg">Seu pedido favorito</p>
-                <h1 className="font-display text-3xl font-extrabold uppercase leading-none text-gold sm:text-5xl">Agora online!</h1>
-                <p className="mt-3 text-sm text-foreground/85 sm:text-base">Tabacaria, bebidas, acessórios e muito mais.</p>
+                <p className="font-display text-sm font-semibold uppercase tracking-wide text-foreground sm:text-lg">{look.bannerKicker}</p>
+                <h1 className="font-display text-3xl font-extrabold uppercase leading-none text-gold sm:text-5xl">{look.bannerTitle}</h1>
+                <p className="mt-3 text-sm text-foreground/85 sm:text-base">{look.bannerText}</p>
                 <Button onClick={() => goTab("categorias")} className="mt-5 h-11 rounded-full px-5 font-bold uppercase tracking-wide">
-                  Ver catálogo <ArrowRight />
+                  {look.bannerButton || "Ver catálogo"} <ArrowRight />
                 </Button>
               </div>
             </section>
@@ -771,7 +778,7 @@ function Catalog() {
 
             <p className="flex items-center gap-2 border-y py-2.5 text-xs font-medium sm:text-sm">
               <Truck className="size-4 shrink-0 text-primary" />
-              <span className="truncate">Entregas das 16:00 às 23:00</span>
+              <span className="truncate">{look.deliveryLine}</span>
             </p>
 
             {highlights.length > 0 && (

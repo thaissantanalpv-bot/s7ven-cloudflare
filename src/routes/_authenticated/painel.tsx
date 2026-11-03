@@ -29,6 +29,7 @@ import {
   Tag,
   Eye,
   Bell,
+  Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -54,6 +55,7 @@ import { lowStockItems } from "@/lib/catalog";
 import { AdminSettings } from "@/components/admin-settings";
 import { PromotionsEditor } from "@/components/promotions-editor";
 import { SpecialDaysEditor } from "@/components/special-days-editor";
+import { CatalogAppearanceEditor } from "@/components/catalog-appearance-editor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/painel")({ staticData: { sitemap: false },
@@ -121,7 +123,7 @@ function Admin() {
   ];
 
   const mobileMenuItems: { id: ViewId; label: string; Icon: typeof Home }[] = [
-    { id: "app-settings", label: "Configurações (Taxas, Horários, Assistente)", Icon: Settings },
+    { id: "app-settings", label: "Configurações (Taxas, Horários, Aparência, Assistente)", Icon: Settings },
     { id: "analytics", label: "Movimento do catálogo", Icon: Activity },
     { id: "report", label: "Relatório de vendas", Icon: Receipt },
     { id: "combos", label: "Combos", Icon: Layers },
@@ -151,10 +153,12 @@ function Admin() {
           <Tabs defaultValue="fees" className="mt-6">
             <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
               <TabsTrigger value="fees" className="gap-1.5"><Clock className="size-4" />Taxas e horários</TabsTrigger>
+              <TabsTrigger value="appearance" className="gap-1.5"><Palette className="size-4" />Aparência do catálogo</TabsTrigger>
               <TabsTrigger value="assistant" className="gap-1.5"><MessageCircle className="size-4" />Assistente</TabsTrigger>
               <TabsTrigger value="alerts" className="gap-1.5"><Bell className="size-4" />Avisos e sons</TabsTrigger>
             </TabsList>
             <TabsContent value="fees"><SettingsEditor initial={settings} /></TabsContent>
+            <TabsContent value="appearance"><CatalogAppearanceEditor /></TabsContent>
             <TabsContent value="assistant"><AnalyticsAssistant /></TabsContent>
             <TabsContent value="alerts"><AdminSettings /></TabsContent>
           </Tabs>

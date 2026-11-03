@@ -3,13 +3,13 @@
 @source "../src";
 @custom-variant dark (&:is(.dark *));
 @theme inline {
-  --font-display: "Geist", "DM Sans", sans-serif;
-  --font-sans: "DM Sans", sans-serif;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 8px;
-  --radius-2xl: 8px;
+  --font-display: var(--app-font-display, "Geist", "DM Sans", sans-serif);
+  --font-sans: var(--app-font-sans, "DM Sans", sans-serif);
+  --radius-sm: var(--app-radius-sm, 4px);
+  --radius-md: var(--app-radius-md, 6px);
+  --radius-lg: var(--app-radius-lg, 8px);
+  --radius-xl: var(--app-radius-xl, 8px);
+  --radius-2xl: var(--app-radius-2xl, 8px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -103,7 +103,7 @@ body:has(.catalog-theme) [role="dialog"] select {
   body {
     background: var(--background);
     color: var(--foreground);
-    font-family: var(--font-sans);
+    font-family: var(--app-font-sans, "DM Sans", sans-serif);
   }
   input,
   textarea,
