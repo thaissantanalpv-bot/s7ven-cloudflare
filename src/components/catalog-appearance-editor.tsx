@@ -9,7 +9,7 @@ import { storeSettingsQuery } from "@/lib/store-settings.query";
 import { saveCatalogAppearance } from "@/lib/store-settings.functions";
 import {
   APPEARANCE_PRESETS, BANNER_POSITIONS, CATALOG_FONTS, CORNER_STYLES, DEFAULT_APPEARANCE,
-  appearanceSchema, appearanceVars, parseAppearance,
+  appearanceSchema, appearanceVars, isLightColor, parseAppearance,
   type CatalogAppearance, type CatalogFont, type CornerStyle,
 } from "@/lib/catalog-appearance";
 import heroImg from "@/assets/hero-narguile.jpg";
