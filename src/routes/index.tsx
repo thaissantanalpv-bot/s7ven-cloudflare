@@ -40,6 +40,7 @@ import { startDeliverySession, quoteDelivery, suggestDeliveryAddress } from "@/l
 import { estimatedDeliveryMinutes } from "@/lib/delivery-route";
 import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine, getSavedCustomerAddress, saveCustomerAddress, type SavedCustomerAddress } from "@/lib/delivery-address";
 import { MapPin, Menu, ArrowLeft, ArrowRight, ShoppingCart, Home, LayoutGrid, ClipboardList, MoreHorizontal, ShieldCheck, Headphones, Flame, Wallet, Trash2, Gem, CheckCircle2 } from "lucide-react";
+import { categoryIcon } from "@/components/catalog/category-icon";
 import heroImg from "@/assets/hero-narguile.jpg";
 import { pairSuggestions } from "@/lib/pair-suggestions";
 import { ProductTile } from "@/components/catalog/product-tile";
