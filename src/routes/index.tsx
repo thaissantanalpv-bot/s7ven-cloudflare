@@ -747,7 +747,9 @@ function Catalog() {
         ) : tab === "inicio" ? (
           <>
             <section aria-label="Boas-vindas" className="relative mt-4 overflow-hidden rounded-2xl border border-primary/30 bg-photo">
-              <img src={heroImg} alt="" width={1600} height={720} className="absolute inset-0 size-full object-cover object-right" />
+              <img key={settings.banner_image_url || "padrao"} src={settings.banner_image_url || heroImg} alt="" width={1600} height={720}
+                onError={(e) => { if (e.currentTarget.src !== new URL(heroImg, location.href).href) e.currentTarget.src = heroImg; }}
+                className="absolute inset-0 size-full object-cover" style={{ objectPosition: look.bannerPosition }} />
               {isLightColor(look.background) && <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />}
               <div className="relative max-w-[70%] px-5 py-8 sm:px-8 sm:py-14 md:max-w-lg">
                 <p className="font-display text-sm font-semibold uppercase tracking-wide text-foreground sm:text-lg">{look.bannerKicker}</p>
