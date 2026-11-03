@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { publicStoreSettingsQuery as storeSettingsQuery } from "@/lib/store-settings.query";
-import { appearanceCss, appearanceFontsHref, parseAppearance } from "@/lib/catalog-appearance";
+import { appearanceCss, appearanceFontsHref, isLightColor, parseAppearance } from "@/lib/catalog-appearance";
 import { savePublicSnapshot, readPublicSnapshot, cacheViewedCatalogPhotos, offlinePhotoUrls } from "@/lib/offline-catalog";
 import { ordersOpen, storeStatus, upcomingSpecialDays, DAYS } from "@/lib/store-settings";
 import { QRCodeSVG } from "qrcode.react";
@@ -748,6 +748,7 @@ function Catalog() {
           <>
             <section aria-label="Boas-vindas" className="relative mt-4 overflow-hidden rounded-2xl border border-primary/30 bg-photo">
               <img src={heroImg} alt="" width={1600} height={720} className="absolute inset-0 size-full object-cover object-right" />
+              {isLightColor(look.background) && <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />}
               <div className="relative max-w-[70%] px-5 py-8 sm:px-8 sm:py-14 md:max-w-lg">
                 <p className="font-display text-sm font-semibold uppercase tracking-wide text-foreground sm:text-lg">{look.bannerKicker}</p>
                 <h1 className="font-display text-3xl font-extrabold uppercase leading-none text-gold sm:text-5xl">{look.bannerTitle}</h1>

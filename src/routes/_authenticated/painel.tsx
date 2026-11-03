@@ -29,6 +29,7 @@ import {
   Tag,
   Eye,
   Bell,
+  Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
