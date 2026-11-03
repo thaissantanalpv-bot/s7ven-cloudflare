@@ -151,11 +151,22 @@ function Admin() {
       default:
         return (
           <Tabs defaultValue="fees" className="mt-6">
-            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
-              <TabsTrigger value="fees" className="gap-1.5"><Clock className="size-4" />Taxas e horários</TabsTrigger>
-              <TabsTrigger value="appearance" className="gap-1.5"><Palette className="size-4" />Aparência do catálogo</TabsTrigger>
-              <TabsTrigger value="assistant" className="gap-1.5"><MessageCircle className="size-4" />Assistente</TabsTrigger>
-              <TabsTrigger value="alerts" className="gap-1.5"><Bell className="size-4" />Avisos e sons</TabsTrigger>
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-4">
+              {([
+                ["fees", Clock, "Taxas e horários"],
+                ["appearance", Palette, "Aparência do catálogo"],
+                ["assistant", MessageCircle, "Assistente"],
+                ["alerts", Bell, "Avisos e sons"],
+              ] as const).map(([value, Icon, label]) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className="h-auto min-h-12 gap-2 whitespace-normal rounded-xl border-2 border-primary/30 bg-card px-3 py-3 text-sm font-semibold text-foreground shadow-sm transition-colors hover:border-primary hover:bg-primary/10 data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+                >
+                  <Icon className="size-5 shrink-0" />
+                  {label}
+                </TabsTrigger>
+              ))}
             </TabsList>
             <TabsContent value="fees"><SettingsEditor initial={settings} /></TabsContent>
             <TabsContent value="appearance"><CatalogAppearanceEditor /></TabsContent>
