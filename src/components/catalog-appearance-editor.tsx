@@ -1,15 +1,18 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ExternalLink, Palette, RotateCcw, ShoppingCart, Truck } from "lucide-react";
+import { ExternalLink, ImageUp, Palette, RotateCcw, ShoppingCart, Trash2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { shrinkImage } from "@/lib/shrink-image";
 import { storeSettingsQuery } from "@/lib/store-settings.query";
 import { saveCatalogAppearance } from "@/lib/store-settings.functions";
 import {
-  APPEARANCE_PRESETS, CATALOG_FONTS, CORNER_STYLES, DEFAULT_APPEARANCE,
+  APPEARANCE_PRESETS, BANNER_POSITIONS, CATALOG_FONTS, CORNER_STYLES, DEFAULT_APPEARANCE,
   appearanceSchema, appearanceVars, parseAppearance,
   type CatalogAppearance, type CatalogFont, type CornerStyle,
 } from "@/lib/catalog-appearance";
+import heroImg from "@/assets/hero-narguile.jpg";
 
 const ALL_FONTS_HREF = `https://fonts.googleapis.com/css2?${Object.values(CATALOG_FONTS).map((f) => `family=${f.google}`).join("&")}&display=swap`;
 
@@ -41,13 +44,42 @@ export function CatalogAppearanceEditor() {
   const [draft, setDraft] = useState<CatalogAppearance>(saved);
   const [status, setStatus] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  // Links temporários para mostrar fotos enviadas antes de salvar (o caminho fica no rascunho).
+  const [bannerUrls, setBannerUrls] = useState<Record<string, string>>({});
   const save = useServerFn(saveCatalogAppearance);
   const client = useQueryClient();
   const changed = JSON.stringify(draft) !== JSON.stringify(saved);
+  const bannerUrl = draft.bannerImage
+    ? bannerUrls[draft.bannerImage] ?? (draft.bannerImage === saved.bannerImage ? settings.banner_image_url : "") ?? ""
+    : "";
 
   const set = <K extends keyof CatalogAppearance>(key: K, value: CatalogAppearance[K]) => {
     setStatus(null);
     setDraft((d) => ({ ...d, [key]: value }));
+  };
+
+  const uploadBanner = async (picked: File | undefined) => {
+    if (!picked) return;
+    setStatus(null);
+    setUploading(true);
+    try {
+      const file = await shrinkImage(picked, 1920);
+      const ext = ({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" } as Record<string, string>)[file.type];
+      if (!ext) throw new Error("Use uma foto JPG, PNG ou WEBP.");
+      const path = `uploads/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("product-photos").upload(path, file, { contentType: file.type, upsert: false });
+      if (error) throw new Error("Não foi possível enviar a foto. Tente novamente.");
+      const { data, error: signedError } = await supabase.storage.from("product-photos").createSignedUrl(path, 3600);
+      if (signedError || !data) throw new Error("Não foi possível conferir a foto enviada.");
+      setBannerUrls((u) => ({ ...u, [path]: data.signedUrl }));
+      setDraft((d) => ({ ...d, bannerImage: path }));
+      setStatus({ kind: "ok", text: "Foto carregada na prévia. Toque em “Salvar aparência” para colocar no catálogo." });
+    } catch (e) {
+      setStatus({ kind: "error", text: e instanceof Error ? e.message : "Não foi possível usar esta foto." });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const submit = async () => {
@@ -56,7 +88,7 @@ export function CatalogAppearanceEditor() {
     setSaving(true);
     try {
       await save({ data: parsed.data });
-      client.setQueryData(storeSettingsQuery.queryKey, { ...settings, catalog_appearance: parsed.data });
+      client.setQueryData(storeSettingsQuery.queryKey, { ...settings, catalog_appearance: parsed.data, banner_image_url: bannerUrl });
       await Promise.all([
         client.invalidateQueries({ queryKey: storeSettingsQuery.queryKey }),
         client.invalidateQueries({ queryKey: ["public-store-settings"] }),
