@@ -21,7 +21,16 @@ export const getStoreSettings = createServerFn({ method: "GET" }).handler(async 
   });
   const { data, error } = await client.from("store_settings").select("delivery_enabled,fixed_delivery_fee,pickup_address,delivery_zones,hours_enabled,opening_hours,order_cutoff,special_days,delivery_distance_enabled,delivery_origin,delivery_distance_tiers,coupons,promoBanner,paused,catalog_appearance").eq("id", "main").maybeSingle();
   if (error) throw new Error("Não foi possível carregar as configurações da loja.");
-  return data ? settingsSchema.parse(data) : EMPTY_SETTINGS;
+  if (!data) return { ...EMPTY_SETTINGS, banner_image_url: "" };
+  const settings = settingsSchema.parse(data);
+  // A foto do banner fica no armazenamento privado; o catálogo recebe um link temporário (o caminho é que fica salvo).
+  let banner_image_url = "";
+  const bannerPath = settings.catalog_appearance?.bannerImage;
+  if (bannerPath) {
+    const { data: signed } = await client.storage.from("product-photos").createSignedUrl(bannerPath, 6 * 3600);
+    if (signed?.signedUrl) banner_image_url = signed.signedUrl.replace(new URL(signed.signedUrl).origin, new URL(url).origin);
+  }
+  return { ...settings, banner_image_url };
 });
 export const checkStoreAdmin = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { data, error } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });

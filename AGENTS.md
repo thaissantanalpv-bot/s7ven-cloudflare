@@ -32,5 +32,5 @@
 - Admin reports (sales, frequent customers by normalized phone) read period-bounded order fields, return aggregates, exclude cancelled sales and never double-count combo components.
 - New catalog orders notify admin devices by Web Push via a dedicated-scope worker apart from the offline one; admin-owned subscriptions, sent server-side after insertion without blocking checkout.
 - Subdirectories have their own AGENTS.md; read before editing there.
-- Catalog look (colors, allowlisted fonts, corners, home texts) lives in `store_settings.catalog_appearance`, parsed field-by-field with fallback and saved only by its own admin server function so other settings saves never overwrite it.
+- Catalog look (colors, allowlisted fonts, corners, home texts, banner photo path/position) lives in `store_settings.catalog_appearance`, parsed field-by-field with fallback and saved only by its own admin server function so other settings saves never overwrite it; the banner photo is a private `product-photos` path made anon-readable by `is_catalog_photo` and served as a signed URL from the settings read.
 - Ratings: public via per-order token link only, one per order, server-written.

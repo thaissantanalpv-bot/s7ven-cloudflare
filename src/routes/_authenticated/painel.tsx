@@ -318,7 +318,8 @@ function SettingsEditor({ initial }: { initial: StoreSettings }) {
     setMessage("");
     try {
       await save({ data: parsed.data });
-      client.setQueryData(storeSettingsQuery.queryKey, parsed.data);
+      // A aparência e a foto do banner têm salvamento próprio; mantém as que já estavam carregadas.
+      client.setQueryData(storeSettingsQuery.queryKey, (old) => ({ ...parsed.data, catalog_appearance: old?.catalog_appearance ?? parsed.data.catalog_appearance, banner_image_url: old?.banner_image_url ?? "" }));
       setSuccess(true);
       setMessage("Configurações salvas.");
     } catch (error) {
