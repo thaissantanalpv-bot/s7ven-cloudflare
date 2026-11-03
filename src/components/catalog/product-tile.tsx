@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { available, discountPercent, productPhotos, type CatalogProduct } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { keyOf, type Cart } from "./cart-keys";
+import { MANY_OPTIONS, kindOf, sortedOptions } from "./option-list";
 
 /** Compact product card: photo, name, price and a quick action. Details open in ProductDetail. */
 export function ProductTile({
@@ -64,6 +65,19 @@ export function ProductTile({
         {hasOpts && !soldOut && (
           <div className="mt-2">
             <p className="text-[10px] font-medium uppercase text-muted-foreground">{p.optionLabel}</p>
+            {(p.options?.length ?? 0) > MANY_OPTIONS ? (
+              <select
+                aria-label={`Escolher ${p.optionLabel?.toLowerCase() ?? "opção"} de ${p.name}`}
+                value={option}
+                onChange={(e) => onSel(p.id, e.target.value)}
+                className={`mt-1 h-9 w-full rounded-md border bg-background px-2 text-xs font-medium text-foreground outline-none focus-visible:border-primary ${option ? "border-primary" : "border-border"}`}
+              >
+                <option value="">Escolha {kindOf(p)} ({p.options?.length})</option>
+                {sortedOptions(p).map((o) => (
+                  <option key={o} value={o} disabled={!available(p, o)}>{o}{available(p, o) ? "" : " — esgotado"}</option>
+                ))}
+              </select>
+            ) : (
             <div className="mt-1 flex flex-wrap gap-1">
               {p.options?.map((o) => (
                 <button
@@ -78,6 +92,7 @@ export function ProductTile({
                 </button>
               ))}
             </div>
+            )}
           </div>
         )}
         <div className="flex flex-wrap items-baseline gap-x-1.5 pt-1.5">
@@ -99,7 +114,7 @@ export function ProductTile({
                 <Plus />Adicionar
               </Button>
             )}
-            {hasOpts && !option && <p className="pt-1 text-center text-[10px] text-muted-foreground">Escolha {p.optionLabel === "Cor" ? "uma cor" : "um sabor"}</p>}
+            {hasOpts && !option && <p className="pt-1 text-center text-[10px] text-muted-foreground">Escolha {kindOf(p)}</p>}
           </div>
         )}
       </div>

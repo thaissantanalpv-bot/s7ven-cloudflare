@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Heart, Minus, Plus, Share2, ShoppingCart, Check } from "lucide-react";
+import { Heart, Minus, Plus, Search, Share2, ShoppingCart, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { ProductCardPhotos } from "@/components/products/product-card-photos";
@@ -7,6 +7,7 @@ import { ProductGallery } from "@/components/products/product-gallery";
 import { available, discountPercent, type CatalogProduct } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { keyOf, OTHER, type Cart } from "./cart-keys";
+import { MANY_OPTIONS, normalize, sortedOptions } from "./option-list";
 
 /** Full product screen: photos, description, variation chips, quantity and add-to-cart. */
 export function ProductDetail({
@@ -39,8 +40,13 @@ export function ProductDetail({
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
-  useEffect(() => { setQty(1); setAdded(false); }, [p?.id]);
+  const [find, setFind] = useState("");
+  useEffect(() => { setQty(1); setAdded(false); setFind(""); }, [p?.id]);
   if (!p) return null;
+  const many = (p.options?.length ?? 0) > MANY_OPTIONS;
+  const q = normalize(find);
+  const shownOptions = many ? sortedOptions(p).filter((o) => !q || normalize(o).includes(q)) : [];
+  const availableCount = (p.options ?? []).filter((o) => available(p, o)).length;
   const hasOpts = Boolean(p.options?.length);
   const isCombo = Boolean(p.comboGroups?.length);
   const chosen = sel[p.id] ?? "";
@@ -107,9 +113,26 @@ export function ProductDetail({
             )}
             {hasOpts && (
               <div>
-                <p className="text-sm font-semibold">{p.optionLabel}</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {p.options?.map((o) => (
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-sm font-semibold">{p.optionLabel}</p>
+                  {many && <p className="text-xs text-muted-foreground">{availableCount} disponíveis{chosen && !isOther ? <> · <span className="font-semibold text-primary">{chosen}</span></> : null}</p>}
+                </div>
+                {many && (
+                  <div className="relative mt-2">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="search"
+                      aria-label={`Buscar ${p.optionLabel?.toLowerCase() ?? "opção"}`}
+                      placeholder={`Buscar ${p.optionLabel === "Cor" ? "cor" : "sabor"}...`}
+                      value={find}
+                      onChange={(e) => setFind(e.target.value)}
+                      className="h-10 w-full rounded-lg border bg-background pl-8 pr-3 text-sm text-foreground outline-none focus-visible:border-primary"
+                    />
+                  </div>
+                )}
+                <div className={many ? "mt-2 grid max-h-56 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border bg-muted/30 p-1.5" : "mt-2 flex flex-wrap gap-2"}>
+                  {many && shownOptions.length === 0 && <p className="col-span-2 py-3 text-center text-xs text-muted-foreground">Nenhum {p.optionLabel === "Cor" ? "cor encontrada" : "sabor encontrado"}</p>}
+                  {(many ? shownOptions : p.options ?? []).map((o) => (
                     <Button
                       key={o}
                       variant="outline"
@@ -118,7 +141,7 @@ export function ProductDetail({
                       disabled={!available(p, o)}
                       onClick={() => onSel(p.id, o)}
                       aria-pressed={chosen === o}
-                      className={`h-auto min-h-8 whitespace-normal rounded-lg px-3 py-1.5 text-xs ${chosen === o ? "border-primary bg-primary text-primary-foreground hover:bg-primary" : "bg-background"}`}
+                      className={`h-auto min-h-8 whitespace-normal rounded-lg px-3 py-1.5 text-xs ${many ? "justify-start text-left" : ""} ${chosen === o ? "border-primary bg-primary text-primary-foreground hover:bg-primary" : "bg-background"}`}
                     >
                       {o}
                     </Button>
