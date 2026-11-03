@@ -66,16 +66,17 @@ export const APPEARANCE_PRESETS: { id: string; label: string; colors: Pick<Catal
 ];
 
 function luminance(color: string) {
-  const [r, g, b] = [1, 3, 5].map((i) => {
+  const ch = (i: number) => {
     const c = parseInt(color.slice(i, i + 2), 16) / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  return 0.2126 * ch(1) + 0.7152 * ch(3) + 0.0722 * ch(5);
 }
-/** Texto preto ou branco, o que tiver mais contraste com a cor de fundo. */
+/** Texto branco quando ele é legível (contraste 3:1 serve para letras em negrito dos botões); senão, escuro. */
 export function readableOn(color: string) {
   const l = luminance(color);
-  return (1.05) / (l + 0.05) >= (l + 0.05) / 0.05 ? "#ffffff" : "#111114";
+  const white = 1.05 / (l + 0.05);
+  return white >= 3 || white >= (l + 0.05) / 0.05 ? "#ffffff" : "#111114";
 }
 export function isLightColor(color: string) {
   return luminance(color) > 0.4;
