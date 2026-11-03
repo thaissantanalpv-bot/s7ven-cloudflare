@@ -29,3 +29,22 @@ describe("aparência do catálogo", () => {
     expect(readableOn("#f0cc6b")).toBe("#111114");
   });
 });
+
+describe("foto do banner", () => {
+  it("sem foto escolhida, usa a foto padrão (campo vazio) e destaca a direita", () => {
+    const a = parseAppearance({});
+    expect(a.bannerImage).toBe("");
+    expect(a.bannerPosition).toBe("right");
+  });
+  it("aceita só fotos enviadas para o catálogo (jpg, png ou webp)", () => {
+    expect(appearanceSchema.safeParse({ ...DEFAULT_APPEARANCE, bannerImage: "uploads/abc-123.webp" }).success).toBe(true);
+    expect(appearanceSchema.safeParse({ ...DEFAULT_APPEARANCE, bannerImage: "https://site.com/foto.jpg" }).success).toBe(false);
+    expect(appearanceSchema.safeParse({ ...DEFAULT_APPEARANCE, bannerImage: "uploads/../segredo.jpg" }).success).toBe(false);
+    expect(appearanceSchema.safeParse({ ...DEFAULT_APPEARANCE, bannerImage: "uploads/video.mp4" }).success).toBe(false);
+  });
+  it("caminho inválido salvo volta à foto padrão sem perder as cores", () => {
+    const a = parseAppearance({ bannerImage: "javascript:alert(1)", primary: "#22a06b" });
+    expect(a.bannerImage).toBe("");
+    expect(a.primary).toBe("#22a06b");
+  });
+});
