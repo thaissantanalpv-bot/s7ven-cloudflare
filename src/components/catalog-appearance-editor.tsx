@@ -181,6 +181,39 @@ export function CatalogAppearanceEditor() {
           </section>
 
           <section className="rounded-xl border bg-card p-4">
+            <h3 className="font-semibold">Foto do banner</h3>
+            <p className="mt-1 text-xs text-muted-foreground">Qualquer tamanho (a foto é ajustada sozinha). Fotos largas, deitadas, ficam melhores. Veja na prévia antes de salvar.</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <div className="h-20 w-36 shrink-0 overflow-hidden rounded-lg border bg-photo">
+                <img src={bannerUrl || heroImg} alt="Foto atual do banner" className="size-full object-cover" style={{ objectPosition: draft.bannerPosition }} />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild variant="outline" size="sm" disabled={uploading || saving}>
+                  <label className={uploading ? "pointer-events-none opacity-60" : "cursor-pointer"}>
+                    <ImageUp className="size-4" />{uploading ? "Enviando…" : "Trocar foto"}
+                    <input aria-label="Enviar foto do banner" type="file" accept="image/*" className="sr-only" disabled={uploading || saving}
+                      onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; void uploadBanner(f); }} />
+                  </label>
+                </Button>
+                {draft.bannerImage && (
+                  <Button variant="ghost" size="sm" disabled={uploading || saving} onClick={() => set("bannerImage", "")}>
+                    <Trash2 className="size-4" />Usar foto padrão
+                  </Button>
+                )}
+              </div>
+            </div>
+            <p className="mt-4 text-sm font-medium">Parte da foto em destaque</p>
+            <div role="radiogroup" aria-label="Parte da foto em destaque" className="mt-2 grid grid-cols-3 gap-2">
+              {(Object.keys(BANNER_POSITIONS) as (keyof typeof BANNER_POSITIONS)[]).map((id) => (
+                <button key={id} type="button" role="radio" aria-checked={draft.bannerPosition === id} onClick={() => set("bannerPosition", id)}
+                  className={`rounded-lg border p-2 text-sm transition-colors ${draft.bannerPosition === id ? "border-primary bg-primary/10 font-semibold text-primary" : "hover:border-muted-foreground/40"}`}>
+                  {BANNER_POSITIONS[id]}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-xl border bg-card p-4">
             <h3 className="font-semibold">Textos do início</h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {TEXT_FIELDS.map(({ key, label, max }) => (
@@ -195,7 +228,7 @@ export function CatalogAppearanceEditor() {
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Prévia</p>
-          <CatalogPreview look={draft} />
+          <CatalogPreview look={draft} bannerUrl={bannerUrl} />
         </aside>
       </div>
 
@@ -211,7 +244,7 @@ export function CatalogAppearanceEditor() {
   );
 }
 
-function CatalogPreview({ look }: { look: CatalogAppearance }) {
+function CatalogPreview({ look, bannerUrl }: { look: CatalogAppearance; bannerUrl: string }) {
   return (
     <div style={previewStyle(look)} className="overflow-hidden rounded-2xl border bg-background text-foreground shadow-soft" aria-label="Prévia do catálogo">
       <div className="flex items-center justify-between border-b px-3 py-2">
@@ -220,11 +253,15 @@ function CatalogPreview({ look }: { look: CatalogAppearance }) {
       </div>
       <div className="p-3">
         <div className="rounded-md border border-[var(--search-bg)] bg-[var(--search-bg)] px-3 py-2 text-xs text-[var(--search-placeholder)]">O que você está procurando?</div>
-        <div className="mt-3 rounded-2xl border border-primary/30 bg-photo p-4">
-          <p className="font-display text-[11px] font-semibold uppercase tracking-wide">{look.bannerKicker}</p>
-          <p className="font-display text-2xl font-extrabold uppercase leading-none text-gold">{look.bannerTitle}</p>
-          <p className="mt-1.5 text-xs opacity-85">{look.bannerText}</p>
-          <span className="mt-3 inline-flex h-8 items-center rounded-full bg-primary px-3 text-[11px] font-bold uppercase text-primary-foreground">{look.bannerButton || "Ver catálogo"}</span>
+        <div className="relative mt-3 overflow-hidden rounded-2xl border border-primary/30 bg-photo">
+          <img src={bannerUrl || heroImg} alt="Foto do banner" className="absolute inset-0 size-full object-cover" style={{ objectPosition: look.bannerPosition }} />
+          {isLightColor(look.background) && <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />}
+          <div className="relative max-w-[70%] p-4">
+            <p className="font-display text-[11px] font-semibold uppercase tracking-wide">{look.bannerKicker}</p>
+            <p className="font-display text-2xl font-extrabold uppercase leading-none text-gold">{look.bannerTitle}</p>
+            <p className="mt-1.5 text-xs opacity-85">{look.bannerText}</p>
+            <span className="mt-3 inline-flex h-8 items-center rounded-full bg-primary px-3 text-[11px] font-bold uppercase text-primary-foreground">{look.bannerButton || "Ver catálogo"}</span>
+          </div>
         </div>
         <p className="mt-3 flex items-center gap-2 border-y py-2 text-[11px] font-medium"><Truck className="size-3.5 text-primary" />{look.deliveryLine}</p>
         <p className="mt-3 font-display text-base font-semibold">Promoções e destaques</p>
