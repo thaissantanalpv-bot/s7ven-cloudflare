@@ -27,6 +27,9 @@ export type CornerStyle = keyof typeof CORNER_STYLES;
 
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida");
 const text = (max: number) => z.string().trim().max(max);
+/** Mesmo formato aceito pela regra de leitura pública das fotos do catálogo. */
+export const BANNER_PATH = /^uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/;
+export const BANNER_POSITIONS = { left: "Esquerda", center: "Centro", right: "Direita" } as const;
 
 export const appearanceSchema = z.object({
   background: hex.default("#09090b"),
@@ -42,6 +45,10 @@ export const appearanceSchema = z.object({
   bannerText: text(140).default("Tabacaria, bebidas, acessórios e muito mais."),
   bannerButton: text(30).default("Ver catálogo"),
   deliveryLine: text(80).default("Entregas das 16:00 às 23:00"),
+  /** Caminho da foto do banner no armazenamento privado; vazio = foto padrão do narguilé. */
+  bannerImage: z.union([z.literal(""), z.string().regex(BANNER_PATH, "Foto do banner inválida")]).default(""),
+  /** Qual parte da foto fica visível quando ela é cortada. */
+  bannerPosition: z.enum(["left", "center", "right"]).default("right"),
 });
 export type CatalogAppearance = z.infer<typeof appearanceSchema>;
 export const DEFAULT_APPEARANCE: CatalogAppearance = appearanceSchema.parse({});
