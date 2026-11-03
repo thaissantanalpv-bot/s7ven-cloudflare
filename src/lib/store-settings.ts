@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseAppearance } from "./catalog-appearance";
 
 export const DAYS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
@@ -42,6 +43,8 @@ export const settingsSchema = z.object({
   order_cutoff: time.default("23:00"),
   special_days: z.array(specialDaySchema).max(60).default([]),
   paused: z.boolean().default(false),
+  /** Aparência do catálogo; salva somente por saveCatalogAppearance. */
+  catalog_appearance: z.unknown().transform((v) => parseAppearance(v)).optional(),
 }).superRefine((s, ctx) => {
   if (s.delivery_enabled && !s.delivery_distance_enabled && s.fixed_delivery_fee === null && !s.delivery_zones.length) ctx.addIssue({ code: "custom", message: "Cadastre pelo menos uma região antes de ativar as taxas." });
   if (s.delivery_distance_enabled && (s.delivery_origin.length < 8 || !s.delivery_distance_tiers.length)) ctx.addIssue({ code: "custom", message: "Informe o endereço completo de saída e pelo menos uma faixa de km." });
