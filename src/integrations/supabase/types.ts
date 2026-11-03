@@ -457,6 +457,7 @@ export type Database = {
       }
       store_settings: {
         Row: {
+          catalog_appearance: Json
           coupons: Json
           delivery_distance_enabled: boolean
           delivery_distance_tiers: Json
@@ -475,6 +476,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          catalog_appearance?: Json
           coupons?: Json
           delivery_distance_enabled?: boolean
           delivery_distance_tiers?: Json
@@ -493,6 +495,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          catalog_appearance?: Json
           coupons?: Json
           delivery_distance_enabled?: boolean
           delivery_distance_tiers?: Json

@@ -1,0 +1,2 @@
+ALTER TABLE public.store_settings ADD COLUMN IF NOT EXISTS catalog_appearance jsonb NOT NULL DEFAULT '{}'::jsonb;
+COMMENT ON COLUMN public.store_settings.catalog_appearance IS 'Catalog look chosen by the admin: colors (hex), allowlisted fonts, corner style and banner/delivery texts. Validated by the app schema.';

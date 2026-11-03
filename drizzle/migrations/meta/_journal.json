@@ -302,6 +302,13 @@
       "when": 1793659728821,
       "tag": "0042_store_special_days",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793664344367,
+      "tag": "0043_catalog_appearance",
+      "breakpoints": true
     }
   ]
 }
