@@ -200,7 +200,7 @@ function CatalogPreview({ look }: { look: CatalogAppearance }) {
           {[{ n: "Essência Ziggy 50g", p: "R$ 25,00", old: "R$ 30,00" }, { n: "Carvão de coco 1kg", p: "R$ 32,00" }].map((item) => (
             <div key={item.n} className="rounded-xl border bg-card p-2">
               <div className="relative aspect-square rounded-lg bg-photo">
-                {item.old && <span className="absolute left-1.5 top-1.5 rounded bg-gold px-1.5 py-0.5 text-[9px] font-bold text-gold-foreground">Promoção</span>}
+                {item.old && <span className="absolute left-1.5 top-1.5 rounded bg-destructive px-1.5 py-0.5 text-[9px] font-bold uppercase text-destructive-foreground">Promoção</span>}
               </div>
               <p className="mt-1.5 line-clamp-2 text-[11px] font-medium leading-tight">{item.n}</p>
               <p className="text-[11px] text-muted-foreground">{item.old && <s className="mr-1">{item.old}</s>}<span className="font-bold text-foreground">{item.p}</span></p>
