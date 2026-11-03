@@ -40,6 +40,7 @@ import { startDeliverySession, quoteDelivery, suggestDeliveryAddress } from "@/l
 import { estimatedDeliveryMinutes } from "@/lib/delivery-route";
 import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine, getSavedCustomerAddress, saveCustomerAddress, type SavedCustomerAddress } from "@/lib/delivery-address";
 import { MapPin, Menu, ArrowLeft, ArrowRight, ShoppingCart, Home, LayoutGrid, ClipboardList, MoreHorizontal, ShieldCheck, Headphones, Flame, Wallet, Trash2, Gem, CheckCircle2 } from "lucide-react";
+import { categoryIcon } from "@/components/catalog/category-icon";
 import heroImg from "@/assets/hero-narguile.jpg";
 import { pairSuggestions } from "@/lib/pair-suggestions";
 import { ProductTile } from "@/components/catalog/product-tile";
@@ -809,14 +810,17 @@ function Catalog() {
                 <Button variant="link" size="sm" className="px-0" onClick={() => { setCat("Todos"); goTab("categorias"); }}>Ver todas <ChevronRight /></Button>
               </div>
               <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-                {categoryCards.map((c) => (
-                  <button key={c.value} type="button" onClick={() => openCategory(c.value)} className="flex w-24 shrink-0 flex-col items-center gap-1.5 text-center">
-                    <span className="grid size-20 place-items-center overflow-hidden rounded-2xl border bg-photo">
-                      {c.cover ? <img src={c.cover} alt="" loading="lazy" className="size-full object-contain p-1.5" /> : <LayoutGrid className="text-primary" />}
-                    </span>
-                    <span className="line-clamp-2 text-xs font-medium">{c.label}</span>
-                  </button>
-                ))}
+                {categoryCards.map((c) => {
+                  const Icon = categoryIcon(c.label);
+                  return (
+                    <button key={c.value} type="button" onClick={() => openCategory(c.value)} className="flex w-28 shrink-0 flex-col items-center gap-2 rounded-2xl border border-border/70 bg-card px-2 py-3 text-center shadow-sm transition hover:border-primary">
+                      <span className="grid size-12 place-items-center rounded-xl bg-primary/15 text-primary">
+                        <Icon className="size-6" strokeWidth={1.8} />
+                      </span>
+                      <span className="line-clamp-2 text-[13px] font-bold leading-tight text-card-foreground">{c.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </section>
 
@@ -837,27 +841,24 @@ function Catalog() {
               <h1 className="mb-4 font-display text-2xl font-semibold">Categorias</h1>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {[
-                  ...(highlights.length ? [{ value: FEATURED, label: "Promoções e destaques", count: highlights.length, cover: productPhotos(highlights[0]!)[0] }] : []),
-                  ...(favorites.length ? [{ value: FAVORITES, label: "Favoritos", count: favorites.length, cover: undefined }] : []),
+                  ...(highlights.length ? [{ value: FEATURED, label: "Promoções e destaques", count: highlights.length }] : []),
+                  ...(favorites.length ? [{ value: FAVORITES, label: "Favoritos", count: favorites.length }] : []),
                   ...categoryCards,
-                ].map((c) => (
-                  <button key={c.value} type="button" onClick={() => openCategory(c.value)} className="group relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-xl border bg-photo text-left transition hover:border-primary">
-                    {c.cover ? (
-                      <img src={c.cover} alt="" loading="lazy" className="absolute inset-0 size-full object-cover transition duration-300 group-hover:scale-105" />
-                    ) : (
-                      <span className="absolute inset-0 grid place-items-center pb-10">
-                        {c.value === FAVORITES ? <Heart className="size-10 fill-destructive text-destructive" /> : <LayoutGrid className="size-10 text-primary" />}
+                ].map((c) => {
+                  const Icon = categoryIcon(c.label);
+                  return (
+                    <button key={c.value} type="button" onClick={() => openCategory(c.value)} className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary">
+                      <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
+                        <Icon className="size-6" strokeWidth={1.8} />
                       </span>
-                    )}
-                    <span className="relative flex items-end justify-between gap-2 bg-gradient-to-t from-background via-background/90 to-transparent px-3 pb-2.5 pt-6">
-                      <span className="min-w-0">
-                        <span className="line-clamp-2 text-sm font-semibold leading-tight">{c.label}</span>
-                        <span className="text-[11px] text-muted-foreground">{c.count} produtos</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="line-clamp-2 text-[15px] font-bold leading-snug text-card-foreground">{c.label}</span>
+                        <span className="text-xs text-muted-foreground">{c.count} produtos</span>
                       </span>
                       <ChevronRight className="size-4 shrink-0 text-primary" />
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </section>
           ) : (
