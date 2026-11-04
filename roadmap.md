@@ -242,3 +242,8 @@
 - [x] Contar cada aparelho uma vez só no catálogo, mesmo entrando várias vezes (testado: 2 visitas do mesmo computador com dados apagados = 1 pessoa; prévia do editor não conta mais).
 - [x] Botão de lembrete no WhatsApp para cliente sem comprar há 1 mês (Clientes frequentes).
 - [ ] Publicar as duas mudanças.
+
+# Vídeo do catálogo com narração (Thais, 04/11/2026 00:23 UTC)
+- [x] Voz calma narrando: "Agora a Seven tem catálogo digital, você consegue fazer o pedido pelo link..." e explicando o passo a passo (categorias, opções/sabores, finalizar, preencher dados, entrega rápida).
+- [x] Mostrar o catálogo real: produtos, sabores, carrinho e campos de dados.
+- [x] Citar o que a tabacaria tem: tabacos, kits com cases, essências para narguilé, acessórios de headshop, combos de bebidas.
