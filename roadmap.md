@@ -244,6 +244,6 @@
 - [ ] Publicar as duas mudanças.
 
 # Vídeo do catálogo com narração (Thais, 04/11/2026 00:23 UTC)
-- [ ] Voz calma narrando: "Agora a Seven tem catálogo digital, você consegue fazer o pedido pelo link..." e explicando o passo a passo (categorias, opções/sabores, finalizar, preencher dados, entrega rápida).
-- [ ] Mostrar o catálogo real: produtos, sabores, carrinho e campos de dados.
-- [ ] Citar o que a tabacaria tem: tabacos, kits com cases, essências para narguilé, acessórios de headshop, combos de bebidas.
+- [x] Voz calma narrando: "Agora a Seven tem catálogo digital, você consegue fazer o pedido pelo link..." e explicando o passo a passo (categorias, opções/sabores, finalizar, preencher dados, entrega rápida).
+- [x] Mostrar o catálogo real: produtos, sabores, carrinho e campos de dados.
+- [x] Citar o que a tabacaria tem: tabacos, kits com cases, essências para narguilé, acessórios de headshop, combos de bebidas.
