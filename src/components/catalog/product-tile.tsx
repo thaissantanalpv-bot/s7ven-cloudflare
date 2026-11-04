@@ -1,6 +1,6 @@
 import { Minus, Play, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { available, discountPercent, productPhotos, type CatalogProduct } from "@/lib/catalog";
+import { available, discountPercent, productPhotos, variationPhoto, type CatalogProduct } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { keyOf, type Cart } from "./cart-keys";
 import { MANY_OPTIONS, kindOf, sortedOptions } from "./option-list";
@@ -23,11 +23,12 @@ export function ProductTile({
   onChange: (key: string, d: number) => void;
   onBuild: () => void;
 }) {
-  const photo = productPhotos(p)[0];
   const hasOpts = Boolean(p.options?.length);
   const isCombo = Boolean(p.comboGroups?.length);
   const chosen = hasOpts ? (sel[p.id] ?? "") : "";
   const option = chosen && chosen !== "__outro__" ? chosen : "";
+  // A selected variation with its own photo replaces the cover right on the card.
+  const photo = variationPhoto(p, option) || productPhotos(p)[0];
   const key = keyOf(p.id, option || undefined);
   const ready = (!hasOpts || !!option) && available(p, option);
   const qty = cart[key] ?? 0;
@@ -37,7 +38,7 @@ export function ProductTile({
     <article className={`group flex min-w-0 flex-col self-start overflow-hidden rounded-xl border border-border bg-card shadow-soft transition hover:border-primary/60 ${soldOut ? "opacity-80 grayscale" : ""}`}>
       <button type="button" onClick={onOpen} aria-label={`Ver detalhes de ${p.name}`} className="relative block aspect-square w-full overflow-hidden bg-photo">
         {photo ? (
-          <img src={photo} alt={p.name} loading="lazy" decoding="async" className="size-full object-contain p-2 transition duration-300 group-hover:scale-105" />
+          <img key={photo} src={photo} alt={option ? `${p.name} — ${option}` : p.name} loading="lazy" decoding="async" className="size-full object-contain p-2 transition duration-300 group-hover:scale-105" />
         ) : (
           <span className="grid size-full place-items-center text-5xl">{p.emoji}</span>
         )}
