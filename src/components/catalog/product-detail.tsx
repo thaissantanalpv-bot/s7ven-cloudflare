@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Heart, Minus, Plus, Search, Share2, ShoppingCart, Check } from "lucide-react";
+import { ArrowLeft, Heart, Minus, Plus, Search, Share2, ShoppingCart, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { ProductCardPhotos } from "@/components/products/product-card-photos";
@@ -71,6 +71,16 @@ export function ProductDetail({
         <div className="flex-1 overflow-y-auto">
           <div className="relative">
             <ProductCardPhotos product={p} option={option} onEnlarge={() => setGalleryOpen(true)} />
+            <Button
+              variant="secondary"
+              size="icon"
+              aria-label="Voltar ao catálogo"
+              title="Voltar ao catálogo"
+              onClick={onClose}
+              className="absolute left-3 top-3 z-10 size-10 rounded-full shadow-soft"
+            >
+              <ArrowLeft className="size-5" />
+            </Button>
           </div>
           <div className="space-y-3 px-4 pb-4 pt-3">
             <div className="flex items-start justify-between gap-3">
