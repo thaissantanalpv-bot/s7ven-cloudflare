@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Minus, Play, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { available, discountPercent, productPhotos, variationPhoto, type CatalogProduct } from "@/lib/catalog";
@@ -29,16 +30,35 @@ export function ProductTile({
   const option = chosen && chosen !== "__outro__" ? chosen : "";
   // A selected variation with its own photo replaces the cover right on the card.
   const photo = variationPhoto(p, option) || productPhotos(p)[0];
+  const cardRef = useRef<HTMLElement>(null);
+  const variationUrls = Object.values(p.variationPhotos ?? {}).join("\n");
+  // Warm the browser cache with this card's variation photos once it nears the screen,
+  // so tapping a color/flavor swaps the photo instantly instead of waiting for the network.
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || !variationUrls || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      for (const src of new Set(variationUrls.split("\n"))) {
+        const img = new Image();
+        img.decoding = "async";
+        img.src = src;
+      }
+    }, { rootMargin: "400px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [variationUrls]);
   const key = keyOf(p.id, option || undefined);
   const ready = (!hasOpts || !!option) && available(p, option);
   const qty = cart[key] ?? 0;
   const soldOut = !available(p);
   const off = discountPercent(p);
   return (
-    <article className={`group flex min-w-0 flex-col self-start overflow-hidden rounded-xl border border-border bg-card shadow-soft transition hover:border-primary/60 ${soldOut ? "opacity-80 grayscale" : ""}`}>
+    <article ref={cardRef} className={`group flex min-w-0 flex-col self-start overflow-hidden rounded-xl border border-border bg-card shadow-soft transition hover:border-primary/60 ${soldOut ? "opacity-80 grayscale" : ""}`}>
       <button type="button" onClick={onOpen} aria-label={`Ver detalhes de ${p.name}`} className="relative block aspect-square w-full overflow-hidden bg-photo">
         {photo ? (
-          <img key={photo} src={photo} alt={option ? `${p.name} — ${option}` : p.name} loading="lazy" decoding="async" className="size-full object-contain p-2 transition duration-300 group-hover:scale-105" />
+          <img src={photo} alt={option ? `${p.name} — ${option}` : p.name} loading="lazy" decoding="async" className="size-full object-contain p-2 transition duration-300 group-hover:scale-105" />
         ) : (
           <span className="grid size-full place-items-center text-5xl">{p.emoji}</span>
         )}
