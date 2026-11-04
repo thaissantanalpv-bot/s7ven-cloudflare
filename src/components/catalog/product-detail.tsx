@@ -77,7 +77,7 @@ export function ProductDetail({
               aria-label="Voltar ao catálogo"
               title="Voltar ao catálogo"
               onClick={onClose}
-              className="absolute left-3 top-3 z-10 size-10 rounded-full shadow-soft"
+              className="absolute left-3 top-3 z-10 size-10 rounded-full border border-primary/60 bg-background/90 text-foreground shadow-soft hover:bg-background"
             >
               <ArrowLeft className="size-5" />
             </Button>
