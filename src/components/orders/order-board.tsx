@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { quickMessages, courierMessage, whatsappTo } from "@/lib/quick-messages";
 import { listOrders, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
 import {
   ORDER_STAGES,
@@ -623,6 +624,23 @@ export function OrderBoard() {
                     Avisar cliente no WhatsApp
                   </a>
                 </Button>
+                {detail.status !== "cancelled" && (
+                  <div className="space-y-2 rounded-xl border p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mensagens rápidas</p>
+                    <div className="flex flex-wrap gap-2">
+                      {quickMessages(detail).map((m) => (
+                        <Button key={m.id} asChild variant="outline" size="sm" className="text-whatsapp">
+                          <a href={whatsappTo(detail.customer_phone, m.text)} target="_blank" rel="noopener noreferrer">{m.label}</a>
+                        </Button>
+                      ))}
+                      {detail.fulfillment !== "pickup" && (
+                        <Button asChild variant="outline" size="sm">
+                          <a href={whatsappTo(null, courierMessage(detail))} target="_blank" rel="noopener noreferrer">Enviar para o motoboy</a>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <Button
                   variant="outline"
                   className="w-full"
