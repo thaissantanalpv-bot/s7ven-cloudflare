@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link2, Copy, Check, MessageCircle, Instagram, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
+import { ShareLinkBuilder } from "@/components/share-link-builder";
 
 export function SiteLinkCard() {
   const [copied, setCopied] = useState(false);
@@ -80,6 +81,7 @@ export function SiteLinkCard() {
           <p className="mt-2 font-mono text-xs text-muted-foreground">{url}</p>
         </div>
       )}
+      <ShareLinkBuilder />
     </section>
   );
 }
