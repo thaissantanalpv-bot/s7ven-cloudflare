@@ -66,7 +66,8 @@ import { applyCoupon } from "@/lib/store-settings";
 export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
   staticData: { sitemap: true },
-  validateSearch: (search: Record<string, unknown>): { aba?: Exclude<Tab, "inicio">; produto?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { aba?: Exclude<Tab, "inicio">; produto?: string; categoria?: string } => ({
+    ...(typeof search["categoria"] === "string" ? { categoria: search["categoria"].slice(0, 120) } : {}),
     ...(typeof search["aba"] === "string" && TABS.includes(search["aba"] as Tab) && search["aba"] !== "inicio" ? { aba: search["aba"] as Exclude<Tab, "inicio"> } : {}),
     ...(typeof search["produto"] === "string" ? { produto: search["produto"] } : {}),
   }),
@@ -296,6 +297,15 @@ function Catalog() {
     const id = new URL(window.location.href).searchParams.get("produto");
     if (id) setDetail(shown.find(p => p.id === id) ?? null);
   }, [shown]);
+  // Direct category links (?categoria=...) from Stories open that category once.
+  useEffect(() => {
+    const wanted = search.categoria;
+    if (!wanted) return;
+    const match = shown.find(p => p.category === wanted || p.category.replace("Narguiles > ", "") === wanted);
+    if (match) { setCat(match.category); setQuery(""); }
+    void navigate({ to: "/", search: { aba: "categorias" }, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.categoria, shown.length]);
   const featured = shown.filter(p => p.featured && available(p));
   const promos = shown.filter(p => discountPercent(p) !== null && available(p));
   const highlights = [...promos, ...featured.filter(p => discountPercent(p) === null)];
