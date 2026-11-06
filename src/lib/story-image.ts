@@ -1,9 +1,9 @@
 const W = 1080;
 const H = 1920;
-const BG = "#123e34";
+const BG = "#f8f7f3";
 const GOLD = "#d4af37";
-const INK = "#ffffff";
-const LOGO_GOLD = "#e6c66c";
+const INK = "#171717";
+const LOGO_GOLD = "#a47b28";
 
 // Fit text by measured width, including names with unusually long words.
 function nameLines(ctx: CanvasRenderingContext2D, name: string, width: number): { lines: string[]; size: number } {
