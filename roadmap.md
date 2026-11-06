@@ -1,3 +1,7 @@
+# Imagens para Instagram e WhatsApp (Thais, 06/11/2026 07:07 UTC)
+- [ ] Retirar QR e textos extras; mostrar foto inteira, valor e logo S7VEN.
+- [ ] Permitir baixar/compartilhar para Instagram, WhatsApp, Status e grupos; verificar imagem real no painel.
+
 # Assistente com a Astra (Thais, 02/11/2026 05:11 UTC)
 - [x] Assistente reconfigurada como consultora (faturamento, catálogo, campanhas, preços/lucro, sites, automações), com pesquisa na internet e acesso aos produtos/preços do catálogo; sem dados de clientes e sem alterar a loja. Teste real no painel respondeu usando os preços cadastrados.
 - [ ] Publicar: depende de Thais pedir a publicação.
