@@ -120,7 +120,7 @@ export async function generateSticker(phrase: string, style: StickerStyle): Prom
   let minX = SIZE, minY = SIZE, maxX = 0, maxY = 0;
   for (let yy = 0; yy < SIZE; yy++) {
     for (let xx = 0; xx < SIZE; xx++) {
-      if (data[(yy * SIZE + xx) * 4 + 3] > 8) {
+      if ((data[(yy * SIZE + xx) * 4 + 3] ?? 0) > 8) {
         if (xx < minX) minX = xx;
         if (xx > maxX) maxX = xx;
         if (yy < minY) minY = yy;

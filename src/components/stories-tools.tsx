@@ -7,12 +7,12 @@ import { generateSticker, stickerFileName, stickerPhrases, stickerStyles } from 
 import { applyInstaFont, instaFonts } from "@/lib/insta-fonts";
 
 function StickerPack() {
-  const [styleId, setStyleId] = useState(stickerStyles[0].id);
+  const [styleId, setStyleId] = useState(stickerStyles[0]?.id ?? "gold-serif");
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [packBusy, setPackBusy] = useState(false);
   const [error, setError] = useState("");
-  const style = stickerStyles.find((s) => s.id === styleId) ?? stickerStyles[0];
+  const style = stickerStyles.find((s) => s.id === styleId) ?? stickerStyles[0]!;
 
   const preview = async (phrase: string) => {
     const key = `${style.id}:${phrase}`;
