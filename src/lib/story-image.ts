@@ -43,7 +43,8 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
   if (line && lines.length < maxLines) lines.push(line);
   if (words.length && lines.length === maxLines) {
     const used = lines.join(" ").split(/\s+/).length;
-    if (used < words.length) lines[maxLines - 1] = lines[maxLines - 1].replace(/\s?\S*$/, "") + "…";
+    const last = lines[maxLines - 1] ?? "";
+    if (used < words.length) lines[maxLines - 1] = last.replace(/\s?\S*$/, "") + "…";
   }
   return lines;
 }
