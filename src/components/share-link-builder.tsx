@@ -39,6 +39,7 @@ export function ShareLinkBuilder() {
     setStoryError("");
     try {
       const blob = await generateStoryImage({
+        name: selectedProduct.name,
         price: brl(selectedProduct.price),
         photoUrl: selectedProduct.image ?? undefined,
       });
