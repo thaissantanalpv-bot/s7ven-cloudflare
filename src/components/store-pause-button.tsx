@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Pause, Play } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { setStorePaused } from "@/lib/store-settings.functions";
 import { storeSettingsQuery, publicStoreSettingsQuery } from "@/lib/store-settings.query";
 
