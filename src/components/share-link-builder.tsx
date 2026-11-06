@@ -15,6 +15,7 @@ export function ShareLinkBuilder() {
   const visible = products.filter((p) => p.active);
   const categories = useMemo(() => [...new Set(visible.map((p) => p.category))].sort(), [visible]);
   const sortedProducts = useMemo(() => [...visible].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")), [visible]);
+  const selectedProduct = kind === "produto" ? sortedProducts.find((p) => p.id === value) : undefined;
   const url = value ? (kind === "categoria" ? categoryLink(ORIGIN, value) : productLink(ORIGIN, value)) : "";
   const copy = async () => {
     if (!url) return;
