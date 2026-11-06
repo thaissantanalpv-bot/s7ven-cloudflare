@@ -64,7 +64,11 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   };
   return <section className="py-7">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-      <div className="flex gap-6 text-sm"><span><strong>{managed.length}</strong> {combos ? "combos" : "produtos"}</span><span className="text-muted-foreground">{managed.filter(p => !available(p)).length} indisponíveis</span>{lowCount > 0 && <span className="text-destructive"><strong>{lowCount}</strong> para repor</span>}</div>
+      <div className="flex flex-wrap gap-2 text-xs font-medium">
+        <span className="rounded-full border bg-card px-3 py-1.5"><strong>{managed.length}</strong> {combos ? "combos" : "produtos"}</span>
+        <span className="rounded-full border bg-card px-3 py-1.5 text-muted-foreground">{managed.filter(p => !available(p)).length} indisponíveis</span>
+        {lowCount > 0 && <span className="rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-destructive"><strong>{lowCount}</strong> para repor</span>}
+      </div>
       <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setBulkOpen(true)}><Percent />Mudar preços em lote</Button><Button onClick={() => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, compareAtPrice: null, category: combos ? "Combos" : "", emoji: "🛍️", image: "", images: [], variationPhotos: {}, video: "", youtube: "", active: true, featured: false, stock: null, minStock: null, optionLabel: "Sabor", allowOther: false, variations: [], comboGroups: combos ? [{ id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }] : [] }, expected: null, preview: "" }); }}><Plus /> {combos ? "Novo combo" : "Novo produto"}</Button></div>
     </div>
     <BulkPriceDialog key={bulkOpen ? "open" : "closed"} open={bulkOpen} onOpenChange={setBulkOpen} products={visible} />
