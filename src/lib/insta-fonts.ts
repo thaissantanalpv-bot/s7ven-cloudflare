@@ -23,7 +23,6 @@ const STYLES: { id: string; label: string; ranges: Range[] }[] = [
   { id: "squared", label: "Quadrados", ranges: [{ upper: 0x1f130 }] },
   { id: "parenthesized", label: "Parênteses", ranges: [{ lower: 0x249c, digits: 0x2474, upper: 0x1f110 }] },
   { id: "fullwidth", label: "Larga", ranges: [{ upper: 0xff21, lower: 0xff41, digits: 0xff10 }] },
-  { id: "regional", label: "Blocos", ranges: [{ upper: 0x1f1e6 }] },
   { id: "small-caps", label: "Versalete", ranges: [] }, // custom map below
 ];
 
@@ -110,7 +109,7 @@ const DECORATIONS: Decoration[] = [
   { id: "cross-above", label: "Cruz em cima", combining: "̽" },
   { id: "asterisk-below", label: "Asterisco embaixo", combining: "͙" },
   { id: "plus-below", label: "Mais embaixo", combining: "̟" },
-  { id: "x-below", label: "X embaixo", combining: "̽" },
+  { id: "x-below", label: "X embaixo", combining: "͓" },
   { id: "bridge", label: "Ponte embaixo", combining: "̪" },
   { id: "square-below", label: "Quadrado embaixo", combining: "̻" },
   { id: "seagull", label: "Gaivota embaixo", combining: "̼" },
