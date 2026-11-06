@@ -3,6 +3,7 @@ const H = 1920;
 const BG = "#ffffff";
 const GOLD = "#d4af37";
 const INK = "#171717";
+const LOGO_GOLD = "#89621f";
 
 // Fit text by measured width, including names with unusually long words.
 function nameLines(ctx: CanvasRenderingContext2D, name: string, width: number): { lines: string[]; size: number } {
@@ -54,7 +55,21 @@ export async function generateStoryImage({ name, price, photoUrl }: StoryImageIn
   const logoScale = Math.min(540 / logo.naturalWidth, 180 / logo.naturalHeight);
   const lw = logo.naturalWidth * logoScale;
   const lh = logo.naturalHeight * logoScale;
-  ctx.drawImage(logo, (W - lw) / 2, 140 + (180 - lh) / 2, lw, lh);
+  // Strengthen only the logo's transparent silhouette, preserving the original artwork.
+  const logoCanvas = document.createElement("canvas");
+  logoCanvas.width = Math.ceil(lw) + 8;
+  logoCanvas.height = Math.ceil(lh) + 8;
+  const logoCtx = logoCanvas.getContext("2d");
+  if (!logoCtx) throw new Error("Seu navegador não conseguiu montar a logo.");
+  for (let x = -2; x <= 2; x++) {
+    for (let y = -2; y <= 2; y++) {
+      if (x * x + y * y <= 4) logoCtx.drawImage(logo, 4 + x, 4 + y, lw, lh);
+    }
+  }
+  logoCtx.globalCompositeOperation = "source-in";
+  logoCtx.fillStyle = LOGO_GOLD;
+  logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height);
+  ctx.drawImage(logoCanvas, (W - lw) / 2 - 4, 140 + (180 - lh) / 2 - 4);
 
   ctx.strokeStyle = GOLD;
   ctx.lineWidth = 2;
