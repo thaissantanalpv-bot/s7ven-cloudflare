@@ -5,7 +5,7 @@ import type { Order } from "@/lib/orders";
 const mocks = vi.hoisted(() => ({ list: vi.fn(), update: vi.fn(), track: vi.fn(), cancel: vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/components/push-notifications", () => ({ PushQuickButton: () => null }));
-vi.mock("@/components/store-pause-button", () => ({ StorePauseButton: () => null }));
+vi.mock("@/components/store-pause-button", () => ({ StorePauseButton: () => null, StorePauseSwitch: () => null }));
 vi.mock("@/lib/orders.functions", () => ({
   listOrders: mocks.list,
   updateOrderStatus: mocks.update,
@@ -160,21 +160,17 @@ describe("Kanban order management", () => {
   it("moves through every stage and builds matching customer updates", async () => {
     mount();
     await screen.findByText("Cliente teste");
-    for (const [label, action, next] of [
-      ["Recebido", "Aceitar pedido", "Em preparo"],
-      ["Em preparo", "Avançar p/ Saiu para entrega", "Saiu para entrega"],
-      ["Saiu para entrega", "Avançar p/ Entregue", "Entregue"],
-    ] as const) {
-      const column = screen.getByRole("region", { name: label });
-      expect(within(column).getByText("Cliente teste")).toBeInTheDocument();
-      fireEvent.click(within(column).getByRole("button", { name: action }));
-      await waitFor(() => expect(row.status).not.toBe(label));
-      await waitFor(() =>
-        expect(
-          within(screen.getByRole("region", { name: next })).getByText("Cliente teste"),
-        ).toBeInTheDocument(),
-      );
-    }
+    fireEvent.click(screen.getByRole("button", { name: "Aceitar pedido" }));
+    await waitFor(() => expect(row.status).toBe("preparing"));
+    fireEvent.click(screen.getByRole("tab", { name: /Em Preparo/ }));
+    expect(await screen.findByText("Cliente teste")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Avançar p/ Saiu para entrega" }));
+    await waitFor(() => expect(row.status).toBe("out_for_delivery"));
+    expect(await screen.findByText("Cliente teste")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Avançar p/ Entregue" }));
+    await waitFor(() => expect(row.status).toBe("delivered"));
+    fireEvent.click(screen.getByRole("tab", { name: /Entregues/ }));
+    expect(await screen.findByText("Cliente teste")).toBeInTheDocument();
     expect(mocks.update).toHaveBeenCalledTimes(3);
   });
   it("shows details with flavors and lets admin change stage", async () => {
@@ -203,7 +199,7 @@ describe("Kanban order management", () => {
     await screen.findByText("Cliente teste");
     fireEvent.change(screen.getByLabelText("Buscar pedido"), { target: { value: "inexistente" } });
     expect(screen.queryByText("Cliente teste")).not.toBeInTheDocument();
-    expect(screen.getAllByText("Nenhum pedido")).toHaveLength(4);
+    expect(screen.getByText("Nenhum pedido nesta etapa")).toBeInTheDocument();
   });
   it("turns sound on automatically and keeps alerting until the order is accepted", async () => {
     const play = vi.fn(() => Promise.resolve());
@@ -214,12 +210,13 @@ describe("Kanban order management", () => {
     await screen.findByText("Cliente teste");
     // Som já vem ativo: o desbloqueio do navegador acontece no toque,
     // e o alerta contínuo começa com o pedido "received" já na tela.
-    await screen.findByRole("button", { name: /Som ativo/ });
+    await screen.findByRole("switch", { name: "Alerta sonoro de novo pedido" });
     await waitFor(() => expect(play).toHaveBeenCalled());
     const pausesBeforeAccept = pause.mock.calls.length;
     // Ao aceitar o pedido (sai de "received"), o alerta contínuo para
     mocks.list.mockImplementation(async () => [{ ...row, status: "preparing" }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
+    fireEvent.click(screen.getByRole("tab", { name: /Em Preparo/ }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Avançar p/ Saiu para entrega" })).toBeInTheDocument());
     await waitFor(() => expect(pause.mock.calls.length).toBeGreaterThan(pausesBeforeAccept));
     vi.restoreAllMocks();
@@ -240,6 +237,7 @@ describe("Kanban order management", () => {
     row.status = "out_for_delivery";
     row.tracking_url = "https://entrega.app/r/abc123";
     mount();
+    fireEvent.click(await screen.findByRole("tab", { name: /Em Preparo/ }));
     await screen.findByText("Cliente teste");
     const notify = screen.getByRole("link", { name: /Avisar cliente do pedido 42/ });
     expect(decodeURIComponent(notify.getAttribute("href") ?? "")).toContain("https://entrega.app/r/abc123");

@@ -72,7 +72,7 @@ describe("Product manager", () => {
   });
   it("creates products with uploaded photos and pauses existing products", async () => {
     setup();
-    fireEvent.click(screen.getByRole("button", { name: "Novo produto" }));
+    fireEvent.click(screen.getByRole("button", { name: "Novo Produto" }));
     const dialog = screen.getByRole("dialog");
     fireEvent.change(within(dialog).getByLabelText("Nome", { exact: true }), { target: { value: "Produto teste" } });
     fireEvent.change(within(dialog).getByLabelText("Categoria", { exact: true }), { target: { value: "Bebidas" } });

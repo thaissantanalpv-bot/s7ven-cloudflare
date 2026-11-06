@@ -17,7 +17,7 @@ import { BulkPriceDialog } from "./bulk-price-dialog";
 import { ProductVideoField } from "./product-video-field";
 import { AiDescription } from "./ai-description";
 
-export function ProductManager({ combos = false }: { combos?: boolean }) {
+export function ProductManager() {
   const { data: products } = useSuspenseQuery(adminCatalogQuery);
   useCatalogUpdates();
   const client = useQueryClient();
@@ -37,8 +37,11 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const categories = [...new Set(products.map(p => p.category))];
-  const managed = products.filter(p => combos ? Boolean(p.comboGroups?.length) : !p.comboGroups?.length);
-  const lowCount = managed.reduce((n, p) => n + lowStockItems(p).length, 0);
+  const [tab, setTab] = useState<"produtos" | "combos" | "falta">("produtos");
+  const regular = products.filter(p => !p.comboGroups?.length);
+  const comboList = products.filter(p => Boolean(p.comboGroups?.length));
+  const lowList = regular.filter(p => lowStockItems(p).length > 0);
+  const managed = tab === "combos" ? comboList : tab === "falta" ? lowList : regular;
   const visible = managed.filter(p => (!category || p.category === category) && (!query || `${p.name} ${p.category}`.toLowerCase().includes(query.toLowerCase())) && (filter === "all" || (filter === "active" ? available(p) : filter === "low" ? lowStockItems(p).length > 0 : !available(p))));
   const persist = async (product: ProductDraft, expected: string | null) => {
     setBusy(true); setMessage("");
@@ -62,46 +65,57 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
     setSelected(new Set()); setDeleting(null); setBusy(false);
     setMessage([done ? `${done} ${done === 1 ? "produto excluído definitivamente" : "produtos excluídos definitivamente"}.` : "", paused.size ? `Combo pausado porque ficou sem opções num grupo: ${[...paused].join(", ")}.` : "", ...failed].filter(Boolean).join(" "));
   };
+  const startNew = (combo: boolean) => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, compareAtPrice: null, category: combo ? "Combos" : "", emoji: "🛍️", image: "", images: [], variationPhotos: {}, video: "", youtube: "", active: true, featured: false, stock: null, minStock: null, optionLabel: "Sabor", allowOther: false, variations: [], comboGroups: combo ? [{ id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }] : [] }, expected: null, preview: "" }); };
   return <section className="py-7">
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-      <div className="flex flex-wrap gap-2 text-xs font-medium">
-        <span className="rounded-full border bg-card px-3 py-1.5"><strong>{managed.length}</strong> {combos ? "combos" : "produtos"}</span>
-        <span className="rounded-full border bg-card px-3 py-1.5 text-muted-foreground">{managed.filter(p => !available(p)).length} indisponíveis</span>
-        {lowCount > 0 && <span className="rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-destructive"><strong>{lowCount}</strong> para repor</span>}
-      </div>
-      <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setBulkOpen(true)}><Percent />Mudar preços em lote</Button><Button onClick={() => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, compareAtPrice: null, category: combos ? "Combos" : "", emoji: "🛍️", image: "", images: [], variationPhotos: {}, video: "", youtube: "", active: true, featured: false, stock: null, minStock: null, optionLabel: "Sabor", allowOther: false, variations: [], comboGroups: combos ? [{ id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }] : [] }, expected: null, preview: "" }); }}><Plus /> {combos ? "Novo combo" : "Novo produto"}</Button></div>
+    <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label="Seções do catálogo">
+      {([
+        { id: "produtos", label: "Produtos", count: regular.length },
+        { id: "combos", label: "Combos", count: comboList.length },
+        { id: "falta", label: "Em Falta", count: lowList.length },
+      ] as const).map(t => (
+        <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${tab === t.id ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}>
+          {t.label}
+          <span className={`grid min-w-6 place-items-center rounded-full px-1.5 py-0.5 text-xs font-bold ${tab === t.id ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>{t.count}</span>
+        </button>
+      ))}
+    </div>
+    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações rápidas do catálogo</p>
+    <div className="mb-5 grid grid-cols-3 gap-2">
+      <Button onClick={() => startNew(false)} className="h-auto min-h-11 px-2 py-2.5 text-xs sm:text-sm"><Plus />Novo Produto</Button>
+      <Button variant="outline" onClick={() => startNew(true)} className="h-auto min-h-11 px-2 py-2.5 text-xs sm:text-sm"><Plus />Criar Combo</Button>
+      <Button variant="outline" onClick={() => setBulkOpen(true)} className="h-auto min-h-11 px-2 py-2.5 text-xs sm:text-sm"><Percent />Preços em Lote</Button>
     </div>
     <BulkPriceDialog key={bulkOpen ? "open" : "closed"} open={bulkOpen} onOpenChange={setBulkOpen} products={visible} />
-    <div className="mb-5 flex flex-wrap gap-3">
-      <div className="relative min-w-48 flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><input className="field pl-10" aria-label="Buscar produtos no painel" placeholder="Buscar produtos" value={query} onChange={e => setQuery(e.target.value)} /></div>
-      <select className="field w-auto" aria-label="Filtrar categoria" value={category} onChange={e => setCategory(e.target.value)}><option value="">Todas as categorias</option>{categories.map(c => <option key={c}>{c}</option>)}</select>
-      <select className="field w-auto" aria-label="Disponibilidade" value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos os produtos</option><option value="active">Disponíveis</option><option value="paused">Indisponíveis</option><option value="low">Estoque baixo</option></select>
+    <div className="mb-5 flex gap-2">
+      <div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><input className="field pl-10" aria-label="Buscar produtos no painel" placeholder="Buscar..." value={query} onChange={e => setQuery(e.target.value)} /></div>
+      <select className="field w-auto max-w-40" aria-label="Filtrar categoria" value={category} onChange={e => setCategory(e.target.value)}><option value="">Todas as categorias</option>{categories.map(c => <option key={c}>{c}</option>)}</select>
+      <select className="field w-auto max-w-32" aria-label="Disponibilidade" value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos</option><option value="active">Disponíveis</option><option value="paused">Indisponíveis</option><option value="low">Estoque baixo</option></select>
     </div>
     {visible.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-3 text-sm"><label className="inline-flex cursor-pointer items-center gap-2"><input type="checkbox" className="size-4 accent-primary" aria-label="Selecionar todos os produtos da lista" checked={visible.every(p => selected.has(p.id))} onChange={e => setSelected(e.target.checked ? new Set([...selected, ...visible.map(p => p.id)]) : new Set([...selected].filter(id => !visible.some(p => p.id === id))))} />Selecionar todos</label>{selected.size > 0 && <><span className="text-muted-foreground">{selected.size} selecionado(s)</span><Button size="sm" variant="destructive" disabled={busy} onClick={() => { setMessage(""); setDeleting(managed.filter(p => selected.has(p.id))); }}><Trash2 />Excluir selecionados</Button><Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Limpar</Button></>}</div>}
     {!editing && message && <p role="status" className="mb-4 text-sm text-primary">{message}</p>}
     <div className="grid grid-cols-1 gap-3">
       {visible.map(p => {
         const status = !p.active ? { label: "Pausado", cls: "bg-muted text-muted-foreground" } : !available(p) ? { label: "Esgotado", cls: "bg-destructive/15 text-destructive" } : { label: "Disponível", cls: "bg-whatsapp/15 text-whatsapp" };
-        return <div key={p.id} className="rounded-2xl border bg-card p-3 shadow-sm sm:p-4">
-          <div className="flex items-start gap-3">
-            <input type="checkbox" className="mt-1 size-5 shrink-0 accent-primary" aria-label={`Selecionar ${p.name}`} checked={selected.has(p.id)} onChange={e => setSelected(prev => { const n = new Set(prev); if (e.target.checked) n.add(p.id); else n.delete(p.id); return n; })} />
-            <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-photo">{p.image ? <img src={p.image} alt={p.name} className="size-full object-contain" /> : <Package className="text-photo-foreground" />}</div>
-            <div className="min-w-0 flex-1">
-              <h2 className="truncate font-semibold leading-tight">{p.name}</h2>
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">{p.category.replace("Narguiles > ", "")} · {p.variations.length ? `${p.variations.length} variações` : "Sem variações"}</p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${status.cls}`}>{status.label}</span>
-                <span className="text-[11px] text-muted-foreground">{p.stock === null ? "sem limite" : `${p.stock} un.`}</span>
-                {p.featured && <span className="flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary"><Star className="size-3" />Destaque</span>}
-              </div>
-              {lowStockItems(p).map(item => <p key={item.label} role="status" className="mt-1 text-[11px] font-medium text-destructive">Repor: {item.label} — restam {item.stock} (mínimo {item.min})</p>)}
+        const stockLabel = p.stock === null ? "sem limite" : `${p.stock} uni.`;
+        return <div key={p.id} className="flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-sm">
+          <input type="checkbox" className="size-5 shrink-0 accent-primary" aria-label={`Selecionar ${p.name}`} checked={selected.has(p.id)} onChange={e => setSelected(prev => { const n = new Set(prev); if (e.target.checked) n.add(p.id); else n.delete(p.id); return n; })} />
+          <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-photo">{p.image ? <img src={p.image} alt={p.name} className="size-full object-contain" /> : <Package className="text-photo-foreground" />}</div>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold leading-tight">{p.name}</h2>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${status.cls}`}>{status.label} • {stockLabel}</span>
+              {p.featured && <span className="flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary"><Star className="size-3" />Destaque</span>}
             </div>
-            <span className="shrink-0 text-right font-mono text-sm font-semibold">{discountPercent(p) !== null && <span className="block text-xs font-normal text-muted-foreground line-through">{brl(p.compareAtPrice ?? 0)}</span>}{brl(p.price)}{discountPercent(p) !== null && <span className="block text-xs font-semibold text-destructive">-{discountPercent(p)}%</span>}</span>
+            <p className="mt-1 truncate text-xs text-muted-foreground">{p.category.replace("Narguiles > ", "")}{p.variations.length ? ` · ${p.variations.length} variações` : ""}</p>
+            {lowStockItems(p).map(item => <p key={item.label} role="status" className="mt-1 text-[11px] font-medium text-destructive">Repor: {item.label} — restam {item.stock} (mínimo {item.min})</p>)}
           </div>
-          <div className="mt-3 flex items-center justify-end gap-1 border-t pt-2.5">
-            <Button variant="outline" size="sm" title="Editar produto" aria-label={`Editar ${p.name}`} onClick={() => edit(p)}><Pencil />Editar</Button>
-            <Button variant="ghost" size="sm" disabled={busy} title={p.active ? "Pausar produto" : "Reativar produto"} aria-label={`${p.active ? "Pausar" : "Reativar"} ${p.name}`} onClick={() => persist({ ...toDraft(p), active: !p.active }, p.updatedAt)}>{p.active ? <Pause /> : <Play />}{p.active ? "Pausar" : "Ativar"}</Button>
-            <Button variant="ghost" size="sm" className="text-destructive" disabled={busy} title="Excluir produto" aria-label={`Excluir ${p.name}`} onClick={() => { setMessage(""); setDeleting([p]); }}><Trash2 />Excluir</Button>
+          <div className="flex shrink-0 flex-col items-end justify-between gap-2 self-stretch py-0.5">
+            <span className="text-right font-mono text-sm font-semibold">{discountPercent(p) !== null && <span className="block text-xs font-normal text-muted-foreground line-through">{brl(p.compareAtPrice ?? 0)}</span>}{brl(p.price)}{discountPercent(p) !== null && <span className="block text-xs font-semibold text-destructive">-{discountPercent(p)}%</span>}</span>
+            <div className="flex gap-1">
+              <Button variant="outline" size="icon" className="size-8" title="Editar produto" aria-label={`Editar ${p.name}`} onClick={() => edit(p)}><Pencil /></Button>
+              <Button variant="ghost" size="icon" className="size-8" disabled={busy} title={p.active ? "Pausar produto" : "Reativar produto"} aria-label={`${p.active ? "Pausar" : "Reativar"} ${p.name}`} onClick={() => persist({ ...toDraft(p), active: !p.active }, p.updatedAt)}>{p.active ? <Pause /> : <Play />}</Button>
+              <Button variant="ghost" size="icon" className="size-8 text-destructive" disabled={busy} title="Excluir produto" aria-label={`Excluir ${p.name}`} onClick={() => { setMessage(""); setDeleting([p]); }}><Trash2 /></Button>
+            </div>
           </div>
         </div>;
       })}
@@ -110,7 +124,7 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
     <Dialog open={Boolean(editing)} onOpenChange={open => { if (!open && !busy) setEditing(null); }}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
         <DialogTitle>{editing?.draft.name || "Novo produto"}</DialogTitle><DialogDescription>S7VEN · Produtos e estoque</DialogDescription>
-        {editing && <ProductEditor combos={combos} products={products.filter(p => p.id !== editing.draft.id)} initial={editing.draft} preview={editing.preview} galleryPreview={products.find(p => p.id === editing.draft.id)?.images ?? []} videoPreview={products.find(p => p.id === editing.draft.id)?.video ?? ""} categories={categories} busy={busy} message={message} onSave={p => persist(p, editing.expected)} />}
+        {editing && <ProductEditor combos={Boolean(editing.draft.comboGroups.length)} products={products.filter(p => p.id !== editing.draft.id)} initial={editing.draft} preview={editing.preview} galleryPreview={products.find(p => p.id === editing.draft.id)?.images ?? []} videoPreview={products.find(p => p.id === editing.draft.id)?.video ?? ""} categories={categories} busy={busy} message={message} onSave={p => persist(p, editing.expected)} />}
       </DialogContent>
     </Dialog>
     <Dialog open={Boolean(deleting)} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
