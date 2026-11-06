@@ -249,7 +249,7 @@
 - [x] Citar o que a tabacaria tem: tabacos, kits com cases, essências para narguilé, acessórios de headshop, combos de bebidas.
 
 # Organização do painel + fontes/figurinhas (Thais, 06/11/2026 06:39 UTC)
-- [ ] Barra de abas fixa embaixo no celular (Resumo, Pedidos, Catálogo, Divulgar, Ajustes), conforme prints enviados.
-- [ ] Fontes para Instagram: mais de 1.000 opções (estilos Unicode × enfeites).
-- [ ] Figurinhas: mais de 1.000 combinações (frases × estilos × moldura).
+- [x] Barra de abas fixa embaixo no celular (Resumo, Pedidos, Catálogo, Divulgar, Ajustes), conforme prints enviados.
+- [x] Fontes para Instagram: mais de 1.000 opções (estilos Unicode × enfeites).
+- [x] Figurinhas: mais de 1.000 combinações (frases × estilos × moldura).
 - [ ] Publicar: depende de Thais pedir a publicação.
