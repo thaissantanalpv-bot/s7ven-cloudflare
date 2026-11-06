@@ -90,7 +90,6 @@ export function OrderBoard() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
-  const [drag, setDrag] = useState<string | null>(null);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const [pendingMessage, setPendingMessage] = useState<Order | null>(null);
   const [, setTick] = useState(0);
@@ -158,7 +157,6 @@ export function OrderBoard() {
       await orders.refetch();
     } finally {
       setBusy("");
-      setDrag(null);
     }
   };
 

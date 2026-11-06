@@ -18,7 +18,6 @@ import {
   Package,
   Receipt,
   Menu,
-  Layers,
   History,
   ChevronRight,
   MessageCircle,
