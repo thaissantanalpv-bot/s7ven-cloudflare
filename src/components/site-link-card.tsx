@@ -84,6 +84,7 @@ export function SiteLinkCard() {
         </div>
       )}
       <ShareLinkBuilder />
+      <StoriesTools />
     </section>
   );
 }
