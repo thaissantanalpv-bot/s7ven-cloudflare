@@ -1,9 +1,13 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, ImageDown, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { catalogQuery } from "@/lib/catalog.query";
 import { categoryLink, productLink } from "@/lib/share-links";
+import { discountPercent } from "@/lib/catalog";
+import { brl } from "@/lib/products";
+import { generateStoryImage } from "@/lib/story-image";
+import { deliverFile } from "@/lib/download";
 
 const ORIGIN = "https://s7venlounge.shop";
 
@@ -17,6 +21,29 @@ export function ShareLinkBuilder() {
   const sortedProducts = useMemo(() => [...visible].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")), [visible]);
   const selectedProduct = kind === "produto" ? sortedProducts.find((p) => p.id === value) : undefined;
   const url = value ? (kind === "categoria" ? categoryLink(ORIGIN, value) : productLink(ORIGIN, value)) : "";
+  const [story, setStory] = useState<{ blob: Blob; url: string } | null>(null);
+  const [storyBusy, setStoryBusy] = useState(false);
+  const [storyError, setStoryError] = useState("");
+  const makeStory = async () => {
+    if (!selectedProduct || !url) return;
+    setStoryBusy(true);
+    setStoryError("");
+    try {
+      const blob = await generateStoryImage({
+        name: selectedProduct.name,
+        price: brl(selectedProduct.price),
+        compareAt: discountPercent(selectedProduct) !== null ? brl(selectedProduct.compareAtPrice ?? 0) : null,
+        photoUrl: selectedProduct.image ?? undefined,
+        link: url,
+        site: ORIGIN,
+      });
+      setStory((old) => { if (old) URL.revokeObjectURL(old.url); return { blob, url: URL.createObjectURL(blob) }; });
+    } catch (e) {
+      setStoryError(e instanceof Error ? e.message : "Não foi possível gerar a imagem.");
+    } finally {
+      setStoryBusy(false);
+    }
+  };
   const copy = async () => {
     if (!url) return;
     try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
