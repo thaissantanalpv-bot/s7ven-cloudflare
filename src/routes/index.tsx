@@ -39,7 +39,7 @@ import { submitOrder, orderTracking } from "@/lib/orders.functions";
 import { startDeliverySession, quoteDelivery, suggestDeliveryAddress } from "@/lib/delivery.functions";
 import { estimatedDeliveryMinutes } from "@/lib/delivery-route";
 import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine, getSavedCustomerAddress, saveCustomerAddress, type SavedCustomerAddress } from "@/lib/delivery-address";
-import { MapPin, Menu, ArrowLeft, ArrowRight, ShoppingCart, Home, LayoutGrid, ClipboardList, MoreHorizontal, ShieldCheck, Headphones, Flame, Wallet, Trash2, Gem, CheckCircle2 } from "lucide-react";
+import { MapPin, Menu, ArrowLeft, ArrowRight, ShoppingCart, Home, LayoutGrid, ClipboardList, MoreHorizontal, ShieldCheck, Headphones, Flame, Wallet, Trash2, Gem, CheckCircle2, Instagram } from "lucide-react";
 import { categoryIcon, categoryImage } from "@/components/catalog/category-icon";
 import heroImg from "@/assets/hero-narguile.jpg";
 import { pairSuggestions } from "@/lib/pair-suggestions";
@@ -57,6 +57,7 @@ import {
   PAYMENT_METHODS,
   STORE_NAME,
   WHATSAPP_NUMBER,
+  INSTAGRAM_URL,
   brl,
 } from "@/lib/products";
 import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
@@ -963,6 +964,7 @@ function Catalog() {
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               <Button asChild className="h-12 bg-whatsapp text-whatsapp-foreground"><a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer"><Headphones />Falar com a loja</a></Button>
+              <Button asChild variant="outline" className="h-12"><a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer"><Instagram className="text-primary" />Instagram da loja</a></Button>
               <Button variant="outline" className="h-12" onClick={() => {
                 const url = window.location.origin;
                 if (navigator.share) navigator.share({ title: STORE_NAME, url }).catch(() => {});
