@@ -111,26 +111,16 @@ function Admin() {
     "app-settings": "Configurações",
   };
 
-  const sidebarItems: { id: ViewId; label: string; Icon: typeof Home; color: string }[] = [
-    { id: "analytics", label: "Movimento", Icon: Activity, color: "text-emerald-400" },
+  const navItems: { id: ViewId; label: string; Icon: typeof Home; color: string }[] = [
+    { id: "home", label: "Início", Icon: Home, color: "text-violet-400" },
     { id: "orders", label: "Pedidos", Icon: ShoppingBag, color: "text-orange-400" },
     { id: "products", label: "Produtos", Icon: Package, color: "text-sky-400" },
-
     { id: "combos", label: "Combos", Icon: Layers, color: "text-pink-400" },
+    { id: "analytics", label: "Movimento", Icon: Activity, color: "text-emerald-400" },
     { id: "report", label: "Relatório", Icon: Receipt, color: "text-teal-400" },
     { id: "history", label: "Histórico", Icon: History, color: "text-indigo-400" },
     { id: "app-settings", label: "Configurações", Icon: Settings, color: "text-slate-400" },
   ];
-
-  const mobileMenuItems: { id: ViewId; label: string; Icon: typeof Home }[] = [
-    { id: "app-settings", label: "Configurações (Taxas, Horários, Aparência, Assistente)", Icon: Settings },
-    { id: "analytics", label: "Movimento do catálogo", Icon: Activity },
-    { id: "report", label: "Relatório de vendas", Icon: Receipt },
-    { id: "combos", label: "Combos", Icon: Layers },
-    { id: "history", label: "Histórico de vendas", Icon: History },
-  ];
-
-  const mobileMenuIds = mobileMenuItems.map((i) => i.id);
 
   function renderView(v: ViewId) {
     switch (v) {
