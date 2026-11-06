@@ -30,12 +30,14 @@ import {
   Eye,
   Bell,
   Palette,
+  Megaphone,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { AdminAppAccess } from "@/components/admin-app-access";
-import { SiteLinkCard } from "@/components/site-link-card";
+import { MarketingTools } from "@/components/marketing-tools";
 import { supabase } from "@/integrations/supabase/client";
 import { storeSettingsQuery } from "@/lib/store-settings.query";
 import { checkStoreAdmin, saveStoreSettings } from "@/lib/store-settings.functions";
@@ -46,12 +48,13 @@ import { DistanceTiersEditor } from "@/components/distance-tiers-editor";
 import { SalesReport } from "@/components/pos/sales-report";
 import { SalesHistory } from "@/components/pos/sales-history";
 import { CatalogAnalytics } from "@/components/catalog-analytics";
-import { AbandonedCartNotice } from "@/components/abandoned-cart-notice";
 import { AnalyticsAssistant } from "@/components/analytics-assistant";
 import { adminCatalogQuery } from "@/lib/catalog.query";
 import { getCatalogFunnel } from "@/lib/catalog-analytics.functions";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 import { lowStockItems } from "@/lib/catalog";
+import { brl } from "@/lib/products";
+import { getSalesReport } from "@/lib/sales-report.functions";
 import { AdminSettings } from "@/components/admin-settings";
 import { PromotionsEditor } from "@/components/promotions-editor";
 import { SpecialDaysEditor } from "@/components/special-days-editor";
@@ -81,7 +84,7 @@ export const Route = createFileRoute("/_authenticated/painel")({ staticData: { s
   component: Admin,
 });
 
-type ViewId = "home" | "analytics" | "orders" | "products" | "combos" | "report" | "history" | "app-settings";
+type ViewId = "home" | "analytics" | "orders" | "products" | "divulgar" | "report" | "history" | "app-settings";
 
 function Admin() {
   const [view, setView] = useState<ViewId>("home");
@@ -101,21 +104,21 @@ function Admin() {
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
 
   const viewTitle: Record<ViewId, string> = {
-    home: "Minha loja",
+    home: "Visão Geral & Financeiro",
     report: "Relatório de vendas",
     analytics: "Movimento do catálogo",
-    combos: "Combos",
+    divulgar: "Divulgação & Redes Sociais",
     history: "Histórico de vendas",
-    orders: "Pedidos e Acompanhamento",
-    products: "Produtos e estoque",
+    orders: "Central de Pedidos",
+    products: "Catálogo, Estoque & Combos",
     "app-settings": "Configurações",
   };
 
   const navItems: { id: ViewId; label: string; Icon: typeof Home; color: string }[] = [
-    { id: "home", label: "Início", Icon: Home, color: "text-violet-400" },
+    { id: "home", label: "Resumo", Icon: Home, color: "text-violet-400" },
     { id: "orders", label: "Pedidos", Icon: ShoppingBag, color: "text-orange-400" },
-    { id: "products", label: "Produtos", Icon: Package, color: "text-sky-400" },
-    { id: "combos", label: "Combos", Icon: Layers, color: "text-pink-400" },
+    { id: "products", label: "Catálogo", Icon: Package, color: "text-sky-400" },
+    { id: "divulgar", label: "Divulgar", Icon: Megaphone, color: "text-fuchsia-400" },
     { id: "analytics", label: "Movimento", Icon: Activity, color: "text-emerald-400" },
     { id: "report", label: "Relatório", Icon: Receipt, color: "text-teal-400" },
     { id: "history", label: "Histórico", Icon: History, color: "text-indigo-400" },
@@ -125,17 +128,17 @@ function Admin() {
   function renderView(v: ViewId) {
     switch (v) {
       case "analytics":
-        return <><CatalogAnalytics /><SiteLinkCard /></>;
+        return <CatalogAnalytics />;
       case "report":
         return <SalesReport />;
-      case "combos":
-        return <ProductManager key="combos" combos />;
+      case "divulgar":
+        return <MarketingTools />;
       case "history":
         return <SalesHistory />;
       case "orders":
         return <OrderBoard />;
       case "products":
-        return <ProductManager key="products" />;
+        return <ProductManager />;
       case "app-settings":
       default:
         return (
