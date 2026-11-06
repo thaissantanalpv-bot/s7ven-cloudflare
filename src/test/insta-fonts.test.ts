@@ -11,11 +11,11 @@ describe("applyInstaFont", () => {
   });
 
   it("converte dígitos no estilo vazado", () => {
-    expect(applyInstaFont("R$ 10", "double")).toBe("R$ 𝟙𝟘");
+    expect(applyInstaFont("R$ 10", "double")).toBe("ℝ$ 𝟙𝟘");
   });
 
   it("preserva espaços, acentos e pontuação", () => {
-    expect(applyInstaFont("Açaí 100%", "mono")).toBe("𝙰çaí 𝟷𝟶𝟶%");
+    expect(applyInstaFont("Açaí 100%", "mono")).toBe("𝙰ç𝚊í 𝟷𝟶𝟶%");
   });
 
   it("usa o h itálico alternativo (U+210E)", () => {
