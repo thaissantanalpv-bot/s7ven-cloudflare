@@ -53,7 +53,7 @@ export type StoryImageInput = {
   name: string;
   price: string;
   compareAt?: string | null;
-  photoUrl?: string;
+  photoUrl?: string | undefined;
   link: string;
   site: string;
 };
