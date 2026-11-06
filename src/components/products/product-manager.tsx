@@ -17,7 +17,7 @@ import { BulkPriceDialog } from "./bulk-price-dialog";
 import { ProductVideoField } from "./product-video-field";
 import { AiDescription } from "./ai-description";
 
-export function ProductManager({ combos = false }: { combos?: boolean }) {
+export function ProductManager() {
   const { data: products } = useSuspenseQuery(adminCatalogQuery);
   useCatalogUpdates();
   const client = useQueryClient();
@@ -37,8 +37,11 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const categories = [...new Set(products.map(p => p.category))];
-  const managed = products.filter(p => combos ? Boolean(p.comboGroups?.length) : !p.comboGroups?.length);
-  const lowCount = managed.reduce((n, p) => n + lowStockItems(p).length, 0);
+  const [tab, setTab] = useState<"produtos" | "combos" | "falta">("produtos");
+  const regular = products.filter(p => !p.comboGroups?.length);
+  const comboList = products.filter(p => Boolean(p.comboGroups?.length));
+  const lowList = regular.filter(p => lowStockItems(p).length > 0);
+  const managed = tab === "combos" ? comboList : tab === "falta" ? lowList : regular;
   const visible = managed.filter(p => (!category || p.category === category) && (!query || `${p.name} ${p.category}`.toLowerCase().includes(query.toLowerCase())) && (filter === "all" || (filter === "active" ? available(p) : filter === "low" ? lowStockItems(p).length > 0 : !available(p))));
   const persist = async (product: ProductDraft, expected: string | null) => {
     setBusy(true); setMessage("");
@@ -62,20 +65,31 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
     setSelected(new Set()); setDeleting(null); setBusy(false);
     setMessage([done ? `${done} ${done === 1 ? "produto excluído definitivamente" : "produtos excluídos definitivamente"}.` : "", paused.size ? `Combo pausado porque ficou sem opções num grupo: ${[...paused].join(", ")}.` : "", ...failed].filter(Boolean).join(" "));
   };
+  const startNew = (combo: boolean) => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, compareAtPrice: null, category: combo ? "Combos" : "", emoji: "🛍️", image: "", images: [], variationPhotos: {}, video: "", youtube: "", active: true, featured: false, stock: null, minStock: null, optionLabel: "Sabor", allowOther: false, variations: [], comboGroups: combo ? [{ id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }] : [] }, expected: null, preview: "" }); };
   return <section className="py-7">
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-      <div className="flex flex-wrap gap-2 text-xs font-medium">
-        <span className="rounded-full border bg-card px-3 py-1.5"><strong>{managed.length}</strong> {combos ? "combos" : "produtos"}</span>
-        <span className="rounded-full border bg-card px-3 py-1.5 text-muted-foreground">{managed.filter(p => !available(p)).length} indisponíveis</span>
-        {lowCount > 0 && <span className="rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-destructive"><strong>{lowCount}</strong> para repor</span>}
-      </div>
-      <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setBulkOpen(true)}><Percent />Mudar preços em lote</Button><Button onClick={() => { setMessage(""); setEditing({ draft: { id: `n${crypto.randomUUID().replaceAll("-", "").slice(0,24)}`, name: "", description: "", price: 0, compareAtPrice: null, category: combos ? "Combos" : "", emoji: "🛍️", image: "", images: [], variationPhotos: {}, video: "", youtube: "", active: true, featured: false, stock: null, minStock: null, optionLabel: "Sabor", allowOther: false, variations: [], comboGroups: combos ? [{ id: crypto.randomUUID(), name: "", quantity: 1, productIds: [] }] : [] }, expected: null, preview: "" }); }}><Plus /> {combos ? "Novo combo" : "Novo produto"}</Button></div>
+    <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label="Seções do catálogo">
+      {([
+        { id: "produtos", label: "Produtos", count: regular.length },
+        { id: "combos", label: "Combos", count: comboList.length },
+        { id: "falta", label: "Em Falta", count: lowList.length },
+      ] as const).map(t => (
+        <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${tab === t.id ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}>
+          {t.label}
+          <span className={`grid min-w-6 place-items-center rounded-full px-1.5 py-0.5 text-xs font-bold ${tab === t.id ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>{t.count}</span>
+        </button>
+      ))}
+    </div>
+    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações rápidas do catálogo</p>
+    <div className="mb-5 grid grid-cols-3 gap-2">
+      <Button onClick={() => startNew(false)} className="h-auto min-h-11 px-2 py-2.5 text-xs sm:text-sm"><Plus />Novo Produto</Button>
+      <Button variant="outline" onClick={() => startNew(true)} className="h-auto min-h-11 px-2 py-2.5 text-xs sm:text-sm"><Plus />Criar Combo</Button>
+      <Button variant="outline" onClick={() => setBulkOpen(true)} className="h-auto min-h-11 px-2 py-2.5 text-xs sm:text-sm"><Percent />Preços em Lote</Button>
     </div>
     <BulkPriceDialog key={bulkOpen ? "open" : "closed"} open={bulkOpen} onOpenChange={setBulkOpen} products={visible} />
-    <div className="mb-5 flex flex-wrap gap-3">
-      <div className="relative min-w-48 flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><input className="field pl-10" aria-label="Buscar produtos no painel" placeholder="Buscar produtos" value={query} onChange={e => setQuery(e.target.value)} /></div>
-      <select className="field w-auto" aria-label="Filtrar categoria" value={category} onChange={e => setCategory(e.target.value)}><option value="">Todas as categorias</option>{categories.map(c => <option key={c}>{c}</option>)}</select>
-      <select className="field w-auto" aria-label="Disponibilidade" value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos os produtos</option><option value="active">Disponíveis</option><option value="paused">Indisponíveis</option><option value="low">Estoque baixo</option></select>
+    <div className="mb-5 flex gap-2">
+      <div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><input className="field pl-10" aria-label="Buscar produtos no painel" placeholder="Buscar..." value={query} onChange={e => setQuery(e.target.value)} /></div>
+      <select className="field w-auto max-w-40" aria-label="Filtrar categoria" value={category} onChange={e => setCategory(e.target.value)}><option value="">Todas as categorias</option>{categories.map(c => <option key={c}>{c}</option>)}</select>
+      <select className="field w-auto max-w-32" aria-label="Disponibilidade" value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos</option><option value="active">Disponíveis</option><option value="paused">Indisponíveis</option><option value="low">Estoque baixo</option></select>
     </div>
     {visible.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-3 text-sm"><label className="inline-flex cursor-pointer items-center gap-2"><input type="checkbox" className="size-4 accent-primary" aria-label="Selecionar todos os produtos da lista" checked={visible.every(p => selected.has(p.id))} onChange={e => setSelected(e.target.checked ? new Set([...selected, ...visible.map(p => p.id)]) : new Set([...selected].filter(id => !visible.some(p => p.id === id))))} />Selecionar todos</label>{selected.size > 0 && <><span className="text-muted-foreground">{selected.size} selecionado(s)</span><Button size="sm" variant="destructive" disabled={busy} onClick={() => { setMessage(""); setDeleting(managed.filter(p => selected.has(p.id))); }}><Trash2 />Excluir selecionados</Button><Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Limpar</Button></>}</div>}
     {!editing && message && <p role="status" className="mb-4 text-sm text-primary">{message}</p>}
