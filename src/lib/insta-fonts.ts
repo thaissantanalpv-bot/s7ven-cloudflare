@@ -144,7 +144,7 @@ function applyStyle(text: string, styleId: string): string {
 }
 
 export function applyInstaFont(text: string, variantId: string): string {
-  const [styleId, decoId = "plain"] = variantId.split("~");
+  const [styleId = "", decoId = "plain"] = variantId.split("~");
   const styled = applyStyle(text, styleId);
   if (styled === text && !STYLES.some((s) => s.id === styleId)) return text;
   const deco = DECORATIONS.find((d) => d.id === decoId);
