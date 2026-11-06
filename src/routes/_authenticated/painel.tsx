@@ -277,25 +277,46 @@ function AdminHome({ onOpen }: { onOpen: (view: string) => void }) {
   const lowStock = products.flatMap(lowStockItems);
   const data = stats.data;
   const cards = [
-    { label: "Visitas", hint: "pessoas que abriram o catálogo hoje", value: data?.visitors, Icon: Users, target: "analytics" },
-    { label: "Carrinhos", hint: "clientes montando pedido agora", value: data?.pending, Icon: ShoppingCart, target: "analytics" },
-    { label: "Pedidos", hint: "pedidos enviados hoje", value: data?.completed, Icon: ShoppingBag, target: "orders" },
-    { label: "Estoque baixo", hint: lowStock.length ? lowStock.slice(0, 2).map(i => i.label).join(", ") + (lowStock.length > 2 ? "…" : "") : "nenhum item no mínimo", value: lowStock.length, Icon: Package, target: "products" },
+    { label: "Visitas", hint: "abriram o catálogo hoje", value: data?.visitors, Icon: Users, target: "analytics", tone: "bg-emerald-500/15 text-emerald-400" },
+    { label: "Carrinhos", hint: "montando pedido agora", value: data?.pending, Icon: ShoppingCart, target: "analytics", tone: "bg-orange-500/15 text-orange-400" },
+    { label: "Pedidos", hint: "enviados hoje", value: data?.completed, Icon: ShoppingBag, target: "orders", tone: "bg-sky-500/15 text-sky-400" },
+    { label: "Estoque baixo", hint: lowStock.length ? lowStock.slice(0, 2).map(i => i.label).join(", ") + (lowStock.length > 2 ? "…" : "") : "nenhum item no mínimo", value: lowStock.length, Icon: Package, target: "products", tone: "bg-pink-500/15 text-pink-400" },
+  ];
+  const quickActions = [
+    { label: "Pedidos", Icon: ShoppingBag, target: "orders" },
+    { label: "Produtos", Icon: Package, target: "products" },
+    { label: "Combos", Icon: Layers, target: "combos" },
+    { label: "Histórico", Icon: History, target: "history" },
   ];
   return (
     <section className="py-6" aria-label="Resumo da loja">
-      <p className="mb-4 flex items-center gap-2 text-sm text-primary"><Activity className="size-4" />{data ? `${data.online} online agora` : "Conectando…"}</p>
+      <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border bg-card px-4 py-3">
+        <p className="flex min-w-0 items-center gap-2 text-sm font-medium">
+          <span className="relative flex size-2.5 shrink-0">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+            <span className="relative inline-flex size-2.5 rounded-full bg-emerald-400" />
+          </span>
+          <span className="truncate">{data ? `${data.online} online agora` : "Conectando…"}</span>
+        </p>
+        <span className="shrink-0 text-xs text-muted-foreground">hoje</span>
+      </div>
       {!stats.error && data && <AbandonedCartNotice count={data.abandoned} onOpen={() => onOpen("analytics")} />}
-      <div className="grid gap-4">
-        {cards.map(({ label, hint, value, Icon, target }) => (
-          <button key={label} type="button" onClick={() => onOpen(target)} className="flex min-h-28 items-center gap-5 rounded-2xl border bg-card p-6 text-left active:scale-[0.98]">
-            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-primary/10"><Icon className="size-8 text-primary" /></span>
-            <span className="min-w-0 flex-1">
-              <span className="block font-display text-4xl font-semibold">{value === undefined ? "—" : value.toLocaleString("pt-BR")}</span>
-              <span className="mt-1 block text-base font-medium">{label}</span>
-              <span className="block text-xs text-muted-foreground">{hint}</span>
-            </span>
-            <ChevronRight className="size-6 shrink-0 text-muted-foreground" />
+      <div className="grid grid-cols-2 gap-3">
+        {cards.map(({ label, hint, value, Icon, target, tone }) => (
+          <button key={label} type="button" onClick={() => onOpen(target)} className="flex min-h-32 flex-col items-start gap-2 rounded-2xl border bg-card p-4 text-left active:scale-[0.98]">
+            <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${tone}`}><Icon className="size-5" /></span>
+            <span className="font-display text-3xl font-semibold leading-none">{value === undefined ? "—" : value.toLocaleString("pt-BR")}</span>
+            <span className="text-sm font-medium leading-tight">{label}</span>
+            <span className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">{hint}</span>
+          </button>
+        ))}
+      </div>
+      <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações rápidas</p>
+      <div className="grid grid-cols-4 gap-2">
+        {quickActions.map(({ label, Icon, target }) => (
+          <button key={label} type="button" onClick={() => onOpen(target)} className="flex flex-col items-center gap-1.5 rounded-xl border bg-card py-3 text-[11px] font-medium active:scale-[0.97]">
+            <Icon className="size-5 text-primary" />
+            {label}
           </button>
         ))}
       </div>
