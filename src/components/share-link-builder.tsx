@@ -58,7 +58,7 @@ export function ShareLinkBuilder() {
         <Button size="sm" variant={kind === "categoria" ? "default" : "outline"} onClick={() => { setKind("categoria"); setValue(""); }}>Categoria</Button>
         <Button size="sm" variant={kind === "produto" ? "default" : "outline"} onClick={() => { setKind("produto"); setValue(""); }}>Produto</Button>
       </div>
-      <select aria-label={kind === "categoria" ? "Escolher categoria" : "Escolher produto"} value={value} onChange={(e) => setValue(e.target.value)} className="field w-full text-sm">
+      <select aria-label={kind === "categoria" ? "Escolher categoria" : "Escolher produto"} value={value} onChange={(e) => { setValue(e.target.value); setStory(null); setStoryError(""); }} className="field w-full text-sm">
         <option value="">Selecione…</option>
         {kind === "categoria"
           ? categories.map((c) => <option key={c} value={c}>{c.replace("Narguiles > ", "")}</option>)
