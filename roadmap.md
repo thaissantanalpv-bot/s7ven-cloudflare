@@ -1,4 +1,5 @@
 # Imagens para Instagram e WhatsApp (Thais, 06/11/2026 07:07 UTC)
+- [x] Melhorar apresentação e incluir nome do produto junto do valor, preservando foto inteira e logo, sem QR (06/11 07:16 UTC). Imagem real de Rosh Simples conferida sem cortes/sobreposição; download e chamada de compartilhamento verificados; teste de foto panorâmica passou.
 - [x] Retirar QR e textos extras; mostrar foto inteira, valor e logo S7VEN.
 - [x] Permitir baixar/compartilhar para Instagram, WhatsApp, Status e grupos; imagem real de Rosh Simples conferida no painel, download e chamada de compartilhamento de arquivo verificados, 5 testes passaram. Escolha/envio no aplicativo externo depende do celular da usuária.
 
