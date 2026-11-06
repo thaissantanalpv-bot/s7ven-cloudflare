@@ -333,53 +333,18 @@ export function OrderBoard() {
       {orders.isPending ? (
         <p className="py-16 text-muted-foreground">Carregando pedidos…</p>
       ) : (
-        <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {ORDER_STAGES.map((stage, index) => {
-            const KANBAN_LABELS: Record<string, string> = {
-              received: "Novos / Pendente",
-              preparing: "Em preparo / Separação",
-              out_for_delivery: "Saiu p/ entrega / Pronto retirada",
-              delivered: "Concluídos hoje",
-            };
-            const kanbanLabel = KANBAN_LABELS[stage.id] ?? stage.label;
-            const KANBAN_COLORS: Record<string, string> = {
-              received: "border-red-500",
-              preparing: "border-amber-500",
-              out_for_delivery: "border-blue-500",
-              delivered: "border-emerald-500",
-            };
-            const colBorder = KANBAN_COLORS[stage.id] ?? "border-border";
-            const count = visible.filter((o) => o.status === stage.id).length;
+        <div className="mt-6 grid gap-3">
+          {visible
+            .filter((o) => (QUEUE_TABS.find((t) => t.id === queueTab)?.statuses as readonly string[] | undefined)?.includes(o.status))
+            .map((order) => {
+            const index = Math.max(0, ORDER_STAGES.findIndex((s) => s.id === order.status));
+            const stage = ORDER_STAGES[index]!;
             return (
-            <section
-              key={stage.id}
-              aria-label={stage.label}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const order = all.find((o) => o.id === drag);
-                if (order) void move(order, stage.id);
-              }}
-              className={`min-w-0 border-t-2 pt-4 ${drag ? "border-primary" : colBorder}`}
-            >
-              <div className="mb-4 flex items-center gap-2">
-                <span className={`size-2.5 rounded-full bg-current ${stage.tone}`} />
-                <h2 className="text-sm font-semibold">{kanbanLabel}</h2>
-                <span className={`ml-auto grid size-6 place-items-center rounded-full text-xs font-bold ${
-                  count > 0 ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                }`}>
-                  {count}
-                </span>
-              </div>
-              <div className="space-y-3">
-                {visible
-                  .filter((o) => o.status === stage.id)
-                  .map((order) => (
+            <section key={order.id} aria-label={`Pedido ${order.number}`} className="min-w-0">
+              <div>
+                {[order].map((order) => (
                     <article
                       key={order.id}
-                      draggable={!busy}
-                      onDragStart={() => setDrag(order.id)}
-                      onDragEnd={() => setDrag(null)}
                       className={`rounded-xl border bg-card p-3.5 shadow-sm transition-all hover:border-primary/50 ${
                         order.status === "received" ? "ring-2 ring-primary/30 animate-pulse-subtle" : ""
                       }`}
@@ -507,16 +472,16 @@ export function OrderBoard() {
                       )}
                     </article>
                   ))}
-                {!visible.some((o) => o.status === stage.id) && (
-                  <div className="flex min-h-40 flex-col items-center justify-center gap-3 border border-dashed text-muted-foreground">
-                    <Package className="size-6 opacity-50" />
-                    <p className="text-xs">Nenhum pedido</p>
-                  </div>
-                )}
               </div>
             </section>
           );
           })}
+          {!visible.some((o) => (QUEUE_TABS.find((t) => t.id === queueTab)?.statuses as readonly string[] | undefined)?.includes(o.status)) && (
+            <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed text-muted-foreground">
+              <Package className="size-6 opacity-50" />
+              <p className="text-xs">Nenhum pedido nesta etapa</p>
+            </div>
+          )}
         </div>
       )}
       {visible.some((o) => o.status === "cancelled") && (
