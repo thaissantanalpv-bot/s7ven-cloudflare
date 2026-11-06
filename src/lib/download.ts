@@ -10,16 +10,17 @@ export function downloadBlob(blob: Blob, filename: string) {
 }
 
 // On phones, opens the share sheet (Instagram, WhatsApp, salvar arquivo); otherwise downloads.
-export async function deliverFile(blob: Blob, filename: string) {
+export async function deliverFile(blob: Blob, filename: string, preferShare = false) {
   const file = new File([blob], filename, { type: blob.type });
   const touch = matchMedia("(pointer: coarse)").matches;
-  if (touch && navigator.canShare?.({ files: [file] })) {
+  if ((touch || preferShare) && navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: filename });
-      return;
+      return "shared";
     } catch (e) {
-      if ((e as DOMException).name === "AbortError") return;
+      if ((e as DOMException).name === "AbortError") return "cancelled";
     }
   }
   downloadBlob(blob, filename);
+  return "downloaded";
 }

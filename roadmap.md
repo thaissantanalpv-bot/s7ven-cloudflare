@@ -1,3 +1,7 @@
+# Imagens para Instagram e WhatsApp (Thais, 06/11/2026 07:07 UTC)
+- [x] Retirar QR e textos extras; mostrar foto inteira, valor e logo S7VEN.
+- [x] Permitir baixar/compartilhar para Instagram, WhatsApp, Status e grupos; imagem real de Rosh Simples conferida no painel, download e chamada de compartilhamento de arquivo verificados, 5 testes passaram. Escolha/envio no aplicativo externo depende do celular da usuária.
+
 # Assistente com a Astra (Thais, 02/11/2026 05:11 UTC)
 - [x] Assistente reconfigurada como consultora (faturamento, catálogo, campanhas, preços/lucro, sites, automações), com pesquisa na internet e acesso aos produtos/preços do catálogo; sem dados de clientes e sem alterar a loja. Teste real no painel respondeu usando os preços cadastrados.
 - [ ] Publicar: depende de Thais pedir a publicação.
