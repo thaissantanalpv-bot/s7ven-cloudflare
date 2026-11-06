@@ -108,14 +108,14 @@ export async function generateStoryImage({ name, price, compareAt, photoUrl, lin
   ctx.fillStyle = TEXT;
   ctx.font = "600 62px 'Space Grotesk', sans-serif";
   const nameLines = wrapLines(ctx, name, W - 160, 2);
-  let y = photoBottom + 130;
+  let y = photoBottom + 120;
   for (const line of nameLines) {
     ctx.fillText(line, W / 2, y);
-    y += 76;
+    y += 70;
   }
 
-  y += 30;
   if (compareAt) {
+    y += 60;
     ctx.font = "500 44px 'Space Grotesk', sans-serif";
     ctx.fillStyle = MUTED;
     const w = ctx.measureText(compareAt).width;
@@ -126,25 +126,25 @@ export async function generateStoryImage({ name, price, compareAt, photoUrl, lin
     ctx.moveTo(W / 2 - w / 2, y - 14);
     ctx.lineTo(W / 2 + w / 2, y - 14);
     ctx.stroke();
-    y += 90;
   }
+  y += 110;
   ctx.font = "800 110px 'Space Grotesk', sans-serif";
   ctx.fillStyle = GOLD;
-  ctx.fillText(price, W / 2, y + 40);
+  ctx.fillText(price, W / 2, y);
 
   const qrData = await QRCode.toDataURL(link, { width: 340, margin: 1, color: { dark: "#0c0a09", light: "#ffffff" } });
   const qr = await loadImage(qrData, false);
-  const cardW = 640, cardH = 560, cardX = (W - cardW) / 2, cardY = H - cardH - 90;
+  const cardW = 560, cardH = 340, cardX = (W - cardW) / 2, cardY = H - cardH - 50;
   ctx.fillStyle = "#ffffff";
   roundRect(ctx, cardX, cardY, cardW, cardH, 40);
   ctx.fill();
-  ctx.drawImage(qr, cardX + (cardW - 300) / 2, cardY + 36, 300, 300);
+  ctx.drawImage(qr, cardX + (cardW - 220) / 2, cardY + 20, 220, 220);
   ctx.fillStyle = BG;
-  ctx.font = "700 44px 'Space Grotesk', sans-serif";
-  ctx.fillText("Peça pelo catálogo", W / 2, cardY + 400);
-  ctx.font = "500 40px 'Space Grotesk', sans-serif";
+  ctx.font = "700 38px 'Space Grotesk', sans-serif";
+  ctx.fillText("Peça pelo catálogo", W / 2, cardY + 278);
+  ctx.font = "500 34px 'Space Grotesk', sans-serif";
   ctx.fillStyle = "#57534e";
-  ctx.fillText(site.replace(/^https?:\/\//, ""), W / 2, cardY + 462);
+  ctx.fillText(site.replace(/^https?:\/\//, ""), W / 2, cardY + 318);
 
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
   if (!blob) throw new Error("Não foi possível gerar a imagem.");
