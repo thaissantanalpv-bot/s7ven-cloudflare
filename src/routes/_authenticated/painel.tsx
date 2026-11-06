@@ -138,6 +138,21 @@ function Admin() {
       case "app-settings":
       default:
         return (
+          <>
+          <div className="mt-6 grid grid-cols-3 gap-2 md:hidden">
+            <Button variant="outline" size="sm" onClick={() => setView("analytics")}>
+              <Activity />
+              Movimento
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setView("report")}>
+              <Receipt />
+              Relatório
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setView("history")}>
+              <History />
+              Histórico
+            </Button>
+          </div>
           <Tabs defaultValue="fees" className="mt-6">
             <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-4">
               {([
@@ -164,6 +179,14 @@ function Admin() {
         );
     }
   }
+
+  const bottomTabs: { id: ViewId; label: string; Icon: typeof Home }[] = [
+    { id: "home", label: "Resumo", Icon: Home },
+    { id: "orders", label: "Pedidos", Icon: ShoppingBag },
+    { id: "products", label: "Catálogo", Icon: Package },
+    { id: "divulgar", label: "Divulgar", Icon: Megaphone },
+    { id: "app-settings", label: "Ajustes", Icon: Settings },
+  ];
 
   const adminNav = (onNavigate?: () => void) => (
     <div className="flex h-full flex-col">
@@ -212,9 +235,6 @@ function Admin() {
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-5">
           <div className="flex min-w-0 items-center gap-3">
-            <Button variant="outline" size="icon" className="shrink-0 md:hidden" aria-label="Abrir menu do painel" onClick={() => setMenuOpen(true)}>
-              <Menu />
-            </Button>
             <div className="min-w-0">
               <p className="text-xs uppercase text-primary">Área da loja</p>
               <h1 className="truncate font-display text-xl font-semibold sm:text-2xl">{viewTitle[view]}</h1>
@@ -228,7 +248,7 @@ function Admin() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-7 pb-10 sm:px-5">
+      <main className="mx-auto max-w-7xl px-4 py-7 pb-28 sm:px-5 md:pb-10">
         {permission.isPending ? (
           <p className="py-12 text-muted-foreground">Conferindo seu acesso…</p>
         ) : permission.error ? (
@@ -259,13 +279,24 @@ function Admin() {
               </div>
             </div>
             <NewOrderAlarm />
-            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-              <SheetContent side="left" className="w-72 p-0">
-                <SheetTitle className="sr-only">Menu do painel</SheetTitle>
-                <SheetDescription className="sr-only">Navegação da área da loja</SheetDescription>
-                {adminNav(() => setMenuOpen(false))}
-              </SheetContent>
-            </Sheet>
+            <nav className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 backdrop-blur md:hidden" aria-label="Abas do painel">
+              <div className="grid grid-cols-5">
+                {bottomTabs.map(({ id, label, Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-current={view === id ? "page" : undefined}
+                    onClick={() => setView(id)}
+                    className={`flex flex-col items-center gap-1 py-2.5 text-[11px] transition-colors ${
+                      view === id ? "font-semibold text-primary" : "text-muted-foreground active:text-foreground"
+                    }`}
+                  >
+                    <Icon className="size-5" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </nav>
           </>
         )}
       </main>
