@@ -124,7 +124,6 @@ function Admin() {
 
   function renderView(v: ViewId) {
     switch (v) {
-      case "home":
       case "analytics":
         return <><CatalogAnalytics /><SiteLinkCard /></>;
       case "report":
