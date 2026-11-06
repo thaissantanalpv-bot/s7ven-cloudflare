@@ -18,7 +18,7 @@ it("preserva todos os pixels de uma foto panorâmica sem cortar", async () => {
   });
   try {
     await generateStoryImage({ name: "Produto panorâmico", price: "R$ 25,00", photoUrl: "photo.png" });
-    const photoDraw = drawImage.mock.calls[1];
+    const photoDraw = drawImage.mock.calls.at(-1);
     expect(photoDraw?.[3]).toBe(900);
     expect(photoDraw?.[4]).toBe(225);
   } finally { vi.unstubAllGlobals(); }
