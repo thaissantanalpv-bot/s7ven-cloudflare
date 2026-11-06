@@ -176,6 +176,7 @@ function Admin() {
             <TabsContent value="assistant"><AnalyticsAssistant /></TabsContent>
             <TabsContent value="alerts"><AdminSettings /></TabsContent>
           </Tabs>
+          </>
         );
     }
   }
