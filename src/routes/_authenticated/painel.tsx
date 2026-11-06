@@ -30,12 +30,14 @@ import {
   Eye,
   Bell,
   Palette,
+  Megaphone,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { AdminAppAccess } from "@/components/admin-app-access";
-import { SiteLinkCard } from "@/components/site-link-card";
+import { MarketingTools } from "@/components/marketing-tools";
 import { supabase } from "@/integrations/supabase/client";
 import { storeSettingsQuery } from "@/lib/store-settings.query";
 import { checkStoreAdmin, saveStoreSettings } from "@/lib/store-settings.functions";
@@ -46,12 +48,13 @@ import { DistanceTiersEditor } from "@/components/distance-tiers-editor";
 import { SalesReport } from "@/components/pos/sales-report";
 import { SalesHistory } from "@/components/pos/sales-history";
 import { CatalogAnalytics } from "@/components/catalog-analytics";
-import { AbandonedCartNotice } from "@/components/abandoned-cart-notice";
 import { AnalyticsAssistant } from "@/components/analytics-assistant";
 import { adminCatalogQuery } from "@/lib/catalog.query";
 import { getCatalogFunnel } from "@/lib/catalog-analytics.functions";
 import { DAYS, settingsSchema, type StoreSettings } from "@/lib/store-settings";
 import { lowStockItems } from "@/lib/catalog";
+import { brl } from "@/lib/products";
+import { getSalesReport } from "@/lib/sales-report.functions";
 import { AdminSettings } from "@/components/admin-settings";
 import { PromotionsEditor } from "@/components/promotions-editor";
 import { SpecialDaysEditor } from "@/components/special-days-editor";
@@ -81,7 +84,7 @@ export const Route = createFileRoute("/_authenticated/painel")({ staticData: { s
   component: Admin,
 });
 
-type ViewId = "home" | "analytics" | "orders" | "products" | "combos" | "report" | "history" | "app-settings";
+type ViewId = "home" | "analytics" | "orders" | "products" | "divulgar" | "report" | "history" | "app-settings";
 
 function Admin() {
   const [view, setView] = useState<ViewId>("home");
@@ -101,21 +104,21 @@ function Admin() {
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
 
   const viewTitle: Record<ViewId, string> = {
-    home: "Minha loja",
+    home: "Visão Geral & Financeiro",
     report: "Relatório de vendas",
     analytics: "Movimento do catálogo",
-    combos: "Combos",
+    divulgar: "Divulgação & Redes Sociais",
     history: "Histórico de vendas",
-    orders: "Pedidos e Acompanhamento",
-    products: "Produtos e estoque",
+    orders: "Central de Pedidos",
+    products: "Catálogo, Estoque & Combos",
     "app-settings": "Configurações",
   };
 
   const navItems: { id: ViewId; label: string; Icon: typeof Home; color: string }[] = [
-    { id: "home", label: "Início", Icon: Home, color: "text-violet-400" },
+    { id: "home", label: "Resumo", Icon: Home, color: "text-violet-400" },
     { id: "orders", label: "Pedidos", Icon: ShoppingBag, color: "text-orange-400" },
-    { id: "products", label: "Produtos", Icon: Package, color: "text-sky-400" },
-    { id: "combos", label: "Combos", Icon: Layers, color: "text-pink-400" },
+    { id: "products", label: "Catálogo", Icon: Package, color: "text-sky-400" },
+    { id: "divulgar", label: "Divulgar", Icon: Megaphone, color: "text-fuchsia-400" },
     { id: "analytics", label: "Movimento", Icon: Activity, color: "text-emerald-400" },
     { id: "report", label: "Relatório", Icon: Receipt, color: "text-teal-400" },
     { id: "history", label: "Histórico", Icon: History, color: "text-indigo-400" },
@@ -125,17 +128,17 @@ function Admin() {
   function renderView(v: ViewId) {
     switch (v) {
       case "analytics":
-        return <><CatalogAnalytics /><SiteLinkCard /></>;
+        return <CatalogAnalytics />;
       case "report":
         return <SalesReport />;
-      case "combos":
-        return <ProductManager key="combos" combos />;
+      case "divulgar":
+        return <MarketingTools />;
       case "history":
         return <SalesHistory />;
       case "orders":
         return <OrderBoard />;
       case "products":
-        return <ProductManager key="products" />;
+        return <ProductManager />;
       case "app-settings":
       default:
         return (
@@ -276,55 +279,95 @@ function Admin() {
 function AdminHome({ onOpen }: { onOpen: (view: string) => void }) {
   const getStats = useServerFn(getCatalogFunnel);
   const stats = useQuery({ queryKey: ["admin-catalog-funnel", "today"], queryFn: () => getStats({ data: "today" }), refetchInterval: 5000, retry: 1 });
+  const getReport = useServerFn(getSalesReport);
+  const report = useQuery({ queryKey: ["admin-sales-report", "today"], queryFn: () => getReport({ data: "today" }), refetchInterval: 60000, retry: false });
   const { data: products } = useSuspenseQuery(adminCatalogQuery);
   const lowStock = products.flatMap(lowStockItems);
   const data = stats.data;
-  const cards = [
-    { label: "Visitas", hint: "abriram o catálogo hoje", value: data?.visitors, Icon: Users, target: "analytics", tone: "bg-emerald-500/15 text-emerald-400" },
-    { label: "Carrinhos", hint: "montando pedido agora", value: data?.pending, Icon: ShoppingCart, target: "analytics", tone: "bg-orange-500/15 text-orange-400" },
-    { label: "Pedidos", hint: "enviados hoje", value: data?.completed, Icon: ShoppingBag, target: "orders", tone: "bg-sky-500/15 text-sky-400" },
-    { label: "Estoque baixo", hint: lowStock.length ? lowStock.slice(0, 2).map(i => i.label).join(", ") + (lowStock.length > 2 ? "…" : "") : "nenhum item no mínimo", value: lowStock.length, Icon: Package, target: "products", tone: "bg-pink-500/15 text-pink-400" },
-  ];
-  const quickActions = [
-    { label: "Pedidos", Icon: ShoppingBag, target: "orders" },
-    { label: "Produtos", Icon: Package, target: "products" },
-    { label: "Combos", Icon: Layers, target: "combos" },
-    { label: "Histórico", Icon: History, target: "history" },
+  const pills = [
+    { label: "Online", value: data?.online, Icon: Activity, tone: "text-emerald-400", target: "analytics" },
+    { label: "Visitas", value: data?.visitors, Icon: Users, tone: "text-sky-400", target: "analytics" },
+    { label: "Carrinhos", value: data?.pending, Icon: ShoppingCart, tone: "text-orange-400", target: "analytics" },
+    { label: "Pedidos", value: data?.completed, Icon: ShoppingBag, tone: "text-pink-400", target: "orders" },
   ];
   return (
-    <section className="py-6" aria-label="Resumo da loja">
-      <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border bg-card px-4 py-3">
-        <p className="flex min-w-0 items-center gap-2 text-sm font-medium">
-          <span className="relative flex size-2.5 shrink-0">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-            <span className="relative inline-flex size-2.5 rounded-full bg-emerald-400" />
-          </span>
-          <span className="truncate">{data ? `${data.online} online agora` : "Conectando…"}</span>
-        </p>
-        <span className="shrink-0 text-xs text-muted-foreground">hoje</span>
+    <section className="space-y-7 py-6" aria-label="Resumo da loja">
+      <div>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Resumo de hoje & vendas</p>
+        <div className="rounded-2xl border bg-card p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <TrendingUp className="size-4 text-primary" />
+                Faturamento de hoje
+              </p>
+              <p className="mt-1 font-display text-4xl font-semibold">{report.data ? brl(report.data.revenue) : "—"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {report.data ? `${report.data.orderCount} pedidos válidos · ticket médio ${brl(report.data.averageTicket)}` : "Carregando vendas…"}
+              </p>
+            </div>
+            <Button onClick={() => onOpen("report")} className="shrink-0">
+              <Receipt />
+              Ver Relatório de Vendas
+            </Button>
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-4 gap-2">
+          {pills.map(({ label, value, Icon, tone, target }) => (
+            <button key={label} type="button" onClick={() => onOpen(target)} className="flex min-w-0 flex-col items-center gap-1 rounded-full border bg-card px-2 py-2.5 active:scale-[0.97]">
+              <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                <Icon className={`size-3.5 ${tone}`} />
+                {label}
+              </span>
+              <span className="font-display text-lg font-semibold leading-none">{value === undefined ? "—" : value.toLocaleString("pt-BR")}</span>
+            </button>
+          ))}
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Button variant="outline" onClick={() => onOpen("report")}>
+            <Receipt />
+            Relatório de Vendas
+          </Button>
+          <Button variant="outline" onClick={() => onOpen("history")}>
+            <History />
+            Histórico de Vendas
+          </Button>
+        </div>
       </div>
-      {!stats.error && data && <AbandonedCartNotice count={data.abandoned} onOpen={() => onOpen("analytics")} />}
-      <div className="grid grid-cols-2 gap-3">
-        {cards.map(({ label, hint, value, Icon, target, tone }) => (
-          <button key={label} type="button" onClick={() => onOpen(target)} className="flex min-h-32 flex-col items-start gap-2 rounded-2xl border bg-card p-4 text-left active:scale-[0.98]">
-            <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${tone}`}><Icon className="size-5" /></span>
-            <span className="font-display text-3xl font-semibold leading-none">{value === undefined ? "—" : value.toLocaleString("pt-BR")}</span>
-            <span className="text-sm font-medium leading-tight">{label}</span>
-            <span className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">{hint}</span>
+      <div>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Alertas do sistema</p>
+        <div className="divide-y rounded-2xl border bg-card">
+          <button type="button" onClick={() => onOpen("products")} className="flex w-full items-center gap-3 p-4 text-left">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-pink-500/15 text-pink-400"><Package className="size-5" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Estoque baixo</span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {lowStock.length ? `${lowStock.length} ${lowStock.length === 1 ? "item" : "itens"} para repor: ${lowStock.slice(0, 2).map(i => i.label).join(", ")}${lowStock.length > 2 ? "…" : ""}` : "Nenhum item no mínimo"}
+              </span>
+            </span>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
           </button>
-        ))}
-      </div>
-      <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações rápidas</p>
-      <div className="grid grid-cols-4 gap-2">
-        {quickActions.map(({ label, Icon, target }) => (
-          <button key={label} type="button" onClick={() => onOpen(target)} className="flex flex-col items-center gap-1.5 rounded-xl border bg-card py-3 text-[11px] font-medium active:scale-[0.97]">
-            <Icon className="size-5 text-primary" />
-            {label}
+          {data && data.abandoned > 0 && (
+            <button type="button" onClick={() => onOpen("analytics")} className="flex w-full items-center gap-3 p-4 text-left">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-orange-500/15 text-orange-400"><ShoppingCart className="size-5" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium">Carrinhos abandonados</span>
+                <span className="block text-xs text-muted-foreground">{data.abandoned} clientes deixaram pedidos pela metade hoje</span>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </button>
+          )}
+          <button type="button" onClick={() => onOpen("analytics")} className="flex w-full items-center gap-3 p-4 text-left">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><Activity className="size-5" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Movimento do catálogo</span>
+              <span className="block text-xs text-muted-foreground">Visitas, buscas e carrinhos em tempo real</span>
+            </span>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
           </button>
-        ))}
+        </div>
+        {stats.error && <p role="alert" className="mt-4 text-sm text-destructive">Não foi possível atualizar os números. <Button variant="link" onClick={() => stats.refetch()}>Tentar novamente</Button></p>}
       </div>
-      {stats.error && <p role="alert" className="mt-4 text-sm text-destructive">Não foi possível atualizar os números. <Button variant="link" onClick={() => stats.refetch()}>Tentar novamente</Button></p>}
-      <SiteLinkCard />
     </section>
   );
 }

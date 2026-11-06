@@ -3,8 +3,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   BellRing,
-  Volume2,
-  VolumeX,
   RefreshCw,
   Search,
   ArrowRight,
@@ -19,6 +17,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { quickMessages, courierMessage, whatsappTo } from "@/lib/quick-messages";
 import { listOrders, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
@@ -36,8 +35,15 @@ import { brl } from "@/lib/products";
 import { OrderPrinting } from "./order-printing";
 import { OrderCancellation } from "./order-cancellation";
 import { PushQuickButton } from "@/components/push-notifications";
-import { StorePauseButton } from "@/components/store-pause-button";
+import { StorePauseSwitch } from "@/components/store-pause-button";
 import { useOrderAlarm } from "./new-order-alarm";
+
+const QUEUE_TABS = [
+  { id: "received", label: "Novos", statuses: ["received"] },
+  { id: "preparing", label: "Em Preparo", statuses: ["preparing", "out_for_delivery"] },
+  { id: "delivered", label: "Entregues", statuses: ["delivered"] },
+] as const;
+type QueueTabId = (typeof QUEUE_TABS)[number]["id"];
 
 const time = (value: string) =>
   new Intl.DateTimeFormat("pt-BR", {
@@ -78,6 +84,7 @@ export function OrderBoard() {
   });
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState("all");
+  const [queueTab, setQueueTab] = useState<QueueTabId>("received");
   const { sound, ready: audioReady, toggle: toggleSound } = useOrderAlarm();
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -202,32 +209,28 @@ export function OrderBoard() {
 
   return (
     <section className="py-7">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-6 text-sm">
-          <span>
-            <strong className="text-2xl font-display">
-              {all.filter((o) => isActiveOrder(o.status)).length}
-            </strong>
-            <span className="ml-2 text-muted-foreground">em andamento</span>
-          </span>
-          <span>
-            <strong className="text-2xl font-display text-whatsapp">
-              {all.filter((o) => o.status === "delivered").length}
-            </strong>
-            <span className="ml-2 text-muted-foreground">entregues</span>
-          </span>
+      <div className="rounded-2xl border bg-card p-4">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Controle de operação da loja</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2.5">
+            <StorePauseSwitch />
+          </div>
+          <div className="flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2.5">
+            <span className="min-w-0 text-sm">
+              <span className="block font-medium">Alerta sonoro</span>
+              <span className="block text-xs text-muted-foreground">{!sound ? "Desativado" : audioReady ? "Ativo (WhatsApp)" : "Toque para ativar"}</span>
+            </span>
+            <Switch aria-label="Alerta sonoro de novo pedido" checked={sound && audioReady} onCheckedChange={() => toggleSound()} />
+          </div>
+          <div className="flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2.5">
+            <span className="min-w-0 text-sm">
+              <span className="block font-medium">Impressora</span>
+              <span className="block text-xs text-muted-foreground">Bobina e preferências</span>
+            </span>
+            <OrderPrinting order={printOrder} onClose={() => setPrintOrder(null)} />
+          </div>
         </div>
-        <div className="flex gap-2">
-          <OrderPrinting order={printOrder} onClose={() => setPrintOrder(null)} />
-          <Button
-            variant={sound && audioReady ? "secondary" : "outline"}
-            onClick={toggleSound}
-            aria-pressed={sound && audioReady}
-          >
-            {sound && audioReady ? <Volume2 /> : <VolumeX />}
-            {!sound ? "Ativar som" : audioReady ? "Som ativo (WhatsApp)" : "Toque na tela para ativar o som"}
-          </Button>
-          <StorePauseButton />
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <PushQuickButton />
           <Button
             variant="outline"
@@ -239,15 +242,38 @@ export function OrderBoard() {
           >
             <RefreshCw className={orders.isFetching ? "animate-spin" : ""} />
           </Button>
+          <span className="ml-auto text-xs text-muted-foreground">
+            <strong className="text-foreground">{all.filter((o) => isActiveOrder(o.status)).length}</strong> em andamento · <strong className="text-whatsapp">{all.filter((o) => o.status === "delivered").length}</strong> entregues
+          </span>
         </div>
       </div>
-      <div className="mt-6 flex flex-wrap gap-3">
+      <p className="mb-3 mt-7 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Fila de pedidos</p>
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Etapas dos pedidos">
+        {QUEUE_TABS.map((tab) => {
+          const count = visible.filter((o) => (tab.statuses as readonly string[]).includes(o.status)).length;
+          const active = queueTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setQueueTab(tab.id)}
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${active ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}
+            >
+              {tab.label}
+              <span className={`grid min-w-6 place-items-center rounded-full px-1.5 py-0.5 text-xs font-bold ${active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-4 flex flex-wrap gap-3">
         <div className="relative min-w-48 flex-1">
           <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
           <input
             className="field pl-10"
             aria-label="Buscar pedido"
-            placeholder="Número, cliente ou telefone"
+            placeholder="Buscar por nº, cliente ou telefone"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -307,53 +333,18 @@ export function OrderBoard() {
       {orders.isPending ? (
         <p className="py-16 text-muted-foreground">Carregando pedidos…</p>
       ) : (
-        <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {ORDER_STAGES.map((stage, index) => {
-            const KANBAN_LABELS: Record<string, string> = {
-              received: "Novos / Pendente",
-              preparing: "Em preparo / Separação",
-              out_for_delivery: "Saiu p/ entrega / Pronto retirada",
-              delivered: "Concluídos hoje",
-            };
-            const kanbanLabel = KANBAN_LABELS[stage.id] ?? stage.label;
-            const KANBAN_COLORS: Record<string, string> = {
-              received: "border-red-500",
-              preparing: "border-amber-500",
-              out_for_delivery: "border-blue-500",
-              delivered: "border-emerald-500",
-            };
-            const colBorder = KANBAN_COLORS[stage.id] ?? "border-border";
-            const count = visible.filter((o) => o.status === stage.id).length;
+        <div className="mt-6 grid gap-3">
+          {visible
+            .filter((o) => (QUEUE_TABS.find((t) => t.id === queueTab)?.statuses as readonly string[] | undefined)?.includes(o.status))
+            .map((order) => {
+            const index = Math.max(0, ORDER_STAGES.findIndex((s) => s.id === order.status));
+            const stage = ORDER_STAGES[index]!;
             return (
-            <section
-              key={stage.id}
-              aria-label={stage.label}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const order = all.find((o) => o.id === drag);
-                if (order) void move(order, stage.id);
-              }}
-              className={`min-w-0 border-t-2 pt-4 ${drag ? "border-primary" : colBorder}`}
-            >
-              <div className="mb-4 flex items-center gap-2">
-                <span className={`size-2.5 rounded-full bg-current ${stage.tone}`} />
-                <h2 className="text-sm font-semibold">{kanbanLabel}</h2>
-                <span className={`ml-auto grid size-6 place-items-center rounded-full text-xs font-bold ${
-                  count > 0 ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                }`}>
-                  {count}
-                </span>
-              </div>
-              <div className="space-y-3">
-                {visible
-                  .filter((o) => o.status === stage.id)
-                  .map((order) => (
+            <section key={order.id} aria-label={`Pedido ${order.number}`} className="min-w-0">
+              <div>
+                {[order].map((order) => (
                     <article
                       key={order.id}
-                      draggable={!busy}
-                      onDragStart={() => setDrag(order.id)}
-                      onDragEnd={() => setDrag(null)}
                       className={`rounded-xl border bg-card p-3.5 shadow-sm transition-all hover:border-primary/50 ${
                         order.status === "received" ? "ring-2 ring-primary/30 animate-pulse-subtle" : ""
                       }`}
@@ -481,16 +472,16 @@ export function OrderBoard() {
                       )}
                     </article>
                   ))}
-                {!visible.some((o) => o.status === stage.id) && (
-                  <div className="flex min-h-40 flex-col items-center justify-center gap-3 border border-dashed text-muted-foreground">
-                    <Package className="size-6 opacity-50" />
-                    <p className="text-xs">Nenhum pedido</p>
-                  </div>
-                )}
               </div>
             </section>
           );
           })}
+          {!visible.some((o) => (QUEUE_TABS.find((t) => t.id === queueTab)?.statuses as readonly string[] | undefined)?.includes(o.status)) && (
+            <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed text-muted-foreground">
+              <Package className="size-6 opacity-50" />
+              <p className="text-xs">Nenhum pedido nesta etapa</p>
+            </div>
+          )}
         </div>
       )}
       {visible.some((o) => o.status === "cancelled") && (
