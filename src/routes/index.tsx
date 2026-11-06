@@ -773,6 +773,14 @@ function Catalog() {
               </div>
             </section>
 
+            <Button asChild variant="outline" className="mt-3 h-12 w-full gap-3 border-primary/30 text-foreground hover:text-primary">
+              <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
+                <Instagram className="size-5 shrink-0 text-primary" />
+                Instagram da S7VEN
+                <ArrowRight className="ml-auto size-4 shrink-0 text-primary" />
+              </a>
+            </Button>
+
             <ul aria-label="Vantagens" className="grid grid-cols-4 gap-2 py-5 text-center">
               {[
                 { icon: Truck, label: "Entrega rápida" },
