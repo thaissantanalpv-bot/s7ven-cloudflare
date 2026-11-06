@@ -96,26 +96,26 @@ export function ProductManager() {
     <div className="grid grid-cols-1 gap-3">
       {visible.map(p => {
         const status = !p.active ? { label: "Pausado", cls: "bg-muted text-muted-foreground" } : !available(p) ? { label: "Esgotado", cls: "bg-destructive/15 text-destructive" } : { label: "Disponível", cls: "bg-whatsapp/15 text-whatsapp" };
-        return <div key={p.id} className="rounded-2xl border bg-card p-3 shadow-sm sm:p-4">
-          <div className="flex items-start gap-3">
-            <input type="checkbox" className="mt-1 size-5 shrink-0 accent-primary" aria-label={`Selecionar ${p.name}`} checked={selected.has(p.id)} onChange={e => setSelected(prev => { const n = new Set(prev); if (e.target.checked) n.add(p.id); else n.delete(p.id); return n; })} />
-            <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-photo">{p.image ? <img src={p.image} alt={p.name} className="size-full object-contain" /> : <Package className="text-photo-foreground" />}</div>
-            <div className="min-w-0 flex-1">
-              <h2 className="truncate font-semibold leading-tight">{p.name}</h2>
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">{p.category.replace("Narguiles > ", "")} · {p.variations.length ? `${p.variations.length} variações` : "Sem variações"}</p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${status.cls}`}>{status.label}</span>
-                <span className="text-[11px] text-muted-foreground">{p.stock === null ? "sem limite" : `${p.stock} un.`}</span>
-                {p.featured && <span className="flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary"><Star className="size-3" />Destaque</span>}
-              </div>
-              {lowStockItems(p).map(item => <p key={item.label} role="status" className="mt-1 text-[11px] font-medium text-destructive">Repor: {item.label} — restam {item.stock} (mínimo {item.min})</p>)}
+        const stockLabel = p.stock === null ? "sem limite" : `${p.stock} uni.`;
+        return <div key={p.id} className="flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-sm">
+          <input type="checkbox" className="size-5 shrink-0 accent-primary" aria-label={`Selecionar ${p.name}`} checked={selected.has(p.id)} onChange={e => setSelected(prev => { const n = new Set(prev); if (e.target.checked) n.add(p.id); else n.delete(p.id); return n; })} />
+          <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-photo">{p.image ? <img src={p.image} alt={p.name} className="size-full object-contain" /> : <Package className="text-photo-foreground" />}</div>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold leading-tight">{p.name}</h2>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${status.cls}`}>{status.label} • {stockLabel}</span>
+              {p.featured && <span className="flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary"><Star className="size-3" />Destaque</span>}
             </div>
-            <span className="shrink-0 text-right font-mono text-sm font-semibold">{discountPercent(p) !== null && <span className="block text-xs font-normal text-muted-foreground line-through">{brl(p.compareAtPrice ?? 0)}</span>}{brl(p.price)}{discountPercent(p) !== null && <span className="block text-xs font-semibold text-destructive">-{discountPercent(p)}%</span>}</span>
+            <p className="mt-1 truncate text-xs text-muted-foreground">{p.category.replace("Narguiles > ", "")}{p.variations.length ? ` · ${p.variations.length} variações` : ""}</p>
+            {lowStockItems(p).map(item => <p key={item.label} role="status" className="mt-1 text-[11px] font-medium text-destructive">Repor: {item.label} — restam {item.stock} (mínimo {item.min})</p>)}
           </div>
-          <div className="mt-3 flex items-center justify-end gap-1 border-t pt-2.5">
-            <Button variant="outline" size="sm" title="Editar produto" aria-label={`Editar ${p.name}`} onClick={() => edit(p)}><Pencil />Editar</Button>
-            <Button variant="ghost" size="sm" disabled={busy} title={p.active ? "Pausar produto" : "Reativar produto"} aria-label={`${p.active ? "Pausar" : "Reativar"} ${p.name}`} onClick={() => persist({ ...toDraft(p), active: !p.active }, p.updatedAt)}>{p.active ? <Pause /> : <Play />}{p.active ? "Pausar" : "Ativar"}</Button>
-            <Button variant="ghost" size="sm" className="text-destructive" disabled={busy} title="Excluir produto" aria-label={`Excluir ${p.name}`} onClick={() => { setMessage(""); setDeleting([p]); }}><Trash2 />Excluir</Button>
+          <div className="flex shrink-0 flex-col items-end justify-between gap-2 self-stretch py-0.5">
+            <span className="text-right font-mono text-sm font-semibold">{discountPercent(p) !== null && <span className="block text-xs font-normal text-muted-foreground line-through">{brl(p.compareAtPrice ?? 0)}</span>}{brl(p.price)}{discountPercent(p) !== null && <span className="block text-xs font-semibold text-destructive">-{discountPercent(p)}%</span>}</span>
+            <div className="flex gap-1">
+              <Button variant="outline" size="icon" className="size-8" title="Editar produto" aria-label={`Editar ${p.name}`} onClick={() => edit(p)}><Pencil /></Button>
+              <Button variant="ghost" size="icon" className="size-8" disabled={busy} title={p.active ? "Pausar produto" : "Reativar produto"} aria-label={`${p.active ? "Pausar" : "Reativar"} ${p.name}`} onClick={() => persist({ ...toDraft(p), active: !p.active }, p.updatedAt)}>{p.active ? <Pause /> : <Play />}</Button>
+              <Button variant="ghost" size="icon" className="size-8 text-destructive" disabled={busy} title="Excluir produto" aria-label={`Excluir ${p.name}`} onClick={() => { setMessage(""); setDeleting([p]); }}><Trash2 /></Button>
+            </div>
           </div>
         </div>;
       })}
@@ -124,7 +124,7 @@ export function ProductManager() {
     <Dialog open={Boolean(editing)} onOpenChange={open => { if (!open && !busy) setEditing(null); }}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
         <DialogTitle>{editing?.draft.name || "Novo produto"}</DialogTitle><DialogDescription>S7VEN · Produtos e estoque</DialogDescription>
-        {editing && <ProductEditor combos={combos} products={products.filter(p => p.id !== editing.draft.id)} initial={editing.draft} preview={editing.preview} galleryPreview={products.find(p => p.id === editing.draft.id)?.images ?? []} videoPreview={products.find(p => p.id === editing.draft.id)?.video ?? ""} categories={categories} busy={busy} message={message} onSave={p => persist(p, editing.expected)} />}
+        {editing && <ProductEditor combos={Boolean(editing.draft.comboGroups.length)} products={products.filter(p => p.id !== editing.draft.id)} initial={editing.draft} preview={editing.preview} galleryPreview={products.find(p => p.id === editing.draft.id)?.images ?? []} videoPreview={products.find(p => p.id === editing.draft.id)?.video ?? ""} categories={categories} busy={busy} message={message} onSave={p => persist(p, editing.expected)} />}
       </DialogContent>
     </Dialog>
     <Dialog open={Boolean(deleting)} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
