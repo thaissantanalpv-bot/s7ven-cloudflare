@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
 import { INSTAGRAM_URL } from "@/lib/products";
 import { ShareLinkBuilder } from "@/components/share-link-builder";
+import { StoriesTools } from "@/components/stories-tools";
 
 export function SiteLinkCard() {
   const [copied, setCopied] = useState(false);
