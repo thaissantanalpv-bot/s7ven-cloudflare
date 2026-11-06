@@ -247,3 +247,9 @@
 - [x] Voz calma narrando: "Agora a Seven tem catálogo digital, você consegue fazer o pedido pelo link..." e explicando o passo a passo (categorias, opções/sabores, finalizar, preencher dados, entrega rápida).
 - [x] Mostrar o catálogo real: produtos, sabores, carrinho e campos de dados.
 - [x] Citar o que a tabacaria tem: tabacos, kits com cases, essências para narguilé, acessórios de headshop, combos de bebidas.
+
+# Organização do painel + fontes/figurinhas (Thais, 06/11/2026 06:39 UTC)
+- [ ] Barra de abas fixa embaixo no celular (Resumo, Pedidos, Catálogo, Divulgar, Ajustes), conforme prints enviados.
+- [ ] Fontes para Instagram: mais de 1.000 opções (estilos Unicode × enfeites).
+- [ ] Figurinhas: mais de 1.000 combinações (frases × estilos × moldura).
+- [ ] Publicar: depende de Thais pedir a publicação.
