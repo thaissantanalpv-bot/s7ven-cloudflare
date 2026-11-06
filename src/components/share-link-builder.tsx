@@ -15,6 +15,7 @@ export function ShareLinkBuilder() {
   const visible = products.filter((p) => p.active);
   const categories = useMemo(() => [...new Set(visible.map((p) => p.category))].sort(), [visible]);
   const sortedProducts = useMemo(() => [...visible].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")), [visible]);
+  const selectedProduct = kind === "produto" ? sortedProducts.find((p) => p.id === value) : undefined;
   const url = value ? (kind === "categoria" ? categoryLink(ORIGIN, value) : productLink(ORIGIN, value)) : "";
   const copy = async () => {
     if (!url) return;
@@ -36,6 +37,19 @@ export function ShareLinkBuilder() {
           ? categories.map((c) => <option key={c} value={c}>{c.replace("Narguiles > ", "")}</option>)
           : sortedProducts.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       </select>
+      {selectedProduct && (
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-2">
+          {selectedProduct.image ? (
+            <img src={selectedProduct.image} alt={selectedProduct.name} className="h-14 w-14 shrink-0 rounded-md object-cover" />
+          ) : (
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] text-muted-foreground">Sem foto</div>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">{selectedProduct.name}</p>
+            <p className="text-xs text-muted-foreground">{selectedProduct.category.replace("Narguiles > ", "")} · R$ {selectedProduct.price.toFixed(2).replace(".", ",")}</p>
+          </div>
+        </div>
+      )}
       {url && (
         <div className="flex items-center gap-2">
           <input readOnly value={url} aria-label="Link gerado" className="field flex-1 font-mono text-xs" onFocus={(e) => e.target.select()} />
