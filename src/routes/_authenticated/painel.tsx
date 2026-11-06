@@ -111,30 +111,19 @@ function Admin() {
     "app-settings": "Configurações",
   };
 
-  const sidebarItems: { id: ViewId; label: string; Icon: typeof Home; color: string }[] = [
-    { id: "analytics", label: "Movimento", Icon: Activity, color: "text-emerald-400" },
+  const navItems: { id: ViewId; label: string; Icon: typeof Home; color: string }[] = [
+    { id: "home", label: "Início", Icon: Home, color: "text-violet-400" },
     { id: "orders", label: "Pedidos", Icon: ShoppingBag, color: "text-orange-400" },
     { id: "products", label: "Produtos", Icon: Package, color: "text-sky-400" },
-
     { id: "combos", label: "Combos", Icon: Layers, color: "text-pink-400" },
+    { id: "analytics", label: "Movimento", Icon: Activity, color: "text-emerald-400" },
     { id: "report", label: "Relatório", Icon: Receipt, color: "text-teal-400" },
     { id: "history", label: "Histórico", Icon: History, color: "text-indigo-400" },
     { id: "app-settings", label: "Configurações", Icon: Settings, color: "text-slate-400" },
   ];
 
-  const mobileMenuItems: { id: ViewId; label: string; Icon: typeof Home }[] = [
-    { id: "app-settings", label: "Configurações (Taxas, Horários, Aparência, Assistente)", Icon: Settings },
-    { id: "analytics", label: "Movimento do catálogo", Icon: Activity },
-    { id: "report", label: "Relatório de vendas", Icon: Receipt },
-    { id: "combos", label: "Combos", Icon: Layers },
-    { id: "history", label: "Histórico de vendas", Icon: History },
-  ];
-
-  const mobileMenuIds = mobileMenuItems.map((i) => i.id);
-
   function renderView(v: ViewId) {
     switch (v) {
-      case "home":
       case "analytics":
         return <><CatalogAnalytics /><SiteLinkCard /></>;
       case "report":
@@ -177,32 +166,70 @@ function Admin() {
     }
   }
 
+  const adminNav = (onNavigate?: () => void) => (
+    <div className="flex h-full flex-col">
+      <Link to="/" className="flex items-center gap-3 border-b px-5 py-5" onClick={onNavigate}>
+        <img src="/logo-s7ven.png" alt="S7VEN Lounge e Tabacaria" width={360} height={312} className="h-12 w-auto object-contain" />
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-semibold">Painel Administrativo</span>
+          <span className="block text-xs text-muted-foreground">S7VEN Lounge e Tabacaria</span>
+        </span>
+      </Link>
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Painel da loja">
+        {navItems.map(({ id, label, Icon, color }) => (
+          <button
+            key={id}
+            type="button"
+            aria-current={view === id ? "page" : undefined}
+            onClick={() => { setView(id); onNavigate?.(); }}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
+              view === id ? "bg-primary/15 font-semibold text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Icon className={`size-5 shrink-0 ${view === id ? "text-primary" : color}`} />
+            {label}
+          </button>
+        ))}
+      </nav>
+      <div className="space-y-1 border-t p-3">
+        <Link to="/" onClick={onNavigate} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+          <ArrowLeft className="size-5 shrink-0" />
+          Ver catálogo
+        </Link>
+        <button
+          type="button"
+          onClick={() => supabase.auth.signOut()}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+        >
+          <LogOut className="size-5 shrink-0" />
+          Sair
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
-          <Link to="/" className="font-display text-2xl font-bold">
-            <img src="/logo-s7ven.png" alt="S7VEN Lounge e Tabacaria" width={360} height={312} className="h-12 w-auto object-contain" />
-          </Link>
-          <div className="flex gap-2">
-            <AdminAppAccess />
-            <Button asChild variant="ghost">
-              <Link to="/">
-                <ArrowLeft />
-                <span className="hidden sm:inline">Catálogo</span>
-              </Link>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button variant="outline" size="icon" className="shrink-0 md:hidden" aria-label="Abrir menu do painel" onClick={() => setMenuOpen(true)}>
+              <Menu />
             </Button>
-            <Button variant="outline" onClick={() => supabase.auth.signOut()}>
+            <div className="min-w-0">
+              <p className="text-xs uppercase text-primary">Área da loja</p>
+              <h1 className="truncate font-display text-xl font-semibold sm:text-2xl">{viewTitle[view]}</h1>
+            </div>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <AdminAppAccess />
+            <Button variant="outline" size="icon" className="md:hidden" aria-label="Sair" onClick={() => supabase.auth.signOut()}>
               <LogOut />
-              Sair
             </Button>
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-7 pb-28 sm:px-5 sm:py-10 sm:pb-28 md:pb-10">
-        <p className="mb-2 text-xs uppercase text-primary">Área da loja</p>
-        <h1 className="font-display text-3xl font-semibold">{viewTitle[view]}</h1>
-        <p className="mt-3 text-sm text-muted-foreground">S7VEN Lounge e Tabacaria.</p>
+      <main className="mx-auto max-w-7xl px-4 py-7 pb-10 sm:px-5">
         {permission.isPending ? (
           <p className="py-12 text-muted-foreground">Conferindo seu acesso…</p>
         ) : permission.error ? (
@@ -222,46 +249,22 @@ function Admin() {
           </div>
         ) : (
           <>
-            <div className="mt-7 hidden gap-6 md:flex">
-              <nav className="admin-sidebar w-56 shrink-0 space-y-1 rounded-xl border bg-card p-3" aria-label="Painel da loja">
-                {sidebarItems.map(({ id, label, Icon, color }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    aria-current={view === id ? "page" : undefined}
-                    onClick={() => setView(id)}
-                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
-                      view === id ? "bg-primary/15 font-semibold text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    <Icon className={`size-5 shrink-0 ${view === id ? "text-primary" : color}`} />
-                    {label}
-                  </button>
-                ))}
-              </nav>
+            <div className="flex gap-6">
+              <aside className="hidden w-60 shrink-0 md:block">
+                <div className="admin-sidebar sticky top-24 max-h-[calc(100vh-7rem)] overflow-hidden rounded-2xl border bg-card">
+                  {adminNav()}
+                </div>
+              </aside>
               <div className="min-w-0 flex-1">
-                {renderView(view)}
+                {view === "home" ? <AdminHome onOpen={(v) => setView(v as ViewId)} /> : renderView(view)}
               </div>
             </div>
             <NewOrderAlarm />
-            <div className="md:hidden">
-              {view === "home" ? <AdminHome onOpen={(v) => setView(v as ViewId)} /> : renderView(view)}
-            </div>
-            <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-background md:hidden" aria-label="Navegação do aplicativo">
-              {([
-                { id: "home" as ViewId, label: "Início", Icon: Home },
-                { id: "orders" as ViewId, label: "Pedidos", Icon: ShoppingBag },
-                { id: "products" as ViewId, label: "Produtos", Icon: Package },
-              ]).map(({ id, label, Icon }) => <Button key={id} variant="ghost" aria-current={view === id ? "page" : undefined} className={`h-16 min-w-0 flex-col gap-1 rounded-none px-1 text-[11px] ${view === id ? "text-primary" : "text-muted-foreground"}`} onClick={() => setView(id)}><Icon className="size-5" />{label}</Button>)}
-              <Button variant="ghost" className={`h-16 flex-col gap-1 rounded-none px-1 text-[11px] ${mobileMenuIds.includes(view) ? "text-primary" : "text-muted-foreground"}`} onClick={() => setMenuOpen(true)}><Menu className="size-5" />Menu</Button>
-            </nav>
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-              <SheetContent side="bottom" className="mx-auto max-w-lg pb-8">
-                <SheetTitle>Minha loja</SheetTitle>
-                <SheetDescription className="mt-2">S7VEN Lounge e Tabacaria</SheetDescription>
-                <div className="mt-6 grid gap-2">
-                  {mobileMenuItems.map(({ id, label, Icon }) => <Button key={id} variant="ghost" className="h-14 justify-start border-b" onClick={() => { setView(id); setMenuOpen(false); }}><Icon className="text-primary" />{label}<ChevronRight className="ml-auto" /></Button>)}
-                </div>
+              <SheetContent side="left" className="w-72 p-0">
+                <SheetTitle className="sr-only">Menu do painel</SheetTitle>
+                <SheetDescription className="sr-only">Navegação da área da loja</SheetDescription>
+                {adminNav(() => setMenuOpen(false))}
               </SheetContent>
             </Sheet>
           </>
