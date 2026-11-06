@@ -83,6 +83,24 @@ export function ShareLinkBuilder() {
           <Button onClick={copy} className="shrink-0">{copied ? <Check /> : <Copy />}{copied ? "Copiado!" : "Copiar"}</Button>
         </div>
       )}
+      {selectedProduct && url && (
+        <div className="space-y-2 rounded-lg border bg-muted/40 p-3">
+          <p className="text-xs font-semibold">Imagem pronta para os Stories</p>
+          <p className="text-xs text-muted-foreground">Gera uma imagem vertical com foto, preço e QR code do produto. No celular, toque em compartilhar e escolha o Instagram.</p>
+          <Button variant="outline" size="sm" disabled={storyBusy} onClick={() => void makeStory()}>
+            <ImageDown />{storyBusy ? "Gerando imagem…" : story ? "Gerar novamente" : "Gerar imagem do Stories"}
+          </Button>
+          {storyError && <p role="alert" className="text-xs text-destructive">{storyError}</p>}
+          {story && (
+            <div className="flex items-center gap-3 pt-1">
+              <img src={story.url} alt={`Imagem de Stories de ${selectedProduct.name}`} className="h-40 w-auto rounded-lg border" />
+              <Button size="sm" onClick={() => void deliverFile(story.blob, `story-${selectedProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`)}>
+                <Instagram />Baixar / enviar ao Instagram
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
