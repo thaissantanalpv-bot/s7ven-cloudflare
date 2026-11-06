@@ -17,7 +17,6 @@ import {
   ShoppingBag,
   Package,
   Receipt,
-  Menu,
   History,
   ChevronRight,
   MessageCircle,
@@ -34,7 +33,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { AdminAppAccess } from "@/components/admin-app-access";
 import { MarketingTools } from "@/components/marketing-tools";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,7 +95,6 @@ function Admin() {
     navigator.serviceWorker.addEventListener("message", onMessage);
     return () => navigator.serviceWorker.removeEventListener("message", onMessage);
   }, []);
-  const [menuOpen, setMenuOpen] = useState(false);
   const check = useServerFn(checkStoreAdmin);
   const permission = useQuery({ queryKey: ["store-admin"], queryFn: () => check(), retry: false });
   const { data: settings } = useSuspenseQuery(storeSettingsQuery);
