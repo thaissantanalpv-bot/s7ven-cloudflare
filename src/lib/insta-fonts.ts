@@ -149,8 +149,9 @@ export function applyInstaFont(text: string, variantId: string): string {
   if (styled === text && !STYLES.some((s) => s.id === styleId)) return text;
   const deco = DECORATIONS.find((d) => d.id === decoId);
   if (!deco || deco.id === "plain") return styled;
-  if (deco.combining) {
-    return [...styled].map((ch) => (ch.trim() ? ch + deco.combining : ch)).join("");
+  const mark = deco.combining;
+  if (mark) {
+    return [...styled].map((ch) => (ch.trim() ? ch + mark : ch)).join("");
   }
   return `${deco.pre ?? ""}${styled}${deco.post ?? ""}`;
 }
