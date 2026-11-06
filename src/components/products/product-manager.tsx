@@ -79,7 +79,7 @@ export function ProductManager({ combos = false }: { combos?: boolean }) {
     </div>
     {visible.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-3 text-sm"><label className="inline-flex cursor-pointer items-center gap-2"><input type="checkbox" className="size-4 accent-primary" aria-label="Selecionar todos os produtos da lista" checked={visible.every(p => selected.has(p.id))} onChange={e => setSelected(e.target.checked ? new Set([...selected, ...visible.map(p => p.id)]) : new Set([...selected].filter(id => !visible.some(p => p.id === id))))} />Selecionar todos</label>{selected.size > 0 && <><span className="text-muted-foreground">{selected.size} selecionado(s)</span><Button size="sm" variant="destructive" disabled={busy} onClick={() => { setMessage(""); setDeleting(managed.filter(p => selected.has(p.id))); }}><Trash2 />Excluir selecionados</Button><Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Limpar</Button></>}</div>}
     {!editing && message && <p role="status" className="mb-4 text-sm text-primary">{message}</p>}
-    <div className="grid gap-3">
+    <div className="grid grid-cols-1 gap-3">
       {visible.map(p => {
         const status = !p.active ? { label: "Pausado", cls: "bg-muted text-muted-foreground" } : !available(p) ? { label: "Esgotado", cls: "bg-destructive/15 text-destructive" } : { label: "Disponível", cls: "bg-whatsapp/15 text-whatsapp" };
         return <div key={p.id} className="rounded-2xl border bg-card p-3 shadow-sm sm:p-4">
