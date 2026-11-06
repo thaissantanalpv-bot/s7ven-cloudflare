@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link2, Copy, Check, MessageCircle, Instagram, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
+import { INSTAGRAM_URL } from "@/lib/products";
 import { ShareLinkBuilder } from "@/components/share-link-builder";
 
 export function SiteLinkCard() {
@@ -56,7 +57,7 @@ export function SiteLinkCard() {
           </a>
         </Button>
         <Button asChild variant="outline" size="sm">
-          <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">
+          <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
             <Instagram />
             Abrir Instagram
           </a>
