@@ -8,6 +8,30 @@
         "@ai-sdk/openai": "^4.0.91",
         "@ai-sdk/openai-compatible": "^3.0.67",
         "@ai-sdk/react": "^4.0.140",
+        "@fontsource/abril-fatface": "^5.3.0",
+        "@fontsource/alex-brush": "^5.3.0",
+        "@fontsource/allura": "^5.3.0",
+        "@fontsource/amatic-sc": "^5.3.0",
+        "@fontsource/ballet": "^5.3.0",
+        "@fontsource/birthstone-bounce": "^5.3.0",
+        "@fontsource/bodoni-moda": "^5.3.0",
+        "@fontsource/borel": "^5.3.0",
+        "@fontsource/caveat": "^5.3.0",
+        "@fontsource/cormorant-garamond": "^5.3.0",
+        "@fontsource/dancing-script": "^5.3.0",
+        "@fontsource/great-vibes": "^5.3.0",
+        "@fontsource/indie-flower": "^5.3.0",
+        "@fontsource/lobster": "^5.3.0",
+        "@fontsource/pacifico": "^5.3.0",
+        "@fontsource/parisienne": "^5.3.0",
+        "@fontsource/pinyon-script": "^5.3.0",
+        "@fontsource/playfair-display": "^5.3.0",
+        "@fontsource/prata": "^5.3.0",
+        "@fontsource/sacramento": "^5.3.0",
+        "@fontsource/satisfy": "^5.3.0",
+        "@fontsource/shadows-into-light": "^5.3.0",
+        "@fontsource/tangerine": "^5.3.0",
+        "@fontsource/yellowtail": "^5.3.0",
         "@hookform/resolvers": "^5.2.2",
         "@lovable.dev/cloud-auth-js": "^1.1.2",
         "@lovable.dev/email-js": "0.3.1",
@@ -416,6 +440,54 @@
     "@floating-ui/react-dom": ["@floating-ui/react-dom@2.1.9", "", { "dependencies": { "@floating-ui/dom": "^1.8.0" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-JDjEFGCpImxDCA7JJKviA0M9+RtmJdj0m/NVU5IMgBK+AmZouAQQ7/+2GLH0GXXY0YMw9oXPB8hKdbPYg5QLYg=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.12", "", {}, "sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww=="],
+
+    "@fontsource/abril-fatface": ["@fontsource/abril-fatface@5.3.0", "", {}, "sha512-voKCJEhGGZNdlk+OS3uFRSDV/HWbs6TAy7qKe9wXq96Uzwadfksyk5eyXLa1T5FkEazBgpHRMRSFBKfA3rbKbg=="],
+
+    "@fontsource/alex-brush": ["@fontsource/alex-brush@5.3.0", "", {}, "sha512-n3m2aZxsc8r748fBiYqfiVJ5l5iJe7ui5KPh2oBz07jsbr7zKynZ6F5MgXbR1iV8J0hPetmp6g5OwKYRZCDUcw=="],
+
+    "@fontsource/allura": ["@fontsource/allura@5.3.0", "", {}, "sha512-UqloNNVxl03+psvtIXCYuo7/v2mD9XmX2HGiczhK6NmDDwbFJJDjrbHZ5tpNuVXKsMEQPc46tZu3hewYN82/YA=="],
+
+    "@fontsource/amatic-sc": ["@fontsource/amatic-sc@5.3.0", "", {}, "sha512-qGAftmq7o21ViixCApztfLOe6TP0VFp3x9ac5KVTwBqW6SU8YJeGWgcLHOfBkooAI+/411R/flMqXos8GseNkA=="],
+
+    "@fontsource/ballet": ["@fontsource/ballet@5.3.0", "", {}, "sha512-JOPosy7HaBqeXWUe1ZSrQoSYS31iRWn2HVBswnOMMAuWUvuDVk/QTsQmBD/20+9fPhOf9SLiIh+LR+yD1A4/lA=="],
+
+    "@fontsource/birthstone-bounce": ["@fontsource/birthstone-bounce@5.3.0", "", {}, "sha512-DWJc8DWsge7yq6ir80ZSmEdTJglNzYCiSQ1GMkTJHe+OKgSJ9lE2pPRpkmirgIXmbiH6vlenRCwCs32G+wWY5A=="],
+
+    "@fontsource/bodoni-moda": ["@fontsource/bodoni-moda@5.3.0", "", {}, "sha512-Wt2XBCHivYxkTP3ydq/Ax+7VshwsOh/6ayA5om2t+yClCkGwLPj2Mi6OnyMANjyLcqDUWs4rlOHnc8SBLf6/pA=="],
+
+    "@fontsource/borel": ["@fontsource/borel@5.3.0", "", {}, "sha512-XYt/ZcbObYv+CT+861JBfpXgGiP0JCiFWnBw3v32Ei9OcBwOWC39vTi9XY781LltDfhvbudd+iusr3hOckmQWw=="],
+
+    "@fontsource/caveat": ["@fontsource/caveat@5.3.0", "", {}, "sha512-eHTfzQxFSW9ABERRLNruHoNJmKed2J7pqTUc5lp4a4POMgXGKpxmWj3d9Hz10kmAg6iuTTLe6UagbA4bnsmfQw=="],
+
+    "@fontsource/cormorant-garamond": ["@fontsource/cormorant-garamond@5.3.0", "", {}, "sha512-weuGsCirGVWBWqpt6YUp0yLThTe4G8YO45noq8wxeJCRvEpq5lFrxNMFSTxcyOyV5k5otzJ8guDzYegdYlcLMQ=="],
+
+    "@fontsource/dancing-script": ["@fontsource/dancing-script@5.3.0", "", {}, "sha512-/FFbz4ZCNN+eG2a6phkZB41iKmyCC6rq2blA/kG9OFeI3/tpzLNazND1bBdEnogLhpfg7o4NfauTbEEYSpSUGg=="],
+
+    "@fontsource/great-vibes": ["@fontsource/great-vibes@5.3.0", "", {}, "sha512-1w60cXzXnC9V4y943po8044O1mqRQBiTTK75h7OpZE+1VQtx+KlAAzoIyEE5KNzu05gUpxaCQg7cbL7ITSwegQ=="],
+
+    "@fontsource/indie-flower": ["@fontsource/indie-flower@5.3.0", "", {}, "sha512-Wo5eN/ruEQcyC3+ArzhlpqWQgph3VuCNbJlEkVw17LUd0uyTHOb9bTec4g9njQzjiL/ijACF27sSwy90L6kZBg=="],
+
+    "@fontsource/lobster": ["@fontsource/lobster@5.3.0", "", {}, "sha512-jt+RDk/8Sstl1Omhox62gTbvRSLbh06kn5BNfDFgf4rNuDPHF+19eWYFxzq5FsdkalbRJNtc5p5C3qE0+leNVg=="],
+
+    "@fontsource/pacifico": ["@fontsource/pacifico@5.3.0", "", {}, "sha512-bWv0fHR1n36p7scRn+maaEaVeQCOq9yvfVfjyAeUzKrK4Y/3qiRAEj4hJgfxj/sjgZZGkeHyKPrbWdDaZtpCVw=="],
+
+    "@fontsource/parisienne": ["@fontsource/parisienne@5.3.0", "", {}, "sha512-YbfjZDYy7FMTVE0HRgejkGX3T5iFfgagOYtAAAymq9GklviFAZ1GqIdlyviNe23TiR20f2K7zxsL4AECtWnkEQ=="],
+
+    "@fontsource/pinyon-script": ["@fontsource/pinyon-script@5.3.0", "", {}, "sha512-ilhy4l5apzyDkfuKb7PZBUT5Sf6nfxucdXT5TQ0wQDyWtDPlouLy1lQq3lMEPk1lPsHHVrd11EkPnEG8FqDgUA=="],
+
+    "@fontsource/playfair-display": ["@fontsource/playfair-display@5.3.0", "", {}, "sha512-uJSABalvdWc10fEPppQjQocamT21LEyRfzzWfRfqbkPz+sRv+kKpYDKyluBUskvJREkJTos9epj1WjQROGu99Q=="],
+
+    "@fontsource/prata": ["@fontsource/prata@5.3.0", "", {}, "sha512-8f3WPCd930Cv1QoP1dSX/b86psNNIWd/8R7Dd1HmWn95Am5X795bqkEpinPJofcTBxPfleszkM5c0vc2amg2Ew=="],
+
+    "@fontsource/sacramento": ["@fontsource/sacramento@5.3.0", "", {}, "sha512-KkqN52aTsJ0pSBva/NREqFljs0M1TwMIpNcqdSQc2EKR/mVU1CvM2dazf9eG19rHMTIssjbia83nGG705SlD1w=="],
+
+    "@fontsource/satisfy": ["@fontsource/satisfy@5.3.0", "", {}, "sha512-dQ+Cy85XdwYnwlzWcbkmA2Qkpxam0ZHDaGm/qoGHlyHKRVgM/BJN8RLHpRm31R0REFBQe5Yl8Ke5oTdpcKdPIA=="],
+
+    "@fontsource/shadows-into-light": ["@fontsource/shadows-into-light@5.3.0", "", {}, "sha512-3dvv0i8/ZwLMY08AAlTLivHUdNQYB6Fxe92d7BZiGbHY2GQnCxEd8JC9CBzxTiP4iyWNa6OZn9LXF+xjc9LaGw=="],
+
+    "@fontsource/tangerine": ["@fontsource/tangerine@5.3.0", "", {}, "sha512-3lR9JgNxpx8M68A5w70eb72BwVhtAFZ4Qq16S8x152+pbF4AjM/vau3ki1AlDwgARB216koqwk/9jQTVDpCP3Q=="],
+
+    "@fontsource/yellowtail": ["@fontsource/yellowtail@5.3.0", "", {}, "sha512-atz4CIdbP7otppxRaObJiygnkyJzIuLFpPRjWspXvXhBWLB0sk35cCu5r6gSkDomRtEWakJ8//bWbyBjJbilGg=="],
 
     "@hookform/resolvers": ["@hookform/resolvers@5.5.7", "", { "dependencies": { "@standard-schema/utils": "^0.3.0" }, "peerDependencies": { "@sinclair/typebox": ">=0.25.24", "@standard-schema/spec": "^1.0.0", "@typeschema/main": ">=0.13.7", "@vinejs/vine": "^2.0.0 || ^3.0.0", "ajv": "^8.12.0", "ajv-errors": "^3.0.0", "ajv-formats": "^2.1.1", "arktype": "^2.0.0", "ata-validator": "^0.7.0", "class-transformer": ">=0.4.0", "class-validator": ">=0.12.0", "computed-types": "^1.0.0", "effect": "^3.10.3", "fluentvalidation-ts": "^3.0.0", "fp-ts": "^2.7.0", "io-ts": "^2.0.0", "joi": "^17.0.0", "nope-validator": ">=0.12.0", "react-hook-form": "^7.55.0", "superstruct": ">=0.12.0", "typanion": "^3.3.2", "valibot": ">=0.31.0 || ^1.0.0-beta.4 || ^1.0.0-rc", "vest": ">=3.0.0", "yup": "^1.0.0", "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["@sinclair/typebox", "@standard-schema/spec", "@typeschema/main", "@vinejs/vine", "ajv", "ajv-errors", "ajv-formats", "arktype", "ata-validator", "class-transformer", "class-validator", "computed-types", "effect", "fluentvalidation-ts", "fp-ts", "io-ts", "joi", "nope-validator", "superstruct", "typanion", "valibot", "vest", "yup", "zod"] }, "sha512-CyPCYV8/KlXfEXLWj8HHHhVsR/IZ6Ckm3b/a4fWtO/lRnRK1huqncb8LlAWrmpPRsse5glF5aVuDRMHEr3UGag=="],
 

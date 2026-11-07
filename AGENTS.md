@@ -35,3 +35,4 @@
 - Catalog look (colors, allowlisted fonts, corners, home texts, banner photo path/position) lives in `store_settings.catalog_appearance`, parsed field-by-field with fallback and saved only by its own admin server function so other settings saves never overwrite it; the banner photo is a private `product-photos` path made anon-readable by `is_catalog_photo` and served as a signed URL from the settings read.
 - Ratings: public via per-order token link only, one per order, server-written.
 - Generate social product images with a shared browser canvas; use native file sharing with a download fallback because web links cannot attach image files to WhatsApp.
+- Keep real social font designs separate from copyable Unicode styles; bundle licensed font files, load via browser FontFace and export transparent text with measured glyph bounds because copying text cannot preserve font families.

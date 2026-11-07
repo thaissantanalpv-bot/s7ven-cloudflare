@@ -1,3 +1,6 @@
+# Fontes distintas para Instagram (Thais, 07/11/2026)
+- [x] Adicionadas 24 fontes reais (Ballet, Birthstone Bounce, Borel e outras), com categorias, prévias e download PNG transparente sem cortar os traços; 19 estilos copiáveis separados, sem repetição por enfeites. Conferido na conta da Thais em celular e computador, download/cópia funcionando, 12 testes passando e site sem erros.
+
 # Imagens para Instagram e WhatsApp (Thais, 06/11/2026 07:07 UTC)
 - [x] Melhorar apresentação e incluir nome do produto junto do valor, preservando foto inteira e logo, sem QR (06/11 07:16 UTC). Imagem real de Rosh Simples conferida sem cortes/sobreposição; download e chamada de compartilhamento verificados; teste de foto panorâmica passou.
 - [x] Retirar QR e textos extras; mostrar foto inteira, valor e logo S7VEN.

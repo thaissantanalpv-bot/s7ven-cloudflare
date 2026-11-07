@@ -47,7 +47,8 @@ const SMALL_CAPS: Record<string, string> = {
 
 function mapChar(ch: string, styleId: string, ranges: Range[]): string {
   if (styleId === "small-caps") return SMALL_CAPS[ch] ?? ch;
-  const code = ch.codePointAt(0)!;
+  const code = ch.codePointAt(0);
+  if (code === undefined) return ch;
   for (const r of ranges) {
     let target: number | null = null;
     if (code >= 65 && code <= 90 && r.upper !== undefined) target = r.upper + (code - 65);
