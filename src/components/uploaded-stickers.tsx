@@ -15,11 +15,11 @@ export function UploadedStickers() {
 
   const load = async () => {
     const { data, error } = await supabase.storage.from(BUCKET).list("", { limit: 200, sortBy: { column: "created_at", order: "desc" } });
-    if (error) return toast.error("Não foi possível carregar suas figurinhas.");
+    if (error) { toast.error("Não foi possível carregar suas figurinhas."); return; }
     const files = (data ?? []).filter((f) => f.id);
-    if (!files.length) return setItems([]);
+    if (!files.length) { setItems([]); return; }
     const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrls(files.map((f) => f.name), 3600);
-    setItems((signed ?? []).filter((s) => s.signedUrl).map((s) => ({ path: s.path ?? "", url: s.signedUrl })));
+    setItems((signed ?? []).flatMap((s) => (s.signedUrl && s.path ? [{ path: s.path, url: s.signedUrl }] : [])));
   };
   useEffect(() => { void load(); }, []);
 
@@ -42,7 +42,7 @@ export function UploadedStickers() {
   const remove = async (path: string) => {
     if (!confirm("Remover esta figurinha?")) return;
     const { error } = await supabase.storage.from(BUCKET).remove([path]);
-    if (error) return toast.error("Não foi possível remover.");
+    if (error) { toast.error("Não foi possível remover."); return; }
     setItems((prev) => prev.filter((i) => i.path !== path));
   };
 
