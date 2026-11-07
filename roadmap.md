@@ -1,4 +1,5 @@
 # Figurinhas para Stories (Thais, 07/11/2026)
+- [x] Disponibilizados em Divulgação os três sites encontrados como links externos, sem redistribuir arquivos de licença não confirmada; destinos, abertura em nova aba e layout conferidos na conta administrativa, cinco testes passaram e build OK.
 - [x] Adicionados cinco estilos inspirados nas novas referências: letras combinadas, faixas rosa, texto em camadas, letras arredondadas e interruptores de foco; frases de loja/academia ampliadas. Quatro downloads transparentes conferidos na conta administrativa, espaçamento refinado na revisão visual, 17 testes e build OK. Fontes semelhantes, não identificadas como idênticas às imagens.
 - [x] Adicionadas 1.800 composições (300 frases × 6 estilos reais), em 20 temas, com busca, cores, favoritas e PNG transparente. Corrigido desalinhamento das prévias na revisão visual; downloads reais de academia/trabalho, envio de arquivo e celular/computador conferidos na conta administrativa; 18 testes passaram e build OK. Postagem no Instagram depende da escolha no aplicativo do celular.
 

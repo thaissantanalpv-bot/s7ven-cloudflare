@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Heart, Loader2, Search, Share2, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, ExternalLink, Heart, Loader2, Search, Share2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { deliverFile, downloadBlob } from "@/lib/download";
@@ -64,6 +64,20 @@ export function StoryStickers() {
   return <div className="border-t pt-4">
     <Button variant="outline" size="sm" onClick={() => setOpen((value) => !value)} aria-expanded={open}><Sparkles />{open ? "Ocultar figurinhas" : "Figurinhas para Stories"}</Button>
     {open && <div className="mt-4 space-y-4">
+      <section aria-label="Coleções em outros sites" className="space-y-2 border-b pb-4">
+        <h3 className="text-sm font-semibold">Coleções em outros sites</h3>
+        <ul className="divide-y divide-border">
+          {[
+            { name: "Marketing Team", detail: "Pack gratuito anunciado · figurinhas, sombras e efeitos", url: "https://marketingteam.com.br/redes-sociais/pack-de-imagens-para-instagram/" },
+            { name: "Flaticon · Academia", detail: "Figurinhas e ilustrações de treino", url: "https://www.flaticon.com/br/stickers-gratis/academia" },
+            { name: "Flaticon · Letras motivacionais", detail: "Frases desenhadas · idioma varia", url: "https://www.flaticon.com/br/stickers-pack/motivational-lettering-4" },
+          ].map((source) => <li key={source.url} className="flex items-center gap-3 py-3">
+            <div className="min-w-0 flex-1"><p className="text-sm font-medium">{source.name}</p><p className="text-xs text-muted-foreground">{source.detail}</p></div>
+            <Button asChild size="icon" variant="outline"><a href={source.url} target="_blank" rel="noopener noreferrer" aria-label={`Abrir ${source.name}`} title={`Abrir ${source.name}`}><ExternalLink /></a></Button>
+          </li>)}
+        </ul>
+        <p className="text-xs text-muted-foreground">Downloads nos sites originais. Confira a licença de cada arquivo; algumas opções exigem crédito ao autor ou pagamento.</p>
+      </section>
       <div className="flex items-center justify-between gap-2"><div><h3 className="font-semibold">Coleção de figurinhas</h3><p className="text-xs text-muted-foreground">{storyStickers.length.toLocaleString("pt-BR")} composições · {stickerThemes.length} temas</p></div><Button size="icon" variant={onlyFavorites ? "default" : "outline"} aria-label="Mostrar favoritas" aria-pressed={onlyFavorites} title="Favoritas" onClick={() => { setOnlyFavorites(!onlyFavorites); setPage(0); }}><Heart /></Button></div>
       <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><input className="field pl-9" aria-label="Buscar figurinhas" placeholder="Buscar frase ou tema…" value={query} maxLength={80} onChange={(e) => { setQuery(e.target.value); setPage(0); }} /></div>
       <div className="grid grid-cols-2 gap-2">
