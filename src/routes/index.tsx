@@ -63,6 +63,7 @@ import {
 import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
 import { checkoutWhatsApp, productMessage, insertCouponLine } from "@/lib/order-message";
 import { applyCoupon } from "@/lib/store-settings";
+import { matchesSearch } from "@/lib/product-search";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
@@ -340,11 +341,11 @@ function Catalog() {
   }, [cart, form, loaded]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = query.trim();
+    // Typing searches the whole catalog, never only the open category.
     const list = shown.filter(
       (p) =>
-        (cat === "Todos" || p.category === cat || (cat === FEATURED && (p.featured || discountPercent(p) !== null)) || (cat === PROMOS && discountPercent(p) !== null) || (cat === FAVORITES && favorites.includes(p.id))) &&
-        (!q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)),
+        (q ? matchesSearch(p, q) : (cat === "Todos" || p.category === cat || (cat === FEATURED && (p.featured || discountPercent(p) !== null)) || (cat === PROMOS && discountPercent(p) !== null) || (cat === FAVORITES && favorites.includes(p.id)))),
     );
     if (sort === "low") list.sort((a, b) => a.price - b.price);
     if (sort === "high") list.sort((a, b) => b.price - a.price);
@@ -729,7 +730,8 @@ function Catalog() {
         </div>
         <div className="relative mx-3 mb-3 lg:hidden md:mx-8">
           <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
-          <input aria-label="Buscar produto" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="O que você está procurando?" className="field search-field pl-10" />
+          <input type="search" enterKeyHint="search" autoComplete="off" aria-label="Buscar produto" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Busque por nome, sabor ou categoria" className="field search-field pl-10 pr-10" />
+          {query && <button type="button" aria-label="Limpar busca" onClick={() => setQuery("")} className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full text-muted-foreground">✕</button>}
         </div>
       </header>
 
