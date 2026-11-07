@@ -1,8 +1,9 @@
 import { loadStoryFont, storyFonts } from "@/lib/story-fonts";
+import { paintReferenceSticker } from "@/lib/sticker-reference-renderer";
 
 const themes = [
   ["Trabalho", "💼", "Bora trabalhar|Nasci linda, não rica|Trabalho e muito café|Empreendedora sim|Meta pra bater|Modo CLT ativado|Já que beleza não paga contas|Meu corre, minhas conquistas|Sextou, mas com trabalho|Hoje o escritório é aqui|Foco no meu negócio|Construindo meu império|A tal da sorte tem muito esforço|Mais um dia de entrega|Expediente encerrado"],
-  ["Academia", "💪", "Bora treinar|Projeto minha melhor versão|Treino pago|Hoje teve endorfina|Tá pago, sem desculpas|Uma repetição de cada vez|Ela treina, ela brilha|Meu pré-treino é coragem|Leg day, me respeita|Foco, força e constância|Suando por mim|Não foi sorte, foi treino|Meu compromisso comigo|Cardio e autoestima|Mais forte que ontem"],
+  ["Academia", "💪", "Bora treinar|Projeto minha melhor versão|Treino pago|Hoje teve endorfina|Tá pago, sem desculpas|Uma repetição de cada vez|Ela treina, ela brilha|Meu pré-treino é coragem|Leg day, me respeita|Foco, força e constância|Suando por mim|Não foi sorte, foi treino|Meu compromisso comigo|Cardio e autoestima|Mais forte que ontem|Treino concluído|Focada que fala|Fazendo o que precisa ser feito|Segundou com treino|Treino tá pago|Disciplina supera motivação|Treino pesado|Sendo 1% melhor que ontem|Vencendo a mim mesma|Bora de treino|Dia de cardio"],
   ["Dia a dia", "✨", "Um dia de cada vez|Vivendo meu agora|Só vai|Meu pequeno caos|Vida real, sem filtro|Fazendo acontecer|De leve e de boa|Colecionando momentos|A vida acontece aqui|Por aqui tá assim|Pequenas alegrias|No meu ritmo|Só sendo eu|Um pouquinho de hoje|Presença, não pressa"],
   ["Café", "☕", "Primeiro o café|Café e coragem|Meu combustível diário|Pausa pro cafezinho|Café, depois eu resolvo|Mais café, menos drama|Um gole de paz|Café com boas ideias|Café passado, dia iniciado|O cheiro da felicidade|Na dúvida, café|Afeto em uma xícara|Café e conversa boa|Meu ritual favorito|Hoje eu tô só o café"],
   ["Bom dia", "🌞", "Bom dia, mundo|Hoje vai ser lindo|Acordei pra vencer|Novo dia, novas chances|Que seja leve|Sol na alma|Começando com gratidão|Levanta e brilha|Energia boa pra hoje|Bom dia com carinho|Deus cuida, eu sigo|Que venham coisas boas|Mais um recomeço|Amanheceu por aqui|Bora fazer esse dia valer"],
@@ -20,11 +21,16 @@ const themes = [
   ["Festa e rolê", "🪩", "Hoje eu tô pro rolê|Brinde à vida|Pronta pra noite|O rolê prometeu tudo|Só volto com histórias|Noite das boas|Modo festa ativado|Que noite, meus amigos|Um brinde aos encontros|Dançando os problemas embora|A pista me chama|Drinks e boas risadas|Hoje tem resenha|As melhores noites são assim|Viva esse momento"],
   ["Fé e gratidão", "🙏", "Deus no comando|Gratidão por hoje|Fé pra seguir|Tudo no tempo certo|Abençoada e grata|Que nunca falte fé|Deus conhece meu caminho|Obrigada por tanto|Meu coração agradece|Onde há fé, há recomeço|Entrego e confio|A graça me alcança|Mais motivos pra agradecer|Com Deus eu vou|Uma oração muda o dia"],
   ["Estudos", "📚", "Bora estudar|Foco no meu futuro|Um capítulo por vez|Estudando pra conquistar|Conhecimento é poder|Hoje teve dedicação|Modo estudante|Meu sonho merece esforço|Anotações e café|Mais perto da aprovação|Disciplina também é amor|Pausa entre os estudos|Aprendendo todo dia|O diploma vem|Orgulho do meu processo"],
-  ["Loja e vendas", "🛍️", "Novidades por aqui|Pedido saindo com amor|Vem garantir o seu|Tem reposição|Minha loja, meu sonho|Cliente feliz, coração feliz|Últimas unidades|Um mimo pra você|Obrigada pela preferência|Seu pedido tá pronto|Escolhido com carinho|Hoje tem promoção|Tá esperando o quê|Passa aqui na loja|Mais uma venda, gratidão"],
+  ["Loja e vendas", "🛍️", "Novidades por aqui|Pedido saindo com amor|Vem garantir o seu|Tem reposição|Minha loja, meu sonho|Cliente feliz, coração feliz|Últimas unidades|Um mimo pra você|Obrigada pela preferência|Seu pedido tá pronto|Escolhido com carinho|Hoje tem promoção|Tá esperando o quê|Passa aqui na loja|Mais uma venda, gratidão|Novidades|Loja aberta|Chegaram novidades|Reposição|Ativando um lindo dia|Escolha perfeita|Estamos online|Iniciando os atendimentos|Clica aqui|Invista e brilhe ainda mais|Preparada para se apaixonar"],
 ] as const;
 
 export const stickerThemes = themes.map(([name, emoji, phrases]) => ({ name, emoji, phrases: phrases.split("|") }));
 export const stickerStyles = [
+  { id: "aesthetic", name: "Aesthetic · letras combinadas", font: "sacramento", layout: "aesthetic" },
+  { id: "faixa", name: "Faixa rosa · treino e loja", font: "abril-fatface", layout: "ribbon" },
+  { id: "camadas", name: "Editorial em camadas", font: "bodoni-moda", layout: "echo" },
+  { id: "fofa", name: "Letras arredondadas", font: "pacifico", layout: "playful" },
+  { id: "foco", name: "Interruptores de foco", font: "sacramento", layout: "switches" },
   { id: "assinatura", name: "Assinatura", font: "great-vibes", layout: "script" },
   { id: "editorial", name: "Editorial", font: "birthstone-bounce", layout: "mixed" },
   { id: "manuscrito", name: "Manuscrito", font: "caveat", layout: "script" },
@@ -43,6 +49,11 @@ export function filterStickers(theme: string, query: string, style = "todos") {
 }
 
 export async function renderSticker(item: StorySticker, color: string): Promise<Blob> {
+  if (["aesthetic", "ribbon", "echo", "playful", "switches"].includes(item.style.layout)) {
+    const canvas = document.createElement("canvas");
+    await paintReferenceSticker(canvas, item, color);
+    return cropSticker(canvas);
+  }
   const font = storyFonts.find((entry) => entry.id === item.style.font);
   const bold = storyFonts.find((entry) => entry.id === "abril-fatface");
   if (!font || !bold) throw new Error("Fonte indisponível.");
@@ -95,6 +106,12 @@ export async function renderSticker(item: StorySticker, color: string): Promise<
     ctx.lineTo(870, (canvas.height - total) / 2 - 28);
     ctx.stroke();
   }
+  return cropSticker(canvas);
+}
+
+function cropSticker(canvas: HTMLCanvasElement): Promise<Blob> {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Não foi possível salvar a figurinha.");
   // Crop to actual painted bounds, keeping transparent breathing room.
   const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
   let left = canvas.width, right = 0, top = canvas.height, bottom = 0;

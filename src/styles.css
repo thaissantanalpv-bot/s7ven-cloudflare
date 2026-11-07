@@ -72,11 +72,12 @@
   --search-placeholder: #6b7280;
   --sticker-ink: #191919;
   --sticker-white: #ffffff;
-  --sticker-pink: #e55b98;
+  --sticker-pink: #f2b5d5;
   --sticker-gold: #a47b28;
   --sticker-preview: #e6e4e9;
 }
-.sticker-stage { background: var(--sticker-preview); }
+.sticker-stage { background: var(--sticker-ink); }
+.sticker-stage-light { background: var(--sticker-preview); }
 .sticker-swatch-ink { background: var(--sticker-ink); }
 .sticker-swatch-white { background: var(--sticker-white); }
 .sticker-swatch-pink { background: var(--sticker-pink); }

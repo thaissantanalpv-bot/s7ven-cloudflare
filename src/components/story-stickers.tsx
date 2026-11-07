@@ -29,7 +29,7 @@ function StickerTile({ item, color, onSelect }: { item: StorySticker; color: str
   const { result, error } = useSticker(item, color);
   return <li className="min-w-0">
     <Button variant="outline" className="h-full w-full justify-start flex-col overflow-hidden p-0" onClick={onSelect} aria-label={`Abrir figurinha: ${item.phrase}, ${item.style.name}`}>
-      <span className="sticker-stage flex aspect-square w-full shrink-0 items-center justify-center overflow-hidden p-2">
+      <span className={`${color === "ink" ? "sticker-stage-light" : "sticker-stage"} flex aspect-square w-full shrink-0 items-center justify-center overflow-hidden p-2`}>
         {result ? <img src={result.url} alt={item.phrase} className="h-full w-full object-contain" /> : error ? <span className="text-xs text-destructive">Tente abrir novamente</span> : <Loader2 className="size-5 animate-spin text-muted-foreground" />}
       </span>
       <span className="w-full whitespace-normal px-2 py-2 text-left text-[11px] leading-4 text-muted-foreground">{item.emoji} {item.style.name}</span>
@@ -42,7 +42,7 @@ export function StoryStickers() {
   const [theme, setTheme] = useState("Todos");
   const [query, setQuery] = useState("");
   const [style, setStyle] = useState("todos");
-  const [color, setColor] = useState("ink");
+  const [color, setColor] = useState("white");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<StorySticker | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -78,7 +78,7 @@ export function StoryStickers() {
     </div>}
     <Dialog open={!!selected} onOpenChange={(value) => { if (!value) setSelected(null); }}><DialogContent className="max-h-[90dvh] max-w-md overflow-y-auto" aria-describedby={undefined}>
       <DialogTitle className="pr-6">{selected?.phrase}</DialogTitle>
-      <div className="sticker-stage flex min-h-56 items-center justify-center rounded-lg p-4">{result ? <img src={result.url} alt={selected?.phrase} className="max-h-72 w-full object-contain" /> : <Loader2 className="animate-spin text-muted-foreground" />}</div>
+      <div className={`${color === "ink" ? "sticker-stage-light" : "sticker-stage"} flex min-h-56 items-center justify-center rounded-lg p-4`}>{result ? <img src={result.url} alt={selected?.phrase} className="max-h-72 w-full object-contain" /> : <Loader2 className="animate-spin text-muted-foreground" />}</div>
       <p className="text-xs text-muted-foreground">{selected?.theme} · {selected?.style.name} · PNG transparente</p>
       {(error || renderError) && <p role="alert" className="text-xs text-destructive">{error || "Não foi possível gerar esta figurinha. Feche e tente novamente."}</p>}
       <div className="flex gap-2"><Button className="flex-1" disabled={!result} onClick={() => { if (result && selected) downloadBlob(result.blob, `s7ven-figurinha-${selected.id}.png`); }}><Download />Baixar</Button><Button className="flex-1" variant="outline" disabled={!result} onClick={() => { if (result && selected) void deliverFile(result.blob, `s7ven-figurinha-${selected.id}.png`, true).catch(() => setError("Não foi possível compartilhar. Você pode baixar a figurinha.")); }}><Share2 />Enviar</Button><Button size="icon" variant={selected && favorites.includes(selected.id) ? "default" : "outline"} aria-label="Favoritar figurinha" title="Favoritar" onClick={favorite}><Heart /></Button></div>
