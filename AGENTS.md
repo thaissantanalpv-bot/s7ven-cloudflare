@@ -37,3 +37,4 @@
 - Generate social product images with a shared browser canvas; use native file sharing with a download fallback because web links cannot attach image files to WhatsApp.
 - Keep real social font designs separate from copyable Unicode styles; bundle licensed font files, load via browser FontFace and export transparent text with measured glyph bounds because copying text cannot preserve font families.
 - Render themed Story stickers locally with bundled fonts and the same canvas for previews and transparent exports; paginate rendering and prepare file blobs before share clicks to preserve mobile user activation.
+- Admin-uploaded Story stickers live in the private story-stickers bucket with admin-only storage policies; served via short-lived signed URLs.

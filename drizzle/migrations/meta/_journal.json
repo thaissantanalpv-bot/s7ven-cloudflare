@@ -316,6 +316,13 @@
       "when": 1793666742274,
       "tag": "0044_catalog_banner_photo",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1794032605465,
+      "tag": "0045_migration",
+      "breakpoints": true
     }
   ]
 }

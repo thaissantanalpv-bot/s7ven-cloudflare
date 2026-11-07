@@ -6,6 +6,7 @@ import { INSTAGRAM_URL } from "@/lib/products";
 import { ShareLinkBuilder } from "@/components/share-link-builder";
 import { StoriesTools } from "@/components/stories-tools";
 import { StoryStickers } from "@/components/story-stickers";
+import { UploadedStickers } from "@/components/uploaded-stickers";
 
 /** Tela "Divulgar" do painel: ferramentas de marketing agrupadas em cards temáticos. */
 export function MarketingTools() {
@@ -42,6 +43,7 @@ export function MarketingTools() {
         <div className="mt-4">
           <StoriesTools />
         </div>
+        <div className="mt-4"><UploadedStickers /></div>
         <div className="mt-4"><StoryStickers /></div>
         <Button asChild variant="outline" size="sm" className="mt-4">
           <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
