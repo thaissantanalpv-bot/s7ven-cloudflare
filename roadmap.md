@@ -1,3 +1,6 @@
+# Figurinhas para Stories (Thais, 07/11/2026)
+- [x] Adicionadas 1.800 composições (300 frases × 6 estilos reais), em 20 temas, com busca, cores, favoritas e PNG transparente. Corrigido desalinhamento das prévias na revisão visual; downloads reais de academia/trabalho, envio de arquivo e celular/computador conferidos na conta administrativa; 18 testes passaram e build OK. Postagem no Instagram depende da escolha no aplicativo do celular.
+
 # Fontes distintas para Instagram (Thais, 07/11/2026)
 - [x] Adicionadas 24 fontes reais (Ballet, Birthstone Bounce, Borel e outras), com categorias, prévias e download PNG transparente sem cortar os traços; 19 estilos copiáveis separados, sem repetição por enfeites. Conferido na conta da Thais em celular e computador, download/cópia funcionando, 12 testes passando e site sem erros.
 
