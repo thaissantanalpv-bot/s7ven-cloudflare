@@ -63,15 +63,38 @@ export function loadStoryFont(font: StoryFont) {
   return promise;
 }
 
-export async function renderFontText(text: string, font: StoryFont, color: string): Promise<Blob> {
+export type FontTextStyle = {
+  color: string;
+  /** Extra thickness in em (0 = normal). */
+  boldEm: number;
+  outlineColor: string | null;
+  shadow: boolean;
+  italic: boolean;
+  uppercase: boolean;
+  letterSpacingEm: number;
+};
+
+export const defaultFontTextStyle: FontTextStyle = { color: "#111111", boldEm: 0, outlineColor: null, shadow: false, italic: false, uppercase: false, letterSpacingEm: 0 };
+export const OUTLINE_EM = 0.08;
+
+export function styledText(text: string, style: FontTextStyle) {
+  return style.uppercase ? text.toLocaleUpperCase("pt-BR") : text;
+}
+
+export async function renderFontText(text: string, font: StoryFont, colorOrStyle: string | FontTextStyle): Promise<Blob> {
+  const style: FontTextStyle = typeof colorOrStyle === "string" ? { ...defaultFontTextStyle, color: colorOrStyle } : colorOrStyle;
   await loadStoryFont(font);
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Não foi possível gerar a imagem.");
-  const value = text.trim();
+  const value = styledText(text.trim(), style);
   if (!value) throw new Error("Digite um texto antes de salvar.");
   const fontSize = 120;
-  ctx.font = `${fontSize}px "${font.family}"`;
+  const applyFont = () => {
+    ctx.font = `${fontSize}px "${font.family}"`;
+    (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = `${style.letterSpacingEm * fontSize}px`;
+  };
+  applyFont();
   const maxWidth = 1200;
   const lines: string[] = [];
   let line = "";
@@ -93,15 +116,47 @@ export async function renderFontText(text: string, font: StoryFont, color: strin
   const ascent = Math.max(fontSize, ...measured.map((m) => m.actualBoundingBoxAscent));
   const descent = Math.max(fontSize * 0.5, ...measured.map((m) => m.actualBoundingBoxDescent));
   const gap = ascent + descent + 30;
-  const margin = 90;
-  canvas.width = Math.ceil(left + right + margin * 2);
-  canvas.height = Math.ceil(ascent + descent + (lines.length - 1) * gap + margin * 2);
-  ctx.font = `${fontSize}px "${font.family}"`;
-  ctx.fillStyle = color;
+  const strokeEm = style.boldEm + (style.outlineColor ? OUTLINE_EM : 0);
+  const skew = style.italic ? 0.2 : 0;
+  const margin = 90 + strokeEm * fontSize + (style.shadow ? 40 : 0);
+  const blockHeight = ascent + descent + (lines.length - 1) * gap;
+  const skewPad = skew * blockHeight;
+  canvas.width = Math.ceil(left + right + margin * 2 + skewPad);
+  canvas.height = Math.ceil(blockHeight + margin * 2);
+  applyFont();
   ctx.textAlign = "left";
-  for (let index = 0; index < lines.length; index++) {
-    const entry = lines[index];
-    if (entry) ctx.fillText(entry, margin + left, margin + ascent + index * gap);
-  }
+  ctx.lineJoin = "round";
+  ctx.miterLimit = 2;
+  if (skew) ctx.setTransform(1, 0, -skew, 1, skewPad, 0);
+  const draw = (withShadow: boolean) => {
+    for (let index = 0; index < lines.length; index++) {
+      const entry = lines[index];
+      if (!entry) continue;
+      const x = margin + left;
+      const y = margin + ascent + index * gap;
+      ctx.save();
+      if (withShadow) {
+        ctx.shadowColor = "rgba(0,0,0,0.45)";
+        ctx.shadowBlur = 18;
+        ctx.shadowOffsetX = 6;
+        ctx.shadowOffsetY = 8;
+      }
+      if (strokeEm > 0) {
+        ctx.strokeStyle = style.outlineColor ?? style.color;
+        ctx.lineWidth = strokeEm * fontSize * 2;
+        ctx.strokeText(entry, x, y);
+        ctx.shadowColor = "transparent";
+      }
+      if (style.outlineColor && style.boldEm > 0) {
+        ctx.strokeStyle = style.color;
+        ctx.lineWidth = style.boldEm * fontSize * 2;
+        ctx.strokeText(entry, x, y);
+      }
+      ctx.fillStyle = style.color;
+      ctx.fillText(entry, x, y);
+      ctx.restore();
+    }
+  };
+  draw(style.shadow);
   return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Não foi possível salvar a imagem.")), "image/png"));
 }
