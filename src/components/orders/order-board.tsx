@@ -39,9 +39,9 @@ import { StorePauseSwitch } from "@/components/store-pause-button";
 import { useOrderAlarm } from "./new-order-alarm";
 
 const QUEUE_TABS = [
-  { id: "received", label: "Novos", statuses: ["received"] },
-  { id: "preparing", label: "Em Preparo", statuses: ["preparing", "out_for_delivery"] },
-  { id: "delivered", label: "Entregues", statuses: ["delivered"] },
+  { id: "received", label: "Novos", statuses: ["received"], icon: BellRing, hint: "Chegaram agora. Confira e toque em Aceitar.", empty: "Nenhum pedido novo. Quando um cliente finalizar no catálogo, ele aparece aqui com alerta." },
+  { id: "preparing", label: "Em Preparo", statuses: ["preparing", "out_for_delivery"], icon: Package, hint: "Separando ou saindo para entrega.", empty: "Nada em preparo. Pedidos aceitos ficam aqui até a entrega." },
+  { id: "delivered", label: "Entregues", statuses: ["delivered"], icon: CheckCircle2, hint: "Pedidos finalizados.", empty: "Nenhum pedido entregue neste filtro. Mude o filtro para \"Todos os pedidos\" para ver os antigos." },
 ] as const;
 type QueueTabId = (typeof QUEUE_TABS)[number]["id"];
 
@@ -208,7 +208,8 @@ export function OrderBoard() {
   return (
     <section className="py-7">
       <div className="rounded-2xl border bg-card p-4">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Controle de operação da loja</p>
+        <h2 className="text-base font-semibold">Controle da loja</h2>
+        <p className="mb-3 text-xs text-muted-foreground">Abra ou pause pedidos, ative o som de alerta e configure a impressora.</p>
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2.5">
             <StorePauseSwitch />
@@ -245,11 +246,15 @@ export function OrderBoard() {
           </span>
         </div>
       </div>
-      <p className="mb-3 mt-7 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Fila de pedidos</p>
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Etapas dos pedidos">
-        {QUEUE_TABS.map((tab) => {
+      <div className="mb-3 mt-7">
+        <h2 className="text-base font-semibold">Fila de pedidos</h2>
+        <p className="text-xs text-muted-foreground">O pedido anda da esquerda para a direita: Novos → Em Preparo → Entregues.</p>
+      </div>
+      <div className="grid grid-cols-3 gap-2" role="tablist" aria-label="Etapas dos pedidos">
+        {QUEUE_TABS.map((tab, n) => {
           const count = visible.filter((o) => (tab.statuses as readonly string[]).includes(o.status)).length;
           const active = queueTab === tab.id;
+          const Icon = tab.icon;
           return (
             <button
               key={tab.id}
@@ -257,14 +262,20 @@ export function OrderBoard() {
               role="tab"
               aria-selected={active}
               onClick={() => setQueueTab(tab.id)}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${active ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}
+              className={`relative flex min-w-0 flex-col items-start gap-1 rounded-2xl border p-3 text-left transition-colors ${active ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}
             >
-              {tab.label}
-              <span className={`grid min-w-6 place-items-center rounded-full px-1.5 py-0.5 text-xs font-bold ${active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>{count}</span>
+              <span className="flex w-full items-center justify-between gap-1">
+                <Icon className="size-4 shrink-0" />
+                <span className="text-xl font-bold leading-none">{count}</span>
+              </span>
+              <span className="truncate text-sm font-semibold">{n + 1}. {tab.label}</span>
             </button>
           );
         })}
       </div>
+      <p className="mt-2 rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+        {QUEUE_TABS.find((t) => t.id === queueTab)?.hint}
+      </p>
       <div className="mt-4 flex flex-wrap gap-3">
         <div className="relative min-w-48 flex-1">
           <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
@@ -477,7 +488,8 @@ export function OrderBoard() {
           {!visible.some((o) => (QUEUE_TABS.find((t) => t.id === queueTab)?.statuses as readonly string[] | undefined)?.includes(o.status)) && (
             <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed text-muted-foreground">
               <Package className="size-6 opacity-50" />
-              <p className="text-xs">Nenhum pedido nesta etapa</p>
+              <p className="text-sm font-medium text-foreground">Nenhum pedido nesta etapa</p>
+              <p className="max-w-xs px-4 text-center text-xs">{QUEUE_TABS.find((t) => t.id === queueTab)?.empty}</p>
             </div>
           )}
         </div>
