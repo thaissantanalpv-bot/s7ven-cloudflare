@@ -899,11 +899,39 @@ function Catalog() {
           )
         ) : tab === "pedidos" ? (
           <section aria-label="Meus pedidos" className="mx-auto max-w-2xl py-5">
-            <h1 className="font-display text-2xl font-semibold">Meus pedidos</h1>
-            <p className="mb-4 text-sm text-muted-foreground">Pedidos feitos neste aparelho. Repita um favorito em um toque.</p>
+            <div className="mb-5 flex items-center gap-3">
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary"><ClipboardList className="size-6" /></span>
+              <div className="min-w-0">
+                <h1 className="font-display text-2xl font-semibold leading-tight">Meus pedidos</h1>
+                <p className="text-sm text-muted-foreground">Acompanhe e repita suas compras feitas neste aparelho.</p>
+              </div>
+            </div>
+            <div className="mb-5 rounded-2xl border bg-card p-4">
+              <h2 className="mb-3 text-sm font-semibold">Como funciona seu pedido</h2>
+              <ol className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  { icon: ShoppingCart, title: "Monte o carrinho", text: "Escolha produtos e sabores" },
+                  { icon: MessageCircle, title: "Envie no WhatsApp", text: "Confirmamos tudo por lá" },
+                  { icon: Wallet, title: "Pague", text: "Pix, cartão ou dinheiro" },
+                  { icon: Navigation, title: "Receba ou retire", text: "Entrega ou retirada na loja" },
+                ].map((s, n) => (
+                  <li key={s.title} className="flex gap-2">
+                    <span className="relative grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><s.icon className="size-4" /><span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-background text-[10px] font-bold text-foreground ring-1 ring-border">{n + 1}</span></span>
+                    <span className="min-w-0"><span className="block text-xs font-semibold">{s.title}</span><span className="block text-[11px] leading-snug text-muted-foreground">{s.text}</span></span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            {orderHistory.length > 0 && (
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-semibold">Histórico</h2>
+                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">{orderHistory.length} {orderHistory.length === 1 ? "pedido" : "pedidos"}</span>
+              </div>
+            )}
             {receipt && (
-              <div className="mb-4 space-y-2 rounded-xl border border-primary/40 bg-primary/10 p-4">
-                <p className="font-semibold">Seu pedido{receipt.purchase ? ` · ${receipt.purchase}ª compra` : ""} · {tracking.data?.status === "cancelled" ? "cancelado pela loja" : "recebido pela loja"}</p>
+              <div className="mb-4 space-y-2 rounded-2xl border border-primary/40 bg-primary/10 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Pedido mais recente</p>
+                <p className="flex items-center gap-2 font-semibold"><CheckCircle2 className="size-4 text-primary" />Seu pedido{receipt.purchase ? ` · ${receipt.purchase}ª compra` : ""} · {tracking.data?.status === "cancelled" ? "cancelado pela loja" : "recebido pela loja"}</p>
                 <div className="flex flex-wrap gap-2">
                   <Button asChild size="sm" variant="outline"><a href={receipt.url} target="_blank" rel="noopener noreferrer"><MessageCircle />Abrir no WhatsApp</a></Button>
                   {receipt.delivery && tracking.data?.trackingUrl && (
@@ -913,22 +941,26 @@ function Catalog() {
               </div>
             )}
             {orderHistory.length === 0 ? (
-              <div className="rounded-xl border bg-card py-12 text-center">
-                <ClipboardList className="mx-auto mb-3 size-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Você ainda não fez pedidos neste aparelho.</p>
+              <div className="rounded-2xl border border-dashed bg-card px-6 py-10 text-center">
+                <ClipboardList className="mx-auto mb-3 size-10 text-primary" />
+                <p className="font-semibold">Nenhum pedido por aqui ainda</p>
+                <p className="mt-1 text-sm text-muted-foreground">Quando você fizer um pedido, ele aparece aqui para você acompanhar e repetir em um toque.</p>
                 <Button className="mt-4" onClick={() => goTab("inicio")}>Ver catálogo</Button>
               </div>
             ) : (
               <ul className="space-y-3">
                 {orderHistory.map((h, i) => (
-                  <li key={h.id || i} className="space-y-2 rounded-xl border bg-card p-4">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="font-bold text-foreground">{h.purchase ? `${h.purchase}ª compra` : "Pedido"}</span>
-                      <span>{new Date(h.date).toLocaleDateString("pt-BR")}</span>
+                  <li key={h.id || i} className="space-y-3 rounded-2xl border bg-card p-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 text-sm font-bold"><span className="grid size-8 place-items-center rounded-full bg-primary/15 text-primary"><ShoppingCart className="size-4" /></span>{h.purchase ? `${h.purchase}ª compra` : "Pedido"}</span>
+                      <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">{new Date(h.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}</span>
                     </div>
-                    <p className="line-clamp-2 text-xs text-muted-foreground">{h.summary}</p>
-                    <div className="flex items-center justify-between border-t pt-2">
-                      <span className="text-sm font-bold text-primary">{brl(h.total)}</span>
+                    <div className="rounded-xl bg-muted/50 p-3">
+                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Itens</p>
+                      <p className="line-clamp-3 text-xs">{h.summary}</p>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span><span className="block text-[11px] text-muted-foreground">Total</span><span className="text-base font-bold text-primary">{brl(h.total)}</span></span>
                       <Button size="sm" onClick={() => {
                         let newCart: Cart = { ...cart };
                         let skipped = 0;
