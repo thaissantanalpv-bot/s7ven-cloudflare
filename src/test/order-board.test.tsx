@@ -166,10 +166,10 @@ describe("Kanban order management", () => {
     expect(await screen.findByText("Cliente teste")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Avançar p/ Saiu para entrega" }));
     await waitFor(() => expect(row.status).toBe("out_for_delivery"));
-    expect(await screen.findByText("Cliente teste")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Avançar p/ Entregue" }));
+    fireEvent.click(screen.getByRole("tab", { name: /A Caminho/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Avançar p/ Entregue" }));
     await waitFor(() => expect(row.status).toBe("delivered"));
-    fireEvent.click(screen.getByRole("tab", { name: /Entregues/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Concluídos/ }));
     expect(await screen.findByText("Cliente teste")).toBeInTheDocument();
     expect(mocks.update).toHaveBeenCalledTimes(3);
   });
@@ -237,7 +237,7 @@ describe("Kanban order management", () => {
     row.status = "out_for_delivery";
     row.tracking_url = "https://entrega.app/r/abc123";
     mount();
-    fireEvent.click(await screen.findByRole("tab", { name: /Em Preparo/ }));
+    fireEvent.click(await screen.findByRole("tab", { name: /A Caminho/ }));
     await screen.findByText("Cliente teste");
     const notify = screen.getByRole("link", { name: /Avisar cliente do pedido 42/ });
     expect(decodeURIComponent(notify.getAttribute("href") ?? "")).toContain("https://entrega.app/r/abc123");

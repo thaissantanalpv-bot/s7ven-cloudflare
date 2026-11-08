@@ -413,7 +413,7 @@ export function OrderBoard() {
                             <MessageCircle />
                           </a>
                         </Button>
-                        <Button variant="outline" size="icon" className="text-destructive" title="Cancelar ou ver detalhes" aria-label={`Cancelar ou ver detalhes do pedido ${order.number}`} onClick={() => setSelected(order.id)}>
+                        <Button variant="outline" size="icon" className="text-destructive" title="Cancelar ou ver detalhes" aria-label="Detalhes" onClick={() => setSelected(order.id)}>
                           <X />
                         </Button>
                       </div>
@@ -422,6 +422,7 @@ export function OrderBoard() {
                           <Button
                             disabled={!!busy}
                             className="mt-3 h-12 w-full bg-whatsapp text-base font-bold uppercase text-whatsapp-foreground hover:bg-whatsapp/90"
+                            aria-label={stage.id === "received" ? "Aceitar pedido" : `Avançar p/ ${ORDER_STAGES[index + 1]?.label}`}
                             onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id)}
                           >
                             {busy === order.id
@@ -437,7 +438,7 @@ export function OrderBoard() {
                             size="sm"
                             className="mt-1 w-full text-xs text-whatsapp"
                             disabled={!!busy}
-                            aria-label={`Avançar e avisar pedido ${order.number} no WhatsApp`}
+                            aria-label={`${stage.id === "received" ? "Aceitar" : ORDER_STAGES[index + 1]?.label} e avisar pedido ${order.number} no WhatsApp`}
                             onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id, true)}
                           >
                             <MessageCircle className="size-3" />
