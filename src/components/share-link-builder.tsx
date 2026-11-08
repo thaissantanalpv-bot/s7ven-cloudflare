@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy, ImageDown, Share2 } from "lucide-react";
+import { Check, Copy, ImageDown, Search, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { catalogQuery } from "@/lib/catalog.query";
 import { categoryLink, productLink } from "@/lib/share-links";
+import { matchesSearch } from "@/lib/product-search";
 import { brl } from "@/lib/products";
 import { generateStoryImage } from "@/lib/story-image";
 import { deliverFile, downloadBlob } from "@/lib/download";
@@ -14,10 +15,12 @@ export function ShareLinkBuilder() {
   const { data: products = [] } = useQuery(catalogQuery);
   const [kind, setKind] = useState<"categoria" | "produto">("categoria");
   const [value, setValue] = useState("");
+  const [query, setQuery] = useState("");
   const [copied, setCopied] = useState(false);
   const visible = products.filter((p) => p.active);
   const categories = useMemo(() => [...new Set(visible.map((p) => p.category))].sort(), [visible]);
   const sortedProducts = useMemo(() => [...visible].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")), [visible]);
+  const filteredProducts = useMemo(() => sortedProducts.filter((p) => matchesSearch(p, query)), [sortedProducts, query]);
   const selectedProduct = kind === "produto" ? sortedProducts.find((p) => p.id === value) : undefined;
   const url = value ? (kind === "categoria" ? categoryLink(ORIGIN, value) : productLink(ORIGIN, value)) : "";
   const [story, setStory] = useState<{ blob: Blob; url: string } | null>(null);
@@ -62,14 +65,54 @@ export function ShareLinkBuilder() {
       <p className="text-xs text-muted-foreground">Escolha uma categoria ou produto e use o link na figurinha do Instagram.</p>
       <div className="flex gap-2">
         <Button size="sm" variant={kind === "categoria" ? "default" : "outline"} onClick={() => { setKind("categoria"); setValue(""); }}>Categoria</Button>
-        <Button size="sm" variant={kind === "produto" ? "default" : "outline"} onClick={() => { setKind("produto"); setValue(""); }}>Produto</Button>
+        <Button size="sm" variant={kind === "produto" ? "default" : "outline"} onClick={() => { setKind("produto"); setValue(""); setQuery(""); }}>Produto</Button>
       </div>
-      <select aria-label={kind === "categoria" ? "Escolher categoria" : "Escolher produto"} value={value} onChange={(e) => { setValue(e.target.value); setStory(null); setStoryError(""); }} className="field w-full text-sm">
-        <option value="">Selecione…</option>
-        {kind === "categoria"
-          ? categories.map((c) => <option key={c} value={c}>{c.replace("Narguiles > ", "")}</option>)
-          : sortedProducts.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-      </select>
+      {kind === "categoria" ? (
+        <select aria-label="Escolher categoria" value={value} onChange={(e) => { setValue(e.target.value); setStory(null); setStoryError(""); }} className="field w-full text-sm">
+          <option value="">Selecione…</option>
+          {categories.map((c) => <option key={c} value={c}>{c.replace("Narguiles > ", "")}</option>)}
+        </select>
+      ) : (
+        <div className="space-y-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Buscar produto"
+              placeholder="Buscar produto pelo nome…"
+              className="field w-full pl-9 text-sm"
+              maxLength={60}
+            />
+          </div>
+          <ul className="max-h-72 space-y-1 overflow-y-auto rounded-lg border p-1" aria-label="Produtos encontrados">
+            {filteredProducts.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  aria-pressed={value === p.id}
+                  onClick={() => { setValue(p.id); setStory(null); setStoryError(""); }}
+                  className={`flex w-full items-center gap-3 rounded-md p-1.5 text-left transition-colors ${value === p.id ? "bg-primary/10 ring-1 ring-primary" : "hover:bg-muted/60"}`}
+                >
+                  {p.image ? (
+                    <img src={p.image} alt="" loading="lazy" className="h-11 w-11 shrink-0 rounded-md object-cover" />
+                  ) : (
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-muted text-[9px] text-muted-foreground">Sem foto</div>
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{p.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">{p.category.replace("Narguiles > ", "")} · {brl(p.price)}</span>
+                  </span>
+                  {value === p.id && <Check className="size-4 shrink-0 text-primary" />}
+                </button>
+              </li>
+            ))}
+            {filteredProducts.length === 0 && (
+              <li className="p-4 text-center text-xs text-muted-foreground">Nenhum produto encontrado para “{query}”.</li>
+            )}
+          </ul>
+        </div>
+      )}
       {selectedProduct && (
         <div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-2">
           {selectedProduct.image ? (
