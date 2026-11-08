@@ -5,7 +5,6 @@ import {
   BellRing,
   RefreshCw,
   Search,
-  ArrowRight,
   MessageCircle,
   Package,
   MapPin,
@@ -40,8 +39,9 @@ import { useOrderAlarm } from "./new-order-alarm";
 
 const QUEUE_TABS = [
   { id: "received", label: "Novos", statuses: ["received"], icon: BellRing, hint: "Chegaram agora. Confira e toque em Aceitar.", empty: "Nenhum pedido novo. Quando um cliente finalizar no catálogo, ele aparece aqui com alerta." },
-  { id: "preparing", label: "Em Preparo", statuses: ["preparing", "out_for_delivery"], icon: Package, hint: "Separando ou saindo para entrega.", empty: "Nada em preparo. Pedidos aceitos ficam aqui até a entrega." },
-  { id: "delivered", label: "Entregues", statuses: ["delivered"], icon: CheckCircle2, hint: "Pedidos finalizados.", empty: "Nenhum pedido entregue neste filtro. Mude o filtro para \"Todos os pedidos\" para ver os antigos." },
+  { id: "preparing", label: "Em Preparo", statuses: ["preparing"], icon: Package, hint: "Separe os itens e toque em Saiu para entrega.", empty: "Nada em preparo. Pedidos aceitos ficam aqui." },
+  { id: "out_for_delivery", label: "A Caminho", statuses: ["out_for_delivery"], icon: MapPin, hint: "Com o entregador ou aguardando retirada. Toque em Concluir quando chegar.", empty: "Nenhum pedido a caminho agora." },
+  { id: "delivered", label: "Concluídos", statuses: ["delivered"], icon: CheckCircle2, hint: "Pedidos finalizados.", empty: "Nenhum pedido entregue neste filtro. Mude o filtro para \"Todos os pedidos\" para ver os antigos." },
 ] as const;
 type QueueTabId = (typeof QUEUE_TABS)[number]["id"];
 
@@ -65,9 +65,9 @@ function elapsed(created: string): string {
 
 function elapsedColor(created: string): string {
   const mins = Math.floor(Math.max(0, Date.now() - new Date(created).getTime()) / 60000);
-  if (mins < 10) return "text-emerald-500";
-  if (mins < 20) return "text-amber-500";
-  return "text-red-500";
+  if (mins < 10) return "border-whatsapp/40 bg-whatsapp/15 text-whatsapp";
+  if (mins < 20) return "border-primary/40 bg-primary/15 text-primary";
+  return "border-destructive/40 bg-destructive/15 text-destructive";
 }
 
 export function OrderBoard() {
@@ -248,9 +248,9 @@ export function OrderBoard() {
       </div>
       <div className="mb-3 mt-7">
         <h2 className="text-base font-semibold">Fila de pedidos</h2>
-        <p className="text-xs text-muted-foreground">O pedido anda da esquerda para a direita: Novos → Em Preparo → Entregues.</p>
+        <p className="text-xs text-muted-foreground">O pedido anda assim: Novos → Em Preparo → A Caminho → Concluídos.</p>
       </div>
-      <div className="grid grid-cols-3 gap-2" role="tablist" aria-label="Etapas dos pedidos">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="tablist" aria-label="Etapas dos pedidos">
         {QUEUE_TABS.map((tab, n) => {
           const count = visible.filter((o) => (tab.statuses as readonly string[]).includes(o.status)).length;
           const active = queueTab === tab.id;
@@ -342,7 +342,7 @@ export function OrderBoard() {
       {orders.isPending ? (
         <p className="py-16 text-muted-foreground">Carregando pedidos…</p>
       ) : (
-        <div className="mt-6 grid gap-3">
+        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {visible
             .filter((o) => (QUEUE_TABS.find((t) => t.id === queueTab)?.statuses as readonly string[] | undefined)?.includes(o.status))
             .map((order) => {
@@ -354,130 +354,100 @@ export function OrderBoard() {
                 {[order].map((order) => (
                     <article
                       key={order.id}
-                      className={`rounded-xl border bg-card p-3.5 shadow-sm transition-all hover:border-primary/50 ${
-                        order.status === "received" ? "ring-2 ring-primary/30 animate-pulse-subtle" : ""
+                      className={`rounded-2xl border bg-card p-4 shadow-sm ${
+                        order.status === "received" ? "border-primary/60 ring-2 ring-primary/25" : ""
                       }`}
                     >
-                      {/* Top bar: badges + timer estilo Anota AI */}
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold ${
-                          order.fulfillment === "pickup"
-                            ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30"
-                            : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
-                        }`}>
-                          {order.fulfillment === "pickup" ? "🏪 Retirada" : "🛵 Entrega"}
-                        </span>
-                        <span className="inline-flex items-center rounded-md border bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-foreground">
-                          💳 {order.payment}
-                        </span>
-                        <span className={`ml-auto inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold ${elapsedColor(order.created_at)}`}>
-                          <Clock className="size-3.5" />
-                          {elapsed(order.created_at)}
-                        </span>
-                      </div>
-                      {/* Order number + time */}
-                      <div className="mt-2 flex justify-between gap-2">
-                        <Button
-                          variant="link"
-                          className="h-auto p-0 font-mono text-sm font-bold text-foreground"
-                          onClick={() => setSelected(order.id)}
-                        >
-                          #{order.number}
-                        </Button>
-                        <span className="text-[11px] text-muted-foreground">
-                          {time(order.created_at)}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            className="font-mono text-2xl font-extrabold leading-none text-foreground"
+                            onClick={() => setSelected(order.id)}
+                            aria-label={`Detalhes do pedido ${order.number}`}
+                          >
+                            #{order.number}
+                          </button>
+                          <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-bold ${elapsedColor(order.created_at)}`}>
+                            <Clock className="size-3.5" />
+                            {elapsed(order.created_at)}
+                          </span>
+                        </div>
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-primary/50 bg-primary/10 px-2.5 py-1 text-xs font-bold uppercase text-primary">
+                          {order.fulfillment === "pickup" ? "🛍️ Retirada" : "🛵 Entrega"}
                         </span>
                       </div>
-                      <h3 className="mt-1.5 break-words text-sm font-semibold">{order.customer_name}</h3>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {order.items.reduce((n, i) => n + i.qty, 0)} itens
+                      <p className="mt-3 break-words text-sm font-semibold">{order.customer_name}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {time(order.created_at)} · {order.fulfillment === "pickup" ? "Retirada na loja" : order.address}
                       </p>
-                      <p className="mt-1 line-clamp-1 break-words text-[11px] text-muted-foreground">
-                        {order.fulfillment === "pickup" ? "Retirada na loja" : order.address}
-                      </p>
+                      <ul className="mt-3 space-y-1 text-sm">
+                        {order.items.slice(0, 4).map((item, i) => (
+                          <li key={i} className="break-words">
+                            <strong>{item.qty}x</strong> {item.name}
+                            {item.option && <span className="text-xs text-muted-foreground"> · {item.option}</span>}
+                          </li>
+                        ))}
+                        {order.items.length > 4 && (
+                          <li className="text-xs text-muted-foreground">+ {order.items.length - 4} itens</li>
+                        )}
+                      </ul>
                       {order.notes && (
-                        <p className="mt-1.5 rounded bg-muted/60 px-2 py-1 text-xs text-foreground">
+                        <p className="mt-2 rounded-lg bg-muted/60 px-2 py-1 text-xs">
                           <strong className="text-primary">Obs:</strong> {order.notes}
                         </p>
                       )}
-                      <div className="my-2 flex items-center justify-between border-t pt-2">
-                        <span className={`text-xs font-medium ${stage.tone}`}>{stage.label}</span>
-                        <strong className="text-sm">{brl(order.total)}</strong>
+                      <div className="mt-3 flex items-center justify-between gap-2 border-t pt-3">
+                        <span className="text-sm text-muted-foreground">💳 {order.payment}</span>
+                        <span className="text-right">
+                          <span className="mr-2 text-xs text-muted-foreground">Total</span>
+                          <strong className="text-lg">{brl(order.total)}</strong>
+                        </span>
                       </div>
-                      {/* Quick action buttons - Anota AI style */}
-                      <div className="flex gap-1.5">
-                        {ORDER_STAGES[index + 1] ? (
-                          <Button
-                            disabled={!!busy}
-                            className="min-w-0 flex-1 font-semibold text-xs h-9 shadow-sm"
-                            size="sm"
-                            onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id)}
-                          >
-                            {busy === order.id ? "Salvando…" : stage.id === "received" ? <><Check className="size-3.5" aria-hidden="true" />Aceitar pedido</> : `Avançar p/ ${ORDER_STAGES[index + 1]?.label}`}
-                            <ArrowRight className="size-3.5 ml-1" />
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="min-w-0 flex-1 text-xs h-9"
-                            onClick={() => setSelected(order.id)}
-                          >
-                            <CheckCircle2 className="size-3.5 mr-1 text-emerald-500" />
-                            Ver detalhes
-                          </Button>
-                        )}
-                        {ORDER_STAGES[index + 1] && (
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="size-8 shrink-0"
-                            title="Detalhes"
-                            aria-label="Detalhes"
-                            onClick={() => setSelected(order.id)}
-                          >
-                            <Package />
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="size-8 shrink-0"
-                          title="Imprimir pedido"
-                          aria-label={`Imprimir pedido ${order.number}`}
-                          onClick={() => setPrintOrder(order)}
-                        >
+                      <div className="mt-3 flex justify-end gap-2">
+                        <Button variant="outline" size="icon" title="Imprimir pedido" aria-label={`Imprimir pedido ${order.number}`} onClick={() => setPrintOrder(order)}>
                           <Printer />
                         </Button>
-                        <Button
-                          asChild
-                          variant="outline"
-                          size="icon"
-                          className="size-8 shrink-0 text-whatsapp"
-                          title={`Avisar cliente no WhatsApp`}
-                        >
-                          <a
-                            href={orderWhatsApp(order)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Avisar cliente do pedido ${order.number} no WhatsApp`}
-                          >
+                        <Button asChild variant="outline" size="icon" className="text-whatsapp" title="Avisar cliente no WhatsApp">
+                          <a href={orderWhatsApp(order)} target="_blank" rel="noopener noreferrer" aria-label={`Avisar cliente do pedido ${order.number} no WhatsApp`}>
                             <MessageCircle />
                           </a>
                         </Button>
-                      </div>
-                      {ORDER_STAGES[index + 1] && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="mt-1 w-full text-[11px] text-whatsapp"
-                          disabled={!!busy}
-                          aria-label={`${stage.id === "received" ? "Aceitar" : ORDER_STAGES[index + 1]?.label} e avisar pedido ${order.number} no WhatsApp`}
-                          onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id, true)}
-                        >
-                          <MessageCircle className="size-3" />
-                          {stage.id === "received" ? "Aceitar" : ORDER_STAGES[index + 1]?.label} + WhatsApp
+                        <Button variant="outline" size="icon" className="text-destructive" title="Cancelar ou ver detalhes" aria-label={`Cancelar ou ver detalhes do pedido ${order.number}`} onClick={() => setSelected(order.id)}>
+                          <X />
                         </Button>
+                      </div>
+                      {ORDER_STAGES[index + 1] ? (
+                        <>
+                          <Button
+                            disabled={!!busy}
+                            className="mt-3 h-12 w-full bg-whatsapp text-base font-bold uppercase text-whatsapp-foreground hover:bg-whatsapp/90"
+                            onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id)}
+                          >
+                            {busy === order.id
+                              ? "Salvando…"
+                              : stage.id === "received"
+                                ? <><Check aria-hidden="true" />Aceitar pedido</>
+                                : stage.id === "preparing"
+                                  ? order.fulfillment === "pickup" ? "Pronto para retirada" : "Saiu para entrega"
+                                  : "Concluir pedido"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-1 w-full text-xs text-whatsapp"
+                            disabled={!!busy}
+                            aria-label={`Avançar e avisar pedido ${order.number} no WhatsApp`}
+                            onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id, true)}
+                          >
+                            <MessageCircle className="size-3" />
+                            Avançar e avisar no WhatsApp
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-whatsapp/10 py-2.5 text-sm font-semibold text-whatsapp">
+                          <CheckCircle2 className="size-4" /> Concluído
+                        </p>
                       )}
                     </article>
                   ))}
