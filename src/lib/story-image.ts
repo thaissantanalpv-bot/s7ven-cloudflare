@@ -2,7 +2,7 @@ const W = 1080;
 const H = 1920;
 const GOLD = "#d4af37";
 const WHITE = "#ffffff";
-const LOGO_GOLD = "#d4af37";
+const LOGO_BLACK = "#000000";
 const MARGIN = 72;
 
 // Bottom scrim: keeps the product visible while making the text readable.
@@ -81,14 +81,8 @@ export async function generateStoryImage({ name, price, photoUrl }: StoryImageIn
   ctx.fillStyle = scrim;
   ctx.fillRect(0, H * SCRIM_TOP, W, H * (1 - SCRIM_TOP));
 
-  // Soft darkening behind the logo at the top corner.
-  const topShade = ctx.createLinearGradient(0, 0, 0, 300);
-  topShade.addColorStop(0, "rgba(10,10,10,0.45)");
-  topShade.addColorStop(1, "rgba(10,10,10,0)");
-  ctx.fillStyle = topShade;
-  ctx.fillRect(0, 0, W, 300);
-
-  // Small gold logo in the top-left corner.
+  // Small black logo in the top-left corner, with a soft white halo so it stays
+  // readable over any photo.
   const logo = await loadImage("/logo-s7ven.png", false);
   const logoScale = Math.min(280 / logo.naturalWidth, 120 / logo.naturalHeight);
   const lw = logo.naturalWidth * logoScale;
@@ -105,8 +99,25 @@ export async function generateStoryImage({ name, price, photoUrl }: StoryImageIn
     }
   }
   logoCtx.globalCompositeOperation = "source-in";
-  logoCtx.fillStyle = LOGO_GOLD;
+  logoCtx.fillStyle = LOGO_BLACK;
   logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height);
+
+  // White glow drawn under the black logo: keeps it visible over dark photos.
+  const halo = 26;
+  const haloCanvas = document.createElement("canvas");
+  haloCanvas.width = logoCanvas.width + halo * 2;
+  haloCanvas.height = logoCanvas.height + halo * 2;
+  const haloCtx = haloCanvas.getContext("2d");
+  if (!haloCtx) throw new Error("Seu navegador não conseguiu montar a logo.");
+  haloCtx.drawImage(logoCanvas, halo, halo);
+  haloCtx.globalCompositeOperation = "source-in";
+  haloCtx.fillStyle = WHITE;
+  haloCtx.fillRect(0, 0, haloCanvas.width, haloCanvas.height);
+  ctx.filter = "blur(14px)";
+  ctx.globalAlpha = 0.8;
+  ctx.drawImage(haloCanvas, MARGIN - 4 - halo, 64 - 4 - halo);
+  ctx.filter = "none";
+  ctx.globalAlpha = 1;
   ctx.drawImage(logoCanvas, MARGIN - 4, 64 - 4);
 
   // Name and price in the lower-left corner, over the gradient.
