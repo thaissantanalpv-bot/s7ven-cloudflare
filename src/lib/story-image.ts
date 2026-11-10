@@ -37,29 +37,6 @@ function loadImage(src: string, cors = true): Promise<HTMLImageElement> {
   });
 }
 
-// Unsharp mask (3x3 Laplacian) over the full canvas; skipped where pixel access is unavailable.
-function sharpen(ctx: CanvasRenderingContext2D, amount: number) {
-  let data: ImageData;
-  try { data = ctx.getImageData(0, 0, W, H); } catch { return; }
-  if (!data?.data) return;
-  const src = data.data;
-  const out = new Uint8ClampedArray(src);
-  const row = W * 4;
-  for (let y = 1; y < H - 1; y++) {
-    for (let x = 1; x < W - 1; x++) {
-      const i = y * row + x * 4;
-      for (let c = 0; c < 3; c++) {
-        const v = src[i + c]!;
-        const lap = 4 * v - src[i + c - 4]! - src[i + c + 4]! - src[i + c - row]! - src[i + c + row]!;
-        // Threshold skips flat areas so JPEG noise is not amplified into grain.
-        if (Math.abs(lap) > 28) out[i + c] = v + lap * amount;
-      }
-    }
-  }
-  data.data.set(out);
-  ctx.putImageData(data, 0, 0);
-}
-
 export type StoryImageInput = {
   name: string;
   price: string;
@@ -78,19 +55,23 @@ export async function generateStoryImage({ name, price, photoUrl }: StoryImageIn
 
   if (!photoUrl) throw new Error("Este produto está sem foto. Adicione uma foto antes de gerar a imagem.");
 
-  // Photo covers the entire screen, centred; only the overflow is cropped.
+  // Instagram compresses everything, so the product photo is never magnified more than
+  // needed: a blurred copy fills the screen and the sharp photo sits at full width on top.
   const img = await loadImage(photoUrl);
-  const scale = Math.max(W / img.naturalWidth, H / img.naturalHeight);
-  const dw = img.naturalWidth * scale;
-  const dh = img.naturalHeight * scale;
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
-  // Small photos get magnified JPEG grain; a light blur scaled to the zoom smooths it out.
-  if (scale > 1.2) ctx.filter = `blur(${Math.min(1.8, (scale - 1) * 0.45).toFixed(2)}px)`;
-  ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  const cover = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+  ctx.filter = "blur(40px) brightness(0.7)";
+  ctx.drawImage(img, (W - img.naturalWidth * cover) / 2 - 60, (H - img.naturalHeight * cover) / 2 - 60, img.naturalWidth * cover + 120, img.naturalHeight * cover + 120);
   ctx.filter = "none";
-  // Upscaled photos look soft; restore edge detail before Instagram recompresses it.
-  if (scale > 1) sharpen(ctx, scale > 1.2 ? 0.35 : 0.22);
+  const fit = Math.min(W / img.naturalWidth, (H * 0.72) / img.naturalHeight);
+  const dw = img.naturalWidth * fit;
+  const dh = img.naturalHeight * fit;
+  ctx.shadowColor = "rgba(0,0,0,0.45)";
+  ctx.shadowBlur = 40;
+  ctx.drawImage(img, (W - dw) / 2, Math.max(150, H * 0.44 - dh / 2), dw, dh);
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
 
   // Dark gradient at the bottom so the text reads well without hiding the product.
   const scrim = ctx.createLinearGradient(0, H * SCRIM_TOP, 0, H);

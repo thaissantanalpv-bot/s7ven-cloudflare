@@ -19,27 +19,23 @@ function stubCanvas(naturalWidth: number, naturalHeight: number) {
   return drawImage;
 }
 
-it("foto panorâmica cobre a tela inteira, cortando só o excesso lateral", async () => {
-  const drawImage = stubCanvas(2000, 500);
+it("foto pequena quadrada não é ampliada além da largura da tela", async () => {
+  const drawImage = stubCanvas(900, 900);
   try {
-    await generateStoryImage({ name: "Produto panorâmico", price: "R$ 25,00", photoUrl: "photo.png" });
-    const photoDraw = drawImage.mock.calls[0];
-    expect(photoDraw?.[1]).toBe(-3300);
-    expect(photoDraw?.[2]).toBe(0);
-    expect(photoDraw?.[3]).toBe(7680);
-    expect(photoDraw?.[4]).toBe(1920);
+    await generateStoryImage({ name: "Produto", price: "R$ 25,00", photoUrl: "photo.png" });
+    const photoDraw = drawImage.mock.calls[1];
+    expect(photoDraw?.[3]).toBe(1080);
+    expect(photoDraw?.[4]).toBe(1080);
   } finally { vi.unstubAllGlobals(); }
 });
 
-it("foto alta cobre a tela inteira, cortando só o excesso vertical", async () => {
+it("foto alta aparece inteira, sem corte", async () => {
   const drawImage = stubCanvas(600, 1600);
   try {
     await generateStoryImage({ name: "Produto alto", price: "R$ 39,90", photoUrl: "photo.png" });
-    const photoDraw = drawImage.mock.calls[0];
-    expect(photoDraw?.[1]).toBe(0);
-    expect(photoDraw?.[2]).toBe(-480);
-    expect(photoDraw?.[3]).toBe(1080);
-    expect(photoDraw?.[4]).toBe(2880);
+    const photoDraw = drawImage.mock.calls[1];
+    expect(photoDraw?.[4]).toBeCloseTo(1382.4);
+    expect(photoDraw?.[3]).toBeCloseTo(518.4);
   } finally { vi.unstubAllGlobals(); }
 });
 
