@@ -66,11 +66,42 @@ export async function generateStoryImage({ name, price, photoUrl }: StoryImageIn
   const fit = Math.min(W / img.naturalWidth, (H * 0.72) / img.naturalHeight);
   const dw = img.naturalWidth * fit;
   const dh = img.naturalHeight * fit;
-  ctx.shadowColor = "rgba(0,0,0,0.45)";
-  ctx.shadowBlur = 40;
-  ctx.drawImage(img, (W - dw) / 2, Math.max(150, H * 0.44 - dh / 2), dw, dh);
-  ctx.shadowColor = "transparent";
-  ctx.shadowBlur = 0;
+  const dx = (W - dw) / 2;
+  const dy = Math.max(150, H * 0.44 - dh / 2);
+
+  // The sharp photo is prepared apart so its edges can fade into the blurred background
+  // (no visible seam) and so fine grain is softened before Instagram recompresses it.
+  const photoCanvas = document.createElement("canvas");
+  photoCanvas.width = Math.ceil(dw);
+  photoCanvas.height = Math.ceil(dh);
+  const photoCtx = photoCanvas.getContext("2d");
+  if (!photoCtx) throw new Error("Seu navegador não conseguiu montar a imagem.");
+  photoCtx.imageSmoothingEnabled = true;
+  photoCtx.imageSmoothingQuality = "high";
+  // Grain is high-frequency noise: Instagram's compression turns it into visible blocks.
+  // A light smoothing (stronger when the photo is enlarged) removes it without blurring labels.
+  photoCtx.filter = `blur(${Math.min(1.4, Math.max(0.45, 0.45 + (fit - 0.7) * 0.9)).toFixed(2)}px)`;
+  photoCtx.drawImage(img, 0, 0, dw, dh);
+  photoCtx.filter = "none";
+  photoCtx.globalCompositeOperation = "destination-in";
+  const featherY = Math.min(140, dh * 0.14);
+  const vertical = photoCtx.createLinearGradient(0, 0, 0, dh);
+  vertical.addColorStop(0, "rgba(0,0,0,0)");
+  vertical.addColorStop(featherY / dh, "rgba(0,0,0,1)");
+  vertical.addColorStop(1 - featherY / dh, "rgba(0,0,0,1)");
+  vertical.addColorStop(1, "rgba(0,0,0,0)");
+  photoCtx.fillStyle = vertical;
+  photoCtx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
+  const featherX = Math.min(90, dw * 0.1);
+  const horizontal = photoCtx.createLinearGradient(0, 0, dw, 0);
+  horizontal.addColorStop(0, "rgba(0,0,0,0)");
+  horizontal.addColorStop(featherX / dw, "rgba(0,0,0,1)");
+  horizontal.addColorStop(1 - featherX / dw, "rgba(0,0,0,1)");
+  horizontal.addColorStop(1, "rgba(0,0,0,0)");
+  photoCtx.fillStyle = horizontal;
+  photoCtx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
+  photoCtx.globalCompositeOperation = "source-over";
+  ctx.drawImage(photoCanvas, dx, dy);
 
   // Dark gradient at the bottom so the text reads well without hiding the product.
   const scrim = ctx.createLinearGradient(0, H * SCRIM_TOP, 0, H);
