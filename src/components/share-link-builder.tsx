@@ -27,7 +27,7 @@ export function ShareLinkBuilder() {
   const [storyBusy, setStoryBusy] = useState(false);
   const [storyError, setStoryError] = useState("");
   const [shareNotice, setShareNotice] = useState("");
-  const filename = `s7ven-${selectedProduct?.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") ?? "produto"}.png`;
+  const filename = `s7ven-${selectedProduct?.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") ?? "produto"}.jpg`;
   const shareStory = async () => {
     if (!story) return;
     setStoryError("");

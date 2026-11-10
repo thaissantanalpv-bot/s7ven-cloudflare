@@ -37,6 +37,28 @@ function loadImage(src: string, cors = true): Promise<HTMLImageElement> {
   });
 }
 
+// Unsharp mask (3x3 Laplacian) over the full canvas; skipped where pixel access is unavailable.
+function sharpen(ctx: CanvasRenderingContext2D, amount: number) {
+  let data: ImageData;
+  try { data = ctx.getImageData(0, 0, W, H); } catch { return; }
+  if (!data?.data) return;
+  const src = data.data;
+  const out = new Uint8ClampedArray(src);
+  const row = W * 4;
+  for (let y = 1; y < H - 1; y++) {
+    for (let x = 1; x < W - 1; x++) {
+      const i = y * row + x * 4;
+      for (let c = 0; c < 3; c++) {
+        const v = src[i + c]!;
+        const lap = 4 * v - src[i + c - 4]! - src[i + c + 4]! - src[i + c - row]! - src[i + c + row]!;
+        out[i + c] = v + lap * amount;
+      }
+    }
+  }
+  data.data.set(out);
+  ctx.putImageData(data, 0, 0);
+}
+
 export type StoryImageInput = {
   name: string;
   price: string;
@@ -60,7 +82,11 @@ export async function generateStoryImage({ name, price, photoUrl }: StoryImageIn
   const scale = Math.max(W / img.naturalWidth, H / img.naturalHeight);
   const dw = img.naturalWidth * scale;
   const dh = img.naturalHeight * scale;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
   ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  // Upscaled photos look soft; restore edge detail before Instagram recompresses it.
+  if (scale > 1) sharpen(ctx, Math.min(0.9, 0.35 + (scale - 1) * 0.6));
 
   // Dark gradient at the bottom so the text reads well without hiding the product.
   const scrim = ctx.createLinearGradient(0, H * SCRIM_TOP, 0, H);
@@ -127,7 +153,7 @@ export async function generateStoryImage({ name, price, photoUrl }: StoryImageIn
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
 
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.97));
   if (!blob) throw new Error("Não foi possível gerar a imagem.");
   return blob;
 }
