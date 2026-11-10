@@ -2,7 +2,6 @@ const W = 1080;
 const H = 1920;
 const GOLD = "#d4af37";
 const WHITE = "#ffffff";
-const LOGO_BLACK = "#000000";
 const MARGIN = 72;
 
 // Bottom scrim: keeps the product visible while making the text readable.
@@ -81,13 +80,35 @@ export async function generateStoryImage({ name, price, photoUrl }: StoryImageIn
   ctx.fillStyle = scrim;
   ctx.fillRect(0, H * SCRIM_TOP, W, H * (1 - SCRIM_TOP));
 
-  // Small black logo in the top-left corner, with a soft white halo so it stays
-  // readable over any photo.
+  // Gold logo exactly as it shows on the site, with a soft dark halo so it stays
+  // readable over light photos.
   const logo = await loadImage("/logo-s7ven.png", false);
   const logoScale = Math.min(280 / logo.naturalWidth, 120 / logo.naturalHeight);
   const lw = logo.naturalWidth * logoScale;
   const lh = logo.naturalHeight * logoScale;
-  // Strengthen only the logo's transparent silhouette, preserving the original artwork.
+
+  // Dark glow: the logo's own silhouette, blurred, drawn behind the artwork.
+  const halo = 26;
+  const haloCanvas = document.createElement("canvas");
+  haloCanvas.width = Math.ceil(lw) + halo * 2 + 8;
+  haloCanvas.height = Math.ceil(lh) + halo * 2 + 8;
+  const haloCtx = haloCanvas.getContext("2d");
+  if (!haloCtx) throw new Error("Seu navegador não conseguiu montar a logo.");
+  for (let x = -2; x <= 2; x++) {
+    for (let y = -2; y <= 2; y++) {
+      if (x * x + y * y <= 4) haloCtx.drawImage(logo, halo + 4 + x, halo + 4 + y, lw, lh);
+    }
+  }
+  haloCtx.globalCompositeOperation = "source-in";
+  haloCtx.fillStyle = "#0a0a0a";
+  haloCtx.fillRect(0, 0, haloCanvas.width, haloCanvas.height);
+  ctx.filter = "blur(12px)";
+  ctx.globalAlpha = 0.92;
+  ctx.drawImage(haloCanvas, MARGIN - 4 - halo, 64 - 4 - halo);
+  ctx.filter = "none";
+  ctx.globalAlpha = 1;
+
+  // The artwork itself, in its own gold colors, drawn a few times so it reads strong.
   const logoCanvas = document.createElement("canvas");
   logoCanvas.width = Math.ceil(lw) + 8;
   logoCanvas.height = Math.ceil(lh) + 8;
@@ -98,26 +119,6 @@ export async function generateStoryImage({ name, price, photoUrl }: StoryImageIn
       if (x * x + y * y <= 4) logoCtx.drawImage(logo, 4 + x, 4 + y, lw, lh);
     }
   }
-  logoCtx.globalCompositeOperation = "source-in";
-  logoCtx.fillStyle = LOGO_BLACK;
-  logoCtx.fillRect(0, 0, logoCanvas.width, logoCanvas.height);
-
-  // White glow drawn under the black logo: keeps it visible over dark photos.
-  const halo = 26;
-  const haloCanvas = document.createElement("canvas");
-  haloCanvas.width = logoCanvas.width + halo * 2;
-  haloCanvas.height = logoCanvas.height + halo * 2;
-  const haloCtx = haloCanvas.getContext("2d");
-  if (!haloCtx) throw new Error("Seu navegador não conseguiu montar a logo.");
-  haloCtx.drawImage(logoCanvas, halo, halo);
-  haloCtx.globalCompositeOperation = "source-in";
-  haloCtx.fillStyle = WHITE;
-  haloCtx.fillRect(0, 0, haloCanvas.width, haloCanvas.height);
-  ctx.filter = "blur(14px)";
-  ctx.globalAlpha = 0.8;
-  ctx.drawImage(haloCanvas, MARGIN - 4 - halo, 64 - 4 - halo);
-  ctx.filter = "none";
-  ctx.globalAlpha = 1;
   ctx.drawImage(logoCanvas, MARGIN - 4, 64 - 4);
 
   // Name and price in the lower-left corner, over the gradient.
