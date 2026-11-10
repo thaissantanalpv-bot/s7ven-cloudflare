@@ -85,9 +85,12 @@ export async function generateStoryImage({ name, price, photoUrl }: StoryImageIn
   const dh = img.naturalHeight * scale;
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
+  // Small photos get magnified JPEG grain; a light blur scaled to the zoom smooths it out.
+  if (scale > 1.2) ctx.filter = `blur(${Math.min(1.8, (scale - 1) * 0.45).toFixed(2)}px)`;
   ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  ctx.filter = "none";
   // Upscaled photos look soft; restore edge detail before Instagram recompresses it.
-  if (scale > 1) sharpen(ctx, 0.22);
+  if (scale > 1) sharpen(ctx, scale > 1.2 ? 0.35 : 0.22);
 
   // Dark gradient at the bottom so the text reads well without hiding the product.
   const scrim = ctx.createLinearGradient(0, H * SCRIM_TOP, 0, H);
