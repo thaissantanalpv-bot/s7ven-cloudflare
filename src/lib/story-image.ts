@@ -51,7 +51,8 @@ function sharpen(ctx: CanvasRenderingContext2D, amount: number) {
       for (let c = 0; c < 3; c++) {
         const v = src[i + c]!;
         const lap = 4 * v - src[i + c - 4]! - src[i + c + 4]! - src[i + c - row]! - src[i + c + row]!;
-        out[i + c] = v + lap * amount;
+        // Threshold skips flat areas so JPEG noise is not amplified into grain.
+        if (Math.abs(lap) > 28) out[i + c] = v + lap * amount;
       }
     }
   }
@@ -86,7 +87,7 @@ export async function generateStoryImage({ name, price, photoUrl }: StoryImageIn
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
   // Upscaled photos look soft; restore edge detail before Instagram recompresses it.
-  if (scale > 1) sharpen(ctx, Math.min(0.9, 0.35 + (scale - 1) * 0.6));
+  if (scale > 1) sharpen(ctx, 0.22);
 
   // Dark gradient at the bottom so the text reads well without hiding the product.
   const scrim = ctx.createLinearGradient(0, H * SCRIM_TOP, 0, H);
