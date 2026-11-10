@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { streamImage } from "@/lib/photos/stream-image";
 
+const HD_PROMPT = "Amplie esta foto para alta resolução, removendo granulado, borrão e artefatos de compressão. Mantenha tudo idêntico: mesma posição dos produtos, mesmas cores, mesmos rótulos, logos e textos. Não adicione, remova nem redesenhe nada.";
+
 export function AiPhotoEditor({ source, productName, onApply, onBusy }: { source: string; productName: string; onApply: (file: File) => Promise<void>; onBusy: (busy: boolean) => void }) {
   const [prompt, setPrompt] = useState("Melhore nitidez e iluminação, mantendo o produto fiel à foto original.");
   const [result, setResult] = useState("");
@@ -37,6 +39,7 @@ export function AiPhotoEditor({ source, productName, onApply, onBusy }: { source
   return <div className="space-y-3 border-y py-4" aria-label="Editor de fotos com IA">
     <h3 className="flex items-center gap-2 font-semibold"><Sparkles className="size-4 text-primary" />Fotos com IA</h3>
     <div className="grid grid-cols-2 gap-3"><figure><img src={source} alt="Foto original" className="aspect-square w-full rounded bg-photo object-contain" /><figcaption className="mt-1 text-xs text-muted-foreground">Original</figcaption></figure><figure>{result ? <img src={result} alt="Foto editada com IA" className={`aspect-square w-full rounded bg-photo object-contain transition-[filter] ${final ? "blur-0" : "blur-2xl"}`} /> : <div className="grid aspect-square place-items-center rounded border bg-photo"><Sparkles className="text-photo-foreground" /></div>}<figcaption className="mt-1 text-xs text-muted-foreground">{busy ? "Editando…" : "Resultado"}</figcaption></figure></div>
+    <Button type="button" variant="secondary" className="w-full" disabled={busy} onClick={() => setPrompt(HD_PROMPT)}><Sparkles />Aumentar qualidade (HD)</Button>
     <label className="block text-sm">Alteração desejada<textarea className="field mt-1" rows={3} maxLength={2000} value={prompt} disabled={busy} onChange={e => setPrompt(e.target.value)} /></label>
     <p className="text-xs text-muted-foreground">Cada edição consome créditos de IA. Confira rótulos e detalhes antes de aplicar.</p>
     <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" disabled={busy || !prompt.trim()} onClick={generate}><Sparkles />{busy ? "Aguarde…" : result && final ? "Refinar resultado" : "Editar com IA"}</Button>{result && <><Button type="button" disabled={busy || !final} onClick={apply}><Check />Usar esta foto</Button><Button type="button" size="icon" variant="ghost" disabled={busy} aria-label="Voltar à foto original" title="Voltar à foto original" onClick={() => { setResult(""); setFinal(false); setError(""); }}><RotateCcw /></Button></>}</div>
