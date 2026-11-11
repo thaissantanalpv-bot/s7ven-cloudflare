@@ -1,2 +1,3 @@
 - Print admin orders in escaped ephemeral iframes; store only local printer preferences because hardware pairing is device-owned.
 - Board flow is received → ready → out_for_delivery (delivery and pickup) → delivered; legacy "preparing" orders show in the ready column; stage times come from the DB-stamped `status_times`, and countdown bars are estimates, never stored deadlines.
+- Order data shown in the side panel must be tap-to-copy through `CopyField` (uses `copyToClipboard`) so admin can paste it into the courier site without retyping.

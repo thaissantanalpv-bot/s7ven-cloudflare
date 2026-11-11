@@ -253,3 +253,47 @@ describe("Kanban order management", () => {
     await screen.findAllByText(/Retirada na loja/);
     expect(screen.queryByLabelText("Link de rastreio do pedido 42")).toBeNull();
   });
+
+/** Área de transferência falsa: registra o que foi copiado. */
+const mockClipboard = () => {
+  const writeText = vi.fn(async (_text: string) => {});
+  Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+  Object.defineProperty(window, "isSecureContext", { value: true, configurable: true });
+  return writeText;
+};
+
+it("copies name, WhatsApp and address from the side panel for pasting into the delivery site", async () => {
+  const writeText = mockClipboard();
+  row.notes = "Tocar a campainha";
+  mount();
+  await screen.findByText("Cliente teste");
+  fireEvent.click(screen.getByRole("button", { name: "Detalhes do pedido 42" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Copiar nome do cliente" }));
+  fireEvent.click(screen.getByRole("button", { name: "Copiar WhatsApp do cliente" }));
+  fireEvent.click(screen.getByRole("button", { name: "Copiar endereço de entrega" }));
+  fireEvent.click(screen.getByRole("button", { name: "Copiar forma de pagamento" }));
+  fireEvent.click(screen.getByRole("button", { name: "Copiar observações" }));
+  await waitFor(() => expect(writeText).toHaveBeenCalledTimes(5));
+  expect(writeText.mock.calls.map((c) => c[0])).toEqual([
+    "Cliente teste",
+    "(18) 99999-9999",
+    "Rua de teste, 123",
+    "Já pago via Pix",
+    "Tocar a campainha",
+  ]);
+});
+
+it("copies the whole order block ready to paste into the delivery site", async () => {
+  const writeText = mockClipboard();
+  mount();
+  await screen.findByText("Cliente teste");
+  fireEvent.click(screen.getByRole("button", { name: "Detalhes do pedido 42" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Copiar todos os dados do pedido 42" }));
+  await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+  const text = String(writeText.mock.calls[0]?.[0] ?? "");
+  expect(text).toContain("Entrega · pedido #42");
+  expect(text).toContain("Cliente: Cliente teste");
+  expect(text).toContain("Endereço: Rua de teste, 123");
+  expect(text).toContain("Pagamento: Já pago via Pix");
+  expect(text).not.toContain("*");
+});

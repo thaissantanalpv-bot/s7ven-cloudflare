@@ -24,10 +24,15 @@ export function quickMessages(order: QuickOrder): QuickMessage[] {
   return list;
 }
 
-export function courierMessage(order: QuickOrder) {
-  const payment = isPix(order.payment)
+/** Forma de pagamento escrita do jeito que a entregadora precisa ler. */
+export function courierPayment(order: QuickOrder) {
+  return isPix(order.payment)
     ? "Já pago via Pix"
     : `Cobrar ${brl(order.total)} (${order.payment})${order.change_for ? ` · troco para ${order.change_for}` : ""}`;
+}
+
+export function courierMessage(order: QuickOrder) {
+  const payment = courierPayment(order);
   return [
     `*Entrega · pedido #${order.number}*`,
     `Cliente: ${order.customer_name}`,

@@ -7,15 +7,20 @@ import {
   Bike,
   Check,
   CheckCircle2,
+  Copy,
   CreditCard,
+  Link2,
   MapPin,
   MessageCircle,
   PackageCheck,
+  Phone,
   Printer,
   RefreshCw,
   Search,
   ShoppingBag,
+  StickyNote,
   Trash2,
+  User,
   Volume2,
   VolumeX,
   X,
@@ -23,7 +28,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 const ALFA_DELIVERY_URL = "https://alfa-delivery.entregasexpressas.com.br/";
-import { quickMessages, courierMessage, whatsappTo } from "@/lib/quick-messages";
+import { quickMessages, courierMessage, courierPayment, whatsappTo } from "@/lib/quick-messages";
+import { copyToClipboard } from "@/lib/pix";
+import { formatBrazilPhone } from "@/lib/phone";
+import { CopyField } from "./copy-field";
 import { listOrders, updateOrderCourier, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
 import {
   ORDER_STAGES,
@@ -213,6 +221,13 @@ export function OrderBoard() {
     } finally {
       setBusy("");
     }
+  };
+
+  /** Copia o bloco inteiro do pedido, pronto para colar no site da entregadora. */
+  const copyAll = async (order: Order) => {
+    const ok = await copyToClipboard(courierMessage(order).replace(/\*/g, ""));
+    if (ok) setNotice(`Dados do pedido #${order.number} copiados. Cole no site da Alfa.`);
+    else setError("Não consegui copiar os dados. Tente copiar campo por campo.");
   };
 
   const spDay = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(d);
@@ -515,16 +530,16 @@ export function OrderBoard() {
 
                 <section aria-label="Entrega e pagamento" className="space-y-2 border-t pt-4">
                   <p className="flex items-center gap-2 font-semibold">{isPickup(detail) ? <ShoppingBag className="size-4 text-primary" /> : <Bike className="size-4 text-primary" />}{isPickup(detail) ? "Retirada na loja" : "Delivery"}</p>
-                  {!isPickup(detail) && <p className="flex gap-2"><MapPin className="mt-0.5 size-4 shrink-0 text-primary" /><span className="break-words">{detail.address}</span></p>}
-                  <p className="flex gap-2">
-                    <CreditCard className="mt-0.5 size-4 shrink-0 text-primary" />
-                    <span>
-                      {detail.payment}{" "}
-                      <span className="text-muted-foreground">({isPix(detail.payment) ? "confira o comprovante" : "cobrar na entrega"})</span>
-                      {detail.change_for && <span className="block text-muted-foreground">Troco para {detail.change_for}</span>}
-                    </span>
-                  </p>
-                  {detail.notes && <p className="rounded-lg bg-muted/60 px-3 py-2"><strong className="text-primary">Obs:</strong> {detail.notes}</p>}
+                  <p className="text-xs text-muted-foreground">Toque em um dado para copiar e colar no site da entrega.</p>
+                  <CopyField icon={User} label="Nome do cliente" copyLabel="nome do cliente" value={detail.customer_name} />
+                  <CopyField icon={Phone} label="WhatsApp" copyLabel="WhatsApp do cliente" value={formatBrazilPhone(detail.customer_phone)} />
+                  {!isPickup(detail) && <CopyField icon={MapPin} label="Endereço" copyLabel="endereço de entrega" value={detail.address} />}
+                  <CopyField icon={CreditCard} label="Pagamento" copyLabel="forma de pagamento" value={courierPayment(detail)} hint={isPix(detail.payment) ? "confira o comprovante" : "cobrar na entrega"} />
+                  {detail.notes && <CopyField icon={StickyNote} label="Observações" copyLabel="observações" value={detail.notes} />}
+                  {!isPickup(detail) && !!detail.tracking_url && <CopyField icon={Link2} label="Link de rastreio" copyLabel="link de rastreio" value={detail.tracking_url} />}
+                  <Button variant="outline" size="sm" className="w-full" aria-label={`Copiar todos os dados do pedido ${detail.number}`} onClick={() => void copyAll(detail)}>
+                    <Copy />Copiar tudo
+                  </Button>
                 </section>
 
                 <div className="grid gap-2">
