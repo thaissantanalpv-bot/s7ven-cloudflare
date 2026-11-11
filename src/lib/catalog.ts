@@ -25,7 +25,7 @@ export const catalogProductSchema = z.object({
   category: z.string().trim().min(1, "Informe a categoria.").max(100),
   emoji: z.string().max(10).default("🛍️"),
   image: z.string().max(1000).refine(v => !v || /^\/produtos\/p\d+\.jpg$/.test(v) || /^uploads\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v), "Foto inválida."),
-  images: z.array(photoPath).max(9, "Use até 10 fotos por produto.").default([]),
+  images: z.array(photoPath).max(500).default([]),
   variationPhotos: z.record(z.string(), photoPath).default({}),
   // Uploaded product video (storage path) and/or a YouTube video id; both optional.
   video: videoPath.default(""),

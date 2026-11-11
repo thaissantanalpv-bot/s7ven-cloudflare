@@ -21,7 +21,7 @@ describe("Shared catalog", () => {
     expect(productPhotos(merged)).toEqual([original.image, "uploads/photo1.jpg"]);
     expect(toDraft({ ...merged, images: ["https://signed.example/photo"], imagePaths: draft.images }).images).toEqual(draft.images);
     expect(catalogProductSchema.safeParse({ ...draft, images: ["https://external.example/photo.jpg"] }).success).toBe(false);
-    expect(catalogProductSchema.safeParse({ ...draft, images: Array(10).fill("uploads/photo1.jpg") }).success).toBe(false);
+    expect(catalogProductSchema.safeParse({ ...draft, images: Array(30).fill("uploads/photo1.jpg") }).success).toBe(true);
   });
   it("links photos to variations and defaults old rows to unlinked", () => {
     const original = mergeCatalog([])[0];

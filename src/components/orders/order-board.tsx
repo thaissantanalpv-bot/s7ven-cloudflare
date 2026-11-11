@@ -47,6 +47,9 @@ import { OrderCancellation } from "./order-cancellation";
 import { PushQuickButton } from "@/components/push-notifications";
 import { StorePauseSwitch } from "@/components/store-pause-button";
 import { useOrderAlarm } from "./new-order-alarm";
+import { adminCatalogQuery } from "@/lib/catalog.query";
+import { variationPhoto } from "@/lib/catalog";
+import { Package } from "lucide-react";
 
 const CANCELLED_CLEARED_KEY = "s7ven-cancelled-cleared-at";
 /** Estimated minutes used for the countdown bar; informative only. */
@@ -123,6 +126,8 @@ export function OrderBoard() {
   const saveTrackingFn = useServerFn(updateOrderTracking);
   const saveCourierFn = useServerFn(updateOrderCourier);
   const client = useQueryClient();
+  const catalog = useQuery(adminCatalogQuery);
+  const photoFor = (productId: string, option?: string) => { const p = catalog.data?.find(x => x.id === productId); return p ? variationPhoto(p, option ?? "") || p.image || "" : ""; };
   const orders = useQuery({
     queryKey: ["store-orders"],
     queryFn: () => fetchOrders(),
@@ -507,8 +512,11 @@ export function OrderBoard() {
                 <section aria-label="Produtos">
                   <ul className="space-y-2">
                     {detail.items.map((item, index) => (
-                      <li key={index} className="flex justify-between gap-3">
-                        <span className="min-w-0 break-words">
+                      <li key={index} className="flex items-start justify-between gap-3">
+                        <span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-md border bg-photo">
+                          {photoFor(item.productId, item.option) ? <img src={photoFor(item.productId, item.option)} alt={item.name} loading="lazy" className="size-full object-contain" /> : <Package className="size-6 text-photo-foreground" />}
+                        </span>
+                        <span className="min-w-0 flex-1 break-words">
                           <strong>{item.qty}x</strong> {item.name}
                           {item.option && <span className="block text-xs text-primary">{item.optionLabel}: {item.option}</span>}
                           {item.qty > 1 && <span className="block text-xs text-muted-foreground">{brl(item.price)} cada</span>}

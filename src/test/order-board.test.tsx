@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({ list: vi.fn(), update: vi.fn(), track: vi.fn()
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/components/push-notifications", () => ({ PushQuickButton: () => null }));
 vi.mock("@/components/store-pause-button", () => ({ StorePauseButton: () => null, StorePauseSwitch: () => null }));
+vi.mock("@/lib/catalog.query", () => ({ adminCatalogQuery: { queryKey: ["admin-catalog-products"], queryFn: async () => [] } }));
 vi.mock("@/lib/orders.functions", () => ({
   listOrders: mocks.list,
   updateOrderStatus: mocks.update,
