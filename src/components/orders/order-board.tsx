@@ -325,7 +325,7 @@ export function OrderBoard() {
       const order_ = ["received", "preparing", "ready", "out_for_delivery", "delivered"] as const;
       return order.status !== "cancelled" && order_.indexOf(order.status as (typeof order_)[number]) >= order_.indexOf(s as (typeof order_)[number]);
     };
-    const steps: { label: string; status: OrderStatus; at?: string }[] = [
+    const steps: { label: string; status: OrderStatus; at?: string | undefined }[] = [
       { label: "Recebido", status: "received", at: t.received ?? order.created_at },
       { label: "Aceito", status: "preparing", at: t.preparing },
       { label: "Em preparo", status: "preparing", at: t.preparing },
@@ -390,7 +390,7 @@ export function OrderBoard() {
           <Button variant="outline" size="icon" aria-label={sound && audioReady ? "Desativar alerta sonoro" : "Ativar alerta sonoro"} title="Alerta sonoro" onClick={() => toggleSound()}>
             {sound && audioReady ? <Volume2 /> : <VolumeX />}
           </Button>
-          <OrderPrinting order={printJob?.order ?? null} kitchen={printJob?.kitchen} onClose={() => setPrintJob(null)} />
+          <OrderPrinting order={printJob?.order ?? null} kitchen={printJob?.kitchen ?? false} onClose={() => setPrintJob(null)} />
           <PushQuickButton />
           <Button variant="outline" size="icon" title="Atualizar pedidos" aria-label="Atualizar pedidos" disabled={orders.isFetching} onClick={() => orders.refetch()}>
             <RefreshCw className={orders.isFetching ? "animate-spin" : ""} />

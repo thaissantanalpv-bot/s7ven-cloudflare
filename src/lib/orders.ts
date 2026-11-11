@@ -119,7 +119,7 @@ export type Order = {
   tracking_url?: string | null;
   courier_name?: string;
   /** When the order entered each stage (ISO), stamped by the database. */
-  status_times?: Partial<Record<OrderStatus, string>>;
+  status_times?: Partial<Record<OrderStatus, string>> | undefined;
   rating_token?: string | null;
   cancellation_reason?: string | null;
   cancelled_at?: string | null;
