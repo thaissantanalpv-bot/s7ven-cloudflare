@@ -99,6 +99,22 @@ export function deliveryLocation(payload: { status?: string; results?: GeocodeRe
   if (result.partial_match || !components.some(c => c.types.includes("route")) || !components.some(c => c.types.includes("street_number")) || !location || !Number.isFinite(location.lat) || !Number.isFinite(location.lng)) throw new Error("Informe a rua e o número completos para calcular a entrega em Araçatuba.");
   return { latitude: location.lat, longitude: location.lng };
 }
+/** Street, number and neighborhood found by reverse geocoding the customer's live location. */
+export function reverseGeocodeAddress(payload: { status?: string; results?: GeocodeResult[] }) {
+  if (payload.status !== "OK" || !payload.results?.length) throw new Error("Não encontramos um endereço para esta localização. Digite a rua e o número.");
+  const result = payload.results.find(r => r.address_components?.some(c => c.types.includes("route"))) ?? payload.results[0]!;
+  const components = result.address_components ?? [];
+  const city = components.find(c => c.types.includes("administrative_area_level_2"))?.long_name ?? components.find(c => c.types.includes("locality"))?.long_name;
+  const state = components.find(c => c.types.includes("administrative_area_level_1"))?.short_name;
+  const country = components.find(c => c.types.includes("country"))?.short_name;
+  const cityName = city?.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  if (cityName !== "aracatuba" || state !== "SP" || country !== "BR") throw new Error("Sua localização está fora de Araçatuba, SP. Fazemos entregas somente na cidade — digite o endereço ou escolha retirada na loja.");
+  const street = components.find(c => c.types.includes("route"))?.long_name?.trim() ?? "";
+  if (!street) throw new Error("Não identificamos a rua nesta localização. Digite a rua e o número.");
+  const number = components.find(c => c.types.includes("street_number"))?.long_name?.trim() ?? "";
+  const neighborhood = ["sublocality_level_1", "sublocality", "neighborhood"].map(t => components.find(c => c.types.includes(t))?.long_name).find(Boolean)?.trim().slice(0, 80) ?? "";
+  return { street: street.slice(0, 120), number: number.slice(0, 12), neighborhood };
+}
 /** Neighborhood (bairro) reported by Google for the first geocoding result, if any. */
 export function deliveryNeighborhood(payload: { results?: GeocodeResult[] }) {
   const components = payload.results?.[0]?.address_components ?? [];

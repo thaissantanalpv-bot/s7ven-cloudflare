@@ -36,7 +36,7 @@ import { useCatalogAnalytics } from "@/lib/use-catalog-analytics";
 import { readAnalyticsIdentity } from "@/lib/catalog-analytics";
 import { customerSchema, submitOrderSchema, validateCartAvailability } from "@/lib/orders";
 import { submitOrder, orderTracking } from "@/lib/orders.functions";
-import { startDeliverySession, quoteDelivery, suggestDeliveryAddress } from "@/lib/delivery.functions";
+import { startDeliverySession, quoteDelivery, suggestDeliveryAddress, locateDeliveryAddress } from "@/lib/delivery.functions";
 import { estimatedDeliveryMinutes } from "@/lib/delivery-route";
 import { DELIVERY_CITY, deliveryAddress, deliveryFieldsComplete, joinAddressLine, restoreDeliveryFields, splitAddressLine, getSavedCustomerAddress, saveCustomerAddress, type SavedCustomerAddress } from "@/lib/delivery-address";
 import { MapPin, Menu, ArrowLeft, ArrowRight, ShoppingCart, Home, LayoutGrid, ClipboardList, MoreHorizontal, ShieldCheck, Headphones, Flame, Wallet, Trash2, Gem, CheckCircle2, Instagram } from "lucide-react";
@@ -174,6 +174,8 @@ function Catalog() {
   const startDistanceSession = useServerFn(startDeliverySession);
   const calculateDistance = useServerFn(quoteDelivery);
   const suggestAddress = useServerFn(suggestDeliveryAddress);
+  const locateAddress = useServerFn(locateDeliveryAddress);
+  const [locating, setLocating] = useState(false);
   const [deliveryQuote, setDeliveryQuote] = useState<{ id: string; address: string; km: number; fee: number; routeDurationSeconds: number; expires: number; config: string } | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [deliveryError, setDeliveryError] = useState("");
@@ -461,6 +463,47 @@ function Catalog() {
       number: suggestion.number || f.number,
       neighborhood: suggestion.neighborhood || f.neighborhood,
     }));
+  };
+  // Preenche o endereço com a localização em tempo real do cliente (GPS do aparelho).
+  const useMyLocation = () => {
+    if (locating) return;
+    setDeliveryError("");
+    if (!navigator.onLine) return setDeliveryError("Conecte-se à internet para usar sua localização.");
+    if (!("geolocation" in navigator)) return setDeliveryError("Este aparelho não permite usar a localização. Digite a rua e o número.");
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const freshToken = async () => (deliveryToken.current = (await startDistanceSession()).token);
+          const token = deliveryToken.current || await freshToken();
+          let found;
+          try {
+            found = await locateAddress({ data: { latitude: position.coords.latitude, longitude: position.coords.longitude, token } });
+          } catch (e) {
+            if (!(e instanceof Error) || e.message !== "DELIVERY_SESSION_EXPIRED") throw e;
+            found = await locateAddress({ data: { latitude: position.coords.latitude, longitude: position.coords.longitude, token: await freshToken() } });
+          }
+          setUseSavedAddress(false);
+          autoQuote.current = true;
+          setAddressLine(joinAddressLine(found.street, found.number));
+          setForm(f => ({ ...f, street: found.street, number: found.number, neighborhood: found.neighborhood || f.neighborhood }));
+          if (!found.number) setDeliveryError("Confirme o número do seu endereço para calcular a entrega.");
+        } catch (e) {
+          setDeliveryError(e instanceof Error ? e.message : "Não foi possível usar sua localização. Digite a rua e o número.");
+        } finally {
+          setLocating(false);
+        }
+      },
+      (geoError) => {
+        setLocating(false);
+        setDeliveryError(
+          geoError.code === geoError.PERMISSION_DENIED
+            ? "Permita o acesso à localização no navegador ou digite a rua e o número."
+            : "Não conseguimos obter sua localização. Digite a rua e o número.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
   };
   // Ao escolher uma sugestão, a taxa de entrega é calculada sozinha.
   useEffect(() => {
@@ -1178,6 +1221,9 @@ function Catalog() {
                       }}>Trocar</Button>
                     </div>
                   )}
+                  <Button type="button" variant="outline" size="sm" className="h-9 w-full text-xs" disabled={locating} onClick={useMyLocation}>
+                    <Navigation className={locating ? "animate-pulse" : ""} />{locating ? "Buscando sua localização…" : "Usar minha localização"}
+                  </Button>
                   <label className="relative block text-xs font-medium"><span className="sr-only">Rua e número *</span>
                     <input
                       className="field py-2"

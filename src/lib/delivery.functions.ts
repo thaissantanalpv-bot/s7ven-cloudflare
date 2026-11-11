@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { distanceFee, settingsSchema } from "./store-settings";
-import { deliveryAddress, deliveryLocation, deliveryNeighborhood } from "./delivery-address";
+import { deliveryAddress, deliveryLocation, deliveryNeighborhood, reverseGeocodeAddress } from "./delivery-address";
 import { deliveryRouteRequest, routeDurationSeconds } from "./delivery-route";
 
 export const startDeliverySession = createServerFn({ method: "POST" }).handler(async () => {
@@ -71,6 +71,43 @@ export const suggestDeliveryAddress = createServerFn({ method: "POST" })
       if (suggestions.length >= 5) break;
     }
     return { suggestions };
+  });
+const locationSchema = z.object({
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  token: z.string().max(200),
+});
+
+/** Converte a localização em tempo real do cliente em rua, número e bairro de Araçatuba. */
+export const locateDeliveryAddress = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => locationSchema.parse(input))
+  .handler(async ({ data }) => {
+    const { verifyDeliveryToken, deliveryClientHash, DELIVERY_QUOTE_GLOBAL_HOURLY_LIMIT, DELIVERY_QUOTE_CLIENT_HOURLY_LIMIT } = await import("./delivery.server");
+    const sessionId = await verifyDeliveryToken(data.token);
+    if (!sessionId) throw new Error("DELIVERY_SESSION_EXPIRED");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const ip = getRequestHeader("cf-connecting-ip") ?? getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const { data: claim, error: claimError } = await supabaseAdmin.rpc("claim_delivery_quote_attempt", {
+      _client_hash: await deliveryClientHash(ip),
+      _global_limit: DELIVERY_QUOTE_GLOBAL_HOURLY_LIMIT,
+      _client_limit: DELIVERY_QUOTE_CLIENT_HOURLY_LIMIT,
+    });
+    if (claimError || claim !== "ok") throw new Error("Muitas buscas de localização agora. Digite o endereço ou tente em instantes.");
+    const apiKey = process.env["LOVABLE_API_KEY"];
+    const mapsKey = process.env["GOOGLE_MAPS_API_KEY"];
+    if (!apiKey || !mapsKey) throw new Error("Conecte o Google Maps para usar a localização.");
+    const gateway = "https://connector-gateway.lovable.dev/google_maps";
+    const response = await fetch(`${gateway}/maps/api/geocode/json?latlng=${data.latitude},${data.longitude}&language=pt-BR&region=br`, {
+      headers: { Authorization: `Bearer ${apiKey}`, "X-Connection-Api-Key": mapsKey },
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      console.error(`Google Maps reverse geocode [${response.status}]: ${body}`);
+      throw new Error("Não foi possível localizar o endereço agora. Digite a rua e o número.");
+    }
+    const payload = await response.json() as Parameters<typeof reverseGeocodeAddress>[0] & { error_message?: string };
+    if (payload.status === "REQUEST_DENIED" || payload.status === "OVER_QUERY_LIMIT") throw new Error(`Google Maps: ${payload.error_message ?? payload.status}`);
+    return reverseGeocodeAddress(payload);
   });
 export const quoteDelivery = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ address: z.string().trim().min(8).max(300), token: z.string().max(200), autoNeighborhood: z.boolean().optional() }).parse(input))

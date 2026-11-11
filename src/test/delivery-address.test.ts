@@ -40,7 +40,25 @@ describe("Endereço de entrega em Araçatuba", () => {
     expect(() => deliveryLocation(incomplete)).toThrow("número completos");
   });
 });
-import { deliveryNeighborhood, joinAddressLine, splitAddressLine } from "@/lib/delivery-address";
+import { deliveryNeighborhood, joinAddressLine, reverseGeocodeAddress, splitAddressLine } from "@/lib/delivery-address";
+itN("reads street, number and neighborhood from the live location", () => {
+  expectN(reverseGeocodeAddress(result())).toEqual({ street: "Rua de teste", number: "123", neighborhood: "" });
+  const located = result();
+  const first = located.results[0];
+  if (!first) throw new Error("Missing fixture");
+  first.address_components = first.address_components.filter(c => !c.types.includes("street_number"));
+  first.address_components.push({ long_name: "Jardim América", short_name: "Jd. América", types: ["sublocality_level_1", "sublocality"] });
+  expectN(reverseGeocodeAddress(located)).toEqual({ street: "Rua de teste", number: "", neighborhood: "Jardim América" });
+});
+itN("rejects live locations outside Araçatuba or without a street", () => {
+  expectN(() => reverseGeocodeAddress(result("Birigui"))).toThrow("fora de Araçatuba");
+  expectN(() => reverseGeocodeAddress({ status: "ZERO_RESULTS" })).toThrow("Não encontramos um endereço");
+  const noStreet = result();
+  const first = noStreet.results[0];
+  if (!first) throw new Error("Missing fixture");
+  first.address_components = first.address_components.filter(c => !c.types.includes("route"));
+  expectN(() => reverseGeocodeAddress(noStreet)).toThrow("Não identificamos a rua");
+});
 import { it as itN, expect as expectN } from "vitest";
 itN("reads the neighborhood from geocoding results", () => {
   expectN(deliveryNeighborhood({ results: [{ address_components: [{ long_name: "Jardim Nova Yorque", short_name: "Jd.", types: ["sublocality_level_1", "sublocality", "political"] }] }] })).toBe("Jardim Nova Yorque");
