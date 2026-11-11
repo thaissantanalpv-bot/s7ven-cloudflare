@@ -10,6 +10,7 @@ vi.mock("@/lib/orders.functions", () => ({
   listOrders: mocks.list,
   updateOrderStatus: mocks.update,
   updateOrderTracking: mocks.track,
+  updateOrderCourier: vi.fn(async () => ({ saved: true })),
   cancelOrder: mocks.cancel,
 }));
 import { OrderBoard } from "@/components/orders/order-board";
@@ -101,7 +102,7 @@ describe("Kanban order management", () => {
   it("requires a reason, persists cancellation and prevents a second action or reactivation", async () => {
     mount();
     await screen.findByText("Cliente teste");
-    fireEvent.click(screen.getByRole("button", { name: "Detalhes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Detalhes do pedido 42" }));
     fireEvent.click(screen.getByRole("button", { name: "Cancelar pedido" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirmar cancelamento" }));
     expect(mocks.cancel).not.toHaveBeenCalled();
@@ -123,7 +124,8 @@ describe("Kanban order management", () => {
     fireEvent.click(screen.getByRole("button", { name: "Salvar preferências" }));
     expect(localStorage.getItem("s7ven-order-printer")).toBe('{"name":"Balcão","paper":"58"}');
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    fireEvent.click(screen.getByRole("button", { name: "Imprimir pedido 42" }));
+    fireEvent.click(screen.getByRole("button", { name: "Detalhes do pedido 42" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Imprimir pedido 42" }));
     const receipt = await screen.findByTitle("Via impressa do pedido");
     expect(receipt.getAttribute("srcdoc")).toContain(row.address);
     expect(receipt.getAttribute("srcdoc")).toContain("Sabor: Melancia");
@@ -160,23 +162,26 @@ describe("Kanban order management", () => {
   it("moves through every stage and builds matching customer updates", async () => {
     mount();
     await screen.findByText("Cliente teste");
+    const replace = vi.fn(), close = vi.fn();
+    const open = vi.spyOn(window, "open").mockReturnValue({ opener: null, location: { replace }, close } as unknown as Window);
     fireEvent.click(screen.getByRole("button", { name: "Aceitar pedido" }));
     await waitFor(() => expect(row.status).toBe("preparing"));
-    fireEvent.click(screen.getByRole("tab", { name: /Em Preparo/ }));
-    expect(await screen.findByText("Cliente teste")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Avançar p/ Saiu para entrega" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Marcar pedido 42 como pronto" }));
+    await waitFor(() => expect(row.status).toBe("ready"));
+    fireEvent.click(await screen.findByRole("button", { name: "Chamar entregador para o pedido 42" }));
     await waitFor(() => expect(row.status).toBe("out_for_delivery"));
-    fireEvent.click(screen.getByRole("tab", { name: /A Caminho/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Avançar p/ Entregue" }));
+    await waitFor(() => expect(replace).toHaveBeenCalledTimes(1));
+    expect(decodeURIComponent(replace.mock.calls[0]?.[0])).toContain("Entrega · pedido #42");
+    fireEvent.click(await screen.findByRole("button", { name: "Concluir entrega do pedido 42" }));
     await waitFor(() => expect(row.status).toBe("delivered"));
-    fireEvent.click(screen.getByRole("tab", { name: /Concluídos/ }));
-    expect(await screen.findByText("Cliente teste")).toBeInTheDocument();
-    expect(mocks.update).toHaveBeenCalledTimes(3);
+    expect(screen.getByText("Entregues hoje (1)")).toBeInTheDocument();
+    expect(mocks.update).toHaveBeenCalledTimes(4);
+    open.mockRestore();
   });
   it("shows details with flavors and lets admin change stage", async () => {
     mount();
     await screen.findByText("Cliente teste");
-    fireEvent.click(screen.getByRole("button", { name: "Detalhes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Detalhes do pedido 42" }));
     expect(await screen.findByText("Sabor: Melancia")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Etapa do pedido"), { target: { value: "preparing" } });
     await waitFor(() => expect(row.status).toBe("preparing"));
@@ -199,7 +204,7 @@ describe("Kanban order management", () => {
     await screen.findByText("Cliente teste");
     fireEvent.change(screen.getByLabelText("Buscar pedido"), { target: { value: "inexistente" } });
     expect(screen.queryByText("Cliente teste")).not.toBeInTheDocument();
-    expect(screen.getByText("Nenhum pedido nesta etapa")).toBeInTheDocument();
+    expect(screen.getByText(/Nenhum pedido novo/)).toBeInTheDocument();
   });
   it("turns sound on automatically and keeps alerting until the order is accepted", async () => {
     const play = vi.fn(() => Promise.resolve());
@@ -210,14 +215,13 @@ describe("Kanban order management", () => {
     await screen.findByText("Cliente teste");
     // Som já vem ativo: o desbloqueio do navegador acontece no toque,
     // e o alerta contínuo começa com o pedido "received" já na tela.
-    await screen.findByRole("switch", { name: "Alerta sonoro de novo pedido" });
+    await screen.findByRole("button", { name: "Desativar alerta sonoro" });
     await waitFor(() => expect(play).toHaveBeenCalled());
     const pausesBeforeAccept = pause.mock.calls.length;
     // Ao aceitar o pedido (sai de "received"), o alerta contínuo para
     mocks.list.mockImplementation(async () => [{ ...row, status: "preparing" }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
-    fireEvent.click(screen.getByRole("tab", { name: /Em Preparo/ }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Avançar p/ Saiu para entrega" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Marcar pedido 42 como pronto" })).toBeInTheDocument());
     await waitFor(() => expect(pause.mock.calls.length).toBeGreaterThan(pausesBeforeAccept));
     vi.restoreAllMocks();
   });
@@ -226,7 +230,7 @@ describe("Kanban order management", () => {
   it("saves the courier tracking link on delivery orders only", async () => {
     mount();
     await screen.findByText("Cliente teste");
-    fireEvent.click(screen.getByRole("button", { name: "Detalhes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Detalhes do pedido 42" }));
     const input = await screen.findByLabelText("Link de rastreio do pedido 42");
     fireEvent.change(input, { target: { value: "https://entrega.app/r/abc123" } });
     fireEvent.blur(input);
@@ -237,9 +241,9 @@ describe("Kanban order management", () => {
     row.status = "out_for_delivery";
     row.tracking_url = "https://entrega.app/r/abc123";
     mount();
-    fireEvent.click(await screen.findByRole("tab", { name: /A Caminho/ }));
     await screen.findByText("Cliente teste");
-    const notify = screen.getByRole("link", { name: /Avisar cliente do pedido 42/ });
+    fireEvent.click(screen.getByRole("button", { name: "Detalhes do pedido 42" }));
+    const notify = await screen.findByRole("link", { name: /Avisar cliente no WhatsApp/ });
     expect(decodeURIComponent(notify.getAttribute("href") ?? "")).toContain("https://entrega.app/r/abc123");
   });
 
@@ -247,7 +251,7 @@ describe("Kanban order management", () => {
     row.fulfillment = "pickup";
     mount();
     await screen.findByText("Cliente teste");
-    fireEvent.click(screen.getByRole("button", { name: "Detalhes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Detalhes do pedido 42" }));
     await screen.findAllByText(/Retirada na loja/);
     expect(screen.queryByLabelText("Link de rastreio do pedido 42")).toBeNull();
   });

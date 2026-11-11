@@ -2,24 +2,29 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  Bell,
   BellRing,
+  Bike,
+  Check,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  MapPin,
+  MessageCircle,
+  PackageCheck,
+  Printer,
   RefreshCw,
   Search,
-  MessageCircle,
-  Package,
-  MapPin,
-  Clock,
-  X,
-  CheckCircle2,
-  Check,
-  Printer,
+  ShoppingBag,
   Trash2,
+  Volume2,
+  VolumeX,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { quickMessages, courierMessage, whatsappTo } from "@/lib/quick-messages";
-import { listOrders, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
+import { listOrders, updateOrderCourier, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
 import {
   ORDER_STAGES,
   orderWhatsApp,
@@ -28,8 +33,6 @@ import {
   type Order,
   type OrderStatus,
 } from "@/lib/orders";
-
-const CANCELLED_CLEARED_KEY = "s7ven-cancelled-cleared-at";
 import { brl } from "@/lib/products";
 import { OrderPrinting } from "./order-printing";
 import { OrderCancellation } from "./order-cancellation";
@@ -37,43 +40,78 @@ import { PushQuickButton } from "@/components/push-notifications";
 import { StorePauseSwitch } from "@/components/store-pause-button";
 import { useOrderAlarm } from "./new-order-alarm";
 
-const QUEUE_TABS = [
-  { id: "received", label: "Novos", statuses: ["received"], icon: BellRing, hint: "Chegaram agora. Confira e toque em Aceitar.", empty: "Nenhum pedido novo. Quando um cliente finalizar no catálogo, ele aparece aqui com alerta." },
-  { id: "preparing", label: "Em Preparo", statuses: ["preparing"], icon: Package, hint: "Separe os itens e toque em Saiu para entrega.", empty: "Nada em preparo. Pedidos aceitos ficam aqui." },
-  { id: "out_for_delivery", label: "A Caminho", statuses: ["out_for_delivery"], icon: MapPin, hint: "Com o entregador ou aguardando retirada. Toque em Concluir quando chegar.", empty: "Nenhum pedido a caminho agora." },
-  { id: "delivered", label: "Concluídos", statuses: ["delivered"], icon: CheckCircle2, hint: "Pedidos finalizados.", empty: "Nenhum pedido entregue neste filtro. Mude o filtro para \"Todos os pedidos\" para ver os antigos." },
+const CANCELLED_CLEARED_KEY = "s7ven-cancelled-cleared-at";
+/** Estimated minutes used for the countdown bars; informative only. */
+export const PREP_MINUTES = 20;
+export const DELIVERY_MINUTES = 30;
+
+const COLUMNS = [
+  { id: "received", title: "Novos", subtitle: "Aguardando aceite", head: "bg-kanban-new text-kanban-ink", edge: "border-kanban-new/70", icon: BellRing },
+  { id: "preparing", title: "Em preparação", subtitle: "Pedidos aceitos", head: "bg-kanban-prep text-kanban-ink", edge: "border-kanban-prep/60", icon: Clock },
+  { id: "ready", title: "Prontos", subtitle: "Entrega / retirada", head: "bg-kanban-ready text-kanban-ink", edge: "border-kanban-ready/60", icon: PackageCheck },
+  { id: "out_for_delivery", title: "Em trânsito", subtitle: "Com o entregador", head: "bg-kanban-transit text-kanban-ink", edge: "border-kanban-transit/60", icon: Bike },
 ] as const;
-type QueueTabId = (typeof QUEUE_TABS)[number]["id"];
 
-const time = (value: string) =>
-  new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
+type Mode = "all" | "delivery" | "pickup";
 
-function elapsed(created: string): string {
-  const diff = Math.max(0, Date.now() - new Date(created).getTime());
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}min`;
-  const hrs = Math.floor(mins / 60);
-  const rem = mins % 60;
-  return `${hrs}h${rem > 0 ? String(rem).padStart(2, "0") : ""}`;
+const clock = (value?: string) =>
+  value
+    ? new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }).format(new Date(value))
+    : "";
+
+const minutesSince = (value: string) => Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000));
+
+function waitLabel(created: string) {
+  const mins = minutesSince(created);
+  if (mins < 1) return "agora";
+  if (mins < 60) return `há ${mins} min`;
+  return `há ${Math.floor(mins / 60)}h${String(mins % 60).padStart(2, "0")}`;
 }
 
-function elapsedColor(created: string): string {
-  const mins = Math.floor(Math.max(0, Date.now() - new Date(created).getTime()) / 60000);
-  if (mins < 10) return "border-whatsapp/40 bg-whatsapp/15 text-whatsapp";
-  if (mins < 20) return "border-primary/40 bg-primary/15 text-primary";
-  return "border-destructive/40 bg-destructive/15 text-destructive";
+/** Remaining minutes and elapsed fraction of an estimated stage duration. */
+export function countdown(startedAt: string, totalMinutes: number, now = Date.now()) {
+  const spent = Math.max(0, (now - new Date(startedAt).getTime()) / 60000);
+  return { remaining: Math.max(0, Math.ceil(totalMinutes - spent)), fraction: Math.min(1, spent / totalMinutes), late: spent > totalMinutes };
+}
+
+const stageStart = (order: Order, status: OrderStatus) => order.status_times?.[status] ?? order.updated_at ?? order.created_at;
+
+const itemsSummary = (order: Order) => {
+  const shown = order.items.slice(0, 2).map((i) => `${i.qty}x ${i.name}`).join(", ");
+  return order.items.length > 2 ? `${shown} +${order.items.length - 2}` : shown;
+};
+
+const isPix = (payment: string) => /pix/i.test(payment);
+const isPickup = (order: Order) => order.fulfillment === "pickup";
+
+function ModeBadge({ order }: { order: Order }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+      {isPickup(order) ? <ShoppingBag className="size-3.5" /> : <Bike className="size-3.5" />}
+      {isPickup(order) ? "Retirada" : "Delivery"}
+    </span>
+  );
+}
+
+function TimeBar({ order, status, minutes, label }: { order: Order; status: OrderStatus; minutes: number; label: string }) {
+  const c = countdown(stageStart(order, status), minutes);
+  return (
+    <div className="mt-3">
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(c.fraction * 100)}>
+        <div className={`h-full rounded-full transition-all ${c.late ? "bg-destructive" : status === "preparing" ? "bg-kanban-prep" : "bg-kanban-transit"}`} style={{ width: `${Math.max(4, c.fraction * 100)}%` }} />
+      </div>
+      <p className={`mt-1 text-xs ${c.late ? "font-semibold text-destructive" : "text-muted-foreground"}`}>
+        {c.late ? `Passou do tempo estimado (${minutes} min)` : `${c.remaining} min restante${c.remaining === 1 ? "" : "s"}`}
+      </p>
+    </div>
+  );
 }
 
 export function OrderBoard() {
   const fetchOrders = useServerFn(listOrders);
   const update = useServerFn(updateOrderStatus);
   const saveTrackingFn = useServerFn(updateOrderTracking);
+  const saveCourierFn = useServerFn(updateOrderCourier);
   const client = useQueryClient();
   const orders = useQuery({
     queryKey: ["store-orders"],
@@ -83,14 +121,15 @@ export function OrderBoard() {
     retry: false,
   });
   const [search, setSearch] = useState("");
-  const [period, setPeriod] = useState("all");
-  const [queueTab, setQueueTab] = useState<QueueTabId>("received");
+  const [mode, setMode] = useState<Mode>("all");
+  const [showCancelledOnly, setShowCancelledOnly] = useState(false);
   const { sound, ready: audioReady, toggle: toggleSound } = useOrderAlarm();
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
-  const [printOrder, setPrintOrder] = useState<Order | null>(null);
+  const [cancelIntent, setCancelIntent] = useState(false);
+  const [printJob, setPrintJob] = useState<{ order: Order; kitchen: boolean } | null>(null);
   const [pendingMessage, setPendingMessage] = useState<Order | null>(null);
   const [, setTick] = useState(0);
   const [cancelledClearedAt, setCancelledClearedAt] = useState<number | null>(null);
@@ -112,10 +151,9 @@ export function OrderBoard() {
     } catch {
       /* storage blocked: cleared only until the page reloads */
     }
-    setNotice("Cancelados limpos do quadro. Eles continuam em Histórico e no filtro Cancelados.");
+    setNotice("Cancelados limpos do quadro. Eles continuam no Histórico.");
   };
 
-  // Tick every 30s to update elapsed timers
   useEffect(() => {
     const iv = setInterval(() => setTick((t) => t + 1), 30000);
     return () => clearInterval(iv);
@@ -128,26 +166,24 @@ export function OrderBoard() {
       ? orders.data.filter((o) => o.source !== "counter" && o.status === "received" && !seen.current?.has(o.id))
       : [];
     if (newOrders.length) {
-      setNotice(
-        `${newOrders.length} ${newOrders.length === 1 ? "novo pedido recebido" : "novos pedidos recebidos"}`,
-      );
+      setNotice(`${newOrders.length} ${newOrders.length === 1 ? "novo pedido recebido" : "novos pedidos recebidos"}`);
     }
     seen.current = new Set(orders.data.map((o) => o.id));
   }, [orders.data]);
 
-
-  const move = async (order: Order, status: OrderStatus, notify = false) => {
+  /** Saves the stage; an optional WhatsApp link opens only after the save succeeds. */
+  const move = async (order: Order, status: OrderStatus, link?: (changed: Order) => string) => {
     if (busy || order.status === status || order.status === "cancelled") return;
-    const popup = notify ? window.open("about:blank", "_blank") : null;
+    const popup = link ? window.open("about:blank", "_blank") : null;
     if (popup) popup.opener = null;
     setBusy(order.id);
     setError("");
     try {
       await update({ data: { id: order.id, status, expected: order.status } });
-      if (notify) {
+      if (link) {
         const changed = { ...order, status };
         setPendingMessage(changed);
-        if (popup) popup.location.replace(orderWhatsApp(changed));
+        if (popup) popup.location.replace(link(changed));
       }
       void client.invalidateQueries({ queryKey: ["admin-sales-report"] });
       await client.invalidateQueries({ queryKey: ["store-orders"] });
@@ -160,481 +196,415 @@ export function OrderBoard() {
     }
   };
 
-  const saveTracking = async (order: Order, trackingUrl: string) => {
-    if (busy || (order.tracking_url ?? "") === trackingUrl.trim()) return;
+  const saveField = async (order: Order, kind: "tracking" | "courier", value: string) => {
+    const current = kind === "tracking" ? order.tracking_url ?? "" : order.courier_name ?? "";
+    if (busy || current === value.trim()) return;
     setBusy(order.id);
     setError("");
     try {
-      await saveTrackingFn({ data: { id: order.id, trackingUrl } });
+      if (kind === "tracking") await saveTrackingFn({ data: { id: order.id, trackingUrl: value } });
+      else await saveCourierFn({ data: { id: order.id, courierName: value } });
       await client.invalidateQueries({ queryKey: ["store-orders"] });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Não foi possível salvar o link de rastreio.");
+      setError(e instanceof Error ? e.message : "Não foi possível salvar.");
       await orders.refetch();
     } finally {
       setBusy("");
     }
   };
 
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
-    new Date(),
-  );
-
-  const isOrderFromToday = (dateStr: string) =>
-    new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
-      new Date(dateStr),
-    ) === today;
+  const spDay = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(d);
+  const today = spDay(new Date());
+  const isToday = (value: string) => spDay(new Date(value)) === today;
 
   const all = (orders.data ?? []).filter(
-    (o) =>
-      o.source !== "counter" &&
-      (o.status !== "delivered" || isOrderFromToday(o.updated_at || o.created_at)),
+    (o) => o.source !== "counter" && (o.status !== "delivered" || isToday(o.updated_at || o.created_at)),
   );
-
   const now = new Date();
+  const term = search.trim().toLocaleLowerCase();
   const visible = all.filter(
     (o) =>
-      (period === "cancelled" || showCancelledOnBoard(o, now, cancelledClearedAt)) &&
-      (period !== "today" || isOrderFromToday(o.created_at)) &&
-      (period !== "active" || isActiveOrder(o.status)) &&
-      (period !== "cancelled" || o.status === "cancelled") &&
-      (!search ||
-        `${o.number} ${o.customer_name} ${o.customer_phone}`
-          .toLocaleLowerCase()
-          .includes(search.toLocaleLowerCase())),
+      showCancelledOnBoard(o, now, cancelledClearedAt) &&
+      (mode === "all" || (mode === "pickup" ? isPickup(o) : !isPickup(o))) &&
+      (!term || `${o.number} #${o.number} ${o.customer_name} ${o.customer_phone}`.toLocaleLowerCase().includes(term)),
   );
-
+  const newCount = all.filter((o) => o.status === "received").length;
+  const delivered = visible.filter((o) => o.status === "delivered");
+  const cancelled = visible.filter((o) => o.status === "cancelled");
   const detail = all.find((o) => o.id === selected);
 
-  return (
-    <section className="py-7">
-      <div className="rounded-2xl border bg-card p-4">
-        <h2 className="text-base font-semibold">Controle da loja</h2>
-        <p className="mb-3 text-xs text-muted-foreground">Abra ou pause pedidos, ative o som de alerta e configure a impressora.</p>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2.5">
-            <StorePauseSwitch />
-          </div>
-          <div className="flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2.5">
-            <span className="min-w-0 text-sm">
-              <span className="block font-medium">Alerta sonoro</span>
-              <span className="block text-xs text-muted-foreground">{!sound ? "Desativado" : audioReady ? "Ativo (WhatsApp)" : "Toque para ativar"}</span>
+  const open = (order: Order, cancel = false) => {
+    setCancelIntent(cancel);
+    setSelected(order.id);
+  };
+
+  const card = (order: Order) => {
+    const column = COLUMNS.find((c) => c.id === order.status) ?? COLUMNS[0];
+    const isBusy = busy === order.id;
+    return (
+      <article
+        key={order.id}
+        aria-label={`Pedido ${order.number}`}
+        className={`rounded-xl border-2 bg-card p-3 shadow-sm transition-colors ${column.edge} ${selected === order.id ? "ring-2 ring-primary" : ""}`}
+      >
+        <button type="button" className="block w-full min-w-0 text-left" onClick={() => open(order)} aria-label={`Detalhes do pedido ${order.number}`}>
+          <span className="flex items-start justify-between gap-2">
+            <span className="flex min-w-0 items-center gap-1.5 font-semibold">
+              <column.icon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <span className="truncate">#{order.number} · <span>{order.customer_name}</span></span>
             </span>
-            <Switch aria-label="Alerta sonoro de novo pedido" checked={sound && audioReady} onCheckedChange={() => toggleSound()} />
-          </div>
-          <div className="flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2.5">
-            <span className="min-w-0 text-sm">
-              <span className="block font-medium">Impressora</span>
-              <span className="block text-xs text-muted-foreground">Bobina e preferências</span>
-            </span>
-            <OrderPrinting order={printOrder} onClose={() => setPrintOrder(null)} />
-          </div>
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <PushQuickButton />
-          <Button
-            variant="outline"
-            size="icon"
-            title="Atualizar pedidos"
-            aria-label="Atualizar pedidos"
-            disabled={orders.isFetching}
-            onClick={() => orders.refetch()}
-          >
-            <RefreshCw className={orders.isFetching ? "animate-spin" : ""} />
-          </Button>
-          <span className="ml-auto text-xs text-muted-foreground">
-            <strong className="text-foreground">{all.filter((o) => isActiveOrder(o.status)).length}</strong> em andamento · <strong className="text-whatsapp">{all.filter((o) => o.status === "delivered").length}</strong> entregues
+            {order.status === "received" && (
+              <span className="shrink-0 rounded-full bg-kanban-new px-2 py-0.5 text-[11px] font-bold text-kanban-ink">Novo!</span>
+            )}
           </span>
-        </div>
-      </div>
-      <div className="mb-3 mt-7">
-        <h2 className="text-base font-semibold">Fila de pedidos</h2>
-        <p className="text-xs text-muted-foreground">O pedido anda assim: Novos → Em Preparo → A Caminho → Concluídos.</p>
-      </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="tablist" aria-label="Etapas dos pedidos">
-        {QUEUE_TABS.map((tab, n) => {
-          const count = visible.filter((o) => (tab.statuses as readonly string[]).includes(o.status)).length;
-          const active = queueTab === tab.id;
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setQueueTab(tab.id)}
-              className={`relative flex min-w-0 flex-col items-start gap-1 rounded-2xl border p-3 text-left transition-colors ${active ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}
-            >
-              <span className="flex w-full items-center justify-between gap-1">
-                <Icon className="size-4 shrink-0" />
-                <span className="text-xl font-bold leading-none">{count}</span>
+          {order.status === "received" && <span className="mt-0.5 block text-xs text-muted-foreground">{waitLabel(order.created_at)}</span>}
+          <span className="mt-2 block break-words text-sm text-foreground/90">
+            {itemsSummary(order)} · <strong>{brl(order.total)}</strong>
+          </span>
+          <span className="mt-1.5 flex items-center justify-between gap-2">
+            <ModeBadge order={order} />
+            {order.status === "out_for_delivery" && !isPickup(order) && (
+              <span className="truncate text-xs text-muted-foreground">
+                Motoboy: <strong className="text-foreground">{order.courier_name || "não informado"}</strong>
               </span>
-              <span className="truncate text-sm font-semibold">{n + 1}. {tab.label}</span>
-            </button>
+            )}
+          </span>
+        </button>
+        {order.status === "preparing" && <TimeBar order={order} status="preparing" minutes={PREP_MINUTES} label={`Tempo de preparo do pedido ${order.number}`} />}
+        {order.status === "out_for_delivery" && <TimeBar order={order} status="out_for_delivery" minutes={DELIVERY_MINUTES} label={`Tempo de entrega do pedido ${order.number}`} />}
+
+        {order.status === "received" && (
+          <>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Button disabled={!!busy} className="bg-whatsapp font-bold text-whatsapp-foreground hover:bg-whatsapp/90" aria-label="Aceitar pedido" onClick={() => void move(order, "preparing")}>
+                {isBusy ? "Salvando…" : <><Check aria-hidden="true" />Aceitar</>}
+              </Button>
+              <Button variant="secondary" disabled={!!busy} aria-label={`Recusar pedido ${order.number}`} onClick={() => open(order, true)}>
+                Recusar
+              </Button>
+            </div>
+            <Button variant="ghost" size="sm" className="mt-1 w-full text-xs text-whatsapp" disabled={!!busy} aria-label={`Aceitar e avisar pedido ${order.number} no WhatsApp`} onClick={() => void move(order, "preparing", orderWhatsApp)}>
+              <MessageCircle className="size-3" />Aceitar e avisar no WhatsApp
+            </Button>
+          </>
+        )}
+        {order.status === "preparing" && (
+          <Button disabled={!!busy} className="mt-3 w-full bg-kanban-prep font-bold text-kanban-ink hover:bg-kanban-prep/90" aria-label={`Marcar pedido ${order.number} como pronto`} onClick={() => void move(order, "ready")}>
+            {isBusy ? "Salvando…" : <><PackageCheck aria-hidden="true" />Pedido pronto</>}
+          </Button>
+        )}
+        {order.status === "ready" &&
+          (isPickup(order) ? (
+            <Button disabled={!!busy} className="mt-3 w-full bg-whatsapp font-bold text-whatsapp-foreground hover:bg-whatsapp/90" aria-label={`Entregar pedido ${order.number} ao cliente`} onClick={() => void move(order, "delivered")}>
+              {isBusy ? "Salvando…" : "Entregar ao Cliente"}
+            </Button>
+          ) : (
+            <Button disabled={!!busy} className="mt-3 w-full bg-kanban-prep font-bold text-kanban-ink hover:bg-kanban-prep/90" aria-label={`Chamar entregador para o pedido ${order.number}`} onClick={() => void move(order, "out_for_delivery", (o) => whatsappTo(null, courierMessage(o)))}>
+              {isBusy ? "Salvando…" : <><Bike aria-hidden="true" />Chamar Entregador</>}
+            </Button>
+          ))}
+        {order.status === "ready" && (
+          <Button variant="ghost" size="sm" className="mt-1 w-full text-xs text-whatsapp" asChild>
+            <a href={orderWhatsApp(order)} target="_blank" rel="noopener noreferrer" aria-label={`Avisar cliente do pedido ${order.number} que está pronto`}>
+              <MessageCircle className="size-3" />Avisar cliente que está pronto
+            </a>
+          </Button>
+        )}
+        {order.status === "out_for_delivery" && (
+          <Button variant="outline" disabled={!!busy} className="mt-3 w-full" aria-label={`Concluir entrega do pedido ${order.number}`} onClick={() => void move(order, "delivered")}>
+            {isBusy ? "Salvando…" : <><CheckCircle2 aria-hidden="true" />Concluir entrega</>}
+          </Button>
+        )}
+      </article>
+    );
+  };
+
+  const timeline = (order: Order) => {
+    const t = order.status_times ?? {};
+    const reached = (s: OrderStatus) => {
+      const order_ = ["received", "preparing", "ready", "out_for_delivery", "delivered"] as const;
+      return order.status !== "cancelled" && order_.indexOf(order.status as (typeof order_)[number]) >= order_.indexOf(s as (typeof order_)[number]);
+    };
+    const steps: { label: string; status: OrderStatus; at?: string }[] = [
+      { label: "Recebido", status: "received", at: t.received ?? order.created_at },
+      { label: "Aceito", status: "preparing", at: t.preparing },
+      { label: "Em preparo", status: "preparing", at: t.preparing },
+      { label: "Pronto", status: "ready", at: t.ready },
+      ...(isPickup(order) ? [] : [{ label: "Saiu para entrega", status: "out_for_delivery" as const, at: t.out_for_delivery }]),
+      { label: "Entregue", status: "delivered", at: t.delivered },
+    ];
+    return (
+      <ol className="space-y-0" aria-label="Linha do tempo do pedido">
+        {steps.map((step, i) => {
+          const done = reached(step.status);
+          return (
+            <li key={step.label} className="relative flex gap-3 pb-4 last:pb-0">
+              {i < steps.length - 1 && <span aria-hidden="true" className={`absolute left-[9px] top-5 h-full w-0.5 ${done ? "bg-primary" : "bg-border"}`} />}
+              <span className={`relative z-10 grid size-5 shrink-0 place-items-center rounded-full border-2 ${done ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40 bg-card"}`}>
+                {done && <Check className="size-3" />}
+              </span>
+              <span className={`text-sm ${done ? "font-semibold" : "text-muted-foreground"}`}>
+                {step.label}
+                {done && step.at && <span className="ml-1 font-normal text-muted-foreground">({clock(step.at)})</span>}
+              </span>
+            </li>
           );
         })}
-      </div>
-      <p className="mt-2 rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-        {QUEUE_TABS.find((t) => t.id === queueTab)?.hint}
-      </p>
-      <div className="mt-4 flex flex-wrap gap-3">
-        <div className="relative min-w-48 flex-1">
-          <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
-          <input
-            className="field pl-10"
-            aria-label="Buscar pedido"
-            placeholder="Buscar por nº, cliente ou telefone"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      </ol>
+    );
+  };
+
+  return (
+    <section className="py-2">
+      {/* Top bar */}
+      <div className="grid gap-3 rounded-2xl border bg-card p-3 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
+        <div className="flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2 lg:min-w-56">
+          <StorePauseSwitch />
         </div>
-        <select
-          aria-label="Filtrar pedidos"
-          className="field max-w-48"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-        >
-          <option value="active">Em andamento</option>
-          <option value="today">Hoje</option>
-          <option value="all">Todos os pedidos</option>
-          <option value="cancelled">Cancelados</option>
-        </select>
-      </div>
-      {notice && (
-        <div
-          role="status"
-          className="mt-4 flex items-center gap-2 border-l-2 border-primary bg-primary/10 px-4 py-3 text-sm text-primary"
-        >
-          <BellRing className="size-4" />
-          {notice}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="ml-auto size-7"
-            aria-label="Dispensar alerta"
-            onClick={() => setNotice("")}
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <div className="relative min-w-44 flex-1">
+            <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
+            <input className="field pl-10" aria-label="Buscar pedido" placeholder="Buscar cliente ou nº do pedido" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <div className="flex gap-1 rounded-xl border bg-background p-1" role="group" aria-label="Filtrar por modalidade">
+            {([["all", "Todos"], ["delivery", "Delivery"], ["pickup", "Retirada"]] as const).map(([id, label]) => (
+              <button key={id} type="button" aria-pressed={mode === id} onClick={() => setMode(id)} className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${mode === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            className="relative grid size-10 place-items-center rounded-xl border bg-background"
+            aria-label={`${newCount} pedido${newCount === 1 ? "" : "s"} aguardando aceite`}
+            title="Pedidos aguardando aceite"
+            onClick={() => document.getElementById("kanban-received")?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" })}
           >
-            <X />
+            <Bell className="size-5" />
+            {newCount > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 grid min-w-5 place-items-center rounded-full bg-destructive px-1 text-[11px] font-bold text-primary-foreground">{newCount}</span>
+            )}
+          </button>
+          <Button variant="outline" size="icon" aria-label={sound && audioReady ? "Desativar alerta sonoro" : "Ativar alerta sonoro"} title="Alerta sonoro" onClick={() => toggleSound()}>
+            {sound && audioReady ? <Volume2 /> : <VolumeX />}
           </Button>
+          <OrderPrinting order={printJob?.order ?? null} kitchen={printJob?.kitchen} onClose={() => setPrintJob(null)} />
+          <PushQuickButton />
+          <Button variant="outline" size="icon" title="Atualizar pedidos" aria-label="Atualizar pedidos" disabled={orders.isFetching} onClick={() => orders.refetch()}>
+            <RefreshCw className={orders.isFetching ? "animate-spin" : ""} />
+          </Button>
+        </div>
+      </div>
+
+      {notice && (
+        <div role="status" className="mt-3 flex items-center gap-2 rounded-xl border-l-4 border-kanban-new bg-kanban-new/10 px-4 py-2.5 text-sm">
+          <BellRing className="size-4 text-kanban-new" />
+          {notice}
+          <Button variant="ghost" size="icon" className="ml-auto size-7" aria-label="Dispensar alerta" onClick={() => setNotice("")}><X /></Button>
         </div>
       )}
       {(error || orders.error) && (
-        <p role="alert" className="mt-4 text-sm text-destructive">
+        <p role="alert" className="mt-3 text-sm text-destructive">
           {error || "Não foi possível carregar os pedidos."}{" "}
-          <Button variant="link" onClick={() => orders.refetch()}>
-            Tentar novamente
-          </Button>
+          <Button variant="link" onClick={() => orders.refetch()}>Tentar novamente</Button>
         </p>
       )}
       {pendingMessage && (
-        <div role="status" className="mt-4 flex flex-wrap items-center gap-3 border-l-2 border-whatsapp py-3 pl-4 text-sm">
+        <div role="status" className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border-l-4 border-whatsapp bg-whatsapp/10 px-4 py-2.5 text-sm">
           <span>Pedido #{pendingMessage.number}: etapa salva.</span>
-          <Button asChild variant="outline" className="text-whatsapp">
-            <a href={orderWhatsApp(pendingMessage)} target="_blank" rel="noopener noreferrer">
-              <MessageCircle />
-              Abrir mensagem no WhatsApp
-            </a>
+          <Button asChild variant="outline" size="sm" className="text-whatsapp">
+            <a href={pendingMessage.status === "out_for_delivery" ? whatsappTo(null, courierMessage(pendingMessage)) : orderWhatsApp(pendingMessage)} target="_blank" rel="noopener noreferrer"><MessageCircle />Abrir mensagem no WhatsApp</a>
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Dispensar mensagem" onClick={() => setPendingMessage(null)}>
-            <X />
-          </Button>
+          <Button variant="ghost" size="icon" className="ml-auto size-7" aria-label="Dispensar mensagem" onClick={() => setPendingMessage(null)}><X /></Button>
         </div>
       )}
+
+      {/* Kanban */}
       {orders.isPending ? (
         <p className="py-16 text-muted-foreground">Carregando pedidos…</p>
-      ) : (
-        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {visible
-            .filter((o) => (QUEUE_TABS.find((t) => t.id === queueTab)?.statuses as readonly string[] | undefined)?.includes(o.status))
-            .map((order) => {
-            const index = Math.max(0, ORDER_STAGES.findIndex((s) => s.id === order.status));
-            const stage = ORDER_STAGES[index]!;
+      ) : showCancelledOnly ? null : (
+        <div className="-mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 sm:mx-0 sm:px-0 xl:grid xl:grid-cols-4 xl:overflow-visible">
+          {COLUMNS.map((column) => {
+            const list = visible.filter((o) => o.status === column.id);
             return (
-            <section key={order.id} aria-label={`Pedido ${order.number}`} className="min-w-0">
-              <div>
-                {[order].map((order) => (
-                    <article
-                      key={order.id}
-                      className={`rounded-2xl border bg-card p-4 shadow-sm ${
-                        order.status === "received" ? "border-primary/60 ring-2 ring-primary/25" : ""
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            className="font-mono text-2xl font-extrabold leading-none text-foreground"
-                            onClick={() => setSelected(order.id)}
-                            aria-label={`Detalhes do pedido ${order.number}`}
-                          >
-                            #{order.number}
-                          </button>
-                          <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-bold ${elapsedColor(order.created_at)}`}>
-                            <Clock className="size-3.5" />
-                            {elapsed(order.created_at)}
-                          </span>
-                        </div>
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-primary/50 bg-primary/10 px-2.5 py-1 text-xs font-bold uppercase text-primary">
-                          {order.fulfillment === "pickup" ? "🛍️ Retirada" : "🛵 Entrega"}
-                        </span>
-                      </div>
-                      <p className="mt-3 break-words text-sm font-semibold">{order.customer_name}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {time(order.created_at)} · {order.fulfillment === "pickup" ? "Retirada na loja" : order.address}
-                      </p>
-                      <ul className="mt-3 space-y-1 text-sm">
-                        {order.items.slice(0, 4).map((item, i) => (
-                          <li key={i} className="break-words">
-                            <strong>{item.qty}x</strong> {item.name}
-                            {item.option && <span className="text-xs text-muted-foreground"> · {item.option}</span>}
-                          </li>
-                        ))}
-                        {order.items.length > 4 && (
-                          <li className="text-xs text-muted-foreground">+ {order.items.length - 4} itens</li>
-                        )}
-                      </ul>
-                      {order.notes && (
-                        <p className="mt-2 rounded-lg bg-muted/60 px-2 py-1 text-xs">
-                          <strong className="text-primary">Obs:</strong> {order.notes}
-                        </p>
-                      )}
-                      <div className="mt-3 flex items-center justify-between gap-2 border-t pt-3">
-                        <span className="text-sm text-muted-foreground">💳 {order.payment}</span>
-                        <span className="text-right">
-                          <span className="mr-2 text-xs text-muted-foreground">Total</span>
-                          <strong className="text-lg">{brl(order.total)}</strong>
-                        </span>
-                      </div>
-                      <div className="mt-3 flex justify-end gap-2">
-                        <Button variant="outline" size="icon" title="Imprimir pedido" aria-label={`Imprimir pedido ${order.number}`} onClick={() => setPrintOrder(order)}>
-                          <Printer />
-                        </Button>
-                        <Button asChild variant="outline" size="icon" className="text-whatsapp" title="Avisar cliente no WhatsApp">
-                          <a href={orderWhatsApp(order)} target="_blank" rel="noopener noreferrer" aria-label={`Avisar cliente do pedido ${order.number} no WhatsApp`}>
-                            <MessageCircle />
-                          </a>
-                        </Button>
-                        <Button variant="outline" size="icon" className="text-destructive" title="Cancelar ou ver detalhes" aria-label="Detalhes" onClick={() => setSelected(order.id)}>
-                          <X />
-                        </Button>
-                      </div>
-                      {ORDER_STAGES[index + 1] ? (
-                        <>
-                          <Button
-                            disabled={!!busy}
-                            className="mt-3 h-12 w-full bg-whatsapp text-base font-bold uppercase text-whatsapp-foreground hover:bg-whatsapp/90"
-                            aria-label={stage.id === "received" ? "Aceitar pedido" : `Avançar p/ ${ORDER_STAGES[index + 1]?.label}`}
-                            onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id)}
-                          >
-                            {busy === order.id
-                              ? "Salvando…"
-                              : stage.id === "received"
-                                ? <><Check aria-hidden="true" />Aceitar pedido</>
-                                : stage.id === "preparing"
-                                  ? order.fulfillment === "pickup" ? "Pronto para retirada" : "Saiu para entrega"
-                                  : "Concluir pedido"}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="mt-1 w-full text-xs text-whatsapp"
-                            disabled={!!busy}
-                            aria-label={`${stage.id === "received" ? "Aceitar" : ORDER_STAGES[index + 1]?.label} e avisar pedido ${order.number} no WhatsApp`}
-                            onClick={() => void move(order, ORDER_STAGES[index + 1]?.id ?? stage.id, true)}
-                          >
-                            <MessageCircle className="size-3" />
-                            Avançar e avisar no WhatsApp
-                          </Button>
-                        </>
-                      ) : (
-                        <p className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-whatsapp/10 py-2.5 text-sm font-semibold text-whatsapp">
-                          <CheckCircle2 className="size-4" /> Concluído
-                        </p>
-                      )}
-                    </article>
-                  ))}
-              </div>
-            </section>
-          );
+              <section key={column.id} id={`kanban-${column.id}`} aria-label={column.title} className="flex w-[82vw] max-w-sm shrink-0 snap-start flex-col rounded-2xl border bg-muted/30 sm:w-80 xl:w-auto xl:max-w-none">
+                <header className={`flex items-center justify-between gap-2 rounded-t-2xl px-3 py-2.5 ${column.head}`}>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold uppercase tracking-wide">{column.title}</span>
+                    <span className="block truncate text-[11px] font-medium opacity-80">{column.subtitle}</span>
+                  </span>
+                  <span className="grid min-w-7 place-items-center rounded-full bg-kanban-ink/15 px-2 py-0.5 text-sm font-bold">{list.length}</span>
+                </header>
+                <div className="flex max-h-[70vh] min-h-40 flex-col gap-3 overflow-y-auto p-2.5">
+                  {list.length ? list.map(card) : (
+                    <p className="m-auto max-w-[14rem] py-8 text-center text-xs text-muted-foreground">
+                      {column.id === "received" ? "Nenhum pedido novo. Quando um cliente finalizar no catálogo, ele aparece aqui com alerta." : "Nenhum pedido nesta etapa."}
+                    </p>
+                  )}
+                </div>
+              </section>
+            );
           })}
-          {!visible.some((o) => (QUEUE_TABS.find((t) => t.id === queueTab)?.statuses as readonly string[] | undefined)?.includes(o.status)) && (
-            <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed text-muted-foreground">
-              <Package className="size-6 opacity-50" />
-              <p className="text-sm font-medium text-foreground">Nenhum pedido nesta etapa</p>
-              <p className="max-w-xs px-4 text-center text-xs">{QUEUE_TABS.find((t) => t.id === queueTab)?.empty}</p>
-            </div>
-          )}
         </div>
       )}
-      {visible.some((o) => o.status === "cancelled") && (
-        <section aria-label="Cancelados" className="mt-8 border-t pt-5">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-semibold text-destructive">Cancelados</h2>
-            {period !== "cancelled" && (
-              <Button variant="outline" size="sm" onClick={clearCancelled}>
-                <Trash2 />
-                Limpar cancelados
-              </Button>
-            )}
+
+      {/* Delivered today + cancelled */}
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span><strong className="text-foreground">{all.filter((o) => isActiveOrder(o.status)).length}</strong> em andamento</span>·
+        <span><strong className="text-whatsapp">{delivered.length}</strong> entregues hoje</span>
+        <Button variant="link" size="sm" className="ml-auto h-auto p-0 text-xs" onClick={() => setShowCancelledOnly((v) => !v)}>
+          {showCancelledOnly ? "Voltar ao quadro" : "Ver cancelados"}
+        </Button>
+      </div>
+      {!showCancelledOnly && delivered.length > 0 && (
+        <details className="mt-3 rounded-2xl border bg-card p-3">
+          <summary className="cursor-pointer text-sm font-semibold">Entregues hoje ({delivered.length})</summary>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            {delivered.map((o) => (
+              <li key={o.id}>
+                <button type="button" onClick={() => open(o)} className="flex w-full items-center justify-between gap-2 rounded-lg border bg-background px-3 py-2 text-left text-sm">
+                  <span className="truncate">#{o.number} · {o.customer_name}</span>
+                  <span className="shrink-0 font-semibold">{brl(o.total)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+      {cancelled.length > 0 && (
+        <section aria-label="Cancelados" className="mt-4 rounded-2xl border bg-card p-3">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-destructive">Cancelados hoje</h2>
+            <Button variant="outline" size="sm" onClick={clearCancelled}><Trash2 />Limpar cancelados</Button>
           </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {visible
-              .filter((o) => o.status === "cancelled")
-              .map((order) => (
-                <article key={order.id} className="min-w-0 rounded-lg border bg-card p-4">
-                  <Button variant="link" className="h-auto p-0" onClick={() => setSelected(order.id)}>
-                    #{order.number} · {order.customer_name}
-                  </Button>
-                  <p className="mt-2 break-words text-sm text-muted-foreground">{order.cancellation_reason}</p>
-                  <p className="mt-3 text-sm">{brl(order.total)} · Cancelado</p>
-                  <Button variant="outline" className="mt-3 w-full" onClick={() => setSelected(order.id)}>
-                    <Package />
-                    Detalhes
-                  </Button>
-                </article>
-              ))}
-          </div>
+          <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            {cancelled.map((o) => (
+              <li key={o.id}>
+                <button type="button" onClick={() => open(o)} className="w-full rounded-lg border bg-background px-3 py-2 text-left text-sm">
+                  <span className="block truncate font-medium">#{o.number} · {o.customer_name}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{o.cancellation_reason}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
-      <Dialog
-        open={!!detail}
-        onOpenChange={(value) => {
-          if (!value) setSelected(null);
-        }}
-      >
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      {showCancelledOnly && cancelled.length === 0 && <p className="mt-4 text-sm text-muted-foreground">Nenhum pedido cancelado hoje.</p>}
+
+      {/* Right detail panel */}
+      <Sheet open={!!detail} onOpenChange={(value) => { if (!value) { setSelected(null); setCancelIntent(false); } }}>
+        <SheetContent side="right" className="w-full gap-0 overflow-y-auto p-0 sm:max-w-md">
           {detail && (
             <>
-              <DialogTitle>Pedido #{detail.number}</DialogTitle>
-              <DialogDescription>
-                {time(detail.created_at)} · {detail.customer_name}
-              </DialogDescription>
-              <div className="space-y-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <MapPin className="size-4 shrink-0 text-primary" />
-                  <p className="break-words">{detail.fulfillment === "pickup" ? "Retirada na loja" : detail.address}</p>
-                </div>
-                <p className="text-muted-foreground">WhatsApp: {detail.customer_phone}</p>
-                <ul className="divide-y">
-                  {detail.items.map((item, index) => (
-                    <li key={index} className="flex justify-between gap-3 py-3">
-                      <span className="break-words">
-                        {item.qty}× {item.name}
-                        {item.option && (
-                          <span className="block text-xs text-primary">
-                            {item.optionLabel}: {item.option}
-                          </span>
-                        )}
-                      </span>
-                      <span className="shrink-0">{brl(item.qty * item.price)}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="space-y-2 border-y py-3">
-                  <p className="flex justify-between">
-                    <span>Produtos</span>
-                    <span>{brl(detail.subtotal)}</span>
-                  </p>
-                  <p className="flex justify-between">
-                    <span>{detail.fulfillment === "pickup" ? "Retirada na loja" : `Entrega ${detail.delivery_zone}`}</span>
+              <div className="border-b p-5 pr-12">
+                <SheetTitle className="text-lg">Pedido #{detail.number} · {detail.customer_name}</SheetTitle>
+                <SheetDescription>Recebido às {clock(detail.created_at)} · WhatsApp {detail.customer_phone}</SheetDescription>
+              </div>
+              <div className="space-y-5 p-5 text-sm">
+                <section aria-label="Produtos">
+                  <ul className="space-y-2">
+                    {detail.items.map((item, index) => (
+                      <li key={index} className="flex justify-between gap-3">
+                        <span className="min-w-0 break-words">
+                          <strong>{item.qty}x</strong> {item.name}
+                          {item.option && <span className="block text-xs text-primary">{item.optionLabel}: {item.option}</span>}
+                          {item.qty > 1 && <span className="block text-xs text-muted-foreground">{brl(item.price)} cada</span>}
+                        </span>
+                        <span className="shrink-0">{brl(item.qty * item.price)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-3 space-y-1 border-t pt-3">
+                    <p className="flex justify-between text-muted-foreground"><span>Produtos</span><span>{brl(detail.subtotal)}</span></p>
+                    {!!detail.coupon_discount && <p className="flex justify-between text-muted-foreground"><span>Cupom {detail.coupon_code}</span><span>- {brl(detail.coupon_discount)}</span></p>}
+                    <p className="flex justify-between text-muted-foreground">
+                      <span>{isPickup(detail) ? "Retirada" : `Entrega ${detail.delivery_zone}`}</span>
+                      <span>{isPickup(detail) ? "Sem taxa" : detail.delivery_confirmed ? brl(detail.delivery_fee) : "A confirmar"}</span>
+                    </p>
+                    <p className="flex justify-between text-base font-bold"><span>Total</span><span>{brl(detail.total)}</span></p>
+                  </div>
+                </section>
+
+                <section aria-label="Entrega e pagamento" className="space-y-2 border-t pt-4">
+                  <p className="flex items-center gap-2 font-semibold">{isPickup(detail) ? <ShoppingBag className="size-4 text-primary" /> : <Bike className="size-4 text-primary" />}{isPickup(detail) ? "Retirada na loja" : "Delivery"}</p>
+                  {!isPickup(detail) && <p className="flex gap-2"><MapPin className="mt-0.5 size-4 shrink-0 text-primary" /><span className="break-words">{detail.address}</span></p>}
+                  <p className="flex gap-2">
+                    <CreditCard className="mt-0.5 size-4 shrink-0 text-primary" />
                     <span>
-                      {detail.fulfillment === "pickup" ? "Sem taxa" : detail.delivery_confirmed ? brl(detail.delivery_fee) : "A confirmar"}
+                      {detail.payment}{" "}
+                      <span className="text-muted-foreground">({isPix(detail.payment) ? "confira o comprovante" : "cobrar na entrega"})</span>
+                      {detail.change_for && <span className="block text-muted-foreground">Troco para {detail.change_for}</span>}
                     </span>
                   </p>
-                  <p className="flex justify-between font-bold">
-                    <span>Total</span>
-                    <span>{brl(detail.total)}</span>
-                  </p>
+                  {detail.notes && <p className="rounded-lg bg-muted/60 px-3 py-2"><strong className="text-primary">Obs:</strong> {detail.notes}</p>}
+                </section>
+
+                <div className="grid gap-2">
+                  <Button className="w-full bg-kanban-prep font-semibold text-kanban-ink hover:bg-kanban-prep/90" onClick={() => setPrintJob({ order: detail, kitchen: true })}>
+                    <Printer />Imprimir p/ Cozinha
+                  </Button>
+                  <Button variant="outline" className="w-full border-kanban-prep text-kanban-prep" aria-label={`Imprimir pedido ${detail.number}`} onClick={() => setPrintJob({ order: detail, kitchen: false })}>
+                    <Printer />Imprimir Cupom
+                  </Button>
                 </div>
-                <p>
-                  Pagamento: {detail.payment}
-                  {detail.change_for && ` · Troco para ${detail.change_for}`}
-                </p>
-                {detail.notes && (
-                  <p className="break-words text-muted-foreground">Observações: {detail.notes}</p>
+
+                {!isPickup(detail) && detail.status !== "cancelled" && (
+                  <section aria-label="Entregador" className="space-y-3 border-t pt-4">
+                    <label className="block">
+                      Nome do motoboy
+                      <input key={`c-${detail.id}`} className="field mt-2" maxLength={60} placeholder="Ex.: Carlos" defaultValue={detail.courier_name ?? ""} disabled={!!busy} onBlur={(e) => void saveField(detail, "courier", e.target.value)} aria-label={`Motoboy do pedido ${detail.number}`} />
+                    </label>
+                    <label className="block">
+                      Link de rastreio do entregador
+                      <input key={`t-${detail.id}`} className="field mt-2" type="url" inputMode="url" placeholder="https://… (cole o link do aplicativo de entrega)" defaultValue={detail.tracking_url ?? ""} disabled={!!busy} onBlur={(e) => void saveField(detail, "tracking", e.target.value)} aria-label={`Link de rastreio do pedido ${detail.number}`} />
+                      <span className="mt-1 block text-xs text-muted-foreground">O cliente acompanha a entrega por esse link.</span>
+                    </label>
+                    <Button asChild variant="outline" size="sm" className="w-full">
+                      <a href={whatsappTo(null, courierMessage(detail))} target="_blank" rel="noopener noreferrer"><Bike />Enviar dados para o motoboy</a>
+                    </Button>
+                  </section>
                 )}
-                {detail.fulfillment === "delivery" && detail.status !== "cancelled" && (
-                  <label className="block">
-                    Link de rastreio do entregador
-                    <input
-                      key={detail.id}
-                      className="field mt-2"
-                      type="url"
-                      inputMode="url"
-                      placeholder="https://… (cole o link do aplicativo de entrega)"
-                      defaultValue={detail.tracking_url ?? ""}
-                      disabled={!!busy}
-                      onBlur={(e) => void saveTracking(detail, e.target.value)}
-                      aria-label={`Link de rastreio do pedido ${detail.number}`}
-                    />
-                    <span className="mt-1 block text-xs text-muted-foreground">
-                      O cliente acompanha a entrega por esse link. Deixe em branco para remover.
-                    </span>
-                  </label>
-                )}
+
+                <section aria-label="Etapas" className="border-t pt-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Andamento</p>
+                  {detail.status === "cancelled" ? <p className="text-destructive">Pedido cancelado.</p> : timeline(detail)}
+                  {detail.status !== "cancelled" && (
+                    <label className="mt-4 block">
+                      Mudar etapa manualmente
+                      <select aria-label="Etapa do pedido" className="field mt-2" disabled={!!busy} value={detail.status} onChange={(e) => void move(detail, e.target.value as OrderStatus)}>
+                        {ORDER_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{stage.label}</option>)}
+                      </select>
+                    </label>
+                  )}
+                </section>
+
                 {detail.status !== "cancelled" && (
-                  <label className="block">
-                    Etapa
-                    <select
-                      aria-label="Etapa do pedido"
-                      className="field mt-2"
-                      disabled={!!busy}
-                      value={detail.status}
-                      onChange={(e) => void move(detail, e.target.value as OrderStatus)}
-                    >
-                      {ORDER_STAGES.map((stage) => (
-                        <option key={stage.id} value={stage.id}>
-                          {stage.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                <OrderCancellation key={detail.id} order={detail} disabled={!!busy} />
-                <Button asChild className="w-full bg-whatsapp text-whatsapp-foreground">
-                  <a href={orderWhatsApp(detail)} target="_blank" rel="noopener noreferrer">
-                    <MessageCircle />
-                    Avisar cliente no WhatsApp
-                  </a>
-                </Button>
-                {detail.status !== "cancelled" && (
-                  <div className="space-y-2 rounded-xl border p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mensagens rápidas</p>
+                  <section aria-label="Mensagens" className="space-y-2 border-t pt-4">
+                    <Button asChild className="w-full bg-whatsapp text-whatsapp-foreground">
+                      <a href={orderWhatsApp(detail)} target="_blank" rel="noopener noreferrer"><MessageCircle />Avisar cliente no WhatsApp</a>
+                    </Button>
                     <div className="flex flex-wrap gap-2">
                       {quickMessages(detail).map((m) => (
                         <Button key={m.id} asChild variant="outline" size="sm" className="text-whatsapp">
                           <a href={whatsappTo(detail.customer_phone, m.text)} target="_blank" rel="noopener noreferrer">{m.label}</a>
                         </Button>
                       ))}
-                      {detail.fulfillment !== "pickup" && (
-                        <Button asChild variant="outline" size="sm">
-                          <a href={whatsappTo(null, courierMessage(detail))} target="_blank" rel="noopener noreferrer">Enviar para o motoboy</a>
-                        </Button>
-                      )}
                     </div>
-                  </div>
+                  </section>
                 )}
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setSelected(null);
-                    setPrintOrder(detail);
-                  }}
-                >
-                  <Printer />
-                  Imprimir pedido
-                </Button>
-                {detail.status === "delivered" && (
-                  <p className="flex items-center gap-2 text-whatsapp">
-                    <CheckCircle2 className="size-4" />
-                    Entregue
-                  </p>
-                )}
+
+                <div className={cancelIntent ? "rounded-xl border border-destructive/40 p-3" : ""}>
+                  {cancelIntent && detail.status !== "cancelled" && <p className="mb-2 text-sm font-semibold text-destructive">Para recusar, informe o motivo e confirme o cancelamento.</p>}
+                  <OrderCancellation key={detail.id} order={detail} disabled={!!busy} />
+                </div>
+                {detail.status === "delivered" && <p className="flex items-center gap-2 text-whatsapp"><CheckCircle2 className="size-4" />Entregue</p>}
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </section>
   );
 }

@@ -38,6 +38,11 @@
   --color-overlay: var(--overlay);
   --color-order-preparing: var(--order-preparing);
   --color-order-delivery: var(--order-delivery);
+  --color-kanban-new: var(--kanban-new);
+  --color-kanban-prep: var(--kanban-prep);
+  --color-kanban-ready: var(--kanban-ready);
+  --color-kanban-transit: var(--kanban-transit);
+  --color-kanban-ink: var(--kanban-ink);
   --shadow-soft: var(--shadow-soft-value);
 }
 :root,
@@ -63,6 +68,11 @@
   --photo-foreground: #f8fafc;
   --order-preparing: #f59e0b;
   --order-delivery: #3b82f6;
+  --kanban-new: #facc15;
+  --kanban-prep: #3b82f6;
+  --kanban-ready: #22c55e;
+  --kanban-transit: #94a3b8;
+  --kanban-ink: #0b0b10;
   --overlay: rgba(9, 9, 11, 0.9);
   --shadow-soft-value: 0 14px 40px rgba(0, 0, 0, 0.65);
   --receipt-paper: #ffffff;

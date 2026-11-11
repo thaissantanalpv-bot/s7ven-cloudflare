@@ -329,6 +329,7 @@ export type Database = {
           change_for: string
           coupon_code: string | null
           coupon_discount: number | null
+          courier_name: string
           created_at: string
           customer_name: string
           customer_phone: string
@@ -346,6 +347,7 @@ export type Database = {
           request_id: string
           source: string
           status: string
+          status_times: Json
           stock_reservations: Json | null
           stock_restored_at: string | null
           subtotal: number
@@ -367,6 +369,7 @@ export type Database = {
           change_for?: string
           coupon_code?: string | null
           coupon_discount?: number | null
+          courier_name?: string
           created_at?: string
           customer_name: string
           customer_phone: string
@@ -384,6 +387,7 @@ export type Database = {
           request_id: string
           source?: string
           status?: string
+          status_times?: Json
           stock_reservations?: Json | null
           stock_restored_at?: string | null
           subtotal: number
@@ -405,6 +409,7 @@ export type Database = {
           change_for?: string
           coupon_code?: string | null
           coupon_discount?: number | null
+          courier_name?: string
           created_at?: string
           customer_name?: string
           customer_phone?: string
@@ -422,6 +427,7 @@ export type Database = {
           request_id?: string
           source?: string
           status?: string
+          status_times?: Json
           stock_reservations?: Json | null
           stock_restored_at?: string | null
           subtotal?: number

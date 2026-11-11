@@ -21,6 +21,12 @@ export const ORDER_STAGES = [
     message: "seu pedido está em preparo.",
   },
   {
+    id: "ready",
+    label: "Pronto",
+    tone: "text-whatsapp",
+    message: "seu pedido está pronto!",
+  },
+  {
     id: "out_for_delivery",
     label: "Saiu para entrega",
     tone: "text-order-delivery",
@@ -33,8 +39,8 @@ export const ORDER_STAGES = [
     message: "seu pedido foi entregue. Obrigado por escolher a S7VEN!",
   },
 ] as const;
-export const workflowStatusSchema = z.enum(["received", "preparing", "out_for_delivery", "delivered"]);
-export const statusSchema = z.enum(["received", "preparing", "out_for_delivery", "delivered", "cancelled"]);
+export const workflowStatusSchema = z.enum(["received", "preparing", "ready", "out_for_delivery", "delivered"]);
+export const statusSchema = z.enum(["received", "preparing", "ready", "out_for_delivery", "delivered", "cancelled"]);
 export const cancelOrderSchema = z.object({
   id: z.string().uuid(),
   reason: z.string().trim().min(1, "Informe o motivo do cancelamento").max(300, "Use até 300 caracteres"),
@@ -111,6 +117,9 @@ export type Order = {
   total: number;
   status: OrderStatus;
   tracking_url?: string | null;
+  courier_name?: string;
+  /** When the order entered each stage (ISO), stamped by the database. */
+  status_times?: Partial<Record<OrderStatus, string>>;
   rating_token?: string | null;
   cancellation_reason?: string | null;
   cancelled_at?: string | null;

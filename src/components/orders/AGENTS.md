@@ -1,1 +1,2 @@
 - Print admin orders in escaped ephemeral iframes; store only local printer preferences because hardware pairing is device-owned.
+- Board flow is received → preparing → ready → out_for_delivery (delivery only) → delivered; stage times come from the DB-stamped `status_times`, and countdown bars are estimates, never stored deadlines.

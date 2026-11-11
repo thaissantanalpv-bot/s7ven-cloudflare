@@ -153,6 +153,7 @@ export const listOrders = createServerFn({ method: "POST" })
           fulfillment: z.enum(["delivery", "pickup"]).parse(row.fulfillment),
           status: statusSchema.parse(row.status),
           cancellation_stock_notes: z.array(z.string()).parse(row.cancellation_stock_notes),
+          status_times: z.record(z.string(), z.string()).catch({}).parse(row.status_times) as Order["status_times"],
           items: row.items as Order["items"],
           subtotal: Number(row.subtotal),
           delivery_fee: Number(row.delivery_fee),
@@ -209,6 +210,29 @@ export const updateOrderTracking = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error || !saved)
       throw new Error("Não foi possível salvar o link de rastreio. Atualize o quadro e tente novamente.");
+    return { saved: true };
+  });
+export const updateOrderCourier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid(), courierName: z.string().trim().max(60) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: admin, error: roleError } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (roleError || !admin) throw new Error("Acesso restrito à administração.");
+    const { data: saved, error } = await context.supabase
+      .from("orders")
+      .update({ courier_name: data.courierName, updated_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .eq("source", "catalog")
+      .eq("fulfillment", "delivery")
+      .neq("status", "cancelled")
+      .select("id")
+      .maybeSingle();
+    if (error || !saved) throw new Error("Não foi possível salvar o entregador.");
     return { saved: true };
   });
 // Public, narrowly scoped read: only the browser that placed the order knows both the order id and its checkout key.

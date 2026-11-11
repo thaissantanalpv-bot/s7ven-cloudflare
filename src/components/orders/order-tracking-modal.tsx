@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Package, CheckCircle2, Truck, ChefHat, Clock } from "lucide-react";
+import { Package, CheckCircle2, Truck, ChefHat, Clock, PackageCheck } from "lucide-react";
 import { orderTracking } from "@/lib/orders.functions";
 import { ORDER_STAGES } from "@/lib/orders";
 
-const ICONS = [Clock, ChefHat, Truck, CheckCircle2] as const;
+const ICONS = [Clock, ChefHat, PackageCheck, Truck, CheckCircle2] as const;
 
 export function OrderTrackingStatus({ orderId, requestId }: { orderId: string; requestId: string }) {
   const track = useServerFn(orderTracking);

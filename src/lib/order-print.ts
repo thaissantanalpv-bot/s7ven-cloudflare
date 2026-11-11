@@ -15,9 +15,10 @@ export function parsePrinterPreferences(value: string | null): PrinterPreference
   } catch { return { ...DEFAULT_PRINTER }; }
 }
 const escape = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char);
-export function orderReceiptHtml(order: Order, paper: PrinterPreferences["paper"], colors: { paper: string; ink: string }) {
+export function orderReceiptHtml(order: Order, paper: PrinterPreferences["paper"], colors: { paper: string; ink: string }, options: { kitchen?: boolean } = {}) {
+  const kitchen = !!options.kitchen;
   const date = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" }).format(new Date(order.created_at));
-  const items = order.items.map(item => `<li><strong>${escape(item.qty)}× ${escape(item.name)}</strong>${item.option ? `<div>${escape(item.optionLabel)}: ${escape(item.option)}</div>` : ""}<div class="amount">${escape(brl(item.qty * item.price))}</div></li>`).join("");
+  const items = order.items.map(item => `<li><strong>${escape(item.qty)}× ${escape(item.name)}</strong>${item.option ? `<div>${escape(item.optionLabel)}: ${escape(item.option)}</div>` : ""}${kitchen ? "" : `<div class="amount">${escape(brl(item.qty * item.price))}</div>`}</li>`).join("");
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>Pedido #${escape(order.number)} — S7VEN</title><style>
   :root { --paper: ${colors.paper}; --ink: ${colors.ink}; }
   @page { size: auto; margin: 0; } * { box-sizing: border-box; }
@@ -29,8 +30,8 @@ export function orderReceiptHtml(order: Order, paper: PrinterPreferences["paper"
   ul { list-style: none; padding: 0; margin: 0; } li { padding: 6px 0; break-inside: avoid; }
   .amount { font-weight: bold; } .row { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 8px; } .row > span:last-child { white-space: nowrap; }
   .total { font-size: 17px; font-weight: bold; } footer { border-top: 1px dashed var(--ink); margin-top: 12px; padding-top: 8px; text-align: center; font-size: 10px; }
-  </style></head><body><header><h1>${escape(STORE_NAME)}</h1><h2>Pedido #${escape(order.number)}</h2><p>${escape(date)}</p><strong>${order.fulfillment === "pickup" ? "RETIRADA NA LOJA" : "VIA DO ENTREGADOR"}</strong></header>
+  </style></head><body><header><h1>${escape(STORE_NAME)}</h1><h2>Pedido #${escape(order.number)}</h2><p>${escape(date)}</p><strong>${kitchen ? "VIA DA COZINHA / SEPARAÇÃO" : order.fulfillment === "pickup" ? "RETIRADA NA LOJA" : "VIA DO ENTREGADOR"}</strong></header>
   <section><p><strong>Cliente:</strong> ${escape(order.customer_name)}</p><p><strong>WhatsApp:</strong> ${escape(order.customer_phone)}</p>${order.fulfillment === "pickup" ? "<p><strong>Retirada na loja — sem entrega</strong></p>" : `<p><strong>Endereço de entrega:</strong><br>${escape(order.address)}</p>`}</section>
-  ${order.status === "cancelled" ? `<section><strong>CANCELADO</strong><p>Motivo: ${escape(order.cancellation_reason)}</p></section>` : ""}<section><ul>${items}</ul></section><section class="values"><p><strong>Produtos:</strong> ${escape(brl(order.subtotal))}</p><p><strong>${order.fulfillment === "pickup" ? "Retirada:" : "Taxa de entrega:"}</strong> ${order.fulfillment === "pickup" ? "Sem taxa" : order.delivery_confirmed ? escape(brl(order.delivery_fee)) : "A confirmar"}</p><p class="total">TOTAL: ${escape(brl(order.total))}</p></section>
-  <section><p><strong>Pagamento:</strong> ${escape(order.payment)}</p>${order.change_for ? `<p><strong>Troco para:</strong> ${escape(order.change_for)}</p>` : ""}${order.notes ? `<p><strong>Observações:</strong> ${escape(order.notes)}</p>` : ""}</section><footer>Via de pedido · Não é documento fiscal</footer></body></html>`;
+  ${order.status === "cancelled" ? `<section><strong>CANCELADO</strong><p>Motivo: ${escape(order.cancellation_reason)}</p></section>` : ""}<section><ul>${items}</ul></section>${kitchen ? (order.notes ? `<section><p><strong>Observações:</strong> ${escape(order.notes)}</p></section>` : "") + `<footer>Via de separação · Não é documento fiscal</footer></body></html>` : `<section class="values"><p><strong>Produtos:</strong> ${escape(brl(order.subtotal))}</p><p><strong>${order.fulfillment === "pickup" ? "Retirada:" : "Taxa de entrega:"}</strong> ${order.fulfillment === "pickup" ? "Sem taxa" : order.delivery_confirmed ? escape(brl(order.delivery_fee)) : "A confirmar"}</p><p class="total">TOTAL: ${escape(brl(order.total))}</p></section>
+  <section><p><strong>Pagamento:</strong> ${escape(order.payment)}</p>${order.change_for ? `<p><strong>Troco para:</strong> ${escape(order.change_for)}</p>` : ""}${order.notes ? `<p><strong>Observações:</strong> ${escape(order.notes)}</p>` : ""}</section><footer>Via de pedido · Não é documento fiscal</footer></body></html>`}`;
 }

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import type { Order } from "@/lib/orders";
 import { DEFAULT_PRINTER, PRINTER_STORAGE_KEY, parsePrinterPreferences, parsePaperWidth, orderReceiptHtml, type PrinterPreferences } from "@/lib/order-print";
-export function OrderPrinting({ order, onClose }: { order: Order | null; onClose: () => void }) {
+export function OrderPrinting({ order, onClose, kitchen = false }: { order: Order | null; onClose: () => void; kitchen?: boolean }) {
   const [preferences, setPreferences] = useState<PrinterPreferences>(DEFAULT_PRINTER);
   const [draft, setDraft] = useState<PrinterPreferences>(DEFAULT_PRINTER);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -20,8 +20,8 @@ export function OrderPrinting({ order, onClose }: { order: Order | null; onClose
     setReady(false); setError("");
     if (!order) { setHtml(""); return; }
     const tokens = getComputedStyle(document.documentElement);
-    setHtml(orderReceiptHtml(order, preferences.paper, { paper: tokens.getPropertyValue("--receipt-paper").trim(), ink: tokens.getPropertyValue("--receipt-ink").trim() }));
-  }, [order, preferences.paper]);
+    setHtml(orderReceiptHtml(order, preferences.paper, { paper: tokens.getPropertyValue("--receipt-paper").trim(), ink: tokens.getPropertyValue("--receipt-ink").trim() }, { kitchen }));
+  }, [order, preferences.paper, kitchen]);
   const save = () => {
     setPreferences(draft);
     try { localStorage.setItem(PRINTER_STORAGE_KEY, JSON.stringify(draft)); setMessage("Preferências salvas neste aparelho."); }
@@ -46,7 +46,7 @@ export function OrderPrinting({ order, onClose }: { order: Order | null; onClose
     </Dialog>
     <Dialog open={!!order} onOpenChange={open => { if (!open) onClose(); }}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
-        <DialogTitle>Imprimir pedido #{order?.number}</DialogTitle>
+        <DialogTitle>{kitchen ? "Via da cozinha" : "Imprimir cupom"} · pedido #{order?.number}</DialogTitle>
         <DialogDescription>{preferences.name || "Impressora térmica"} · Bobina {preferences.paper} mm</DialogDescription>
         <div className="flex justify-center overflow-hidden rounded-md bg-photo py-3">
           {html && <iframe ref={frame} title="Via impressa do pedido" className={`receipt-preview receipt-preview-${preferences.paper}`} srcDoc={html} onLoad={() => setReady(true)} />}

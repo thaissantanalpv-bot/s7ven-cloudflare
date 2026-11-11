@@ -234,7 +234,7 @@ function Admin() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-5">
+        <div className={`mx-auto flex ${view === "orders" ? "max-w-[1700px]" : "max-w-7xl"} items-center justify-between gap-3 px-4 py-4 sm:px-5`}>
           <div className="flex min-w-0 items-center gap-3">
             <div className="min-w-0">
               <p className="text-xs uppercase text-primary">Área da loja</p>
@@ -249,7 +249,7 @@ function Admin() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-7 pb-28 sm:px-5 md:pb-10">
+      <main className={`mx-auto ${view === "orders" ? "max-w-[1700px]" : "max-w-7xl"} px-4 py-7 pb-28 sm:px-5 md:pb-10`}>
         {permission.isPending ? (
           <p className="py-12 text-muted-foreground">Conferindo seu acesso…</p>
         ) : permission.error ? (
