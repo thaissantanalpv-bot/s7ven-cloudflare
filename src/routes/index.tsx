@@ -47,7 +47,7 @@ import { ProductTile } from "@/components/catalog/product-tile";
 import { ProductDetail } from "@/components/catalog/product-detail";
 import { keyOf, SEP, type Cart } from "@/components/catalog/cart-keys";
 import { catalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
-import { available, discountPercent, productPhotos, visibleProducts, type CatalogProduct } from "@/lib/catalog";
+import { available, discountPercent, itemPhoto, productPhotos, visibleProducts, type CatalogProduct } from "@/lib/catalog";
 import { ProductGallery } from "@/components/products/product-gallery";
 import { ProductCardPhotos } from "@/components/products/product-card-photos";
 import { ComboBuilder } from "@/components/products/combo-builder";
@@ -1136,11 +1136,15 @@ function Catalog() {
               <ul className="max-h-32 space-y-2 overflow-y-auto pr-1">
                 {items.map((i) => (
                   <li key={i.key} className="flex items-center gap-2.5">
-                    {i.product.image ? (
-                      <img src={i.product.image} alt={i.product.name} loading="lazy" decoding="async" className="size-10 shrink-0 rounded-md object-contain" />
-                    ) : (
-                      <span className="text-2xl">{i.product.emoji}</span>
-                    )}
+                    {(() => {
+                      // The variation's own photo wins over the cover, so the customer sees exactly what they picked.
+                      const photo = itemPhoto(i.product, i.option);
+                      return photo ? (
+                        <img src={photo} alt={i.product.name} loading="lazy" decoding="async" className="size-10 shrink-0 rounded-md object-contain" />
+                      ) : (
+                        <span className="text-2xl">{i.product.emoji}</span>
+                      );
+                    })()}
                     <div className="min-w-0 flex-1 leading-tight">
                       <p className="truncate text-sm font-medium">{i.product.name}</p>
                       {i.option && <p className="truncate text-xs text-primary">{i.product.optionLabel}: {i.option}</p>}

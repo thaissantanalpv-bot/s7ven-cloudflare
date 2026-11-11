@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { available, type CatalogProduct } from "@/lib/catalog";
+import { available, itemPhoto, type CatalogProduct } from "@/lib/catalog";
 import { type ComboSelection } from "@/lib/combos";
 import { validateCartAvailability } from "@/lib/orders";
 import { brl } from "@/lib/products";
@@ -36,7 +36,7 @@ export function ComboBuilder({ product, products, open, onOpenChange, onAdd }: {
       const k = `${group.id}:${id}`;
       const option = options[k] ?? "";
       const ready = !p.variations.length || Boolean(option.trim());
-      return <div key={id} className="py-3"><div className="flex items-center gap-3">{p.image && <img src={p.image} alt={p.name} className="size-12 shrink-0 rounded object-contain bg-photo" />}<span className="min-w-0 flex-1 text-sm">{p.name}</span><Button size="icon" variant="outline" title="Adicionar item" aria-label={`Adicionar ${p.name} em ${group.name}`} disabled={!ready || !available(p, option.trim()) || choices.filter(s => s.groupId === group.id).reduce((n, s) => n + s.qty, 0) >= group.quantity} onClick={() => change(group.id, id, option.trim(), 1)}><Plus /></Button></div>
+      return <div key={id} className="py-3"><div className="flex items-center gap-3">{(() => { const photo = itemPhoto(p, option.trim()); return photo ? <img src={photo} alt={p.name} className="size-12 shrink-0 rounded object-contain bg-photo" /> : null; })()}<span className="min-w-0 flex-1 text-sm">{p.name}</span><Button size="icon" variant="outline" title="Adicionar item" aria-label={`Adicionar ${p.name} em ${group.name}`} disabled={!ready || !available(p, option.trim()) || choices.filter(s => s.groupId === group.id).reduce((n, s) => n + s.qty, 0) >= group.quantity} onClick={() => change(group.id, id, option.trim(), 1)}><Plus /></Button></div>
         {p.variations.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{p.variations.map(v => <Button key={v.name} size="sm" variant={option === v.name ? "default" : "outline"} aria-pressed={option === v.name} disabled={!available(p, v.name)} onClick={() => setOptions(prev => ({ ...prev, [k]: v.name }))}>{v.name}</Button>)}{p.allowOther && <input className="field" aria-label={`Outro sabor de ${p.name}`} maxLength={40} placeholder="Outro sabor" value={p.variations.some(v => v.name === option) ? "" : option} onChange={e => setOptions(prev => ({ ...prev, [k]: e.target.value }))} />}</div>}
         {!available(p) && <p className="text-xs text-destructive">Indisponível</p>}
         {choices.filter(s => s.groupId === group.id && s.productId === id).map(s => <div key={s.option} className="mt-2 flex items-center gap-2 text-sm text-primary"><Button variant="ghost" size="icon" title="Remover item" aria-label={`Remover ${p.name} ${s.option}`} onClick={() => change(group.id, id, s.option, -1)}><Minus /></Button><input className="field w-20 px-2 text-center" type="number" min={1} max={group.quantity} step={1} inputMode="numeric" aria-label={`Quantidade de ${p.name} em ${group.name}`} value={s.qty} onChange={e => setQty(group.id, id, s.option, Number(e.target.value))} />× {p.name} {s.option && `(${s.option})`}</div>)}

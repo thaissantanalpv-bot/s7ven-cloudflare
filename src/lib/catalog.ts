@@ -125,6 +125,10 @@ export function productPhotos(p: Pick<CatalogProduct, "image" | "images">) {
 export function variationPhoto(p: Pick<CatalogProduct, "variationPhotos">, option: string) {
   return option ? p.variationPhotos?.[option] ?? "" : "";
 }
+/** Photo shown for a cart line, order item or combo item: the picked variation's own photo first, then the cover. */
+export function itemPhoto(p: Pick<CatalogProduct, "image" | "variationPhotos">, option: string) {
+  return variationPhoto(p, option) || p.image || "";
+}
 /** Whole-number discount percentage when a valid struck-through price exists, otherwise null. */
 export function discountPercent(p: Pick<CatalogProduct, "price" | "compareAtPrice">): number | null {
   const old = p.compareAtPrice;
