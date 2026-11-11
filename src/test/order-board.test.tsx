@@ -169,7 +169,7 @@ describe("Kanban order management", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Chamar entregador para o pedido 42" }));
     await waitFor(() => expect(row.status).toBe("out_for_delivery"));
     await waitFor(() => expect(replace).toHaveBeenCalledTimes(1));
-    expect(decodeURIComponent(replace.mock.calls[0]?.[0])).toContain("Entrega · pedido #42");
+    expect(replace.mock.calls[0]?.[0]).toBe("https://alfa-delivery.entregasexpressas.com.br/");
     fireEvent.click(await screen.findByRole("button", { name: "Concluir entrega do pedido 42" }));
     await waitFor(() => expect(row.status).toBe("delivered"));
     expect(screen.getByText("Pedido entregue")).toBeInTheDocument();

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+const ALFA_DELIVERY_URL = "https://alfa-delivery.entregasexpressas.com.br/";
 import { quickMessages, courierMessage, whatsappTo } from "@/lib/quick-messages";
 import { listOrders, updateOrderCourier, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
 import {
@@ -294,7 +295,7 @@ export function OrderBoard() {
               {isBusy ? "Salvando…" : <><ShoppingBag aria-hidden="true" />Pronto pra retirada</>}
             </Button>
           ) : (
-            <Button disabled={!!busy} className="mt-3 w-full bg-kanban-prep font-bold text-kanban-ink hover:bg-kanban-prep/90" aria-label={`Chamar entregador para o pedido ${order.number}`} onClick={() => void move(order, "out_for_delivery", (o) => whatsappTo(null, courierMessage(o)))}>
+            <Button disabled={!!busy} className="mt-3 w-full bg-kanban-prep font-bold text-kanban-ink hover:bg-kanban-prep/90" aria-label={`Chamar entregador para o pedido ${order.number}`} onClick={() => { void navigator.clipboard?.writeText(courierMessage(order).replace(/\*/g, "")).then(() => setNotice("Dados do pedido copiados. Cole no site da Alfa."), () => setError("Não consegui copiar os dados; use o painel do pedido.")); void move(order, "out_for_delivery", () => ALFA_DELIVERY_URL); }}>
               {isBusy ? "Salvando…" : <><Bike aria-hidden="true" />Chamar Entregador</>}
             </Button>
           ))}
