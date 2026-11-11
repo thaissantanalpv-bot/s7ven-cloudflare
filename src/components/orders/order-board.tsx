@@ -7,7 +7,6 @@ import {
   Bike,
   Check,
   CheckCircle2,
-  Clock,
   CreditCard,
   MapPin,
   MessageCircle,
@@ -41,16 +40,18 @@ import { StorePauseSwitch } from "@/components/store-pause-button";
 import { useOrderAlarm } from "./new-order-alarm";
 
 const CANCELLED_CLEARED_KEY = "s7ven-cancelled-cleared-at";
-/** Estimated minutes used for the countdown bars; informative only. */
-export const PREP_MINUTES = 20;
+/** Estimated minutes used for the countdown bar; informative only. */
 export const DELIVERY_MINUTES = 30;
 
 const COLUMNS = [
-  { id: "received", title: "Novos", subtitle: "Aguardando aceite", head: "bg-kanban-new text-kanban-ink", edge: "border-kanban-new/70", icon: BellRing },
-  { id: "preparing", title: "Em preparação", subtitle: "Pedidos aceitos", head: "bg-kanban-prep text-kanban-ink", edge: "border-kanban-prep/60", icon: Clock },
-  { id: "ready", title: "Prontos", subtitle: "Entrega / retirada", head: "bg-kanban-ready text-kanban-ink", edge: "border-kanban-ready/60", icon: PackageCheck },
-  { id: "out_for_delivery", title: "Em trânsito", subtitle: "Com o entregador", head: "bg-kanban-transit text-kanban-ink", edge: "border-kanban-transit/60", icon: Bike },
+  { id: "received", title: "Pedidos novos", subtitle: "Aguardando aceite", head: "bg-kanban-new text-kanban-ink", edge: "border-kanban-new/70", icon: BellRing },
+  { id: "ready", title: "Pedidos prontos", subtitle: "Aguardando entrega / retirada", head: "bg-kanban-ready text-kanban-ink", edge: "border-kanban-ready/60", icon: PackageCheck },
+  { id: "out_for_delivery", title: "Saiu p/ entrega", subtitle: "Ou pronto pra retirada na loja", head: "bg-kanban-transit text-kanban-ink", edge: "border-kanban-transit/60", icon: Bike },
+  { id: "delivered", title: "Pedidos entregues", subtitle: "Concluídos hoje", head: "bg-whatsapp text-whatsapp-foreground", edge: "border-whatsapp/60", icon: CheckCircle2 },
 ] as const;
+
+/** Legacy "preparing" orders are shown in the "ready" column; the board flow no longer uses that stage. */
+const boardStatus = (status: OrderStatus) => (status === "preparing" ? "ready" : status);
 
 type Mode = "all" | "delivery" | "pickup";
 
@@ -98,7 +99,7 @@ function TimeBar({ order, status, minutes, label }: { order: Order; status: Orde
   return (
     <div className="mt-3">
       <div className="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(c.fraction * 100)}>
-        <div className={`h-full rounded-full transition-all ${c.late ? "bg-destructive" : status === "preparing" ? "bg-kanban-prep" : "bg-kanban-transit"}`} style={{ width: `${Math.max(4, c.fraction * 100)}%` }} />
+        <div className={`h-full rounded-full transition-all ${c.late ? "bg-destructive" : "bg-kanban-transit"}`} style={{ width: `${Math.max(4, c.fraction * 100)}%` }} />
       </div>
       <p className={`mt-1 text-xs ${c.late ? "font-semibold text-destructive" : "text-muted-foreground"}`}>
         {c.late ? `Passou do tempo estimado (${minutes} min)` : `${c.remaining} min restante${c.remaining === 1 ? "" : "s"}`}
@@ -239,7 +240,7 @@ export function OrderBoard() {
   };
 
   const card = (order: Order) => {
-    const column = COLUMNS.find((c) => c.id === order.status) ?? COLUMNS[0];
+    const column = COLUMNS.find((c) => c.id === boardStatus(order.status)) ?? COLUMNS[0];
     const isBusy = busy === order.id;
     return (
       <article
@@ -270,40 +271,34 @@ export function OrderBoard() {
             )}
           </span>
         </button>
-        {order.status === "preparing" && <TimeBar order={order} status="preparing" minutes={PREP_MINUTES} label={`Tempo de preparo do pedido ${order.number}`} />}
         {order.status === "out_for_delivery" && <TimeBar order={order} status="out_for_delivery" minutes={DELIVERY_MINUTES} label={`Tempo de entrega do pedido ${order.number}`} />}
 
         {order.status === "received" && (
           <>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button disabled={!!busy} className="bg-whatsapp font-bold text-whatsapp-foreground hover:bg-whatsapp/90" aria-label="Aceitar pedido" onClick={() => void move(order, "preparing")}>
+              <Button disabled={!!busy} className="bg-whatsapp font-bold text-whatsapp-foreground hover:bg-whatsapp/90" aria-label="Aceitar pedido" onClick={() => void move(order, "ready")}>
                 {isBusy ? "Salvando…" : <><Check aria-hidden="true" />Aceitar</>}
               </Button>
               <Button variant="secondary" disabled={!!busy} aria-label={`Recusar pedido ${order.number}`} onClick={() => open(order, true)}>
                 Recusar
               </Button>
             </div>
-            <Button variant="ghost" size="sm" className="mt-1 w-full text-xs text-whatsapp" disabled={!!busy} aria-label={`Aceitar e avisar pedido ${order.number} no WhatsApp`} onClick={() => void move(order, "preparing", orderWhatsApp)}>
+            <Button variant="ghost" size="sm" className="mt-1 w-full text-xs text-whatsapp" disabled={!!busy} aria-label={`Aceitar e avisar pedido ${order.number} no WhatsApp`} onClick={() => void move(order, "ready", orderWhatsApp)}>
               <MessageCircle className="size-3" />Aceitar e avisar no WhatsApp
             </Button>
           </>
         )}
-        {order.status === "preparing" && (
-          <Button disabled={!!busy} className="mt-3 w-full bg-kanban-prep font-bold text-kanban-ink hover:bg-kanban-prep/90" aria-label={`Marcar pedido ${order.number} como pronto`} onClick={() => void move(order, "ready")}>
-            {isBusy ? "Salvando…" : <><PackageCheck aria-hidden="true" />Pedido pronto</>}
-          </Button>
-        )}
-        {order.status === "ready" &&
+        {boardStatus(order.status) === "ready" && order.status !== "cancelled" &&
           (isPickup(order) ? (
-            <Button disabled={!!busy} className="mt-3 w-full bg-whatsapp font-bold text-whatsapp-foreground hover:bg-whatsapp/90" aria-label={`Entregar pedido ${order.number} ao cliente`} onClick={() => void move(order, "delivered")}>
-              {isBusy ? "Salvando…" : "Entregar ao Cliente"}
+            <Button disabled={!!busy} className="mt-3 w-full bg-kanban-ready font-bold text-kanban-ink hover:bg-kanban-ready/90" aria-label={`Marcar pedido ${order.number} como pronto para retirada`} onClick={() => void move(order, "out_for_delivery")}>
+              {isBusy ? "Salvando…" : <><ShoppingBag aria-hidden="true" />Pronto pra retirada</>}
             </Button>
           ) : (
             <Button disabled={!!busy} className="mt-3 w-full bg-kanban-prep font-bold text-kanban-ink hover:bg-kanban-prep/90" aria-label={`Chamar entregador para o pedido ${order.number}`} onClick={() => void move(order, "out_for_delivery", (o) => whatsappTo(null, courierMessage(o)))}>
               {isBusy ? "Salvando…" : <><Bike aria-hidden="true" />Chamar Entregador</>}
             </Button>
           ))}
-        {order.status === "ready" && (
+        {boardStatus(order.status) === "ready" && order.status !== "cancelled" && (
           <Button variant="ghost" size="sm" className="mt-1 w-full text-xs text-whatsapp" asChild>
             <a href={orderWhatsApp(order)} target="_blank" rel="noopener noreferrer" aria-label={`Avisar cliente do pedido ${order.number} que está pronto`}>
               <MessageCircle className="size-3" />Avisar cliente que está pronto
@@ -311,9 +306,12 @@ export function OrderBoard() {
           </Button>
         )}
         {order.status === "out_for_delivery" && (
-          <Button variant="outline" disabled={!!busy} className="mt-3 w-full" aria-label={`Concluir entrega do pedido ${order.number}`} onClick={() => void move(order, "delivered")}>
-            {isBusy ? "Salvando…" : <><CheckCircle2 aria-hidden="true" />Concluir entrega</>}
+          <Button disabled={!!busy} className="mt-3 w-full bg-whatsapp font-bold text-whatsapp-foreground hover:bg-whatsapp/90" aria-label={`Concluir entrega do pedido ${order.number}`} onClick={() => void move(order, "delivered")}>
+            {isBusy ? "Salvando…" : <><CheckCircle2 aria-hidden="true" />{isPickup(order) ? "Entregar ao Cliente" : "Concluir entrega"}</>}
           </Button>
+        )}
+        {order.status === "delivered" && (
+          <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-whatsapp"><CheckCircle2 className="size-4" />Pedido entregue</p>
         )}
       </article>
     );
@@ -322,16 +320,14 @@ export function OrderBoard() {
   const timeline = (order: Order) => {
     const t = order.status_times ?? {};
     const reached = (s: OrderStatus) => {
-      const order_ = ["received", "preparing", "ready", "out_for_delivery", "delivered"] as const;
-      return order.status !== "cancelled" && order_.indexOf(order.status as (typeof order_)[number]) >= order_.indexOf(s as (typeof order_)[number]);
+      const flow = ["received", "ready", "out_for_delivery", "delivered"] as const;
+      return order.status !== "cancelled" && flow.indexOf(boardStatus(order.status) as (typeof flow)[number]) >= flow.indexOf(s as (typeof flow)[number]);
     };
     const steps: { label: string; status: OrderStatus; at?: string | undefined }[] = [
-      { label: "Recebido", status: "received", at: t.received ?? order.created_at },
-      { label: "Aceito", status: "preparing", at: t.preparing },
-      { label: "Em preparo", status: "preparing", at: t.preparing },
-      { label: "Pronto", status: "ready", at: t.ready },
-      ...(isPickup(order) ? [] : [{ label: "Saiu para entrega", status: "out_for_delivery" as const, at: t.out_for_delivery }]),
-      { label: "Entregue", status: "delivered", at: t.delivered },
+      { label: "Pedido novo", status: "received", at: t.received ?? order.created_at },
+      { label: "Pedido pronto", status: "ready", at: t.ready ?? t.preparing },
+      { label: isPickup(order) ? "Pronto pra retirada" : "Saiu para entrega", status: "out_for_delivery", at: t.out_for_delivery },
+      { label: "Pedido entregue", status: "delivered", at: t.delivered },
     ];
     return (
       <ol className="space-y-0" aria-label="Linha do tempo do pedido">
@@ -427,7 +423,7 @@ export function OrderBoard() {
       ) : showCancelledOnly ? null : (
         <div className="-mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 sm:mx-0 sm:px-0 xl:grid xl:grid-cols-4 xl:overflow-visible">
           {COLUMNS.map((column) => {
-            const list = visible.filter((o) => o.status === column.id);
+            const list = visible.filter((o) => boardStatus(o.status) === column.id);
             return (
               <section key={column.id} id={`kanban-${column.id}`} aria-label={column.title} className="flex w-[82vw] max-w-sm shrink-0 snap-start flex-col rounded-2xl border bg-muted/30 sm:w-80 xl:w-auto xl:max-w-none">
                 <header className={`flex items-center justify-between gap-2 rounded-t-2xl px-3 py-2.5 ${column.head}`}>
@@ -440,7 +436,11 @@ export function OrderBoard() {
                 <div className="flex max-h-[70vh] min-h-40 flex-col gap-3 overflow-y-auto p-2.5">
                   {list.length ? list.map(card) : (
                     <p className="m-auto max-w-[14rem] py-8 text-center text-xs text-muted-foreground">
-                      {column.id === "received" ? "Nenhum pedido novo. Quando um cliente finalizar no catálogo, ele aparece aqui com alerta." : "Nenhum pedido nesta etapa."}
+                      {column.id === "received"
+                        ? "Nenhum pedido novo. Quando um cliente finalizar no catálogo, ele aparece aqui com alerta."
+                        : column.id === "delivered"
+                          ? "Nenhum pedido entregue hoje ainda."
+                          : "Nenhum pedido nesta etapa."}
                     </p>
                   )}
                 </div>
@@ -458,21 +458,6 @@ export function OrderBoard() {
           {showCancelledOnly ? "Voltar ao quadro" : "Ver cancelados"}
         </Button>
       </div>
-      {!showCancelledOnly && delivered.length > 0 && (
-        <details className="mt-3 rounded-2xl border bg-card p-3">
-          <summary className="cursor-pointer text-sm font-semibold">Entregues hoje ({delivered.length})</summary>
-          <ul className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            {delivered.map((o) => (
-              <li key={o.id}>
-                <button type="button" onClick={() => open(o)} className="flex w-full items-center justify-between gap-2 rounded-lg border bg-background px-3 py-2 text-left text-sm">
-                  <span className="truncate">#{o.number} · {o.customer_name}</span>
-                  <span className="shrink-0 font-semibold">{brl(o.total)}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
       {cancelled.length > 0 && (
         <section aria-label="Cancelados" className="mt-4 rounded-2xl border bg-card p-3">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

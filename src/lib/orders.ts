@@ -10,7 +10,7 @@ import { ratingLink } from "./ratings";
 export const ORDER_STAGES = [
   {
     id: "received",
-    label: "Recebido",
+    label: "Pedido novo",
     tone: "text-primary",
     message: "recebemos seu pedido! Em breve iniciaremos o preparo.",
   },
@@ -22,7 +22,7 @@ export const ORDER_STAGES = [
   },
   {
     id: "ready",
-    label: "Pronto",
+    label: "Pedido pronto",
     tone: "text-whatsapp",
     message: "seu pedido está pronto!",
   },
@@ -34,7 +34,7 @@ export const ORDER_STAGES = [
   },
   {
     id: "delivered",
-    label: "Entregue",
+    label: "Pedido entregue",
     tone: "text-whatsapp",
     message: "seu pedido foi entregue. Obrigado por escolher a S7VEN!",
   },

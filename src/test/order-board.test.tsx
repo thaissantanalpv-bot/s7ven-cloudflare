@@ -75,15 +75,15 @@ describe("Kanban order management", () => {
     const replace = vi.fn(), close = vi.fn();
     const open = vi.spyOn(window, "open").mockReturnValue({ opener: null, location: { replace }, close } as unknown as Window);
     let finish: (() => void) | undefined;
-    mocks.update.mockImplementationOnce(() => new Promise(resolve => { finish = () => { row.status = "preparing"; resolve({ saved: true }); }; }));
+    mocks.update.mockImplementationOnce(() => new Promise(resolve => { finish = () => { row.status = "ready"; resolve({ saved: true }); }; }));
     mount();
     await screen.findByText("Cliente teste");
     fireEvent.click(screen.getByRole("button", { name: "Aceitar e avisar pedido 42 no WhatsApp" }));
     expect(replace).not.toHaveBeenCalled();
     finish?.();
     await waitFor(() => expect(replace).toHaveBeenCalledTimes(1));
-    expect(decodeURIComponent(replace.mock.calls[0]?.[0])).toContain("seu pedido está em preparo");
-    expect(row.status).toBe("preparing");
+    expect(decodeURIComponent(replace.mock.calls[0]?.[0])).toContain("seu pedido está pronto");
+    expect(row.status).toBe("ready");
     open.mockRestore();
   });
   it("never opens a stage message if the status write fails", async () => {
@@ -165,8 +165,6 @@ describe("Kanban order management", () => {
     const replace = vi.fn(), close = vi.fn();
     const open = vi.spyOn(window, "open").mockReturnValue({ opener: null, location: { replace }, close } as unknown as Window);
     fireEvent.click(screen.getByRole("button", { name: "Aceitar pedido" }));
-    await waitFor(() => expect(row.status).toBe("preparing"));
-    fireEvent.click(await screen.findByRole("button", { name: "Marcar pedido 42 como pronto" }));
     await waitFor(() => expect(row.status).toBe("ready"));
     fireEvent.click(await screen.findByRole("button", { name: "Chamar entregador para o pedido 42" }));
     await waitFor(() => expect(row.status).toBe("out_for_delivery"));
@@ -174,8 +172,8 @@ describe("Kanban order management", () => {
     expect(decodeURIComponent(replace.mock.calls[0]?.[0])).toContain("Entrega · pedido #42");
     fireEvent.click(await screen.findByRole("button", { name: "Concluir entrega do pedido 42" }));
     await waitFor(() => expect(row.status).toBe("delivered"));
-    expect(screen.getByText("Entregues hoje (1)")).toBeInTheDocument();
-    expect(mocks.update).toHaveBeenCalledTimes(4);
+    expect(screen.getByText("Pedido entregue")).toBeInTheDocument();
+    expect(mocks.update).toHaveBeenCalledTimes(3);
     open.mockRestore();
   });
   it("shows details with flavors and lets admin change stage", async () => {
@@ -183,12 +181,12 @@ describe("Kanban order management", () => {
     await screen.findByText("Cliente teste");
     fireEvent.click(screen.getByRole("button", { name: "Detalhes do pedido 42" }));
     expect(await screen.findByText("Sabor: Melancia")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Etapa do pedido"), { target: { value: "preparing" } });
-    await waitFor(() => expect(row.status).toBe("preparing"));
+    fireEvent.change(screen.getByLabelText("Etapa do pedido"), { target: { value: "ready" } });
+    await waitFor(() => expect(row.status).toBe("ready"));
     await waitFor(() =>
       expect(
         screen.getByRole("link", { name: "Avisar cliente no WhatsApp" }).getAttribute("href"),
-      ).toContain("preparo"),
+      ).toContain("pronto"),
     );
   });
   it("shows a recoverable failure without silently moving a card", async () => {
@@ -219,9 +217,9 @@ describe("Kanban order management", () => {
     await waitFor(() => expect(play).toHaveBeenCalled());
     const pausesBeforeAccept = pause.mock.calls.length;
     // Ao aceitar o pedido (sai de "received"), o alerta contínuo para
-    mocks.list.mockImplementation(async () => [{ ...row, status: "preparing" }]);
+    mocks.list.mockImplementation(async () => [{ ...row, status: "ready" }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Marcar pedido 42 como pronto" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Chamar entregador para o pedido 42" })).toBeInTheDocument());
     await waitFor(() => expect(pause.mock.calls.length).toBeGreaterThan(pausesBeforeAccept));
     vi.restoreAllMocks();
   });
