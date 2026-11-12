@@ -31,10 +31,13 @@ export const callAlfaDelivery = createServerFn({ method: "POST" })
     if (origin.length < 8) throw new Error("Cadastre o endereço da loja em Minha loja > Entregas.");
     const { alfaToken, alfaRequest } = await import("./alfa.server");
     const [pickupAddress, customerAddress, token] = await Promise.all([geocode(origin), geocode(order.address, order.notes ?? ""), alfaToken()]);
+    // Customer notes (apartment, back house, etc.) go to every field the courier app shows.
+    const notes = (order.notes ?? "").trim();
+    if (notes) Object.assign(customerAddress, { complement: notes.slice(0, 120), reference: notes.slice(0, 200) });
     const base = {
       merchant: { id: ALFA_MERCHANT_ID, name: ALFA_MERCHANT_NAME },
       pickupAddress, deliveryAddress: customerAddress,
-      vehicle: { type: ["MOTORBIKE_BAG", "MOTORBIKE_BOX"], container: "NORMAL" },
+      vehicle: { type: ["MOTORBIKE_BAG", "MOTORBIKE_BOX"], container: "NORMAL", ...(notes ? { instruction: `Obs. do cliente: ${notes}`.slice(0, 300) } : {}) },
       limitTimes: { pickupLimit: 20, deliveryLimit: 60, orderCreatedAt: new Date(order.created_at).toISOString() },
       totalOrderPrice: { value: Number(order.total), currency: "BRL" },
       orderDeliveryFee: { value: Number(order.delivery_fee), currency: "BRL" },
@@ -50,7 +53,7 @@ export const callAlfaDelivery = createServerFn({ method: "POST" })
       orderId: order.id, orderDisplayId: String(order.number),
       customerName: order.customer_name, customerPhone: order.customer_phone,
       payments: alfaPayments(order.payment, Number(order.total), order.change_for ?? ""),
-      items, specialInstructions: (order.notes ?? "").slice(0, 300),
+      items, specialInstructions: notes ? `Obs. do cliente: ${notes}`.slice(0, 300) : "",
     }) as { deliveryId?: string; status?: string };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("orders").update({
