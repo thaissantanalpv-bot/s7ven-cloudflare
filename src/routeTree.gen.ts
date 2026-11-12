@@ -18,6 +18,7 @@ import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated
 import { Route as ApiAssistantRouteImport } from './routes/api/assistant'
 import { Route as ApiDescribeProductRouteImport } from './routes/api/describe-product'
 import { Route as ApiEditPhotoRouteImport } from './routes/api/edit-photo'
+import { Route as ApiPublicAlfaWebhookRouteImport } from './routes/api/public/alfa-webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
@@ -64,6 +65,11 @@ const ApiEditPhotoRoute = ApiEditPhotoRouteImport.update({
   path: '/api/edit-photo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAlfaWebhookRoute = ApiPublicAlfaWebhookRouteImport.update({
+  id: '/api/public/alfa-webhook',
+  path: '/api/public/alfa-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/api/assistant': typeof ApiAssistantRoute
   '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
+  '/api/public/alfa-webhook': typeof ApiPublicAlfaWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/api/assistant': typeof ApiAssistantRoute
   '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
+  '/api/public/alfa-webhook': typeof ApiPublicAlfaWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/api/assistant': typeof ApiAssistantRoute
   '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
+  '/api/public/alfa-webhook': typeof ApiPublicAlfaWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/api/assistant'
     | '/api/describe-product'
     | '/api/edit-photo'
+    | '/api/public/alfa-webhook'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/api/assistant'
     | '/api/describe-product'
     | '/api/edit-photo'
+    | '/api/public/alfa-webhook'
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/api/assistant'
     | '/api/describe-product'
     | '/api/edit-photo'
+    | '/api/public/alfa-webhook'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   ApiAssistantRoute: typeof ApiAssistantRoute
   ApiDescribeProductRoute: typeof ApiDescribeProductRoute
   ApiEditPhotoRoute: typeof ApiEditPhotoRoute
+  ApiPublicAlfaWebhookRoute: typeof ApiPublicAlfaWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -220,6 +233,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiEditPhotoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/alfa-webhook': {
+      id: '/api/public/alfa-webhook'
+      path: '/api/public/alfa-webhook'
+      fullPath: '/api/public/alfa-webhook'
+      preLoaderRoute: typeof ApiPublicAlfaWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
@@ -250,6 +270,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAssistantRoute: ApiAssistantRoute,
   ApiDescribeProductRoute: ApiDescribeProductRoute,
   ApiEditPhotoRoute: ApiEditPhotoRoute,
+  ApiPublicAlfaWebhookRoute: ApiPublicAlfaWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport

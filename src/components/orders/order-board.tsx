@@ -32,6 +32,8 @@ import { quickMessages, courierMessage, courierPayment, whatsappTo } from "@/lib
 import { copyToClipboard } from "@/lib/pix";
 import { formatBrazilPhone } from "@/lib/phone";
 import { CopyField } from "./copy-field";
+import { callAlfaDelivery } from "@/lib/alfa.functions";
+import { alfaStatusLabel, canCallAlfa } from "@/lib/alfa";
 import { listOrders, updateOrderCourier, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
 import {
   ORDER_STAGES,
@@ -125,6 +127,25 @@ export function OrderBoard() {
   const update = useServerFn(updateOrderStatus);
   const saveTrackingFn = useServerFn(updateOrderTracking);
   const saveCourierFn = useServerFn(updateOrderCourier);
+  const alfaFn = useServerFn(callAlfaDelivery);
+  const callAlfa = async (order: Order) => {
+    if (busy) return;
+    setBusy(order.id);
+    setError("");
+    try {
+      const quote = await alfaFn({ data: { id: order.id, confirm: false } });
+      const price = quote.price != null ? brl(quote.price) : "a confirmar";
+      const eta = quote.etaMinutes != null ? ` · entrega em ~${quote.etaMinutes} min` : "";
+      if (!window.confirm(`Chamar motoboy da Alfa para o pedido #${order.number}?\n\nCorrida: ${price}${eta}`)) return;
+      await alfaFn({ data: { id: order.id, confirm: true } });
+      setNotice(`Pedido #${order.number} enviado para a Alfa. O quadro atualiza sozinho quando o motoboy retirar e entregar.`);
+      await client.invalidateQueries({ queryKey: ["store-orders"] });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível chamar a Alfa.");
+    } finally {
+      setBusy("");
+    }
+  };
   const client = useQueryClient();
   const catalog = useQuery(adminCatalogQuery);
   const photoFor = (productId: string, option?: string) => { const p = catalog.data?.find(x => x.id === productId); return p ? variationPhoto(p, option ?? "") || p.image || "" : ""; };
@@ -290,6 +311,9 @@ export function OrderBoard() {
                 Motoboy: <strong className="text-foreground">{order.courier_name || "não informado"}</strong>
               </span>
             )}
+            {!!order.alfa_status && order.status !== "delivered" && (
+              <span className="truncate text-xs font-semibold text-muted-foreground">🛵 {alfaStatusLabel(order.alfa_status)}{order.alfa_status === "REJECTED" && order.alfa_message ? ` (${order.alfa_message})` : ""}</span>
+            )}
           </span>
         </button>
         {order.status === "out_for_delivery" && <TimeBar order={order} status="out_for_delivery" minutes={DELIVERY_MINUTES} label={`Tempo de entrega do pedido ${order.number}`} />}
@@ -315,9 +339,18 @@ export function OrderBoard() {
               {isBusy ? "Salvando…" : <><ShoppingBag aria-hidden="true" />Pronto pra retirada</>}
             </Button>
           ) : (
-            <Button disabled={!!busy} className="mt-3 w-full bg-kanban-prep font-bold text-kanban-ink hover:bg-kanban-prep/90" aria-label={`Chamar entregador para o pedido ${order.number}`} onClick={() => { void navigator.clipboard?.writeText(courierMessage(order).replace(/\*/g, "")).then(() => setNotice("Dados do pedido copiados. Cole no site da Alfa."), () => setError("Não consegui copiar os dados; use o painel do pedido.")); void move(order, "out_for_delivery", () => ALFA_DELIVERY_URL); }}>
-              {isBusy ? "Salvando…" : <><Bike aria-hidden="true" />Chamar Entregador</>}
-            </Button>
+            canCallAlfa(order.alfa_status) ? (
+              <>
+                <Button disabled={!!busy} className="mt-3 w-full bg-kanban-prep font-bold text-kanban-ink hover:bg-kanban-prep/90" aria-label={`Chamar Alfa Delivery para o pedido ${order.number}`} onClick={() => void callAlfa(order)}>
+                  {isBusy ? "Consultando a Alfa…" : <><Bike aria-hidden="true" />🛵 Chamar Alfa Delivery</>}
+                </Button>
+                <Button variant="ghost" size="sm" className="mt-1 w-full text-xs" disabled={!!busy} aria-label={`Copiar dados e abrir site da Alfa para o pedido ${order.number}`} onClick={() => { void navigator.clipboard?.writeText(courierMessage(order).replace(/\*/g, "")).then(() => setNotice("Dados do pedido copiados. Cole no site da Alfa."), () => setError("Não consegui copiar os dados; use o painel do pedido.")); void move(order, "out_for_delivery", () => ALFA_DELIVERY_URL); }}>
+                  Copiar dados e abrir site da Alfa
+                </Button>
+              </>
+            ) : (
+              <p className="mt-3 rounded-md bg-kanban-prep/15 px-2 py-1.5 text-center text-xs font-semibold" role="status">🛵 {alfaStatusLabel(order.alfa_status)}</p>
+            )
           ))}
         {boardStatus(order.status) === "ready" && order.status !== "cancelled" && (
           <Button variant="ghost" size="sm" className="mt-1 w-full text-xs text-whatsapp" asChild>

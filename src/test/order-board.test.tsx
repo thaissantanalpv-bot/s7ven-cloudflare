@@ -7,6 +7,7 @@ vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/components/push-notifications", () => ({ PushQuickButton: () => null }));
 vi.mock("@/components/store-pause-button", () => ({ StorePauseButton: () => null, StorePauseSwitch: () => null }));
 vi.mock("@/lib/catalog.query", () => ({ adminCatalogQuery: { queryKey: ["admin-catalog-products"], queryFn: async () => [] } }));
+vi.mock("@/lib/alfa.functions", () => ({ callAlfaDelivery: async () => ({ price: 9, etaMinutes: 20, created: false }) }));
 vi.mock("@/lib/orders.functions", () => ({
   listOrders: mocks.list,
   updateOrderStatus: mocks.update,
@@ -167,7 +168,7 @@ describe("Kanban order management", () => {
     const open = vi.spyOn(window, "open").mockReturnValue({ opener: null, location: { replace }, close } as unknown as Window);
     fireEvent.click(screen.getByRole("button", { name: "Aceitar pedido" }));
     await waitFor(() => expect(row.status).toBe("ready"));
-    fireEvent.click(await screen.findByRole("button", { name: "Chamar entregador para o pedido 42" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Copiar dados e abrir site da Alfa para o pedido 42" }));
     await waitFor(() => expect(row.status).toBe("out_for_delivery"));
     await waitFor(() => expect(replace).toHaveBeenCalledTimes(1));
     expect(replace.mock.calls[0]?.[0]).toBe("https://alfa-delivery.entregasexpressas.com.br/");
@@ -220,7 +221,7 @@ describe("Kanban order management", () => {
     // Ao aceitar o pedido (sai de "received"), o alerta contínuo para
     mocks.list.mockImplementation(async () => [{ ...row, status: "ready" }]);
     fireEvent.click(screen.getByRole("button", { name: "Atualizar pedidos" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Chamar entregador para o pedido 42" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Copiar dados e abrir site da Alfa para o pedido 42" })).toBeInTheDocument());
     await waitFor(() => expect(pause.mock.calls.length).toBeGreaterThan(pausesBeforeAccept));
     vi.restoreAllMocks();
   });

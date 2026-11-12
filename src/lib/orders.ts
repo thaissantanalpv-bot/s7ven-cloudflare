@@ -117,6 +117,9 @@ export type Order = {
   total: number;
   status: OrderStatus;
   tracking_url?: string | null;
+  alfa_status?: string | null;
+  alfa_message?: string | null;
+  alfa_price?: number | null;
   courier_name?: string;
   /** When the order entered each stage (ISO), stamped by the database. */
   status_times?: Partial<Record<OrderStatus, string>> | undefined;

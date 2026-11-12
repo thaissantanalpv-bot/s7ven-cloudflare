@@ -317,6 +317,11 @@ export type Database = {
       orders: {
         Row: {
           address: string
+          alfa_delivery_id: string | null
+          alfa_message: string | null
+          alfa_price: number | null
+          alfa_status: string | null
+          alfa_updated_at: string | null
           analytics_session_id: string | null
           analytics_visitor_id: string | null
           cancellation_reason: string | null
@@ -357,6 +362,11 @@ export type Database = {
         }
         Insert: {
           address: string
+          alfa_delivery_id?: string | null
+          alfa_message?: string | null
+          alfa_price?: number | null
+          alfa_status?: string | null
+          alfa_updated_at?: string | null
           analytics_session_id?: string | null
           analytics_visitor_id?: string | null
           cancellation_reason?: string | null
@@ -397,6 +407,11 @@ export type Database = {
         }
         Update: {
           address?: string
+          alfa_delivery_id?: string | null
+          alfa_message?: string | null
+          alfa_price?: number | null
+          alfa_status?: string | null
+          alfa_updated_at?: string | null
           analytics_session_id?: string | null
           analytics_visitor_id?: string | null
           cancellation_reason?: string | null
