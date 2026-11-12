@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 const ALFA_DELIVERY_URL = "https://alfa-delivery.entregasexpressas.com.br/";
+const NINETY_NINE_URL = "https://99app.com/entrega/";
 import { quickMessages, courierMessage, courierPayment, whatsappTo } from "@/lib/quick-messages";
 import { copyToClipboard } from "@/lib/pix";
 import { formatBrazilPhone } from "@/lib/phone";
@@ -343,7 +344,14 @@ export function OrderBoard() {
               {isBusy ? "Salvando…" : <><ShoppingBag aria-hidden="true" />Pronto pra retirada</>}
             </Button>
           ) : (
-            canCallAlfa(order.alfa_status) ? (
+            order.late_delivery ? (
+              <>
+                <p className="mt-3 rounded-md bg-kanban-prep/15 px-2 py-1.5 text-center text-xs font-semibold" role="note">🚗 Entrega pela 99 · Pix · cote a corrida e avise a taxa ao cliente</p>
+                <Button disabled={!!busy} className="mt-2 w-full bg-kanban-prep font-bold text-kanban-ink hover:bg-kanban-prep/90" aria-label={`Copiar dados e abrir a 99 para o pedido ${order.number}`} onClick={() => { void navigator.clipboard?.writeText(courierMessage(order).replace(/\*/g, "")).then(() => setNotice("Dados do pedido copiados. Cole na 99 Entrega."), () => setError("Não consegui copiar os dados; use o painel do pedido.")); void move(order, "out_for_delivery", () => NINETY_NINE_URL); }}>
+                  {isBusy ? "Salvando…" : <>🚗 Copiar dados e abrir a 99</>}
+                </Button>
+              </>
+            ) : canCallAlfa(order.alfa_status) ? (
               <>
                 <Button disabled={!!busy} className="mt-3 w-full bg-kanban-prep font-bold text-kanban-ink hover:bg-kanban-prep/90" aria-label={`Chamar Alfa Delivery para o pedido ${order.number}`} onClick={() => void callAlfa(order)}>
                   {isBusy ? "Consultando a Alfa…" : <><Bike aria-hidden="true" />🛵 Chamar Alfa Delivery</>}

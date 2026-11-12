@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS late_delivery boolean NOT NULL DEFAULT false;

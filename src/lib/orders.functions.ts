@@ -61,8 +61,9 @@ export const submitOrder = createServerFn({ method: "POST" })
       throw new Error(`As entregas de hoje encerraram às ${settings.order_cutoff}. Escolha retirada na loja${orderStatus.closesAt ? ` (até ${orderStatus.closesAt})` : ""}.`);
     const { data: catalogRows, error: catalogError } = await supabaseAdmin.from("catalog_products").select("id,data,updated_at").in("id", [...new Set(data.items.flatMap(i => [i.productId, ...(i.components ?? []).map(c => c.productId)]))]);
     if (catalogError) throw new Error("Não foi possível conferir o estoque.");
+    const lateDelivery = orderStatus.open && orderStatus.late && data.customer.fulfillment === "delivery";
     let verifiedDelivery: { fee: number; km: number } | undefined;
-    if (data.customer.fulfillment === "delivery" && settings.delivery_enabled && settings.delivery_distance_enabled) {
+    if (!lateDelivery && data.customer.fulfillment === "delivery" && settings.delivery_enabled && settings.delivery_distance_enabled) {
       const { verifyDeliveryToken, deliverySettingsHash } = await import("./delivery.server");
       const sessionId = await verifyDeliveryToken(data.deliveryToken);
       if (!data.deliveryQuoteId || !sessionId) throw new Error("Calcule a taxa de entrega antes de enviar.");
@@ -70,7 +71,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       if (quoteError || !quote || quote.address !== deliveryAddress(data.customer.address) || quote.settings_hash !== await deliverySettingsHash(settings)) throw new Error("O endereço ou a taxa mudou. Calcule a entrega novamente.");
       verifiedDelivery = { fee: Number(quote.fee), km: Number(quote.distance_km) };
     }
-    const priced = priceOrder(data, settings, catalogFromRows(catalogRows), verifiedDelivery);
+    const priced = priceOrder(data, settings, catalogFromRows(catalogRows), verifiedDelivery, undefined, lateDelivery);
     const { data: saved, error } = await supabaseAdmin
       .from("orders")
       .insert({
@@ -85,6 +86,7 @@ export const submitOrder = createServerFn({ method: "POST" })
         change_for: data.customer.change,
         notes: data.customer.notes,
         scheduled_for: opening ? opening.at.toISOString() : null,
+        late_delivery: lateDelivery,
         ...priced,
       })
       .select("id,number,created_at")

@@ -212,10 +212,12 @@ function Catalog() {
   const status = now
     ? storeStatus(settings, now)
     : { open: true, configured: false, label: "Atendimento" };
-  const orderStatus = now ? ordersOpen(settings, now) : { open: true, delivery: true, configured: false, reason: null, closesAt: null };
+  const orderStatus = now ? ordersOpen(settings, now) : { open: true, delivery: true, late: false, configured: false, reason: null, closesAt: null };
   const orderingBlocked = orderStatus.configured && !orderStatus.open;
   /** Depois do horário das entregas: ainda dá para pedir, mas só para retirar até a loja fechar. */
   const pickupOnly = orderStatus.open && !orderStatus.delivery;
+  /** Depois das 23:00: entrega pela 99, somente Pix, taxa cotada pela 99. */
+  const late99 = orderStatus.open && orderStatus.late;
   const pickupUntil = orderStatus.closesAt ? ` até ${orderStatus.closesAt}` : "";
   const [hoursOpen, setHoursOpen] = useState(false);
   const [sort, setSort] = useState("catalog");
@@ -398,11 +400,14 @@ function Catalog() {
   useEffect(() => {
     if (pickupOnly && form.fulfillment === "delivery") setForm(f => ({ ...f, fulfillment: "pickup" }));
   }, [pickupOnly, form.fulfillment]);
-  const distanceMode = settings.delivery_enabled && settings.delivery_distance_enabled;
+  useEffect(() => {
+    if (late99 && isDelivery && form.payment && form.payment !== "Pix") setForm(f => ({ ...f, payment: "Pix" }));
+  }, [late99, isDelivery, form.payment]);
+  const distanceMode = !late99 && settings.delivery_enabled && settings.delivery_distance_enabled;
   const distanceConfig = JSON.stringify([settings.delivery_origin, settings.delivery_distance_tiers]);
   const validQuote = deliveryQuote?.address === deliveryAddress(fullAddress) && deliveryQuote.config === distanceConfig && deliveryQuote.expires > (now?.getTime() ?? 0) ? deliveryQuote : null;
   const deliveryEstimate = estimatedDeliveryMinutes(validQuote?.routeDurationSeconds);
-  const deliveryFee = isDelivery && settings.delivery_enabled ? (distanceMode ? validQuote?.fee ?? 0 : settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
+  const deliveryFee = isDelivery && late99 ? 0 : isDelivery && settings.delivery_enabled ? (distanceMode ? validQuote?.fee ?? 0 : settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
   useEffect(() => {
     if (deliveryQuote && deliveryQuote.address === deliveryAddress(fullAddress) && deliveryQuote.config === distanceConfig) return;
     quoteRequest.current += 1;
@@ -588,7 +593,8 @@ function Catalog() {
       return setError(e instanceof Error ? e.message : "Confira os produtos do carrinho.");
     }
     if (isDelivery && distanceMode && !validQuote) return setError("Calcule a entrega pelo endereço antes de enviar.");
-    if (isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && !zone)
+    if (isDelivery && late99 && form.payment !== "Pix") return setError("Depois das 23:00 a entrega é feita pela 99 e o pagamento é somente por Pix.");
+    if (isDelivery && !late99 && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && !zone)
       return setError("Escolha o bairro ou região de entrega.");
     if (orderingBlocked && !canSchedule)
       return setError(orderStatus.reason === "paused" ? "A loja pausou os pedidos por alguns instantes. Tente novamente mais tarde." : "A loja está fechada. Confira os horários de atendimento.");
@@ -610,7 +616,7 @@ function Catalog() {
       ),
       "",
       `*Produtos: ${brl(subtotal)}*`,
-      !isDelivery ? "*Retirada na loja · Sem taxa de entrega*" : settings.delivery_enabled
+      !isDelivery ? "*Retirada na loja · Sem taxa de entrega*" : late99 ? "*Entrega pela 99 (após 23:00) · taxa da corrida a confirmar · pagamento somente Pix*" : settings.delivery_enabled
         ? `*Entrega${distanceMode ? ` (${validQuote?.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km)` : settings.fixed_delivery_fee === null ? ` (${zone?.name})` : ""}: ${brl(deliveryFee)}*`
         : "*Entrega: valor a confirmar com a loja*",
       `*Total${!isDelivery || settings.delivery_enabled ? "" : " dos produtos"}: ${brl(subtotal + deliveryFee)}*`,
@@ -1334,7 +1340,7 @@ function Catalog() {
                   {deliveryError && <p role="alert" className="text-xs text-destructive">{deliveryError}</p>}
                 </div>
               )}
-              {isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && (
+              {isDelivery && !late99 && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && (
                 <select aria-label="Bairro ou região" className="field py-2" value={form.zone} onChange={(e) => setForm({ ...form, zone: e.target.value })}>
                   <option value="">Selecione sua região</option>
                   {settings.delivery_zones.map((z) => (
@@ -1350,6 +1356,7 @@ function Catalog() {
                       variant="outline"
                       key={m}
                       type="button"
+                      disabled={late99 && isDelivery && m !== "Pix"}
                       aria-pressed={form.payment === m}
                       aria-label={m}
                       onClick={() => setForm({ ...form, payment: m })}
@@ -1360,6 +1367,12 @@ function Catalog() {
                   ))}
                 </div>
               </div>
+              {late99 && isDelivery && (
+                <p role="note" className="rounded-lg border border-primary/30 bg-primary/5 p-2 text-xs">
+                  <span className="font-semibold">🚗 Após as 23:00 a entrega é feita pela 99, com pagamento somente por Pix.</span>{" "}
+                  <span className="text-muted-foreground">A taxa é a da corrida da 99: avisamos o valor pelo WhatsApp antes de chamar o entregador.</span>
+                </p>
+              )}
               {fieldErrors.payment?.[0] && <p id="payment-error" className="text-xs text-destructive">{fieldErrors.payment[0]}</p>}
               {form.payment === "Pix" && displayedTotal > 0 && (
                 <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-1.5">
@@ -1406,7 +1419,7 @@ function Catalog() {
               <dt className="text-muted-foreground">{isDelivery ? "Entrega" : "Retirada"}</dt>
               <dd className={`text-right font-semibold ${!isDelivery || (distanceMode ? validQuote : settings.fixed_delivery_fee !== null || zone) ? "text-primary" : "text-muted-foreground"}`}>
                 {!isDelivery ? "Grátis" : settings.delivery_enabled
-                  ? distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : quoting ? "calculando…" : "calcule acima" : settings.fixed_delivery_fee !== null || zone
+                  ? late99 ? "valor da 99, a confirmar" : distanceMode ? validQuote || receipt && !items.length ? brl(displayedDeliveryFee) : quoting ? "calculando…" : "calcule acima" : settings.fixed_delivery_fee !== null || zone
                     ? brl(displayedDeliveryFee)
                     : "selecione a região"
                   : "a confirmar"}
