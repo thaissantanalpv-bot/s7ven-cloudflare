@@ -143,8 +143,8 @@ export function ordersOpen(settings: StoreSettings, now = new Date()) {
 }
 
 const WEEKDAYS_SHORT = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
-/** Next time the store opens for orders, e.g. "hoje às 16:00" or "quarta às 16:00"; null when unknown or open now. */
-export function nextOpening(settings: StoreSettings, now = new Date()) {
+/** Next store opening as an instant plus a friendly label ("hoje às 16:00"); null when unknown or paused. Sao Paulo has no DST (UTC-3). */
+export function nextOpeningAt(settings: StoreSettings, now = new Date()) {
   if (settings.paused || !settings.hours_enabled) return null;
   const { date, current } = saoPauloClock(now);
   for (let i = 0; i < 8; i++) {
@@ -152,9 +152,12 @@ export function nextOpening(settings: StoreSettings, now = new Date()) {
     const h = hoursForDate(settings, day);
     if (!h.enabled || (i === 0 && h.open <= current)) continue;
     const label = i === 0 ? "hoje" : i === 1 ? "amanhã" : WEEKDAYS_SHORT[new Date(`${day}T12:00:00Z`).getUTCDay()];
-    return `${label} às ${h.open}`;
+    return { at: new Date(`${day}T${h.open}:00-03:00`), label: `${label} às ${h.open}` };
   }
   return null;
+}
+export function nextOpening(settings: StoreSettings, now = new Date()) {
+  return nextOpeningAt(settings, now)?.label ?? null;
 }
 
 /** Lowest delivery fee a customer can expect, before typing an address; null when delivery is off or unpriced. */

@@ -38,3 +38,4 @@
 - Keep real social font designs separate from copyable Unicode styles; bundle licensed font files, load via browser FontFace and export transparent text with measured glyph bounds because copying text cannot preserve font families.
 - Render themed Story stickers locally with bundled fonts and the same canvas for previews and transparent exports; paginate rendering and prepare file blobs before share clicks to preserve mobile user activation.
 - Admin-uploaded Story stickers live in the private story-stickers bucket with admin-only storage policies; served via short-lived signed URLs.
+- Orders placed while the store is closed (not paused) are saved with `scheduled_for` = next opening; the board hides them until then and a per-minute managed schedule (`/api/public/jobs/release-scheduled-orders`) claims and notifies each once — so closed-hours sales are never lost.

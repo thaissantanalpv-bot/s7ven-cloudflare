@@ -124,6 +124,8 @@ export type Order = {
   /** When the order entered each stage (ISO), stamped by the database. */
   status_times?: Partial<Record<OrderStatus, string>> | undefined;
   rating_token?: string | null;
+  /** Placed while the store was closed: hidden from the board until this instant (store opening). */
+  scheduled_for?: string | null;
   cancellation_reason?: string | null;
   cancelled_at?: string | null;
   cancelled_by?: string | null;
@@ -286,4 +288,9 @@ export function orderWhatsApp(
   const reason = order.cancellation_reason?.trim();
   const cancelled = `seu pedido foi cancelado${reason ? `. Motivo: ${reason}` : ""}. Qualquer dúvida, estamos à disposição.`;
   return `https://wa.me/${normalizePhone(order.customer_phone)}?text=${encodeURIComponent(`Olá, ${order.customer_name}! ${order.status === "cancelled" ? cancelled : stage?.message ?? ""}\n${purchaseLabel(order.purchase_number) ? `Sua ${purchaseLabel(order.purchase_number)} — ` : ""}${STORE_NAME}${tracking}${rating}`)}`;
+}
+
+/** A scheduled order stays off the board (and silent) until the store opens. */
+export function isWaitingSchedule(order: Pick<Order, "scheduled_for">, now = new Date()) {
+  return !!order.scheduled_for && new Date(order.scheduled_for).getTime() > now.getTime();
 }

@@ -353,6 +353,8 @@ export type Database = {
           payment: string
           rating_token: string
           request_id: string
+          scheduled_for: string | null
+          scheduled_notified_at: string | null
           source: string
           status: string
           status_times: Json
@@ -398,6 +400,8 @@ export type Database = {
           payment: string
           rating_token?: string
           request_id: string
+          scheduled_for?: string | null
+          scheduled_notified_at?: string | null
           source?: string
           status?: string
           status_times?: Json
@@ -443,6 +447,8 @@ export type Database = {
           payment?: string
           rating_token?: string
           request_id?: string
+          scheduled_for?: string | null
+          scheduled_notified_at?: string | null
           source?: string
           status?: string
           status_times?: Json

@@ -40,6 +40,7 @@ import {
   orderWhatsApp,
   isActiveOrder,
   showCancelledOnBoard,
+  isWaitingSchedule,
   type Order,
   type OrderStatus,
 } from "@/lib/orders";
@@ -199,12 +200,13 @@ export function OrderBoard() {
   useEffect(() => {
     if (!orders.data) return;
     const newOrders = seen.current
-      ? orders.data.filter((o) => o.source !== "counter" && o.status === "received" && !seen.current?.has(o.id))
+      ? orders.data.filter((o) => o.source !== "counter" && o.status === "received" && !isWaitingSchedule(o) && !seen.current?.has(o.id))
       : [];
     if (newOrders.length) {
       setNotice(`${newOrders.length} ${newOrders.length === 1 ? "novo pedido recebido" : "novos pedidos recebidos"}`);
     }
-    seen.current = new Set(orders.data.map((o) => o.id));
+    // Scheduled orders are "seen" only once released, so the alert rings when the store opens.
+    seen.current = new Set(orders.data.filter((o) => !isWaitingSchedule(o)).map((o) => o.id));
   }, [orders.data]);
 
   /** Saves the stage; an optional WhatsApp link opens only after the save succeeds. */
@@ -265,13 +267,15 @@ export function OrderBoard() {
   );
   const now = new Date();
   const term = search.trim().toLocaleLowerCase();
+  const waitingSchedule = all.filter((o) => o.status !== "cancelled" && isWaitingSchedule(o, now));
   const visible = all.filter(
     (o) =>
+      !isWaitingSchedule(o, now) &&
       showCancelledOnBoard(o, now, cancelledClearedAt) &&
       (mode === "all" || (mode === "pickup" ? isPickup(o) : !isPickup(o))) &&
       (!term || `${o.number} #${o.number} ${o.customer_name} ${o.customer_phone}`.toLocaleLowerCase().includes(term)),
   );
-  const newCount = all.filter((o) => o.status === "received").length;
+  const newCount = all.filter((o) => o.status === "received" && !isWaitingSchedule(o, now)).length;
   const delivered = visible.filter((o) => o.status === "delivered");
   const cancelled = visible.filter((o) => o.status === "cancelled");
   const detail = all.find((o) => o.id === selected);
@@ -300,7 +304,7 @@ export function OrderBoard() {
               <span className="shrink-0 rounded-full bg-kanban-new px-2 py-0.5 text-[11px] font-bold text-kanban-ink">Novo!</span>
             )}
           </span>
-          {order.status === "received" && <span className="mt-0.5 block text-xs text-muted-foreground">{waitLabel(order.created_at)}</span>}
+          {order.status === "received" && <span className="mt-0.5 block text-xs text-muted-foreground">{waitLabel(order.scheduled_for ?? order.created_at)}</span>}
           <span className="mt-2 block break-words text-sm text-foreground/90">
             {itemsSummary(order)} · <strong>{brl(order.total)}</strong>
           </span>
@@ -469,6 +473,21 @@ export function OrderBoard() {
           </Button>
           <Button variant="ghost" size="icon" className="ml-auto size-7" aria-label="Dispensar mensagem" onClick={() => setPendingMessage(null)}><X /></Button>
         </div>
+      )}
+
+      {waitingSchedule.length > 0 && (
+        <details className="mt-4 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3">
+          <summary className="cursor-pointer text-sm font-semibold">⏰ {waitingSchedule.length} {waitingSchedule.length === 1 ? "pedido agendado" : "pedidos agendados"} para quando a loja abrir</summary>
+          <p className="mt-1 text-xs text-muted-foreground">Feitos com a loja fechada. Entram sozinhos em "Pedidos novos" no horário de abertura, com alerta no celular.</p>
+          <ul className="mt-2 space-y-1 text-sm">
+            {waitingSchedule.map((o) => (
+              <li key={o.id} className="flex flex-wrap justify-between gap-2">
+                <button type="button" className="font-medium underline-offset-2 hover:underline" onClick={() => open(o)}>#{o.number} · {o.customer_name}</button>
+                <span className="text-muted-foreground">{brl(o.total)} · {new Date(o.scheduled_for!).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "short", hour: "2-digit", minute: "2-digit" })}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
 
       {/* Kanban */}

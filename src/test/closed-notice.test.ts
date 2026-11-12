@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_SETTINGS, deliveryFeeFrom, nextOpening } from "@/lib/store-settings";
+import { EMPTY_SETTINGS, deliveryFeeFrom, nextOpening, nextOpeningAt } from "@/lib/store-settings";
+import { isWaitingSchedule } from "@/lib/orders";
 import { checkoutStage } from "@/lib/catalog-analytics";
 
 const week = [0, 1, 2, 3, 4, 5, 6].map(day => ({ day, enabled: day !== 1, open: "16:00", close: "01:00" }));
@@ -20,5 +21,15 @@ describe("closed-store notice and checkout stages", () => {
     expect(checkoutStage({ hasCart: true, deliveryReady: true, paymentChosen: false, sendTapped: false })).toBe(2);
     expect(checkoutStage({ hasCart: true, deliveryReady: true, paymentChosen: true, sendTapped: false })).toBe(3);
     expect(checkoutStage({ hasCart: true, deliveryReady: false, paymentChosen: false, sendTapped: true })).toBe(4);
+  });
+});
+
+describe("scheduled orders", () => {
+  it("schedules a Monday order for Tuesday 16:00 São Paulo (19:00 UTC)", () => {
+    expect(nextOpeningAt(settings, new Date("2026-11-16T15:00:00Z"))?.at.toISOString()).toBe("2026-11-17T19:00:00.000Z");
+  });
+  it("keeps a scheduled order off the board until opening", () => {
+    expect(isWaitingSchedule({ scheduled_for: "2026-11-17T19:00:00Z" }, new Date("2026-11-17T18:59:00Z"))).toBe(true);
+    expect(isWaitingSchedule({ scheduled_for: "2026-11-17T19:00:00Z" }, new Date("2026-11-17T19:00:01Z"))).toBe(false);
   });
 });

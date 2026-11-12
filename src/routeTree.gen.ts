@@ -19,6 +19,7 @@ import { Route as ApiAssistantRouteImport } from './routes/api/assistant'
 import { Route as ApiDescribeProductRouteImport } from './routes/api/describe-product'
 import { Route as ApiEditPhotoRouteImport } from './routes/api/edit-photo'
 import { Route as ApiPublicAlfaWebhookRouteImport } from './routes/api/public/alfa-webhook'
+import { Route as ApiPublicJobsReleaseScheduledOrdersRouteImport } from './routes/api/public/jobs/release-scheduled-orders'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
@@ -70,6 +71,12 @@ const ApiPublicAlfaWebhookRoute = ApiPublicAlfaWebhookRouteImport.update({
   path: '/api/public/alfa-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicJobsReleaseScheduledOrdersRoute =
+  ApiPublicJobsReleaseScheduledOrdersRouteImport.update({
+    id: '/api/public/jobs/release-scheduled-orders',
+    path: '/api/public/jobs/release-scheduled-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
@@ -87,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
   '/api/public/alfa-webhook': typeof ApiPublicAlfaWebhookRoute
+  '/api/public/jobs/release-scheduled-orders': typeof ApiPublicJobsReleaseScheduledOrdersRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
@@ -99,6 +107,7 @@ export interface FileRoutesByTo {
   '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
   '/api/public/alfa-webhook': typeof ApiPublicAlfaWebhookRoute
+  '/api/public/jobs/release-scheduled-orders': typeof ApiPublicJobsReleaseScheduledOrdersRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
@@ -113,6 +122,7 @@ export interface FileRoutesById {
   '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
   '/api/public/alfa-webhook': typeof ApiPublicAlfaWebhookRoute
+  '/api/public/jobs/release-scheduled-orders': typeof ApiPublicJobsReleaseScheduledOrdersRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/api/describe-product'
     | '/api/edit-photo'
     | '/api/public/alfa-webhook'
+    | '/api/public/jobs/release-scheduled-orders'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/api/describe-product'
     | '/api/edit-photo'
     | '/api/public/alfa-webhook'
+    | '/api/public/jobs/release-scheduled-orders'
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
@@ -152,6 +164,7 @@ export interface FileRouteTypes {
     | '/api/describe-product'
     | '/api/edit-photo'
     | '/api/public/alfa-webhook'
+    | '/api/public/jobs/release-scheduled-orders'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
@@ -165,6 +178,7 @@ export interface RootRouteChildren {
   ApiDescribeProductRoute: typeof ApiDescribeProductRoute
   ApiEditPhotoRoute: typeof ApiEditPhotoRoute
   ApiPublicAlfaWebhookRoute: typeof ApiPublicAlfaWebhookRoute
+  ApiPublicJobsReleaseScheduledOrdersRoute: typeof ApiPublicJobsReleaseScheduledOrdersRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -240,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAlfaWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/jobs/release-scheduled-orders': {
+      id: '/api/public/jobs/release-scheduled-orders'
+      path: '/api/public/jobs/release-scheduled-orders'
+      fullPath: '/api/public/jobs/release-scheduled-orders'
+      preLoaderRoute: typeof ApiPublicJobsReleaseScheduledOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
@@ -271,6 +292,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDescribeProductRoute: ApiDescribeProductRoute,
   ApiEditPhotoRoute: ApiEditPhotoRoute,
   ApiPublicAlfaWebhookRoute: ApiPublicAlfaWebhookRoute,
+  ApiPublicJobsReleaseScheduledOrdersRoute:
+    ApiPublicJobsReleaseScheduledOrdersRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport

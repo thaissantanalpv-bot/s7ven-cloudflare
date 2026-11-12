@@ -190,7 +190,7 @@ function Catalog() {
   const autoQuote = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
-  const [receipt, setReceipt] = useState<{ id: string; requestId: string; number: number; purchase: number | null; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean; itemCount: number } | null>(null);
+  const [receipt, setReceipt] = useState<{ scheduledLabel?: string | null; id: string; requestId: string; number: number; purchase: number | null; url: string; subtotal: number; deliveryFee: number; total: number; delivery: boolean; itemCount: number } | null>(null);
   const trackOrder = useServerFn(orderTracking);
   const tracking = useQuery({
     queryKey: ["order-tracking", receipt?.id],
@@ -271,6 +271,8 @@ function Catalog() {
   }));
   const reopensAt = now ? nextOpening(settings, now) : null;
   const feeFrom = deliveryFeeFrom(settings);
+  /** Closed (not paused) with known hours: the order is scheduled for the next opening instead of blocked. */
+  const canSchedule = orderingBlocked && orderStatus.reason === "closed" && !!reopensAt;
   // Warn once, the moment a customer starts a cart while orders are closed, instead of only at checkout.
   useEffect(() => { if (hasCartItems && orderingBlocked) setClosedWarn(w => w === "hidden" ? "show" : w); }, [hasCartItems, orderingBlocked]);
   const [error, setError] = useState("");
@@ -588,7 +590,7 @@ function Catalog() {
     if (isDelivery && distanceMode && !validQuote) return setError("Calcule a entrega pelo endereço antes de enviar.");
     if (isDelivery && settings.delivery_enabled && !distanceMode && settings.fixed_delivery_fee === null && !zone)
       return setError("Escolha o bairro ou região de entrega.");
-    if (orderingBlocked)
+    if (orderingBlocked && !canSchedule)
       return setError(orderStatus.reason === "paused" ? "A loja pausou os pedidos por alguns instantes. Tente novamente mais tarde." : "A loja está fechada. Confira os horários de atendimento.");
     if (isDelivery && pickupOnly)
       return setError(`As entregas de hoje encerraram às ${settings.order_cutoff}. Escolha retirada na loja${pickupUntil}.`);
@@ -623,12 +625,13 @@ function Catalog() {
     setAttempt({ signature, id: requestId });
     setSending(true);
     // Open synchronously to retain browser popup permission; navigate only after a successful save.
-    const popup = window.open("about:blank", "_blank");
+    // Scheduled orders reach the store by themselves when it opens; no WhatsApp tab needed now.
+    const popup = canSchedule ? null : window.open("about:blank", "_blank");
     if (popup) popup.opener = null;
     try {
       const saved = await registerOrder({ data: validated.data });
       const url = checkoutWhatsApp(saved.purchase, lines, d.phone, couponResult && appliedCoupon ? { code: appliedCoupon.code, discount: couponResult.discount } : null);
-      setReceipt({ id: saved.id, requestId, number: saved.number, purchase: saved.purchase ?? null, url, subtotal, deliveryFee, total, delivery: isDelivery, itemCount: count });
+      setReceipt({ scheduledLabel: saved.scheduledLabel ?? null, id: saved.id, requestId, number: saved.number, purchase: saved.purchase ?? null, url, subtotal, deliveryFee, total, delivery: isDelivery, itemCount: count });
       if (isDelivery && form.street && form.number) {
         saveCustomerAddress({ name: d.name, phone: d.phone, street: form.street, number: form.number, neighborhood: form.neighborhood });
       }
@@ -798,7 +801,7 @@ function Catalog() {
             <Clock className="size-5 shrink-0 text-primary" aria-hidden="true" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">{settings.paused ? "Pedidos pausados no momento" : "Loja fechada no momento"}</p>
-              <p className="text-xs text-muted-foreground">{settings.paused ? "Você pode explorar o catálogo. Os pedidos voltam em breve." : `Você pode montar o carrinho agora. ${reopensAt ? `Os pedidos abrem ${reopensAt}.` : "Os pedidos voltam no horário de atendimento."}`}</p>
+              <p className="text-xs text-muted-foreground">{settings.paused ? "Você pode explorar o catálogo. Os pedidos voltam em breve." : reopensAt ? `Você pode agendar seu pedido agora. Ele chega à loja sozinho ${reopensAt}.` : "Os pedidos voltam no horário de atendimento."}</p>
             </div>
             <Button variant="link" size="sm" className="shrink-0 px-0" onClick={() => goTab("mais")}>Horários</Button>
           </div>
@@ -1119,7 +1122,7 @@ function Catalog() {
               <img src="/logo-s7ven.png" alt="" width={360} height={312} className="h-20 w-auto" />
               <CheckCircle2 className="mt-6 size-20 text-gold" strokeWidth={1.5} />
               <h2 className="mt-4 font-display text-3xl font-extrabold uppercase text-gold">{tracking.data?.status === "cancelled" ? "Pedido cancelado" : "Pedido enviado!"}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Seu pedido foi registrado e enviado pelo WhatsApp{receipt.purchase ? ` — é a sua ${receipt.purchase}ª compra com a gente` : ""}. Em breve nossa equipe vai te responder.</p>
+              <p className="mt-2 text-sm text-muted-foreground">{receipt.scheduledLabel ? `Pedido agendado! A loja está fechada agora e ele chega sozinho ${receipt.scheduledLabel}, sem você precisar fazer nada` : "Seu pedido foi registrado e enviado pelo WhatsApp"}{receipt.purchase ? ` — é a sua ${receipt.purchase}ª compra com a gente` : ""}. Em breve nossa equipe vai te responder.</p>
               <div className="mt-5 w-full rounded-xl border bg-card p-4 text-left">
                 <p className="mb-2 font-semibold">Resumo do pedido</p>
                 <p className="flex justify-between text-sm"><span>{receipt.itemCount} {receipt.itemCount === 1 ? "item" : "itens"}</span><span className="font-semibold">{brl(receipt.total)}</span></p>
@@ -1411,7 +1414,7 @@ function Catalog() {
               <dd className="text-right font-display text-lg font-bold leading-tight">{brl(displayedTotal)}</dd>
             </dl>
             {status.configured && !status.open && orderStatus.reason !== "paused" && (
-              <p className="text-xs text-destructive">Loja fechada no momento. Confira os horários de atendimento.</p>
+              <p className="text-xs text-destructive">{canSchedule ? `Loja fechada agora. Seu pedido fica agendado e chega à loja sozinho ${reopensAt}.` : "Loja fechada no momento. Confira os horários de atendimento."}</p>
             )}
             {orderingBlocked && orderStatus.reason === "paused" && (
               <p className="text-xs text-destructive">Pedidos pausados no momento. Tente novamente mais tarde.</p>
@@ -1421,11 +1424,11 @@ function Catalog() {
             )}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button
-              disabled={!online || sending || !items.length || orderingBlocked}
+              disabled={!online || sending || !items.length || (orderingBlocked && !canSchedule)}
               onClick={send}
               className="h-11 w-full rounded-lg bg-whatsapp font-semibold text-whatsapp-foreground"
             >
-              <MessageCircle /> {!online ? "Conecte-se para enviar" : sending ? "Registrando pedido…" : "Enviar pedido pelo WhatsApp"}
+              <MessageCircle /> {!online ? "Conecte-se para enviar" : sending ? "Registrando pedido…" : canSchedule ? `Agendar pedido para ${reopensAt}` : "Enviar pedido pelo WhatsApp"}
             </Button>
           </div>
           </>)}

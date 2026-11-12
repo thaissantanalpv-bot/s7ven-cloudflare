@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { submitOrderSchema, priceOrder, statusSchema, workflowStatusSchema, cancelOrderSchema, trackingUrlSchema, purchaseNumbers, type Order } from "./orders";
-import { EMPTY_SETTINGS, ordersOpen, settingsSchema } from "./store-settings";
+import { EMPTY_SETTINGS, nextOpeningAt, ordersOpen, settingsSchema } from "./store-settings";
 import { catalogFromRows } from "./catalog";
 import { deliveryAddress } from "./delivery-address";
 
@@ -27,14 +27,14 @@ export const submitOrder = createServerFn({ method: "POST" })
     const replay = async () => {
       const { data: existing, error: existingError } = await supabaseAdmin
         .from("orders")
-        .select("id,number,customer_phone,customer_name,created_at")
+        .select("id,number,customer_phone,customer_name,created_at,scheduled_for")
         .eq("request_id", data.requestId)
         .maybeSingle();
       if (existingError) throw new Error("Não foi possível registrar o pedido. Tente novamente.");
       if (!existing) return null;
       if (existing.customer_phone !== data.customer.phone || existing.customer_name !== data.customer.name)
         throw new Error("Não foi possível registrar o pedido. Atualize a página e tente novamente.");
-      return { id: existing.id, number: existing.number, purchase: await purchaseNumber(existing.id, existing.created_at) };
+      return { id: existing.id, number: existing.number, purchase: await purchaseNumber(existing.id, existing.created_at), scheduledFor: existing.scheduled_for, scheduledLabel: null as string | null };
     };
     const existing = await replay();
     if (existing) return existing;
@@ -54,8 +54,10 @@ export const submitOrder = createServerFn({ method: "POST" })
     const settings = row ? settingsSchema.parse(row) : EMPTY_SETTINGS;
     const orderStatus = ordersOpen(settings);
     if (!orderStatus.open && orderStatus.reason === "paused") throw new Error("A loja pausou os pedidos por alguns instantes. O catálogo continua aberto para consulta.");
-    if (!orderStatus.open) throw new Error("A loja está fechada. Confira os horários.");
-    if (data.customer.fulfillment === "delivery" && !orderStatus.delivery)
+    // Closed store: the order is scheduled and reaches the store automatically when it opens.
+    const opening = orderStatus.open ? null : nextOpeningAt(settings);
+    if (!orderStatus.open && !opening) throw new Error("A loja está fechada. Confira os horários.");
+    if (orderStatus.open && data.customer.fulfillment === "delivery" && !orderStatus.delivery)
       throw new Error(`As entregas de hoje encerraram às ${settings.order_cutoff}. Escolha retirada na loja${orderStatus.closesAt ? ` (até ${orderStatus.closesAt})` : ""}.`);
     const { data: catalogRows, error: catalogError } = await supabaseAdmin.from("catalog_products").select("id,data,updated_at").in("id", [...new Set(data.items.flatMap(i => [i.productId, ...(i.components ?? []).map(c => c.productId)]))]);
     if (catalogError) throw new Error("Não foi possível conferir o estoque.");
@@ -82,6 +84,7 @@ export const submitOrder = createServerFn({ method: "POST" })
         payment: data.customer.payment,
         change_for: data.customer.change,
         notes: data.customer.notes,
+        scheduled_for: opening ? opening.at.toISOString() : null,
         ...priced,
       })
       .select("id,number,created_at")
@@ -94,6 +97,9 @@ export const submitOrder = createServerFn({ method: "POST" })
       }
       throw new Error("Não foi possível registrar o pedido. Seu carrinho foi mantido.");
     }
+    const result = { id: saved.id, number: saved.number, purchase: await purchaseNumber(saved.id, saved.created_at), scheduledFor: opening ? opening.at.toISOString() : null, scheduledLabel: opening?.label ?? null };
+    // Scheduled orders notify the store later, from the release job, when it opens.
+    if (opening) return result;
     // Avisos para a loja (celular e e-mail) em paralelo; falhas de envio nunca bloqueiam o pedido.
     const pushNotice = (async () => {
       const { newOrderPush } = await import("@/lib/push");
@@ -126,7 +132,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     })();
     for (const result of await Promise.allSettled([pushNotice, emailNotice]))
       if (result.status === "rejected") console.error("Falha ao enviar aviso de novo pedido:", result.reason);
-    return { id: saved.id, number: saved.number, purchase: await purchaseNumber(saved.id, saved.created_at) };
+    return result;
   });
 export const listOrders = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
