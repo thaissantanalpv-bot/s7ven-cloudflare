@@ -808,8 +808,10 @@ function Catalog() {
         )}
 
         {feeFrom !== null && !searching && (
-          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><Truck className="size-4 shrink-0 text-primary" aria-hidden="true" />
-            {feeFrom === 0 ? "Entrega grátis" : `Entrega a partir de ${brl(feeFrom)}`}{settings.delivery_distance_enabled ? ", conforme a distância" : ""} · retirada na loja sem taxa
+          <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-display text-sm font-semibold text-foreground">
+            <Truck className="size-4 shrink-0 text-primary" aria-hidden="true" />
+            <span>{feeFrom === 0 ? "Entrega grátis" : `Entrega a partir de ${brl(feeFrom)}`}{settings.delivery_distance_enabled ? ", conforme a distância" : ""}</span>
+            <span className="text-muted-foreground">· retirada na loja sem taxa</span>
           </p>
         )}
 
