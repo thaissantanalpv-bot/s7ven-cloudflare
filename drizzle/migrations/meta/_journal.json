@@ -337,6 +337,13 @@
       "when": 1794496140059,
       "tag": "0047_alfa_delivery_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1794512761721,
+      "tag": "0048_migration",
+      "breakpoints": true
     }
   ]
 }

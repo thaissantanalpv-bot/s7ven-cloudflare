@@ -42,6 +42,17 @@ export function CatalogAnalytics() {
       <div><p className="text-sm text-muted-foreground">Conversão em pedido enviado</p><p className="mt-2 text-2xl font-semibold">{data ? `${conversion.toLocaleString("pt-BR")}%` : "—"}</p></div>
       <div><p className="text-sm text-muted-foreground">Carrinhos em andamento</p><p className="mt-2 text-2xl font-semibold">{data?.pending ?? "—"}</p></div>
     </div>
+    {data?.stages && <div className="border-b py-6">
+      <p className="text-sm font-semibold">Onde os clientes desistem</p>
+      <p className="mb-4 text-xs text-muted-foreground">Última etapa que cada carrinho abandonado alcançou no período.</p>
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {([["Só colocou no carrinho", data.stages.cart], ["Preencheu entrega ou retirada", data.stages.address], ["Escolheu o pagamento", data.stages.payment], ["Tocou em enviar, mas não concluiu", data.stages.send]] as const).map(([label, value]) => {
+          const total = data.stages!.cart + data.stages!.address + data.stages!.payment + data.stages!.send;
+          return <article key={label} className="rounded-lg border bg-card p-4"><p className="min-h-8 text-xs text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-semibold">{value}</p><p className="text-xs text-muted-foreground">{total ? Math.round(value / total * 100) : 0}%</p></article>;
+        })}
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground">As etapas começaram a ser registradas em 12/11/2026. Carrinhos anteriores aparecem como "Só colocou no carrinho".</p>
+    </div>}
     <div className="mt-5 space-y-2 text-xs text-muted-foreground">
       <p>Desistência estimada: carrinho sem pedido enviado e sem atividade por 30 minutos. Se o cliente voltar, a contagem se ajusta.</p>
       <p>Visitantes únicos por navegador no período. Pedidos enviados não significam pagamento confirmado.</p>

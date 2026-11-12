@@ -141,3 +141,28 @@ export function ordersOpen(settings: StoreSettings, now = new Date()) {
   if (afterMidnight || current >= settings.order_cutoff) return { open: true as const, delivery: false, configured: status.configured, reason: "cutoff" as const, closesAt };
   return { open: true as const, delivery: true, configured: status.configured, reason: null, closesAt };
 }
+
+const WEEKDAYS_SHORT = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+/** Next time the store opens for orders, e.g. "hoje às 16:00" or "quarta às 16:00"; null when unknown or open now. */
+export function nextOpening(settings: StoreSettings, now = new Date()) {
+  if (settings.paused || !settings.hours_enabled) return null;
+  const { date, current } = saoPauloClock(now);
+  for (let i = 0; i < 8; i++) {
+    const day = shiftIsoDay(date, i);
+    const h = hoursForDate(settings, day);
+    if (!h.enabled || (i === 0 && h.open <= current)) continue;
+    const label = i === 0 ? "hoje" : i === 1 ? "amanhã" : WEEKDAYS_SHORT[new Date(`${day}T12:00:00Z`).getUTCDay()];
+    return `${label} às ${h.open}`;
+  }
+  return null;
+}
+
+/** Lowest delivery fee a customer can expect, before typing an address; null when delivery is off or unpriced. */
+export function deliveryFeeFrom(settings: StoreSettings) {
+  if (!settings.delivery_enabled) return null;
+  const fees = settings.delivery_distance_enabled && settings.delivery_distance_tiers.length
+    ? settings.delivery_distance_tiers.map(t => t.fee)
+    : settings.fixed_delivery_fee !== null ? [settings.fixed_delivery_fee]
+    : settings.delivery_zones.map(z => z.fee);
+  return fees.length ? Math.min(...fees) : null;
+}

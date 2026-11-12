@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const analyticsIdentitySchema = z.object({ sessionId: z.string().uuid(), visitorId: z.string().uuid() });
-export const trackingSchema = analyticsIdentitySchema.extend({ hasCart: z.boolean(), device: z.string().max(120).regex(/^[\w./:@+\- ]*$/).optional() });
+export const trackingSchema = analyticsIdentitySchema.extend({ hasCart: z.boolean(), stage: z.number().int().min(0).max(4).optional(), device: z.string().max(120).regex(/^[\w./:@+\- ]*$/).optional() });
 
 /** Visits from the editor preview and local tests are not real customers. */
 export function shouldTrackHost(hostname: string) {
@@ -23,6 +23,7 @@ export const funnelStatsSchema = z.object({
   completed: z.number().int().nonnegative(), abandoned: z.number().int().nonnegative(),
   online: z.number().int().nonnegative(), pending: z.number().int().nonnegative(),
   updatedAt: z.string(), trackingSince: z.string().nullable(),
+  stages: z.object({ cart: z.number().int().nonnegative(), address: z.number().int().nonnegative(), payment: z.number().int().nonnegative(), send: z.number().int().nonnegative() }).optional(),
 });
 export type AnalyticsIdentity = z.infer<typeof analyticsIdentitySchema>;
 let fallbackIdentity: AnalyticsIdentity | undefined;
@@ -61,4 +62,11 @@ export function readAnalyticsIdentity(): AnalyticsIdentity | undefined {
     fallbackIdentity ??= { sessionId: crypto.randomUUID(), visitorId: crypto.randomUUID() };
     return fallbackIdentity;
   }
+}
+/** Furthest checkout step reached: 0 nothing, 1 cart, 2 delivery/pickup filled, 3 payment chosen, 4 tapped send. */
+export function checkoutStage(input: { hasCart: boolean; deliveryReady: boolean; paymentChosen: boolean; sendTapped: boolean }) {
+  if (!input.hasCart) return 0;
+  if (input.sendTapped) return 4;
+  if (input.deliveryReady && input.paymentChosen) return 3;
+  return input.deliveryReady ? 2 : 1;
 }

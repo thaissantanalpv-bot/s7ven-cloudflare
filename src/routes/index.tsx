@@ -28,7 +28,8 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { publicStoreSettingsQuery as storeSettingsQuery } from "@/lib/store-settings.query";
 import { appearanceCss, appearanceFontsHref, isLightColor, parseAppearance } from "@/lib/catalog-appearance";
 import { savePublicSnapshot, readPublicSnapshot, cacheViewedCatalogPhotos, offlinePhotoUrls } from "@/lib/offline-catalog";
-import { ordersOpen, storeStatus, upcomingSpecialDays, DAYS } from "@/lib/store-settings";
+import { ordersOpen, storeStatus, upcomingSpecialDays, DAYS, nextOpening, deliveryFeeFrom } from "@/lib/store-settings";
+import { checkoutStage } from "@/lib/catalog-analytics";
 import { QRCodeSVG } from "qrcode.react";
 import { useServerFn } from "@tanstack/react-start";
 import { PhoneField } from "@/components/orders/phone-field";
@@ -220,7 +221,8 @@ function Catalog() {
   const [sort, setSort] = useState("catalog");
   const [cart, setCart] = useState<Cart>({});
   const [loaded, setLoaded] = useState(false);
-  useCatalogAnalytics(loaded, Object.values(cart).some(qty => qty > 0));
+  const [closedWarn, setClosedWarn] = useState<"hidden" | "show" | "done">("hidden");
+  const [sendTapped, setSendTapped] = useState(false);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("Todos");
   const [open, setOpen] = useState(false);
@@ -260,6 +262,17 @@ function Catalog() {
 
   const fullAddress = [form.street.trim(), form.number.trim(), form.neighborhood.trim()].filter(Boolean).join(", ");
   const addressComplete = deliveryFieldsComplete(form.street, form.number);
+  const hasCartItems = Object.values(cart).some(qty => qty > 0);
+  useCatalogAnalytics(loaded, hasCartItems, checkoutStage({
+    hasCart: hasCartItems,
+    deliveryReady: form.fulfillment === "pickup" ? !!form.name.trim() : addressComplete,
+    paymentChosen: !!form.payment,
+    sendTapped,
+  }));
+  const reopensAt = now ? nextOpening(settings, now) : null;
+  const feeFrom = deliveryFeeFrom(settings);
+  // Warn once, the moment a customer starts a cart while orders are closed, instead of only at checkout.
+  useEffect(() => { if (hasCartItems && orderingBlocked) setClosedWarn(w => w === "hidden" ? "show" : w); }, [hasCartItems, orderingBlocked]);
   const [error, setError] = useState("");
   const [sel, setSel] = useState<Record<string, string>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
@@ -561,6 +574,7 @@ function Catalog() {
 
   const send = async () => {
     if (sending) return;
+    setSendTapped(true);
     if (!navigator.onLine) return setError("Conecte-se à internet para confirmar os valores e enviar seu pedido.");
     setError("");
     setSubmitted(true);
@@ -784,10 +798,16 @@ function Catalog() {
             <Clock className="size-5 shrink-0 text-primary" aria-hidden="true" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">{settings.paused ? "Pedidos pausados no momento" : "Loja fechada no momento"}</p>
-              <p className="text-xs text-muted-foreground">{settings.paused ? "Você pode explorar o catálogo. Os pedidos voltam em breve." : "Você pode explorar o catálogo. Os pedidos voltam no horário de atendimento."}</p>
+              <p className="text-xs text-muted-foreground">{settings.paused ? "Você pode explorar o catálogo. Os pedidos voltam em breve." : `Você pode montar o carrinho agora. ${reopensAt ? `Os pedidos abrem ${reopensAt}.` : "Os pedidos voltam no horário de atendimento."}`}</p>
             </div>
             <Button variant="link" size="sm" className="shrink-0 px-0" onClick={() => goTab("mais")}>Horários</Button>
           </div>
+        )}
+
+        {feeFrom !== null && !searching && (
+          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><Truck className="size-4 shrink-0 text-primary" aria-hidden="true" />
+            {feeFrom === 0 ? "Entrega grátis" : `Entrega a partir de ${brl(feeFrom)}`}{settings.delivery_distance_enabled ? ", conforme a distância" : ""} · retirada na loja sem taxa
+          </p>
         )}
 
         {searching ? (
@@ -1412,6 +1432,16 @@ function Catalog() {
         </SheetContent>
       </Sheet>
       {detail && <ProductDetail product={detail} onClose={closeDetail} cart={cart} sel={sel} typed={typed} onSel={(id, v) => setSel((x) => ({ ...x, [id]: v }))} onTyped={(id, v) => setTyped((x) => ({ ...x, [id]: v }))} onChange={change} onBuild={setBuilding} favorite={favorites.includes(detail.id)} onToggleFavorite={toggleFavorite} onShare={setQrModalProduct} />}
+      {closedWarn === "show" && (
+        <div role="alertdialog" aria-label="Loja fechada" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-xl border border-primary/40 bg-card p-4 shadow-lg">
+          <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="size-4 text-primary" aria-hidden="true" />{settings.paused ? "Pedidos pausados no momento" : "A loja está fechada agora"}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{settings.paused ? "Seu carrinho fica guardado. Os pedidos voltam em breve." : `Seu carrinho fica guardado neste aparelho. ${reopensAt ? `Você poderá enviar o pedido ${reopensAt}.` : "Você poderá enviar no horário de atendimento."}`}</p>
+          <div className="mt-3 flex justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={() => { setClosedWarn("done"); goTab("mais"); }}>Ver horários</Button>
+            <Button size="sm" onClick={() => setClosedWarn("done")}>Entendi</Button>
+          </div>
+        </div>
+      )}
       {building && <ComboBuilder key={building.id} product={building} products={products} open onOpenChange={value => { if (!value) setBuilding(null); }} onAdd={selections => { const key = keyOf(building.id, comboOption(selections)); const next = { ...cart, [key]: (cart[key] ?? 0) + 1 }; validateCartAvailability(cartInputs(next), products); setCart(next); setBuilding(null); }} />}
     </div>
   );

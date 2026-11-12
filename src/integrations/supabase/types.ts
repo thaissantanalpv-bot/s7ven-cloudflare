@@ -129,6 +129,7 @@ export type Database = {
         Row: {
           cart_started_at: string | null
           checkout_at: string | null
+          checkout_stage: number
           device_key: string | null
           id: string
           last_seen_at: string
@@ -139,6 +140,7 @@ export type Database = {
         Insert: {
           cart_started_at?: string | null
           checkout_at?: string | null
+          checkout_stage?: number
           device_key?: string | null
           id: string
           last_seen_at?: string
@@ -149,6 +151,7 @@ export type Database = {
         Update: {
           cart_started_at?: string | null
           checkout_at?: string | null
+          checkout_stage?: number
           device_key?: string | null
           id?: string
           last_seen_at?: string
@@ -622,6 +625,7 @@ export type Database = {
           _device?: string
           _id: string
           _rate_key: string
+          _stage?: number
           _visitor: string
         }
         Returns: undefined
