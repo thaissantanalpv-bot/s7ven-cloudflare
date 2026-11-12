@@ -132,21 +132,14 @@ export function storeStatus(settings: StoreSettings, now = new Date()) {
  * (ex.: 23:00) o pedido continua possível, mas somente para retirada, até a loja fechar.
  * Datas especiais (feriados) usam o mesmo horário limite das entregas.
  */
-/** Entregas pela 99 (após o horário dos entregadores) vão até este horário da madrugada. */
-export const LATE_DELIVERY_UNTIL = "02:00";
 export function ordersOpen(settings: StoreSettings, now = new Date()) {
-  if (settings.paused) return { open: false as const, delivery: false, configured: true, reason: "paused" as const, closesAt: null, late: false };
+  if (settings.paused) return { open: false as const, delivery: false, configured: true, reason: "paused" as const, closesAt: null };
   const status = storeStatus(settings, now);
-  if (!status.open) return { open: false as const, delivery: false, configured: status.configured, reason: "closed" as const, closesAt: null, late: false };
+  if (!status.open) return { open: false as const, delivery: false, configured: status.configured, reason: "closed" as const, closesAt: null };
   const { current, today, yesterday, afterMidnight } = currentWindow(settings, now);
   const closesAt = !status.configured ? null : afterMidnight ? yesterday.close : today.enabled ? today.close : null;
-  if (afterMidnight || current >= settings.order_cutoff) {
-    // Depois do horário dos nossos entregadores, a entrega segue pela 99 até LATE_DELIVERY_UNTIL, só com Pix.
-    const lateWindow = afterMidnight ? current < LATE_DELIVERY_UNTIL : true;
-    if (lateWindow && status.configured) return { open: true as const, delivery: true, late: true, configured: status.configured, reason: null, closesAt };
-    return { open: true as const, delivery: false, late: false, configured: status.configured, reason: "cutoff" as const, closesAt };
-  }
-  return { open: true as const, delivery: true, late: false, configured: status.configured, reason: null, closesAt };
+  if (afterMidnight || current >= settings.order_cutoff) return { open: true as const, delivery: false, configured: status.configured, reason: "cutoff" as const, closesAt };
+  return { open: true as const, delivery: true, configured: status.configured, reason: null, closesAt };
 }
 
 const WEEKDAYS_SHORT = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];

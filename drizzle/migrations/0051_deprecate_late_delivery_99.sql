@@ -1,0 +1,1 @@
+COMMENT ON COLUMN public.orders.late_delivery IS 'DEPRECATED: opção da 99 Entrega desativada a pedido da Thais em 12/11/2026; o app não lê mais esta coluna.';

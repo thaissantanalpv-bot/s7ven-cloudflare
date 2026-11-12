@@ -126,7 +126,6 @@ export type Order = {
   rating_token?: string | null;
   /** Placed while the store was closed: hidden from the board until this instant (store opening). */
   scheduled_for?: string | null;
-  late_delivery?: boolean;
   cancellation_reason?: string | null;
   cancelled_at?: string | null;
   cancelled_by?: string | null;
@@ -204,7 +203,7 @@ export function validateCartAvailability(
       throw new Error(`${product.name}: item esgotado ou quantidade indisponível. Remova ou ajuste a quantidade no carrinho.`);
   }
 }
-export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: StoreSettings, products: (Product | CatalogProduct)[] = PRODUCTS, verifiedDelivery?: { fee: number; km: number }, couponOverride?: { discount: number; code: string }, lateDelivery = false) {
+export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: StoreSettings, products: (Product | CatalogProduct)[] = PRODUCTS, verifiedDelivery?: { fee: number; km: number }, couponOverride?: { discount: number; code: string }) {
   validateCartAvailability(input.items, products);
   const items = input.items.map((line) => {
     const product = products.find((p) => p.id === line.productId);
@@ -229,14 +228,12 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
   });
   const zone = settings.delivery_zones.find((z) => z.id === input.customer.zone);
   const delivery = input.customer.fulfillment !== "pickup";
-  if (lateDelivery && delivery && input.customer.payment !== "Pix") throw new Error("Depois das 23:00 a entrega é feita pela 99 e o pagamento é somente por Pix.");
-  // Entrega pela 99: a taxa é a cotação da 99, combinada com o cliente antes de chamar.
-  const byDistance = !lateDelivery && delivery && settings.delivery_enabled && settings.delivery_distance_enabled;
+  const byDistance = delivery && settings.delivery_enabled && settings.delivery_distance_enabled;
   if (byDistance && !verifiedDelivery) throw new Error("Calcule a entrega pelo endereço antes de enviar.");
-  if (!lateDelivery && delivery && settings.delivery_enabled && !byDistance && settings.fixed_delivery_fee === null && !zone) throw new Error("Escolha o bairro ou região de entrega.");
+  if (delivery && settings.delivery_enabled && !byDistance && settings.fixed_delivery_fee === null && !zone) throw new Error("Escolha o bairro ou região de entrega.");
   const subtotal =
     Math.round(items.reduce((s, i) => s + Math.round(i.price * 100) * i.qty, 0)) / 100;
-  const delivery_fee = lateDelivery ? 0 : byDistance ? verifiedDelivery?.fee ?? 0 : delivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
+  const delivery_fee = byDistance ? verifiedDelivery?.fee ?? 0 : delivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
   let couponDiscount = couponOverride?.discount ?? 0;
   let couponCode = couponOverride?.code ?? null;
   if (!couponOverride && input.couponCode) {

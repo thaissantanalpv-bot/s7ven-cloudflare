@@ -348,7 +348,6 @@ export type Database = {
           fulfillment: string
           id: string
           items: Json
-          late_delivery: boolean
           notes: string
           number: number
           payment: string
@@ -396,7 +395,6 @@ export type Database = {
           fulfillment?: string
           id?: string
           items: Json
-          late_delivery?: boolean
           notes?: string
           number?: never
           payment: string
@@ -444,7 +442,6 @@ export type Database = {
           fulfillment?: string
           id?: string
           items?: Json
-          late_delivery?: boolean
           notes?: string
           number?: never
           payment?: string
