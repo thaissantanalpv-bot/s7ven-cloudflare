@@ -32,7 +32,7 @@ import { quickMessages, courierMessage, courierPayment, whatsappTo } from "@/lib
 import { copyToClipboard } from "@/lib/pix";
 import { formatBrazilPhone } from "@/lib/phone";
 import { CopyField } from "./copy-field";
-import { callAlfaDelivery } from "@/lib/alfa.functions";
+import { callAlfaDelivery, cancelAlfaDelivery } from "@/lib/alfa.functions";
 import { alfaStatusLabel, canCallAlfa } from "@/lib/alfa";
 import { listOrders, updateOrderCourier, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
 import {
@@ -146,6 +146,18 @@ export function OrderBoard() {
     } finally {
       setBusy("");
     }
+  };
+  const cancelAlfaFn = useServerFn(cancelAlfaDelivery);
+  const cancelAlfa = async (order: Order) => {
+    if (busy || !window.confirm(`Cancelar a corrida da Alfa do pedido #${order.number}? O pedido continua no quadro.`)) return;
+    setBusy(order.id); setError("");
+    try {
+      await cancelAlfaFn({ data: { id: order.id } });
+      setNotice(`Corrida da Alfa do pedido #${order.number} cancelada.`);
+      await client.invalidateQueries({ queryKey: ["store-orders"] });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível cancelar na Alfa.");
+    } finally { setBusy(""); }
   };
   const client = useQueryClient();
   const catalog = useQuery(adminCatalogQuery);
@@ -353,7 +365,12 @@ export function OrderBoard() {
                 </Button>
               </>
             ) : (
-              <p className="mt-3 rounded-md bg-kanban-prep/15 px-2 py-1.5 text-center text-xs font-semibold" role="status">🛵 {alfaStatusLabel(order.alfa_status)}</p>
+              <>
+                <p className="mt-3 rounded-md bg-kanban-prep/15 px-2 py-1.5 text-center text-xs font-semibold" role="status">🛵 {alfaStatusLabel(order.alfa_status)}</p>
+                <Button variant="ghost" size="sm" className="mt-1 w-full text-xs text-destructive" disabled={!!busy} aria-label={`Cancelar corrida da Alfa do pedido ${order.number}`} onClick={() => void cancelAlfa(order)}>
+                  Cancelar corrida da Alfa
+                </Button>
+              </>
             )
           ))}
         {boardStatus(order.status) === "ready" && order.status !== "cancelled" && (

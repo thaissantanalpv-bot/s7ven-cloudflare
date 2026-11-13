@@ -61,3 +61,20 @@ export const callAlfaDelivery = createServerFn({ method: "POST" })
     }).eq("id", order.id);
     return { price: null, etaMinutes: null, created: true };
   });
+
+/** Cancel the active Alfa delivery of an order (before pickup). Admin only. */
+export const cancelAlfaDelivery = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: admin, error: roleError } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (roleError || !admin) throw new Error("Acesso restrito à administração.");
+    const { data: order, error } = await context.supabase.from("orders").select("id,alfa_status").eq("id", data.id).maybeSingle();
+    if (error || !order) throw new Error("Pedido não encontrado.");
+    if (canCallAlfa(order.alfa_status)) throw new Error("Não há corrida ativa da Alfa neste pedido.");
+    const { alfaToken, alfaRequest } = await import("./alfa.server");
+    await alfaRequest(`/v1/logistics/cancel/${encodeURIComponent(order.id)}`, await alfaToken(), { reason: "PROBLEM_AT_MERCHANT", action: "CANCEL_DELIVERY", message: "Cancelado pela loja" });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("orders").update({ alfa_status: "CANCELLED", alfa_updated_at: new Date().toISOString() }).eq("id", order.id);
+    return { ok: true };
+  });
