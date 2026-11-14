@@ -1,6 +1,6 @@
 /** Unsharp mask on raw RGBA pixels: original + amount × (original − blurred), skipping alpha. */
-export function unsharp(orig: Uint8ClampedArray, blurred: Uint8ClampedArray, amount = 0.8, threshold = 3): Uint8ClampedArray {
-  const out = new Uint8ClampedArray(orig.length);
+export function unsharp(orig: Uint8ClampedArray, blurred: Uint8ClampedArray, amount = 0.8, threshold = 3): Uint8ClampedArray<ArrayBuffer> {
+  const out = new Uint8ClampedArray(new ArrayBuffer(orig.length));
   for (let i = 0; i < orig.length; i += 4) {
     for (let c = 0; c < 3; c++) {
       const diff = orig[i + c]! - blurred[i + c]!;
