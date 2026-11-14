@@ -6,3 +6,4 @@
 - Admin drafts are built with `toDraft`, which must use stored paths (`imagePath`/`imagePaths`/`variationPhotoPaths`), never resolved signed URLs, and prunes variation-photo links to existing variations/photos.
 - AI product descriptions (`/api/describe-product`) are admin-only suggestions from the Astra model on Responses with built-in web search; they only fill the field after the admin taps "Usar", and share the photo-AI block state on 402/403.
 - Photo edits use the Gateway SDK at medium quality by default, with high quality opt-in; never replay an empty stream automatically, to avoid duplicate paid edits.
+- Bulk sharpening runs in the browser (canvas unsharp mask, no AI cost) on cover photos; results are reviewed before/after, uploaded as new paths and saved per product with the updated_at conflict check.
