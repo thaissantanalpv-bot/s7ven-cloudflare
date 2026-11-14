@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { editImage } from "./image-gateway.server";
+import { editImage, editImageStream, GatewayError } from "@lovable.dev/ai-gateway";
 
 const fail = (message: string, status: number) => new Response(message, { status, headers: { "Cache-Control": "no-store" } });
 export async function handlePhotoEdit(request: Request) {
@@ -26,19 +26,32 @@ export async function handlePhotoEdit(request: Request) {
   const name = input.get("productName");
   if (!(image instanceof File) || !["image/jpeg","image/png","image/webp"].includes(image.type) || image.size > 5*1024*1024 || !image.size) return fail("Use JPG, PNG ou WebP de até 5 MB.", 400);
   if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 2000 || typeof name !== "string" || name.length > 150) return fail("Informe a alteração desejada, até 2.000 caracteres.", 400);
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) return fail("A edição de fotos está sem configuração de IA.", 401);
-  const form = new FormData();
-  form.set("image", image);
-  form.set("stream", input.get("stream") === "false" ? "false" : "true");
-  form.set("prompt", `Edite a fotografia de produto para o catálogo da S7VEN. Produto informado: ${name}. Preserve exatamente o produto real, formato, proporções, cores, marca, rótulos e textos legíveis. Não adicione outros produtos ou acessórios não existentes. Mostre o item inteiro, com iluminação natural de fotografia comercial. Altere apenas qualidade, iluminação e cenário conforme solicitado. Instrução da administradora: ${prompt}`);
-  const upstream = await editImage({ baseURL: "https://ai.gateway.lovable.dev", apiKey, model: "openai/gpt-image-2.5-sunburst", format: "openai" }, form);
-  if (upstream.status === 402 || upstream.status === 403) {
-    const payload = await upstream.clone().json().catch(() => ({})) as { message?: string; error?: { message?: string } };
-    const reason = payload.message ?? payload.error?.message ?? "O acesso à edição de fotos está bloqueado. Confira os créditos e permissões.";
-    await supabaseAdmin.from("admin_photo_ai_state").upsert({ user_id: auth.user.id, blocked_reason: reason, updated_at: new Date().toISOString() });
+  const payload = {
+    model: "openai/gpt-image-2.5-sunburst" as const,
+    image,
+    quality: input.get("quality") === "high" ? "high" as const : "medium" as const,
+    size: "auto" as const,
+    output_format: "png" as const,
+    prompt: `Edite a fotografia de produto para o catálogo da S7VEN. Produto informado: ${name}. Preserve exatamente o produto real, formato, proporções, cores, marca, rótulos e textos legíveis. Não adicione outros produtos ou acessórios não existentes. Mostre o item inteiro, com iluminação natural de fotografia comercial. Altere apenas qualidade, iluminação e cenário conforme solicitado. Instrução da administradora: ${prompt}`,
+  };
+  try {
+    if (input.get("stream") === "false") {
+      const result = await editImage(payload, { signal: request.signal });
+      return Response.json(result, { headers: { "Cache-Control": "no-store" } });
+    }
+    const stream = await editImageStream({ ...payload, partial_images: 1 }, { signal: request.signal });
+    return stream.toResponse({ headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    if (error instanceof GatewayError) {
+      const status = error.httpStatus ?? 503;
+      const reason = status === 402 || status === 403
+        ? "O acesso à edição de fotos está bloqueado. Confira os créditos e permissões."
+        : "Não foi possível concluir a edição. Tente novamente mais tarde.";
+      if (status === 402 || status === 403) {
+        await supabaseAdmin.from("admin_photo_ai_state").upsert({ user_id: auth.user.id, blocked_reason: reason, updated_at: new Date().toISOString() });
+      }
+      return fail(reason, status);
+    }
+    return fail("Não foi possível concluir a edição. Tente novamente mais tarde.", 503);
   }
-  const headers = new Headers({ "Content-Type": upstream.headers.get("Content-Type") ?? "application/json", "Cache-Control": "no-store" });
-  upstream.headers.forEach((value,name) => { if (name.toLowerCase().startsWith("x-lovable-aig-")) headers.set(name,value); });
-  return new Response(upstream.body, { status: upstream.status, headers });
 }

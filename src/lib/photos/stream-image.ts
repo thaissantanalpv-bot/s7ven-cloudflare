@@ -92,18 +92,7 @@ export async function streamImage(
   signal?.throwIfAborted();
   if (streamError) throw new Error(streamError);
   if (!sawAnyEvent) {
-    const replay = await send(false);
-    if (!replay.ok) {
-      const text = await replay.text().catch(() => "");
-      let message = text;
-      try { const data = JSON.parse(text); message = data.message ?? data.error?.message ?? text; } catch { /* plain safe app error */ }
-      throw new Error(message || `Não foi possível editar a foto (${replay.status}).`);
-    }
-    const json = (await replay.json()) as { data?: { b64_json?: string }[] };
-    const b64 = json.data?.[0]?.b64_json;
-    if (!b64) throw new Error("A IA não retornou uma foto.");
-    onFrame(`data:image/png;base64,${b64}`, true);
-    return;
+    throw new Error("A edição não retornou uma foto. Confira os créditos antes de tentar novamente.");
   }
   if (!sawCompleted) throw new Error("A edição da foto não foi concluída. A prévia não pode ser aplicada.");
 }

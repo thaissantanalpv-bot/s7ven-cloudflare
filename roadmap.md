@@ -1,3 +1,6 @@
+# Edição de fotos mais rápida (Thais, 14/11/2026)
+- [x] Qualidade média no modo Rápida, alta opcional em Mais detalhes/HD; removida repetição automática de edição sem resposta. Edição real no painel concluída em 25,9 s sem salvar o produto; 8 testes passaram e build OK. Publicação depende de Thais.
+
 # Figurinhas para Stories (Thais, 07/11/2026)
 - [x] Adicionados cinco estilos inspirados nas novas referências: letras combinadas, faixas rosa, texto em camadas, letras arredondadas e interruptores de foco; frases de loja/academia ampliadas. Quatro downloads transparentes conferidos na conta administrativa, espaçamento refinado na revisão visual, 17 testes e build OK. Fontes semelhantes, não identificadas como idênticas às imagens.
 - [x] Adicionadas 1.800 composições (300 frases × 6 estilos reais), em 20 temas, com busca, cores, favoritas e PNG transparente. Corrigido desalinhamento das prévias na revisão visual; downloads reais de academia/trabalho, envio de arquivo e celular/computador conferidos na conta administrativa; 18 testes passaram e build OK. Postagem no Instagram depende da escolha no aplicativo do celular.
