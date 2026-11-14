@@ -39,6 +39,7 @@ export function ProductManager() {
   const [busy, setBusy] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [sharpenList, setSharpenList] = useState<CatalogProduct[] | null>(null);
+  const [bgList, setBgList] = useState<CatalogProduct[] | null>(null);
   const categories = [...new Set(products.map(p => p.category))];
   const [tab, setTab] = useState<"produtos" | "combos" | "falta">("produtos");
   const regular = products.filter(p => !p.comboGroups?.length);
@@ -88,6 +89,7 @@ export function ProductManager() {
       <Button variant="outline" onClick={() => startNew(true)} className="h-auto min-h-11 px-2 py-2.5 text-xs sm:text-sm"><Plus />Criar Combo</Button>
       <Button variant="outline" onClick={() => setBulkOpen(true)} className="h-auto min-h-11 px-2 py-2.5 text-xs sm:text-sm"><Percent />Preços em Lote</Button>
     </div>
+    <BulkSharpenDialog mode="background" open={Boolean(bgList)} onOpenChange={o => { if (!o) setBgList(null); }} products={bgList ?? []} />
     <BulkSharpenDialog open={Boolean(sharpenList)} onOpenChange={o => { if (!o) setSharpenList(null); }} products={sharpenList ?? []} />
     <BulkPriceDialog key={bulkOpen ? "open" : "closed"} open={bulkOpen} onOpenChange={setBulkOpen} products={visible} />
     <div className="mb-2 flex flex-wrap gap-2">
@@ -96,7 +98,7 @@ export function ProductManager() {
       <select className="field min-w-0 flex-1 sm:w-auto sm:max-w-32 sm:flex-none" aria-label="Disponibilidade" value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos</option><option value="active">Disponíveis</option><option value="paused">Indisponíveis</option><option value="low">Estoque baixo</option></select>
     </div>
     <p className="mb-5 text-xs text-muted-foreground">Mostrando {visible.length} de {managed.length}{(query || category || filter !== "all") && <> · <button type="button" className="text-primary underline" onClick={() => { setQuery(""); setCategory(""); setFilter("all"); }}>limpar filtros</button></>}{tab === "produtos" && " · combos ficam na aba Combos"}</p>
-    {visible.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-3 text-sm"><label className="inline-flex cursor-pointer items-center gap-2"><input type="checkbox" className="size-4 accent-primary" aria-label="Selecionar todos os produtos da lista" checked={visible.every(p => selected.has(p.id))} onChange={e => setSelected(e.target.checked ? new Set([...selected, ...visible.map(p => p.id)]) : new Set([...selected].filter(id => !visible.some(p => p.id === id))))} />Selecionar todos</label>{selected.size > 0 && <><span className="text-muted-foreground">{selected.size} selecionado(s)</span><Button size="sm" variant="destructive" disabled={busy} onClick={() => { setMessage(""); setDeleting(managed.filter(p => selected.has(p.id))); }}><Trash2 />Excluir selecionados</Button><Button size="sm" variant="outline" disabled={busy} onClick={() => setSharpenList(managed.filter(p => selected.has(p.id)))}><Sparkles />Melhorar nitidez</Button><Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Limpar</Button></>}</div>}
+    {visible.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-3 text-sm"><label className="inline-flex cursor-pointer items-center gap-2"><input type="checkbox" className="size-4 accent-primary" aria-label="Selecionar todos os produtos da lista" checked={visible.every(p => selected.has(p.id))} onChange={e => setSelected(e.target.checked ? new Set([...selected, ...visible.map(p => p.id)]) : new Set([...selected].filter(id => !visible.some(p => p.id === id))))} />Selecionar todos</label>{selected.size > 0 && <><span className="text-muted-foreground">{selected.size} selecionado(s)</span><Button size="sm" variant="destructive" disabled={busy} onClick={() => { setMessage(""); setDeleting(managed.filter(p => selected.has(p.id))); }}><Trash2 />Excluir selecionados</Button><Button size="sm" variant="outline" disabled={busy} onClick={() => setSharpenList(managed.filter(p => selected.has(p.id)))}><Sparkles />Melhorar nitidez</Button><Button size="sm" variant="outline" disabled={busy} onClick={() => setBgList(managed.filter(p => selected.has(p.id)))}><Sparkles />Novo fundo com IA</Button><Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Limpar</Button></>}</div>}
     {!editing && message && <p role="status" className="mb-4 text-sm text-primary">{message}</p>}
     <div className="grid grid-cols-1 gap-3">
       {visible.map(p => {
