@@ -66,7 +66,7 @@ import { checkoutWhatsApp, productMessage, insertCouponLine } from "@/lib/order-
 import { applyCoupon } from "@/lib/store-settings";
 import { matchesSearch } from "@/lib/product-search";
 import { OrderSchedulePicker } from "@/components/catalog/order-schedule-picker";
-import { scheduleLabel, validateSchedule } from "@/lib/order-schedule";
+import { validateSchedule } from "@/lib/order-schedule";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
@@ -1163,7 +1163,9 @@ function Catalog() {
           <div className="flex-1 space-y-1.5 overflow-y-auto px-4 pb-1.5 pt-2">
             <p role="status" className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs ${orderingBlocked || (status.configured && !status.open) ? "border-destructive/40 bg-destructive/10" : "border-primary/40 bg-primary/10"}`}>
               <Clock className={`size-4 shrink-0 ${orderingBlocked || (status.configured && !status.open) ? "text-destructive" : "text-primary"}`} />
-              {orderingBlocked || (status.configured && !status.open)
+              {scheduledFor
+                ? <span className="font-semibold">{isDelivery ? "Entrega agendada" : "Retirada agendada"}</span>
+                : orderingBlocked || (status.configured && !status.open)
                 ? <span className="min-w-0 truncate"><span className="font-semibold">{orderStatus.reason === "paused" ? "Pedidos pausados" : "Loja fechada"}</span><span className="text-muted-foreground"> · explore o catálogo</span></span>
                 : pickupOnly
                   ? <span className="min-w-0 truncate"><span className="font-semibold">Somente retirada{pickupUntil}</span><span className="text-muted-foreground"> · entregas encerradas por hoje</span></span>
@@ -1249,7 +1251,7 @@ function Catalog() {
                 <Button size="sm" variant={isDelivery ? "default" : "outline"} aria-pressed={isDelivery} disabled={pickupOnly} onClick={() => { setForm({ ...form, fulfillment: "delivery" }); setError(""); }}><Truck />{pickupOnly ? "Entrega encerrada" : "Entrega"}</Button>
                 <Button size="sm" variant={!isDelivery ? "default" : "outline"} aria-pressed={!isDelivery} onClick={() => { setForm({ ...form, fulfillment: "pickup" }); setError(""); }}><Store />Retirada na loja</Button>
               </div>
-              {now && settings.hours_enabled && !settings.paused && <OrderSchedulePicker settings={settings} now={now} fulfillment={form.fulfillment} at={scheduledFor} onChange={setScheduledFor} onFulfillment={fulfillment => { setScheduledFor(""); setForm(f => ({ ...f, fulfillment })); }} />}
+              {now && settings.hours_enabled && !settings.paused && <OrderSchedulePicker compact settings={settings} now={now} fulfillment={form.fulfillment} at={scheduledFor} onChange={setScheduledFor} onFulfillment={fulfillment => { setScheduledFor(""); setForm(f => ({ ...f, fulfillment })); }} />}
               {isDelivery && (
                 <fieldset className="space-y-1.5" aria-label="Endereço de entrega">
                   {savedAddress && useSavedAddress && (
@@ -1431,14 +1433,14 @@ function Catalog() {
               <dt className="font-semibold">{isDelivery && distanceMode && !validQuote && items.length ? "Total (sem entrega)" : "Total"}</dt>
               <dd className="text-right font-display text-lg font-bold leading-tight">{brl(displayedTotal)}</dd>
             </dl>
-            {status.configured && !status.open && orderStatus.reason !== "paused" && (
-              <p className="text-xs text-destructive">{canSchedule ? `Loja fechada agora. Seu pedido fica agendado e chega à loja sozinho ${reopensAt}.` : "Loja fechada no momento. Confira os horários de atendimento."}</p>
+            {status.configured && !status.open && orderStatus.reason !== "paused" && !scheduledFor && (
+              <p className="text-xs text-muted-foreground">{canSchedule ? `Agendado para a próxima abertura: ${reopensAt}.` : "Loja fechada no momento. Confira os horários de atendimento."}</p>
             )}
             {orderingBlocked && orderStatus.reason === "paused" && (
               <p className="text-xs text-destructive">Pedidos pausados no momento. Tente novamente mais tarde.</p>
             )}
             {pickupOnly && (
-              <p className="text-xs text-destructive">As entregas encerraram às {settings.order_cutoff}. Você ainda pode fazer o pedido para retirar na loja{pickupUntil}.</p>
+              <p className="text-xs text-muted-foreground">Agora, somente retirada{pickupUntil}. Entrega disponível por agendamento.</p>
             )}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button
@@ -1446,7 +1448,7 @@ function Catalog() {
               onClick={send}
               className="h-11 w-full rounded-lg bg-whatsapp font-semibold text-whatsapp-foreground"
             >
-              <MessageCircle /> {!online ? "Conecte-se para enviar" : sending ? "Registrando pedido…" : canSchedule ? scheduledFor ? `Agendar para ${scheduleLabel(new Date(scheduledFor))}` : `Agendar pedido para ${reopensAt}` : "Enviar pedido pelo WhatsApp"}
+              <MessageCircle /> {!online ? "Conecte-se para enviar" : sending ? "Registrando pedido…" : canSchedule ? "Confirmar agendamento" : "Enviar pedido pelo WhatsApp"}
             </Button>
           </div>
           </>)}
