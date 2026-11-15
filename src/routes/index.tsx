@@ -1124,7 +1124,7 @@ function Catalog() {
               <img src="/logo-s7ven.png" alt="" width={360} height={312} className="h-20 w-auto" />
               <CheckCircle2 className="mt-6 size-20 text-gold" strokeWidth={1.5} />
               <h2 className="mt-4 font-display text-3xl font-extrabold uppercase text-gold">{tracking.data?.status === "cancelled" ? "Pedido cancelado" : "Pedido enviado!"}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{receipt.scheduledLabel ? `Pedido agendado! A loja está fechada agora e ele chega sozinho ${receipt.scheduledLabel}, sem você precisar fazer nada` : "Seu pedido foi registrado na loja. A mensagem está pronta para você enviar no WhatsApp"}. Em breve nossa equipe vai te responder.</p>
+              <p className="mt-2 text-sm text-muted-foreground">{receipt.scheduledLabel ? `Pedido agendado! A loja está fechada agora e ele chega sozinho ${receipt.scheduledLabel}, sem você precisar fazer nada` : "Seu pedido foi registrado na loja. Você abriu a conversa no WhatsApp, mas ainda precisa tocar em Enviar para mandar a mensagem"}. Em breve nossa equipe vai te responder.</p>
               <div className="mt-5 w-full rounded-xl border bg-card p-4 text-left">
                 <p className="mb-2 font-semibold">Resumo do pedido</p>
                 <p className="flex justify-between text-sm"><span>{receipt.itemCount} {receipt.itemCount === 1 ? "item" : "itens"}</span><span className="font-semibold">{brl(receipt.total)}</span></p>
