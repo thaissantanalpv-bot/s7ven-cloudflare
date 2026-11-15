@@ -852,12 +852,6 @@ function Catalog() {
               </div>
             </section>
 
-            {now && settings.hours_enabled && !settings.paused && (
-              <section aria-label="Agendamento do pedido" className="border-b py-4">
-                <OrderSchedulePicker settings={settings} now={now} fulfillment={form.fulfillment} at={scheduledFor} onChange={setScheduledFor} onFulfillment={fulfillment => { setScheduledFor(""); setForm(f => ({ ...f, fulfillment })); }} />
-              </section>
-            )}
-
             <Button asChild variant="outline" className="mt-3 h-12 w-full gap-3 border-primary/30 text-foreground hover:text-primary">
               <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
                 <Instagram className="size-5 shrink-0 text-primary" />
