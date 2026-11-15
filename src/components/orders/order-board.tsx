@@ -33,7 +33,7 @@ import { copyToClipboard } from "@/lib/pix";
 import { formatBrazilPhone } from "@/lib/phone";
 import { CopyField } from "./copy-field";
 import { callAlfaDelivery, cancelAlfaDelivery } from "@/lib/alfa.functions";
-import { alfaStatusLabel, canCallAlfa } from "@/lib/alfa";
+import { alfaReasonLabel, alfaStatusLabel, canCallAlfa } from "@/lib/alfa";
 import { listOrders, updateOrderCourier, updateOrderStatus, updateOrderTracking } from "@/lib/orders.functions";
 import {
   ORDER_STAGES,
@@ -328,7 +328,7 @@ export function OrderBoard() {
               </span>
             )}
             {!!order.alfa_status && order.status !== "delivered" && (
-              <span className="truncate text-xs font-semibold text-muted-foreground">🛵 {alfaStatusLabel(order.alfa_status)}{order.alfa_status === "REJECTED" && order.alfa_message ? ` (${order.alfa_message})` : ""}</span>
+              <span className="truncate text-xs font-semibold text-muted-foreground">🛵 {alfaStatusLabel(order.alfa_status)}{(order.alfa_status === "REJECTED" || order.alfa_status === "CANCELLED") && order.alfa_message ? ` (${alfaReasonLabel(order.alfa_message)})` : ""}</span>
             )}
           </span>
         </button>

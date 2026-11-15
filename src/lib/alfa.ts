@@ -73,3 +73,10 @@ export function alfaAddressFromGeocode(result: GeocodeResult | undefined, comple
     longitude: loc.lng,
   };
 }
+
+const REASONS: Record<string, string> = {
+  REGION_NOT_SERVED: "a Alfa diz que não atende essa região",
+  NO_COURIER_AVAILABLE: "sem motoboy disponível",
+};
+/** Plain-language reason for an Alfa rejection/cancellation code. */
+export function alfaReasonLabel(code: string) { return REASONS[code] ?? code; }
