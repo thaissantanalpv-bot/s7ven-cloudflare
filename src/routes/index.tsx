@@ -832,11 +832,11 @@ function Catalog() {
               <img key={settings.banner_image_url || "padrao"} src={settings.banner_image_url || heroImg} alt="" width={1600} height={720}
                 onError={(e) => { if (e.currentTarget.src !== new URL(heroImg, location.href).href) e.currentTarget.src = heroImg; }}
                 className="absolute inset-0 size-full object-cover" style={{ objectPosition: look.bannerPosition }} />
-              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent" />
-              <div className="relative max-w-[70%] px-5 py-8 sm:px-8 sm:py-14 md:max-w-lg">
+              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/95 to-background/75 sm:from-background sm:via-background/90 sm:to-transparent" />
+              <div className="relative min-w-0 max-w-full px-5 py-7 sm:max-w-[70%] sm:px-8 sm:py-14 md:max-w-lg">
                 <p className="font-display text-sm font-semibold uppercase tracking-wide text-foreground sm:text-lg">{look.bannerKicker}</p>
-                <h1 className="font-display text-3xl font-extrabold uppercase leading-none text-gold sm:text-5xl">{look.bannerTitle}</h1>
-                <p className="mt-3 text-sm text-foreground/85 sm:text-base">{look.bannerText}</p>
+                <h1 className="mt-1 break-words font-display text-3xl font-extrabold uppercase leading-tight text-foreground sm:text-5xl sm:text-gold">{look.bannerTitle}</h1>
+                <p className="mt-3 text-sm text-foreground sm:text-base">{look.bannerText}</p>
                 <Button onClick={() => goTab("categorias")} className="mt-5 h-11 rounded-full px-5 font-bold uppercase tracking-wide">
                   {look.bannerButton || "Ver catálogo"} <ArrowRight />
                 </Button>
