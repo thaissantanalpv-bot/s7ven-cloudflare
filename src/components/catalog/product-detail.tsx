@@ -7,7 +7,7 @@ import { ProductGallery } from "@/components/products/product-gallery";
 import { available, discountPercent, type CatalogProduct } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 import { keyOf, OTHER, type Cart } from "./cart-keys";
-import { MANY_OPTIONS, normalize, sortedOptions } from "./option-list";
+import { MANY_OPTIONS, kindOf, normalize, sortedOptions } from "./option-list";
 
 /** Full product screen: photos, description, variation chips, quantity and add-to-cart. */
 export function ProductDetail({
@@ -59,8 +59,8 @@ export function ProductDetail({
   const ready = (!hasOpts || (isOther ? !!text : !!chosen)) && available(p, option);
   const optionOut = hasOpts && !!option && !available(p, option);
   const off = discountPercent(p);
-  const kind = p.optionLabel === "Cor" ? "uma cor" : p.optionLabel === "Sabor" ? "um sabor" : "uma opção";
-  const optionWord = p.optionLabel === "Cor" ? "cor" : p.optionLabel === "Sabor" ? "sabor" : "opção";
+  const kind = kindOf(p);
+  const optionWord = p.optionLabel?.toLowerCase() || "opção";
   const add = () => {
     onChange(key, qty);
     setAdded(true);

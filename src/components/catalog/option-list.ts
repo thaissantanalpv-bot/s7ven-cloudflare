@@ -3,7 +3,11 @@ import { available, type CatalogProduct } from "@/lib/catalog";
 /** Above this many flavors/colors, cards use a compact dropdown and the detail screen adds search. */
 export const MANY_OPTIONS = 6;
 
-export const kindOf = (p: CatalogProduct) => (p.optionLabel === "Cor" ? "uma cor" : "um sabor");
+export const kindOf = (p: CatalogProduct) => (
+  p.optionLabel === "Cor" ? "uma cor"
+    : p.optionLabel === "Sabor" ? "um sabor"
+      : p.optionLabel === "Variação" ? "uma variação" : "uma opção"
+);
 
 /** Alphabetical (pt-BR), with sold-out options moved to the end. */
 export function sortedOptions(p: CatalogProduct): string[] {
