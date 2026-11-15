@@ -64,6 +64,7 @@ export const customerSchema = z.object({
     ctx.addIssue({ code: "custom", path: ["address"], message: "Informe o endereço completo" });
 });
 export const submitOrderSchema = z.object({
+  scheduledFor: z.string().datetime({ offset: true }).optional(),
   deliveryQuoteId: z.string().uuid().optional(),
   deliveryToken: z.string().max(200).optional(),
   analytics: analyticsIdentitySchema.optional(),

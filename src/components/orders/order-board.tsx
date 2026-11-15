@@ -494,13 +494,13 @@ export function OrderBoard() {
 
       {waitingSchedule.length > 0 && (
         <details className="mt-4 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3">
-          <summary className="cursor-pointer text-sm font-semibold">⏰ {waitingSchedule.length} {waitingSchedule.length === 1 ? "pedido agendado" : "pedidos agendados"} para quando a loja abrir</summary>
-          <p className="mt-1 text-xs text-muted-foreground">Feitos com a loja fechada. Entram sozinhos em "Pedidos novos" no horário de abertura, com alerta no celular.</p>
+          <summary className="cursor-pointer text-sm font-semibold">⏰ {waitingSchedule.length} {waitingSchedule.length === 1 ? "pedido agendado" : "pedidos agendados"}</summary>
+          <p className="mt-1 text-xs text-muted-foreground">Entram em "Pedidos novos" no horário agendado, com alerta no celular.</p>
           <ul className="mt-2 space-y-1 text-sm">
             {waitingSchedule.map((o) => (
               <li key={o.id} className="flex flex-wrap justify-between gap-2">
                 <button type="button" className="font-medium underline-offset-2 hover:underline" onClick={() => open(o)}>#{o.number} · {o.customer_name}</button>
-                <span className="text-muted-foreground">{brl(o.total)} · {new Date(o.scheduled_for!).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                <span className="text-muted-foreground">{o.fulfillment === "pickup" ? "Retirada" : "Entrega"} · {brl(o.total)} · {o.scheduled_for && new Date(o.scheduled_for).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
               </li>
             ))}
           </ul>

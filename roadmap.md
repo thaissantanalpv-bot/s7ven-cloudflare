@@ -1,3 +1,7 @@
+# Agendamento escolhido pelo cliente (Thais, 15/11/2026)
+- [x] Escolher retirada/entrega, dia e horário na abertura e manter a escolha no carrinho (intervalos de 30 minutos, próximos 30 dias).
+- [x] Validar horários semanais, datas especiais e limite de entrega no envio; 31 testes passaram. Pedido real de teste agendado conferido na administração e cancelado, com estoque devolvido. Liberação no horário futuro usa o job existente; não aguardada neste teste.
+
 # Correções de segurança (Thais, 15/11/2026)
 - [x] Impedir troca de dono dos avisos entre administradores: RLS e identidade imutável; tentativa real recusada e dono preservado.
 - [x] Não devolver histórico de compras no checkout público; contagem somente na administração.

@@ -65,6 +65,8 @@ import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
 import { checkoutWhatsApp, productMessage, insertCouponLine } from "@/lib/order-message";
 import { applyCoupon } from "@/lib/store-settings";
 import { matchesSearch } from "@/lib/product-search";
+import { OrderSchedulePicker } from "@/components/catalog/order-schedule-picker";
+import { scheduleLabel, validateSchedule } from "@/lib/order-schedule";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
@@ -215,7 +217,8 @@ function Catalog() {
   const orderStatus = now ? ordersOpen(settings, now) : { open: true, delivery: true, configured: false, reason: null, closesAt: null };
   const orderingBlocked = orderStatus.configured && !orderStatus.open;
   /** Depois do horário das entregas: ainda dá para pedir, mas só para retirar até a loja fechar. */
-  const pickupOnly = orderStatus.open && !orderStatus.delivery;
+  const [scheduledFor, setScheduledFor] = useState("");
+  const pickupOnly = !scheduledFor && orderStatus.open && !orderStatus.delivery;
   const pickupUntil = orderStatus.closesAt ? ` até ${orderStatus.closesAt}` : "";
   const [hoursOpen, setHoursOpen] = useState(false);
   const [sort, setSort] = useState("catalog");
@@ -272,7 +275,7 @@ function Catalog() {
   const reopensAt = now ? nextOpening(settings, now) : null;
   const feeFrom = deliveryFeeFrom(settings);
   /** Closed (not paused) with known hours: the order is scheduled for the next opening instead of blocked. */
-  const canSchedule = orderingBlocked && orderStatus.reason === "closed" && !!reopensAt;
+  const canSchedule = !!scheduledFor || (orderingBlocked && orderStatus.reason === "closed" && !!reopensAt);
   // Warn once, the moment a customer starts a cart while orders are closed, instead of only at checkout.
   useEffect(() => { if (hasCartItems && orderingBlocked) setClosedWarn(w => w === "hidden" ? "show" : w); }, [hasCartItems, orderingBlocked]);
   const [error, setError] = useState("");
@@ -580,6 +583,10 @@ function Catalog() {
     if (!navigator.onLine) return setError("Conecte-se à internet para confirmar os valores e enviar seu pedido.");
     setError("");
     setSubmitted(true);
+    if (scheduledFor) {
+      try { validateSchedule(settings, scheduledFor, form.fulfillment); }
+      catch (e) { return setError(e instanceof Error ? e.message : "Escolha outro horário."); }
+    }
     // Validate saved cart entries too: missing products must not be silently omitted.
     const inputItems = cartInputs(cart);
     try {
@@ -597,9 +604,9 @@ function Catalog() {
     const r = customerSchema.safeParse({ ...form, address: fullAddress });
     if (!r.success) return setError(r.error.issues[0]?.message ?? "Verifique os dados");
     const d = r.data;
-    const requestId = attempt?.signature === JSON.stringify({ customer: d, items: inputItems }) ? attempt.id : crypto.randomUUID();
+    const requestId = attempt?.signature === JSON.stringify({ customer: d, items: inputItems, scheduledFor }) ? attempt.id : crypto.randomUUID();
     const analytics = readAnalyticsIdentity();
-    const validated = submitOrderSchema.safeParse({ requestId, customer: d, items: inputItems, analytics, deliveryQuoteId: isDelivery && distanceMode ? validQuote?.id : undefined, deliveryToken: isDelivery && distanceMode && deliveryToken.current ? deliveryToken.current : undefined });
+    const validated = submitOrderSchema.safeParse({ requestId, scheduledFor: scheduledFor || undefined, customer: d, items: inputItems, analytics, deliveryQuoteId: isDelivery && distanceMode ? validQuote?.id : undefined, deliveryToken: isDelivery && distanceMode && deliveryToken.current ? deliveryToken.current : undefined });
     if (!validated.success) return setError("Confira os produtos e as quantidades do carrinho antes de enviar.");
     const lines = [
       `*Novo pedido — ${STORE_NAME}*`,
@@ -621,7 +628,7 @@ function Catalog() {
       `*Pagamento:* ${d.payment}${d.payment === "Dinheiro" && d.change ? ` (troco para ${d.change})` : ""}`,
       d.notes ? `*Obs.:* ${d.notes}` : "",
     ].filter((l, idx, arr) => l !== "" || arr[idx - 1] !== "");
-    const signature = JSON.stringify({ customer: d, items: inputItems });
+    const signature = JSON.stringify({ customer: d, items: inputItems, scheduledFor });
     setAttempt({ signature, id: requestId });
     setSending(true);
     // Open synchronously to retain browser popup permission; navigate only after a successful save.
@@ -630,6 +637,7 @@ function Catalog() {
     if (popup) popup.opener = null;
     try {
       const saved = await registerOrder({ data: validated.data });
+      if (saved.scheduledLabel) lines.unshift(`*Agendado para ${saved.scheduledLabel}*`);
       const url = checkoutWhatsApp(saved.purchase, lines, d.phone, couponResult && appliedCoupon ? { code: appliedCoupon.code, discount: couponResult.discount } : null);
       setReceipt({ scheduledLabel: saved.scheduledLabel ?? null, id: saved.id, requestId, number: saved.number, purchase: saved.purchase ?? null, url, subtotal, deliveryFee, total, delivery: isDelivery, itemCount: count });
       if (isDelivery && form.street && form.number) {
@@ -642,6 +650,7 @@ function Catalog() {
         localStorage.setItem("s7ven-order-history", JSON.stringify(updatedHistory));
       } catch {}
       setCart({});
+      setScheduledFor("");
       setAttempt(null);
       setAppliedCoupon(null);
       setCouponInput("");
@@ -842,6 +851,12 @@ function Catalog() {
                 </Button>
               </div>
             </section>
+
+            {now && settings.hours_enabled && !settings.paused && (
+              <section aria-label="Agendamento do pedido" className="border-b py-4">
+                <OrderSchedulePicker settings={settings} now={now} fulfillment={form.fulfillment} at={scheduledFor} onChange={setScheduledFor} onFulfillment={fulfillment => { setScheduledFor(""); setForm(f => ({ ...f, fulfillment })); }} />
+              </section>
+            )}
 
             <Button asChild variant="outline" className="mt-3 h-12 w-full gap-3 border-primary/30 text-foreground hover:text-primary">
               <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
@@ -1124,7 +1139,7 @@ function Catalog() {
               <img src="/logo-s7ven.png" alt="" width={360} height={312} className="h-20 w-auto" />
               <CheckCircle2 className="mt-6 size-20 text-gold" strokeWidth={1.5} />
               <h2 className="mt-4 font-display text-3xl font-extrabold uppercase text-gold">{tracking.data?.status === "cancelled" ? "Pedido cancelado" : "Pedido enviado!"}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{receipt.scheduledLabel ? `Pedido agendado! A loja está fechada agora e ele chega sozinho ${receipt.scheduledLabel}, sem você precisar fazer nada` : "Seu pedido foi registrado na loja. Você abriu a conversa no WhatsApp, mas ainda precisa tocar em Enviar para mandar a mensagem"}. Em breve nossa equipe vai te responder.</p>
+              <p className="mt-2 text-sm text-muted-foreground">{receipt.scheduledLabel ? `Pedido agendado para ${receipt.scheduledLabel}. Ele chega automaticamente à loja no horário agendado` : "Seu pedido foi registrado na loja. Você abriu a conversa no WhatsApp, mas ainda precisa tocar em Enviar para mandar a mensagem"}. Em breve nossa equipe vai te responder.</p>
               <div className="mt-5 w-full rounded-xl border bg-card p-4 text-left">
                 <p className="mb-2 font-semibold">Resumo do pedido</p>
                 <p className="flex justify-between text-sm"><span>{receipt.itemCount} {receipt.itemCount === 1 ? "item" : "itens"}</span><span className="font-semibold">{brl(receipt.total)}</span></p>
@@ -1234,6 +1249,7 @@ function Catalog() {
                 <Button size="sm" variant={isDelivery ? "default" : "outline"} aria-pressed={isDelivery} disabled={pickupOnly} onClick={() => { setForm({ ...form, fulfillment: "delivery" }); setError(""); }}><Truck />{pickupOnly ? "Entrega encerrada" : "Entrega"}</Button>
                 <Button size="sm" variant={!isDelivery ? "default" : "outline"} aria-pressed={!isDelivery} onClick={() => { setForm({ ...form, fulfillment: "pickup" }); setError(""); }}><Store />Retirada na loja</Button>
               </div>
+              {now && settings.hours_enabled && !settings.paused && <OrderSchedulePicker settings={settings} now={now} fulfillment={form.fulfillment} at={scheduledFor} onChange={setScheduledFor} onFulfillment={fulfillment => { setScheduledFor(""); setForm(f => ({ ...f, fulfillment })); }} />}
               {isDelivery && (
                 <fieldset className="space-y-1.5" aria-label="Endereço de entrega">
                   {savedAddress && useSavedAddress && (
@@ -1430,7 +1446,7 @@ function Catalog() {
               onClick={send}
               className="h-11 w-full rounded-lg bg-whatsapp font-semibold text-whatsapp-foreground"
             >
-              <MessageCircle /> {!online ? "Conecte-se para enviar" : sending ? "Registrando pedido…" : canSchedule ? `Agendar pedido para ${reopensAt}` : "Enviar pedido pelo WhatsApp"}
+              <MessageCircle /> {!online ? "Conecte-se para enviar" : sending ? "Registrando pedido…" : canSchedule ? scheduledFor ? `Agendar para ${scheduleLabel(new Date(scheduledFor))}` : `Agendar pedido para ${reopensAt}` : "Enviar pedido pelo WhatsApp"}
             </Button>
           </div>
           </>)}

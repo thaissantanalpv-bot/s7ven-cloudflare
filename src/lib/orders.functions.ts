@@ -5,6 +5,7 @@ import { submitOrderSchema, priceOrder, statusSchema, workflowStatusSchema, canc
 import { EMPTY_SETTINGS, nextOpeningAt, ordersOpen, settingsSchema } from "./store-settings";
 import { catalogFromRows } from "./catalog";
 import { deliveryAddress } from "./delivery-address";
+import { scheduleLabel, validateSchedule } from "./order-schedule";
 
 export const submitOrder = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => submitOrderSchema.parse(input))
@@ -23,7 +24,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       if (!existing) return null;
       if (existing.customer_phone !== data.customer.phone || existing.customer_name !== data.customer.name)
         throw new Error("Não foi possível registrar o pedido. Atualize a página e tente novamente.");
-      return { id: existing.id, number: existing.number, purchase: null, scheduledFor: existing.scheduled_for, scheduledLabel: null as string | null };
+      return { id: existing.id, number: existing.number, purchase: null, scheduledFor: existing.scheduled_for, scheduledLabel: existing.scheduled_for ? scheduleLabel(new Date(existing.scheduled_for)) : null };
     };
     const existing = await replay();
     if (existing) return existing;
@@ -44,9 +45,9 @@ export const submitOrder = createServerFn({ method: "POST" })
     const orderStatus = ordersOpen(settings);
     if (!orderStatus.open && orderStatus.reason === "paused") throw new Error("A loja pausou os pedidos por alguns instantes. O catálogo continua aberto para consulta.");
     // Closed store: the order is scheduled and reaches the store automatically when it opens.
-    const opening = orderStatus.open ? null : nextOpeningAt(settings);
+    const opening = data.scheduledFor ? validateSchedule(settings, data.scheduledFor, data.customer.fulfillment) : orderStatus.open ? null : nextOpeningAt(settings);
     if (!orderStatus.open && !opening) throw new Error("A loja está fechada. Confira os horários.");
-    if (orderStatus.open && data.customer.fulfillment === "delivery" && !orderStatus.delivery)
+    if (!opening && orderStatus.open && data.customer.fulfillment === "delivery" && !orderStatus.delivery)
       throw new Error(`As entregas de hoje encerraram às ${settings.order_cutoff}. Escolha retirada na loja${orderStatus.closesAt ? ` (até ${orderStatus.closesAt})` : ""}.`);
     const { data: catalogRows, error: catalogError } = await supabaseAdmin.from("catalog_products").select("id,data,updated_at").in("id", [...new Set(data.items.flatMap(i => [i.productId, ...(i.components ?? []).map(c => c.productId)]))]);
     if (catalogError) throw new Error("Não foi possível conferir o estoque.");
