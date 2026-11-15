@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { RefreshCw, TrendingUp, Receipt, Ban, Download, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSalesReport } from "@/lib/sales-report.functions";
+import { csvDocument } from "@/lib/csv";
 import type { SalesPeriod } from "@/lib/sales-report";
 import { brl } from "@/lib/products";
 import { RatingsCard } from "./ratings-card";
@@ -30,9 +31,9 @@ export function SalesReport() {
       ...Object.entries(data.paymentMethods || {}).map(([method, info]) => [method, String(info.count), info.total.toFixed(2)]),
       [],
       ["Posição", "Produto", "Unidades", "Receita (R$)"],
-      ...data.bestSellers.map((p, i) => [String(i + 1), `"${p.name.replace(/"/g, '""')}"`, String(p.quantity), p.revenue.toFixed(2)]),
+      ...data.bestSellers.map((p, i) => [String(i + 1), p.name, String(p.quantity), p.revenue.toFixed(2)]),
     ];
-    const csvContent = "\uFEFF" + summaryRows.map(r => r.join(";")).join("\n");
+    const csvContent = csvDocument(summaryRows);
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

@@ -59,7 +59,8 @@ export function ProductDetail({
   const ready = (!hasOpts || (isOther ? !!text : !!chosen)) && available(p, option);
   const optionOut = hasOpts && !!option && !available(p, option);
   const off = discountPercent(p);
-  const kind = p.optionLabel === "Cor" ? "uma cor" : "um sabor";
+  const kind = p.optionLabel === "Cor" ? "uma cor" : p.optionLabel === "Sabor" ? "um sabor" : "uma opção";
+  const optionWord = p.optionLabel === "Cor" ? "cor" : p.optionLabel === "Sabor" ? "sabor" : "opção";
   const add = () => {
     onChange(key, qty);
     setAdded(true);
@@ -133,7 +134,7 @@ export function ProductDetail({
                     <input
                       type="search"
                       aria-label={`Buscar ${p.optionLabel?.toLowerCase() ?? "opção"}`}
-                      placeholder={`Buscar ${p.optionLabel === "Cor" ? "cor" : "sabor"}...`}
+                      placeholder={`Buscar ${optionWord}...`}
                       value={find}
                       onChange={(e) => setFind(e.target.value)}
                       className="h-10 w-full rounded-lg border bg-background pl-8 pr-3 text-sm text-foreground outline-none focus-visible:border-primary"
@@ -141,7 +142,7 @@ export function ProductDetail({
                   </div>
                 )}
                 <div className={many ? "mt-2 grid max-h-56 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border bg-muted/30 p-1.5" : "mt-2 flex flex-wrap gap-2"}>
-                  {many && shownOptions.length === 0 && <p className="col-span-2 py-3 text-center text-xs text-muted-foreground">Nenhum {p.optionLabel === "Cor" ? "cor encontrada" : "sabor encontrado"}</p>}
+                  {many && shownOptions.length === 0 && <p className="col-span-2 py-3 text-center text-xs text-muted-foreground">Nenhuma opção encontrada</p>}
                   {(many ? shownOptions : p.options ?? []).map((o) => (
                     <Button
                       key={o}
@@ -158,7 +159,7 @@ export function ProductDetail({
                   ))}
                 </div>
                 {isOther && (
-                  <input className="field mt-2" placeholder={`Qual ${p.optionLabel === "Cor" ? "cor" : "sabor"}?`} maxLength={40} value={typed[p.id] ?? ""} onChange={(e) => onTyped(p.id, e.target.value)} />
+                  <input className="field mt-2" placeholder={`Qual ${optionWord}?`} maxLength={40} value={typed[p.id] ?? ""} onChange={(e) => onTyped(p.id, e.target.value)} />
                 )}
                 {optionOut && <p className="mt-1 text-xs font-semibold text-destructive">Esgotado</p>}
               </div>

@@ -12,18 +12,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     // Public checkout is a narrowly scoped privileged write, never a public read of customer data.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Idempotent retries only replay an order placed with the same checkout key by the same customer.
-    // Which purchase this is for the customer: earlier non-cancelled orders with the same phone, plus this one.
-    const purchaseNumber = async (orderId: string, createdAt: string) => {
-      const national = data.customer.phone.slice(2);
-      const { count: earlier, error: countError } = await supabaseAdmin
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .in("customer_phone", [data.customer.phone, national])
-        .neq("status", "cancelled")
-        .neq("id", orderId)
-        .lte("created_at", createdAt);
-      return countError ? null : (earlier ?? 0) + 1;
-    };
+    // A typed phone is not proof of ownership. Historical purchase counts stay admin-only.
     const replay = async () => {
       const { data: existing, error: existingError } = await supabaseAdmin
         .from("orders")
@@ -34,7 +23,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       if (!existing) return null;
       if (existing.customer_phone !== data.customer.phone || existing.customer_name !== data.customer.name)
         throw new Error("Não foi possível registrar o pedido. Atualize a página e tente novamente.");
-      return { id: existing.id, number: existing.number, purchase: await purchaseNumber(existing.id, existing.created_at), scheduledFor: existing.scheduled_for, scheduledLabel: null as string | null };
+      return { id: existing.id, number: existing.number, purchase: null, scheduledFor: existing.scheduled_for, scheduledLabel: null as string | null };
     };
     const existing = await replay();
     if (existing) return existing;
@@ -97,7 +86,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       }
       throw new Error("Não foi possível registrar o pedido. Seu carrinho foi mantido.");
     }
-    const result = { id: saved.id, number: saved.number, purchase: await purchaseNumber(saved.id, saved.created_at), scheduledFor: opening ? opening.at.toISOString() : null, scheduledLabel: opening?.label ?? null };
+    const result = { id: saved.id, number: saved.number, purchase: null, scheduledFor: opening ? opening.at.toISOString() : null, scheduledLabel: opening?.label ?? null };
     // Scheduled orders notify the store later, from the release job, when it opens.
     if (opening) return result;
     // Avisos para a loja (celular e e-mail) em paralelo; falhas de envio nunca bloqueiam o pedido.

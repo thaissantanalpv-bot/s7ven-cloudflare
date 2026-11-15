@@ -23,7 +23,8 @@ export async function createDeliveryToken(now = Date.now()) {
 export async function verifyDeliveryToken(token: string | undefined, now = Date.now()) {
   const match = /^([0-9a-f-]{36})\.(\d{1,16})\.([0-9a-f]{64})$/.exec(token ?? "");
   if (!match) return null;
-  const id = match[1]!, exp = match[2]!, sig = match[3]!;
+  const [, id, exp, sig] = match;
+  if (!id || !exp || !sig) return null;
   if (Number(exp) < now) return null;
   const ok = await crypto.subtle.verify("HMAC", await signingKey(), fromHex(sig), encoder.encode(`${id}.${exp}`));
   return ok ? id : null;
@@ -40,4 +41,16 @@ export const DELIVERY_QUOTE_CLIENT_HOURLY_LIMIT = 20;
 /** Pseudonymous per-network key (HMAC of the caller IP); the raw IP is never stored. */
 export async function deliveryClientHash(ip: string) {
   return toHex(await crypto.subtle.sign("HMAC", await signingKey(), encoder.encode(`delivery-client:${ip}`)));
+}
+
+/** Shared existing store/network budget; failures always stop paid Maps calls. */
+export async function claimMapsBudget(client: {
+  rpc: (name: "claim_delivery_quote_attempt", args: { _client_hash: string; _global_limit: number; _client_limit: number }) => PromiseLike<{ data: unknown; error: unknown }>;
+}, ip: string) {
+  const { data, error } = await client.rpc("claim_delivery_quote_attempt", {
+    _client_hash: await deliveryClientHash(ip),
+    _global_limit: DELIVERY_QUOTE_GLOBAL_HOURLY_LIMIT,
+    _client_limit: DELIVERY_QUOTE_CLIENT_HOURLY_LIMIT,
+  });
+  if (error || data !== "ok") throw new Error("Muitas buscas de endereço agora. Digite o endereço ou tente em instantes.");
 }

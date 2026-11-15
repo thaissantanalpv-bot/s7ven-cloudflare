@@ -7,7 +7,7 @@ vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/components/push-notifications", () => ({ PushQuickButton: () => null }));
 vi.mock("@/components/store-pause-button", () => ({ StorePauseButton: () => null, StorePauseSwitch: () => null }));
 vi.mock("@/lib/catalog.query", () => ({ adminCatalogQuery: { queryKey: ["admin-catalog-products"], queryFn: async () => [] } }));
-vi.mock("@/lib/alfa.functions", () => ({ callAlfaDelivery: async () => ({ price: 9, etaMinutes: 20, created: false }) }));
+vi.mock("@/lib/alfa.functions", () => ({ callAlfaDelivery: async () => ({ price: 9, etaMinutes: 20, created: false }), cancelAlfaDelivery: vi.fn(async () => ({ cancelled: true })) }));
 vi.mock("@/lib/orders.functions", () => ({
   listOrders: mocks.list,
   updateOrderStatus: mocks.update,

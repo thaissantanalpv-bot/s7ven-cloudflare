@@ -28,9 +28,8 @@ export const savePushSubscription = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => pushSubscriptionSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    // Verified admin only: a device that switched accounts is reassigned to the current admin.
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("admin_push_subscriptions").upsert(
+    // Run as the verified owner: endpoint conflicts cannot reassign another admin's device.
+    const { error } = await context.supabase.from("admin_push_subscriptions").upsert(
       {
         user_id: context.userId,
         endpoint: data.endpoint,
@@ -42,16 +41,17 @@ export const savePushSubscription = createServerFn({ method: "POST" })
       { onConflict: "endpoint" },
     );
     if (error) throw new Error("Não foi possível ativar os avisos neste aparelho.");
-    const { data: extra } = await supabaseAdmin
+    const { data: extra } = await context.supabase
       .from("admin_push_subscriptions")
       .select("id")
       .eq("user_id", context.userId)
       .order("updated_at", { ascending: false })
       .range(MAX_DEVICES_PER_ADMIN, MAX_DEVICES_PER_ADMIN + 49);
     if (extra?.length)
-      await supabaseAdmin
+      await context.supabase
         .from("admin_push_subscriptions")
         .delete()
+        .eq("user_id", context.userId)
         .in(
           "id",
           extra.map((r) => r.id),

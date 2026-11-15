@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Banknote, Download, Package, Receipt, ShoppingCart } from "lucide-react";
 import { listOrders } from "@/lib/orders.functions";
+import { csvDocument } from "@/lib/csv";
 import { orderStatusLabel, type Order } from "@/lib/orders";
 import { dailySales, historyPeriodRange, inSalesRange, summarizeSales, type HistoryPeriod } from "@/lib/sales-report";
 import { OrderCancellation } from "@/components/orders/order-cancellation";
@@ -59,7 +60,6 @@ export function SalesHistory() {
 
   const exportCsv = () => {
     if (!filtered.length) return;
-    const quote = (v: string) => `"${(v || "").replace(/"/g, '""')}"`;
     const rows = [
       ["Faturamento (R$)", summary.revenue.toFixed(2)],
       ["Vendas", String(summary.orderCount)],
@@ -67,12 +67,12 @@ export function SalesHistory() {
       ["Cancelados", String(summary.cancelledCount)],
       [],
       ["Posição", "Produto", "Unidades", "Receita (R$)"],
-      ...summary.bestSellers.map((p, i) => [String(i + 1), quote(p.name), String(p.quantity), p.revenue.toFixed(2)]),
+      ...summary.bestSellers.map((p, i) => [String(i + 1), p.name, String(p.quantity), p.revenue.toFixed(2)]),
       [],
       ["Venda", "Data", "Origem", "Cliente", "Telefone", "Pagamento", "Situação", "Subtotal", "Taxa_Entrega", "Total"],
-      ...filtered.map(o => [`#${o.number}`, timestamp(o.created_at), o.source === "counter" ? "Balcão" : "Catálogo", quote(o.customer_name), quote(o.customer_phone ?? ""), quote(o.payment), statusText(o), o.subtotal.toFixed(2), o.delivery_fee.toFixed(2), o.total.toFixed(2)]),
+      ...filtered.map(o => [`#${o.number}`, timestamp(o.created_at), o.source === "counter" ? "Balcão" : "Catálogo", o.customer_name, o.customer_phone ?? "", o.payment, statusText(o), o.subtotal.toFixed(2), o.delivery_fee.toFixed(2), o.total.toFixed(2)]),
     ];
-    const blob = new Blob(["\uFEFF" + rows.map(r => r.join(";")).join("\n")], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([csvDocument(rows)], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

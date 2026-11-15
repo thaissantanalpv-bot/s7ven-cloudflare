@@ -832,7 +832,7 @@ function Catalog() {
               <img key={settings.banner_image_url || "padrao"} src={settings.banner_image_url || heroImg} alt="" width={1600} height={720}
                 onError={(e) => { if (e.currentTarget.src !== new URL(heroImg, location.href).href) e.currentTarget.src = heroImg; }}
                 className="absolute inset-0 size-full object-cover" style={{ objectPosition: look.bannerPosition }} />
-              {isLightColor(look.background) && <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />}
+              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent" />
               <div className="relative max-w-[70%] px-5 py-8 sm:px-8 sm:py-14 md:max-w-lg">
                 <p className="font-display text-sm font-semibold uppercase tracking-wide text-foreground sm:text-lg">{look.bannerKicker}</p>
                 <h1 className="font-display text-3xl font-extrabold uppercase leading-none text-gold sm:text-5xl">{look.bannerTitle}</h1>
@@ -874,7 +874,7 @@ function Catalog() {
             </p>
 
             {highlights.length > 0 && (
-              <section aria-label="Promoções e destaques" className="py-6">
+              <section aria-label="Promoções e destaques" className="overflow-hidden py-6">
                 <Carousel opts={{ align: "start", loop: highlights.length > 4 }}>
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <h2 className="flex items-center gap-2 font-display text-xl font-semibold">Promoções e destaques <Flame className="size-5 text-gold" /></h2>
@@ -1124,7 +1124,7 @@ function Catalog() {
               <img src="/logo-s7ven.png" alt="" width={360} height={312} className="h-20 w-auto" />
               <CheckCircle2 className="mt-6 size-20 text-gold" strokeWidth={1.5} />
               <h2 className="mt-4 font-display text-3xl font-extrabold uppercase text-gold">{tracking.data?.status === "cancelled" ? "Pedido cancelado" : "Pedido enviado!"}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{receipt.scheduledLabel ? `Pedido agendado! A loja está fechada agora e ele chega sozinho ${receipt.scheduledLabel}, sem você precisar fazer nada` : "Seu pedido foi registrado e enviado pelo WhatsApp"}{receipt.purchase ? ` — é a sua ${receipt.purchase}ª compra com a gente` : ""}. Em breve nossa equipe vai te responder.</p>
+              <p className="mt-2 text-sm text-muted-foreground">{receipt.scheduledLabel ? `Pedido agendado! A loja está fechada agora e ele chega sozinho ${receipt.scheduledLabel}, sem você precisar fazer nada` : "Seu pedido foi registrado na loja. A mensagem está pronta para você enviar no WhatsApp"}. Em breve nossa equipe vai te responder.</p>
               <div className="mt-5 w-full rounded-xl border bg-card p-4 text-left">
                 <p className="mb-2 font-semibold">Resumo do pedido</p>
                 <p className="flex justify-between text-sm"><span>{receipt.itemCount} {receipt.itemCount === 1 ? "item" : "itens"}</span><span className="font-semibold">{brl(receipt.total)}</span></p>

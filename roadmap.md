@@ -1,3 +1,12 @@
+# Correções de segurança (Thais, 15/11/2026)
+- [x] Impedir troca de dono dos avisos entre administradores: RLS e identidade imutável; tentativa real recusada e dono preservado.
+- [x] Não devolver histórico de compras no checkout público; contagem somente na administração.
+- [x] Neutralizar fórmulas em todos os relatórios CSV; exportação real conferida.
+- [x] Conferir e compartilhar o orçamento já existente de chamadas Maps com as sugestões de endereço; RPC privado e falhas bloqueiam chamadas pagas.
+- [x] 252 testes passaram; painel autenticado, cadastro/remoção de avisos e catálogo 384px conferidos sem erros; build OK.
+- [x] Corrigir legibilidade do banner, rótulo de variações e confirmação WhatsApp apontados na revisão; página sem rolagem horizontal.
+- [ ] Publicar as correções: depende de Thais publicar ou solicitar publicação. Teste de corrida real Alfa e liberação de agendados no horário seguem não confirmados nesta revisão.
+
 # Edição de fotos mais rápida (Thais, 14/11/2026)
 - [x] Qualidade média no modo Rápida, alta opcional em Mais detalhes/HD; removida repetição automática de edição sem resposta. Edição real no painel concluída em 25,9 s sem salvar o produto; 8 testes passaram e build OK. Publicação depende de Thais.
 
