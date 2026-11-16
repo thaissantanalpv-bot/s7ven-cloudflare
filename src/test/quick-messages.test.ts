@@ -19,3 +19,9 @@ describe("mensagens rápidas", () => {
     expect(categoryLink("https://s7venlounge.shop", "Combos")).toBe("https://s7venlounge.shop/?aba=categorias&categoria=Combos");
   });
 });
+
+describe("courierMessage retorno", () => {
+  const o = { number: 1, customer_name: "A", customer_phone: "1", address: "R", total: 10, notes: "" } as never;
+  it("pede retorno no dinheiro", () => expect(courierMessage({ ...(o as object), payment: "Dinheiro" } as never)).toContain("Retornar à loja"));
+  it("não pede retorno no Pix", () => expect(courierMessage({ ...(o as object), payment: "Pix" } as never)).not.toContain("Retornar à loja"));
+});

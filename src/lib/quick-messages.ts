@@ -39,6 +39,7 @@ export function courierMessage(order: QuickOrder) {
     `WhatsApp: ${order.customer_phone}`,
     `Endereço: ${order.address}`,
     `Pagamento: ${payment}`,
+    isPix(order.payment) ? "" : "⚠️ Retornar à loja com o pagamento",
     order.notes ? `Obs.: ${order.notes}` : "",
   ].filter(Boolean).join("\n");
 }
