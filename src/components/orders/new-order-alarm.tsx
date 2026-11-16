@@ -1,5 +1,7 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { isWaitingSchedule } from "@/lib/orders";
 import { useServerFn } from "@tanstack/react-start";
 import { listOrders } from "@/lib/orders.functions";
 import { brl } from "@/lib/products";
@@ -84,6 +86,22 @@ export function NewOrderAlarm() {
   });
   const { sound, ready } = useOrderAlarm();
   const seen = useRef<Set<string> | null>(null);
+  const client = useQueryClient();
+
+  // Aceite em outro computador: atualiza na hora para o alerta parar em todos os painéis.
+  useEffect(() => {
+    const refresh = () => void client.invalidateQueries({ queryKey: ["store-orders"] });
+    const channel = supabase
+      .channel(`orders-alarm-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, refresh)
+      .subscribe();
+    const onVisible = () => document.visibilityState === "visible" && refresh();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      void supabase.removeChannel(channel);
+    };
+  }, [client]);
 
   useEffect(() => {
     const el = new Audio("/sounds/new-order-alert.mp3");
@@ -130,7 +148,7 @@ export function NewOrderAlarm() {
     seen.current = new Set(orders.data.map((o) => o.id));
   }, [orders.data]);
 
-  const hasNew = (orders.data ?? []).some((o) => o.source !== "counter" && o.status === "received");
+  const hasNew = (orders.data ?? []).some((o) => o.source !== "counter" && o.status === "received" && !isWaitingSchedule(o));
 
   useEffect(() => {
     const el = audio;
