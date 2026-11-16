@@ -14,3 +14,13 @@ describe("Alfa Delivery", () => {
     expect(alfaPayments("Dinheiro", 47, "R$ 50,00")).toMatchObject({ offlineMethod: [{ type: "CASH" }], change: { value: 3 } });
   });
 });
+
+import { alfaNeedsReturn } from "@/lib/alfa";
+describe("alfaNeedsReturn", () => {
+  it("pede retorno para dinheiro e cartão", () => {
+    expect(alfaNeedsReturn("Dinheiro")).toBe(true);
+    expect(alfaNeedsReturn("Cartão de crédito")).toBe(true);
+    expect(alfaNeedsReturn("Cartão de débito")).toBe(true);
+  });
+  it("não pede retorno para Pix", () => expect(alfaNeedsReturn("Pix")).toBe(false));
+});

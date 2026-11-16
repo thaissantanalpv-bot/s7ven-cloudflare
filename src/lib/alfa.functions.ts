@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { ALFA_MERCHANT_ID, ALFA_MERCHANT_NAME, alfaAddressFromGeocode, alfaPayments, canCallAlfa } from "./alfa";
+import { ALFA_MERCHANT_ID, ALFA_MERCHANT_NAME, alfaAddressFromGeocode, alfaNeedsReturn, alfaPayments, canCallAlfa } from "./alfa";
 import { deliveryAddress } from "./delivery-address";
 
 async function geocode(address: string, complement = "") {
@@ -41,7 +41,7 @@ export const callAlfaDelivery = createServerFn({ method: "POST" })
       limitTimes: { pickupLimit: 20, deliveryLimit: 60, orderCreatedAt: new Date(order.created_at).toISOString() },
       totalOrderPrice: { value: Number(order.total), currency: "BRL" },
       orderDeliveryFee: { value: Number(order.delivery_fee), currency: "BRL" },
-      totalWeight: 1000, returnToMerchant: false, canCombine: true, onlinePayment: false,
+      totalWeight: 1000, returnToMerchant: alfaNeedsReturn(order.payment), canCombine: true, onlinePayment: false,
     };
     if (!data.confirm) {
       const quote = await alfaRequest("/v1/logistics/availability", token, base) as { deliveryPrice?: { value?: number; price?: { value?: number } }; ETAs?: { deliveryEtaInMinutes?: number } };

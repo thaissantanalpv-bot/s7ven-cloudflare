@@ -40,6 +40,11 @@ export function canCallAlfa(status: string | null | undefined) {
   return !status || status === "REJECTED" || status === "CANCELLED";
 }
 
+/** Courier must come back to the store when collecting money or a card machine (anything but Pix). */
+export function alfaNeedsReturn(payment: string) {
+  return payment !== "Pix";
+}
+
 /** Open Delivery payment block from the order's payment method. */
 export function alfaPayments(payment: string, total: number, changeFor: string) {
   const amount = { value: Math.round(total * 100) / 100, currency: "BRL" };
