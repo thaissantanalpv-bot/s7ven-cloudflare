@@ -1,4 +1,5 @@
 {
+  "keep_vars": true,
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "s7ven-cloudflare",
   "compatibility_date": "2026-11-18",
