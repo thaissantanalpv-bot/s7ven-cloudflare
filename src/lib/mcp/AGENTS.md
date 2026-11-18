@@ -1,0 +1,2 @@
+- MCP exposes read-only catalog information through verified OAuth and caller-scoped RLS; no customer data or operational mutations, to preserve privacy and existing permissions.
+- Keep database clients lazy and shared; register one SDK tool per file, with SDK-generated transport routes, so manifest extraction works without runtime secrets.

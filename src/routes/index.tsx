@@ -65,6 +65,8 @@ import { PIX_KEY, buildPixPayload, copyToClipboard } from "@/lib/pix";
 import { checkoutWhatsApp, productMessage, insertCouponLine } from "@/lib/order-message";
 import { applyCoupon } from "@/lib/store-settings";
 import { matchesSearch } from "@/lib/product-search";
+import { useWebMCP } from "use-webmcp-tool";
+import { runWebMCPTool } from "@/lib/webmcp-telemetry";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(storeSettingsQuery), context.queryClient.ensureQueryData(catalogQuery)]),
@@ -373,6 +375,17 @@ function Catalog() {
     if (sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
   }, [sort, shown]);
+
+  useWebMCP({
+    name: "read_catalog",
+    description: "Consulte os produtos e preços atualmente exibidos no catálogo S7VEN, sem alterar a tela.",
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
+    enabled: tab === "inicio" || tab === "categorias",
+    execute: () => runWebMCPTool("read_catalog", () => {
+      const list = tab === "categorias" ? filtered : allProducts;
+      return list.length ? list.slice(0, 30).map(p => `${p.id}: ${p.name} · ${brl(p.price)} · ${available(p) ? "disponível" : "esgotado"}`).join("\n") + (list.length > 30 ? `\nMais ${list.length - 30} produtos na página.` : "") : "Nenhum produto nesta visualização.";
+    }),
+  });
 
   const items: Line[] = useMemo(
     () =>

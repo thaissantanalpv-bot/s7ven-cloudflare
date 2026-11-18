@@ -1,3 +1,9 @@
+# Integrações de agentes (Thais, 18/11/2026)
+- [x] Configurar MCP protegido com OAuth para consulta de produtos, sem dados de clientes ou alterações na loja; autorização ativada, assinatura assimétrica já existente.
+- [x] Adicionar consulta local no catálogo com WebMCP; manifesto gerado, login preserva retorno, requisições sem autorização recebem 401.
+- [ ] Validar aprovação/recusa com conta real: acesso de teste indisponível por falha de conexão do serviço de dados.
+- [ ] Republicar para disponibilizar a nova integração: depende de publicação pela Thais.
+
 # Agendamento escolhido pelo cliente (Thais, 15/11/2026)
 - [x] Escolher retirada/entrega, dia e horário na abertura e manter a escolha no carrinho (intervalos de 30 minutos, próximos 30 dias).
 - [x] Validar horários semanais, datas especiais e limite de entrega no envio; 31 testes passaram. Pedido real de teste agendado conferido na administração e cancelado, com estoque devolvido. Liberação no horário futuro usa o job existente; não aguardada neste teste.

@@ -4,8 +4,10 @@ import { ArrowLeft, ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
+import { oauthReturnPath } from "@/lib/oauth-return-path";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>): { next?: string } => ({ next: oauthReturnPath(s["next"] ?? "/painel") }),
   staticData: { sitemap: false },
   head: () => ({
     meta: [
@@ -23,6 +25,10 @@ export const Route = createFileRoute("/auth")({
 
 function Auth() {
   const navigate = useNavigate();
+  const { next: returnPath } = Route.useSearch();
+  const next = returnPath ?? "/painel";
+  const returnToApp = () => { window.location.assign(next); };
+  const authReturnUrl = () => new URL(`/auth?next=${encodeURIComponent(next)}`, window.location.origin).href;
   const [mode, setMode] = useState<"login" | "signup" | "reset" | "password">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,9 +41,9 @@ function Auth() {
       return;
     }
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/painel" });
+      if (data.user) window.location.assign(next);
     });
-  }, [navigate]);
+  }, [navigate, next]);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -46,7 +52,7 @@ function Auth() {
     try {
       if (mode === "reset") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: authReturnUrl(),
         });
         setMessage(
           error
@@ -56,12 +62,12 @@ function Auth() {
       } else if (mode === "password") {
         const { error } = await supabase.auth.updateUser({ password });
         if (error) setMessage("Não foi possível atualizar a senha.");
-        else await navigate({ to: "/painel" });
+        else returnToApp();
       } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/auth` },
+          options: { emailRedirectTo: authReturnUrl() },
         });
         setMessage(
           error
@@ -72,7 +78,7 @@ function Auth() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error)
           setMessage("E-mail ou senha incorretos, ou conta ainda não confirmada.");
-        else await navigate({ to: "/painel" });
+        else returnToApp();
       }
     } catch {
       setMessage("Não foi possível conectar. Tente novamente.");
@@ -86,14 +92,14 @@ function Auth() {
     setMessage("");
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/auth`,
+        redirect_uri: authReturnUrl(),
       });
       if (result.error) {
         setMessage("Não foi possível entrar com Google. Tente novamente.");
         return;
       }
       if (result.redirected) return;
-      await navigate({ to: "/painel" });
+      returnToApp();
     } catch {
       setMessage("Não foi possível conectar ao Google. Tente novamente.");
     } finally {

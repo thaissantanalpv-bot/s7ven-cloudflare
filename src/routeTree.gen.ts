@@ -13,11 +13,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AvaliarRouteImport } from './routes/avaliar'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as ApiAssistantRouteImport } from './routes/api/assistant'
 import { Route as ApiDescribeProductRouteImport } from './routes/api/describe-product'
 import { Route as ApiEditPhotoRouteImport } from './routes/api/edit-photo'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicAlfaWebhookRouteImport } from './routes/api/public/alfa-webhook'
 import { Route as ApiPublicJobsReleaseScheduledOrdersRouteImport } from './routes/api/public/jobs/release-scheduled-orders'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -41,11 +44,22 @@ const AvaliarRoute = AvaliarRouteImport.update({
   path: '/avaliar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
@@ -64,6 +78,11 @@ const ApiDescribeProductRoute = ApiDescribeProductRouteImport.update({
 const ApiEditPhotoRoute = ApiEditPhotoRouteImport.update({
   id: '/api/edit-photo',
   path: '/api/edit-photo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAlfaWebhookRoute = ApiPublicAlfaWebhookRouteImport.update({
@@ -88,11 +107,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/avaliar': typeof AvaliarRoute
+  '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/api/assistant': typeof ApiAssistantRoute
   '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/alfa-webhook': typeof ApiPublicAlfaWebhookRoute
   '/api/public/jobs/release-scheduled-orders': typeof ApiPublicJobsReleaseScheduledOrdersRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -101,11 +123,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/avaliar': typeof AvaliarRoute
+  '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/api/assistant': typeof ApiAssistantRoute
   '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/alfa-webhook': typeof ApiPublicAlfaWebhookRoute
   '/api/public/jobs/release-scheduled-orders': typeof ApiPublicJobsReleaseScheduledOrdersRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -116,11 +141,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/avaliar': typeof AvaliarRoute
+  '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/api/assistant': typeof ApiAssistantRoute
   '/api/describe-product': typeof ApiDescribeProductRoute
   '/api/edit-photo': typeof ApiEditPhotoRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/alfa-webhook': typeof ApiPublicAlfaWebhookRoute
   '/api/public/jobs/release-scheduled-orders': typeof ApiPublicJobsReleaseScheduledOrdersRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -131,11 +159,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/avaliar'
+    | '/mcp'
     | '/sitemap.xml'
+    | '/.well-known/oauth-protected-resource'
     | '/painel'
     | '/api/assistant'
     | '/api/describe-product'
     | '/api/edit-photo'
+    | '/.lovable/oauth/consent'
     | '/api/public/alfa-webhook'
     | '/api/public/jobs/release-scheduled-orders'
     | '/lovable/email/transactional/preview'
@@ -144,11 +175,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/avaliar'
+    | '/mcp'
     | '/sitemap.xml'
+    | '/.well-known/oauth-protected-resource'
     | '/painel'
     | '/api/assistant'
     | '/api/describe-product'
     | '/api/edit-photo'
+    | '/.lovable/oauth/consent'
     | '/api/public/alfa-webhook'
     | '/api/public/jobs/release-scheduled-orders'
     | '/lovable/email/transactional/preview'
@@ -158,11 +192,14 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/avaliar'
+    | '/mcp'
     | '/sitemap.xml'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/painel'
     | '/api/assistant'
     | '/api/describe-product'
     | '/api/edit-photo'
+    | '/.lovable/oauth/consent'
     | '/api/public/alfa-webhook'
     | '/api/public/jobs/release-scheduled-orders'
     | '/lovable/email/transactional/preview'
@@ -173,10 +210,13 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   AvaliarRoute: typeof AvaliarRoute
+  McpRoute: typeof McpRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApiAssistantRoute: typeof ApiAssistantRoute
   ApiDescribeProductRoute: typeof ApiDescribeProductRoute
   ApiEditPhotoRoute: typeof ApiEditPhotoRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicAlfaWebhookRoute: typeof ApiPublicAlfaWebhookRoute
   ApiPublicJobsReleaseScheduledOrdersRoute: typeof ApiPublicJobsReleaseScheduledOrdersRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -212,11 +252,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AvaliarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/painel': {
@@ -245,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/api/edit-photo'
       fullPath: '/api/edit-photo'
       preLoaderRoute: typeof ApiEditPhotoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/alfa-webhook': {
@@ -287,10 +348,14 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   AvaliarRoute: AvaliarRoute,
+  McpRoute: McpRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApiAssistantRoute: ApiAssistantRoute,
   ApiDescribeProductRoute: ApiDescribeProductRoute,
   ApiEditPhotoRoute: ApiEditPhotoRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicAlfaWebhookRoute: ApiPublicAlfaWebhookRoute,
   ApiPublicJobsReleaseScheduledOrdersRoute:
     ApiPublicJobsReleaseScheduledOrdersRoute,
