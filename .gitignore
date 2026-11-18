@@ -30,3 +30,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Never commit project secrets or previous Lovable Cloud connection
+.env
+.env.*
+!.env.example
+.dev.vars*
+!.dev.vars.example
