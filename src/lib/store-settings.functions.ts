@@ -1,3 +1,4 @@
+import { logCatalogFetch } from "./catalog-request-log";
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -9,14 +10,19 @@ import { appearanceSchema } from "./catalog-appearance";
 export const getStoreSettings = createServerFn({ method: "GET" }).handler(async () => {
   const url = process.env["SUPABASE_URL"];
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) throw new Error("Não foi possível carregar as configurações da loja.");
+  if (!url || !key) {
+    console.error("[S7VEN]", "configuracoes", "configuracao ausente", { urlPresente: Boolean(url), chavePresente: Boolean(key) });
+    throw new Error("Não foi possível carregar as configurações da loja.");
+  }
   const client = createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { fetch: (input, init) => {
       const headers = new Headers(init?.headers);
       if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization");
       headers.set("apikey", key);
-      return fetch(input, { ...init, headers });
+      const path = new URL(input instanceof Request ? input.url : String(input)).pathname;
+      const operation = path.startsWith("/storage/v1/") ? (path.includes("/product-videos") ? "videos" : "fotos") : "configuracoes";
+      return logCatalogFetch(input, { ...init, headers }, operation);
     } },
   });
   const { data, error } = await client.from("store_settings").select("delivery_enabled,fixed_delivery_fee,pickup_address,delivery_zones,hours_enabled,opening_hours,order_cutoff,special_days,delivery_distance_enabled,delivery_origin,delivery_distance_tiers,coupons,promoBanner,paused,catalog_appearance").eq("id", "main").maybeSingle();

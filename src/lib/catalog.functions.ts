@@ -1,3 +1,4 @@
+import { logCatalogFetch } from "./catalog-request-log";
 import { createServerFn } from "@tanstack/react-start";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
@@ -9,14 +10,19 @@ import { bulkPrice, bulkPriceChangeSchema, catalogFromRows, catalogProductSchema
 export const getCatalog = createServerFn({ method: "GET" }).handler(async () => {
   const url = process.env["SUPABASE_URL"];
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) throw new Error("Não foi possível carregar os produtos.");
+  if (!url || !key) {
+    console.error("[S7VEN]", "produtos", "configuracao ausente", { urlPresente: Boolean(url), chavePresente: Boolean(key) });
+    throw new Error("Não foi possível carregar os produtos.");
+  }
   const client = createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { fetch: (input, init) => {
       const headers = new Headers(init?.headers);
       if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization");
       headers.set("apikey", key);
-      return fetch(input, { ...init, headers });
+      const path = new URL(input instanceof Request ? input.url : String(input)).pathname;
+      const operation = path.startsWith("/storage/v1/") ? (path.includes("/product-videos") ? "videos" : "fotos") : "produtos";
+      return logCatalogFetch(input, { ...init, headers }, operation);
     } },
   });
   const rows = [];
