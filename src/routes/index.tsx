@@ -453,7 +453,8 @@ function Catalog() {
   // Sugestões de endereço enquanto o cliente digita a rua (somente Araçatuba).
   useEffect(() => {
     const text = `${form.street.trim()} ${form.number.trim()}`.trim();
-    if (!isDelivery || !distanceMode || !online || text.length < 5) {
+    // Avoid consuming a server-side ORS lookup on every short/unfinished street name.
+    if (!isDelivery || !distanceMode || !online || text.length < 8) {
       setSuggestions([]);
       setSuggestionsOpen(false);
       return;
@@ -470,7 +471,7 @@ function Catalog() {
         if (e instanceof Error && e.message === "DELIVERY_SESSION_EXPIRED") deliveryToken.current = "";
         if (request === suggestRequest.current) { setSuggestions([]); setSuggestionsOpen(false); }
       }
-    }, 750);
+    }, 1300);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.street, form.number, isDelivery, distanceMode, online]);

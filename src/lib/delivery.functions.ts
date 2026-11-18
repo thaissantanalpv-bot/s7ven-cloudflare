@@ -16,14 +16,14 @@ const suggestionSchema = z.object({
   sessionToken: z.string().uuid(), // retained for checkout API compatibility
 });
 
-/** Autocomplete free tier, with durable per-network request limits. */
+/** Autocomplete: independent per-network/global quotas, with a daily cap below free ORS geocoding quota. */
 export const suggestDeliveryAddress = createServerFn({ method: 'POST' })
   .inputValidator((input: unknown) => suggestionSchema.parse(input))
   .handler(async ({ data }) => {
-    const { verifyDeliveryToken, claimMapsBudget } = await import('./delivery.server');
+    const { verifyDeliveryToken, claimAddressLookupBudget } = await import('./delivery.server');
     if (!await verifyDeliveryToken(data.token)) throw new Error('DELIVERY_SESSION_EXPIRED');
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    await claimMapsBudget(supabaseAdmin, getRequestHeader('cf-connecting-ip') ?? 'unknown');
+    await claimAddressLookupBudget(supabaseAdmin, getRequestHeader('cf-connecting-ip') ?? 'unknown');
     const { orsAutocomplete } = await import('./openrouteservice.server');
     return { suggestions: orsSuggestions(await orsAutocomplete(data.input)) };
   });
@@ -37,10 +37,10 @@ const locationSchema = z.object({
 export const locateDeliveryAddress = createServerFn({ method: 'POST' })
   .inputValidator((input: unknown) => locationSchema.parse(input))
   .handler(async ({ data }) => {
-    const { verifyDeliveryToken, claimMapsBudget } = await import('./delivery.server');
+    const { verifyDeliveryToken, claimAddressLookupBudget } = await import('./delivery.server');
     if (!await verifyDeliveryToken(data.token)) throw new Error('DELIVERY_SESSION_EXPIRED');
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    await claimMapsBudget(supabaseAdmin, getRequestHeader('cf-connecting-ip') ?? 'unknown');
+    await claimAddressLookupBudget(supabaseAdmin, getRequestHeader('cf-connecting-ip') ?? 'unknown');
     const { orsReverseGeocode } = await import('./openrouteservice.server');
     return orsReverseGeocode(data.latitude, data.longitude);
   });

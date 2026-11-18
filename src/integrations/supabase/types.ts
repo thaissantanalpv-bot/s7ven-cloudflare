@@ -595,6 +595,10 @@ export type Database = {
           started_at: string
         }[]
       }
+      claim_delivery_lookup_attempt: {
+        Args: { _client_hash: string }
+        Returns: string
+      }
       claim_delivery_quote_attempt: {
         Args: {
           _client_hash: string

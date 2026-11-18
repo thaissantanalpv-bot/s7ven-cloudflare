@@ -38,6 +38,25 @@ export async function deliverySettingsHash(settings: StoreSettings) {
 export const DELIVERY_QUOTE_GLOBAL_HOURLY_LIMIT = 200;
 export const DELIVERY_QUOTE_CLIENT_HOURLY_LIMIT = 20;
 
+/** Address autocomplete and GPS geocoding use a different budget from chargeable quotes.
+ * Limits are enforced in Postgres by claim_delivery_lookup_attempt; never trust client counters.
+ * Install drizzle/migrations/0054_delivery_lookup_budget.sql in Supabase BR before deploying.
+ */
+export async function claimAddressLookupBudget(client: {
+  rpc: (name: "claim_delivery_lookup_attempt", args: { _client_hash: string }) => PromiseLike<{ data: unknown; error: unknown }>;
+}, ip: string) {
+  const { data, error } = await client.rpc("claim_delivery_lookup_attempt", {
+    _client_hash: await deliveryClientHash(ip),
+  });
+  if (error) {
+    console.error('[S7VEN] lookup budget: RPC unavailable', { code: (error as { code?: string }).code ?? 'unknown' });
+    throw new Error('Não foi possível verificar o limite de consultas de endereço. Tente novamente em instantes.');
+  }
+  if (data !== "ok") {
+    throw new Error('Limite de sugestões de endereço atingido. Digite a rua e o número manualmente para tentar calcular a entrega.');
+  }
+}
+
 /** Pseudonymous per-network key (HMAC of the caller IP); the raw IP is never stored. */
 export async function deliveryClientHash(ip: string) {
   return toHex(await crypto.subtle.sign("HMAC", await signingKey(), encoder.encode(`delivery-client:${ip}`)));
