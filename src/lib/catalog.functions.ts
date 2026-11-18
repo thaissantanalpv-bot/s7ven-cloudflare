@@ -59,7 +59,7 @@ async function resolveCatalogPhotos(products: CatalogProduct[], client: Supabase
     const resolvePhoto = (path: string) => {
       if (!path.startsWith("uploads/")) return path;
       const signed = urls.find(u => u.path === path)?.signedUrl;
-      return signed ? signed.replace(new URL(signed).origin, new URL(import.meta.env['VITE_SUPABASE_URL']).origin) : "";
+      return signed ? signed : "";
     };
     for (const p of products) {
       p.imagePaths = p.images ?? [];
@@ -88,7 +88,7 @@ async function resolveCatalogPhotos(products: CatalogProduct[], client: Supabase
       if (!p.video?.startsWith("uploads/")) continue;
       const signed = urls?.find(u => u.path === p.video)?.signedUrl;
       p.videoPath = p.video;
-      p.video = signed ? signed.replace(new URL(signed).origin, new URL(import.meta.env['VITE_SUPABASE_URL']).origin) : "";
+      p.video = signed ? signed : "";
     }
   }
   return products;
