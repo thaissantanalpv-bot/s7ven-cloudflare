@@ -1,18 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { ALFA_MERCHANT_ID, ALFA_MERCHANT_NAME, alfaAddressFromGeocode, alfaNeedsReturn, alfaPayments, canCallAlfa } from "./alfa";
+import { ALFA_MERCHANT_ID, ALFA_MERCHANT_NAME, alfaNeedsReturn, alfaPayments, canCallAlfa } from "./alfa";
 import { deliveryAddress } from "./delivery-address";
 
 async function geocode(address: string, complement = "") {
-  const apiKey = process.env["LOVABLE_API_KEY"], mapsKey = process.env["GOOGLE_MAPS_API_KEY"];
-  if (!apiKey || !mapsKey) throw new Error("Google Maps não está conectado.");
-  const res = await fetch(`https://connector-gateway.lovable.dev/google_maps/maps/api/geocode/json?address=${encodeURIComponent(deliveryAddress(address))}&components=country:BR&region=br&language=pt-BR`, {
-    headers: { Authorization: `Bearer ${apiKey}`, "X-Connection-Api-Key": mapsKey },
-  });
-  if (!res.ok) { console.error(`Alfa geocode [${res.status}]: ${await res.text()}`); throw new Error("Não consegui localizar o endereço no mapa."); }
-  const payload = await res.json() as { results?: Parameters<typeof alfaAddressFromGeocode>[0][] };
-  return alfaAddressFromGeocode(payload.results?.[0], complement);
+  const { orsGeocodeAddress } = await import('./openrouteservice.server');
+  const { orsAlfaAddress } = await import('./openrouteservice');
+  const point = await orsGeocodeAddress(deliveryAddress(address));
+  return orsAlfaAddress(point, complement);
 }
 
 /** Quote (confirm=false) or create (confirm=true) an Alfa delivery for a catalog delivery order. Admin only. */

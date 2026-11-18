@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deliveryRouteRequest, routeDurationSeconds, estimatedDeliveryMinutes } from "../lib/delivery-route";
+import { DELIVERY_TRAVEL_MODE, routeDurationSeconds, estimatedDeliveryMinutes } from "../lib/delivery-route";
 
 describe("delivery vehicle", () => {
   it("adds the chosen 30–45 minute preparation range to the rounded route duration", () => {
@@ -10,8 +10,7 @@ describe("delivery vehicle", () => {
     for (const duration of [null, undefined, NaN, -1, Infinity]) expect(estimatedDeliveryMinutes(duration)).toBeNull();
     for (const duration of ["", "10m", "-1s", "Infinitys"]) expect(() => routeDurationSeconds(duration)).toThrow();
   });
-  it("requests motorcycle routing, not driving or cycling", () => {
-    const request = deliveryRouteRequest("Araçatuba, SP", { latitude: -21.2089, longitude: -50.4328 });
-    expect(request.travelMode).toBe("TWO_WHEELER");
+  it('identifies the switch to ORS car routing for quote-hash invalidation', () => {
+    expect(DELIVERY_TRAVEL_MODE).toBe('openrouteservice-driving-car-v1');
   });
 });

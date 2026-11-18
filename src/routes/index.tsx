@@ -453,7 +453,7 @@ function Catalog() {
   // Sugestões de endereço enquanto o cliente digita a rua (somente Araçatuba).
   useEffect(() => {
     const text = `${form.street.trim()} ${form.number.trim()}`.trim();
-    if (!isDelivery || !distanceMode || !online || text.length < 3) {
+    if (!isDelivery || !distanceMode || !online || text.length < 5) {
       setSuggestions([]);
       setSuggestionsOpen(false);
       return;
@@ -470,7 +470,7 @@ function Catalog() {
         if (e instanceof Error && e.message === "DELIVERY_SESSION_EXPIRED") deliveryToken.current = "";
         if (request === suggestRequest.current) { setSuggestions([]); setSuggestionsOpen(false); }
       }
-    }, 350);
+    }, 750);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.street, form.number, isDelivery, distanceMode, online]);
@@ -1335,11 +1335,12 @@ function Catalog() {
                         <span className="font-medium">{form.neighborhood.trim() || "automático"}</span>
                         <span className="text-muted-foreground"> · {DELIVERY_CITY.replace(/, ?SP$/, "")}</span>
                       </p>
-                      {validQuote && <p role="status" className="font-semibold text-primary">{brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km de moto</p>}
+                      {validQuote && <p role="status" className="font-semibold text-primary">{brl(validQuote.fee)} · {validQuote.km.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} km por ruas (rota de carro)</p>}
                     </div>
                     <Button size="sm" variant="outline" className="h-8 shrink-0 px-2.5 text-xs" disabled={quoting || !addressComplete || fullAddress.trim().length < 8 || Boolean(validQuote)} onClick={calculateDelivery}><Truck />{quoting ? "Calculando…" : validQuote ? "Calculada" : "Calcular entrega"}</Button>
                   </div>
                   {validQuote && deliveryEstimate && <p role="status" className="flex items-center gap-1.5 text-xs text-muted-foreground"><Clock className="size-3.5 shrink-0 text-primary" />Entrega estimada: {deliveryEstimate.min}–{deliveryEstimate.max} min (aproximado)</p>}
+                  <p className="text-[10px] text-muted-foreground">Distância estimada de carro, não rota de moto. Rotas © openrouteservice/HeiGIT · dados © OpenStreetMap contributors.</p>
                   {deliveryError && <p role="alert" className="text-xs text-destructive">{deliveryError}</p>}
                 </div>
               )}
