@@ -47,19 +47,36 @@ function createSupabaseFetch(supabaseUrl: string, supabaseKey: string): typeof f
 
 
 function createSupabaseClient() {
-  // Use import.meta.env for client-side (Vite build-time replacement)
-  // Fall back to process.env for SSR (server-side rendering)
-  const SUPABASE_URL = import.meta.env['VITE_SUPABASE_URL'] || process.env['SUPABASE_URL'];
-  const SUPABASE_PUBLISHABLE_KEY = import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'];
+  // The Cloudflare Worker uses runtime bindings. The browser uses Vite's static
+  // import.meta.env.VITE_* replacement. Never let SSR prioritize a build-time
+  // value (which may belong to the previous Lovable project).
+  const server = typeof window === "undefined";
+  const runtime = server && typeof process !== "undefined" ? process.env : undefined;
+  const rawUrl = server ? runtime?.["SUPABASE_URL"] : import.meta.env.VITE_SUPABASE_URL;
+  const rawKey = server ? runtime?.["SUPABASE_PUBLISHABLE_KEY"] : import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const SUPABASE_URL = typeof rawUrl === "string" ? rawUrl.trim().replace(/\/+$/, "") : "";
+  const SUPABASE_PUBLISHABLE_KEY = typeof rawKey === "string" ? rawKey.trim() : "";
 
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    const missing = [
-      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
-    ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
-    console.error(`[Supabase] ${message}`);
-    throw new Error(message);
+  // Fail closed: this staging application must never access Lovable's old DB.
+  let urlValid = false;
+  try {
+    const parsed = new URL(SUPABASE_URL);
+    urlValid = parsed.protocol === "https:" &&
+      parsed.hostname === "rorjblbxpxicuapwpnxb.supabase.co" &&
+      (parsed.pathname === "/" || parsed.pathname === "") &&
+      !parsed.search && !parsed.hash && !parsed.username && !parsed.password;
+  } catch { /* Empty or malformed URL. */ }
+  const keyValid = SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_");
+  if (!urlValid || !keyValid) {
+    // Deliberately log only boolean diagnostics, never URLs or credentials.
+    console.error("[S7VEN] Supabase: configuracao invalida", {
+      ambiente: server ? "worker" : "navegador",
+      urlPresente: Boolean(SUPABASE_URL),
+      urlValida: urlValid,
+      chavePresente: Boolean(SUPABASE_PUBLISHABLE_KEY),
+      chavePublicaValida: keyValid,
+    });
+    throw new Error("Configuracao do Supabase brasileiro ausente ou invalida.");
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
