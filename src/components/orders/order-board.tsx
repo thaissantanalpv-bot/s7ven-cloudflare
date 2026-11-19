@@ -50,7 +50,7 @@ import { OrderCancellation } from "./order-cancellation";
 import { PushQuickButton } from "@/components/push-notifications";
 import { StorePauseSwitch } from "@/components/store-pause-button";
 import { useOrderAlarm } from "./new-order-alarm";
-import { adminCatalogQuery } from "@/lib/catalog.query";
+import { adminCatalogQuery, useCatalogUpdates } from "@/lib/catalog.query";
 import { variationPhoto } from "@/lib/catalog";
 import { Package } from "lucide-react";
 
@@ -160,6 +160,7 @@ export function OrderBoard() {
     } finally { setBusy(""); }
   };
   const client = useQueryClient();
+  useCatalogUpdates();
   const catalog = useQuery(adminCatalogQuery);
   const photoFor = (productId: string, option?: string) => { const p = catalog.data?.find(x => x.id === productId); return p ? variationPhoto(p, option ?? "") || p.image || "" : ""; };
   const orders = useQuery({

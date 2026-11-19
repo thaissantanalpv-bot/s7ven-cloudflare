@@ -27,7 +27,7 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { publicStoreSettingsQuery as storeSettingsQuery } from "@/lib/store-settings.query";
 import { appearanceCss, appearanceFontsHref, isLightColor, parseAppearance } from "@/lib/catalog-appearance";
-import { savePublicSnapshot, readPublicSnapshot, cacheViewedCatalogPhotos, offlinePhotoUrls } from "@/lib/offline-catalog";
+import { savePublicSnapshot, readPublicSnapshot, offlinePhotoUrls } from "@/lib/offline-catalog";
 import { ordersOpen, storeStatus, upcomingSpecialDays, DAYS, deliveryFeeFrom } from "@/lib/store-settings";
 import { checkoutStage } from "@/lib/catalog-analytics";
 import { QRCodeSVG } from "qrcode.react";
@@ -152,7 +152,8 @@ function Catalog() {
         if (savedSettings) queryClient.setQueryData(storeSettingsQuery.queryKey, savedSettings);
       }
     };
-    update();
+    // Do not re-fetch on initial mount: SSR already supplied the catalog and media URLs.
+    setOnline(navigator.onLine);
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
     return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
@@ -163,7 +164,9 @@ function Catalog() {
       savePublicSnapshot("settings", settings);
     }
     const urls = [...new Set(catalogProducts.flatMap(product => [product.image, ...(product.images ?? [])]).filter((url): url is string => Boolean(url)))];
-    if (online) return cacheViewedCatalogPhotos(urls);
+    // Disabled temporarily: a second fetch of every loaded photo doubles Storage egress.
+    // The stored offline catalog data remains available; offline photo prefetch is paused.
+    if (online) return;
     let disposed = false;
     let resolved = new Map<string, string>();
     void offlinePhotoUrls(urls).then(result => {

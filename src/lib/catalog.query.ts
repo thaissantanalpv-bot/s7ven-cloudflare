@@ -2,12 +2,37 @@ import { queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCatalog, getAdminCatalog } from "./catalog.functions";
+import { retainCatalogPhotoUrls } from "./catalog-photo-stability";
 import { publicOfflineRead } from "./offline-catalog";
 
 // Public catalog: realtime invalidation below already pushes product changes,
 // so poll lightly instead of refetching the full catalog every 5s.
-export const catalogQuery = queryOptions({ queryKey: ["catalog-products"], queryFn: () => publicOfflineRead("products", () => getCatalog()), networkMode: "always", staleTime: 60000, refetchInterval: 60000, refetchOnReconnect: "always" });
-export const adminCatalogQuery = queryOptions({ queryKey: ["admin-catalog-products"], queryFn: () => getAdminCatalog(), staleTime: 0, refetchInterval: 5000 });
+// Realtime updates invalidate the query immediately. The slow safety refresh also
+// renews signed photo links before their 1-hour expiry (including when Realtime drops).
+export const catalogQuery = queryOptions({
+  queryKey: ["catalog-products"],
+  queryFn: () => publicOfflineRead("products", () => getCatalog()),
+  networkMode: "always",
+  staleTime: 15 * 60 * 1000,
+  refetchInterval: 45 * 60 * 1000,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: "always",
+  structuralSharing: (previous, incoming) => retainCatalogPhotoUrls(
+    Array.isArray(previous) ? previous : undefined,
+    incoming as Awaited<ReturnType<typeof getCatalog>>,
+  ),
+});
+export const adminCatalogQuery = queryOptions({
+  queryKey: ["admin-catalog-products"],
+  queryFn: () => getAdminCatalog(),
+  staleTime: 60 * 1000,
+  refetchInterval: 10 * 60 * 1000,
+  refetchOnWindowFocus: true,
+  structuralSharing: (previous, incoming) => retainCatalogPhotoUrls(
+    Array.isArray(previous) ? previous : undefined,
+    incoming as Awaited<ReturnType<typeof getAdminCatalog>>,
+  ),
+});
 export function useCatalogUpdates() {
   const client = useQueryClient();
   useEffect(() => {
