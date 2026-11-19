@@ -14,6 +14,40 @@ export type PreparedCatalogImage = {
   source: { width: number; height: number; bytes: number };
 };
 
+const PIPELINE_VERSION = "v1";
+
+/** Stable per source file, so retries and a future backfill address the same immutable objects. */
+export async function catalogImageId(file: File): Promise<string> {
+  const bytes = new Uint8Array(
+    await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(reader.error ?? new Error("Não foi possível ler esta foto."));
+      reader.readAsArrayBuffer(file);
+    }),
+  );
+  const type = new TextEncoder().encode(`${PIPELINE_VERSION}:${file.type}:`);
+  const input = new Uint8Array(type.length + bytes.length);
+  input.set(type);
+  input.set(bytes, type.length);
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", input));
+  const hash = [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${PIPELINE_VERSION}-${hash.slice(0, 32)}`;
+}
+
+const ORIGINAL_PATH = /^(uploads\/[a-zA-Z0-9_-]+)_original_(webp|jpg)\.(jpg|png|webp)$/;
+
+/** Derivatives are used only for uploads that completed the whole pipeline. */
+export function catalogDerivativePaths(path: string): CatalogImageVariants | null {
+  const match = path.match(ORIGINAL_PATH);
+  if (!match?.[1] || !match[2]) return null;
+  return {
+    thumb: `${match[1]}_128.${match[2]}`,
+    card: `${match[1]}_512.${match[2]}`,
+    gallery: `${match[1]}_1600.${match[2]}`,
+  };
+}
+
 const ACCEPTED_TYPES: Record<string, "jpg" | "png" | "webp"> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -47,7 +81,7 @@ async function renderVariant(
  * Prepares immutable catalog media without uploading it.
  *
  * The original remains available for rollback. Derivative names are deterministic
- * for one upload id, which also makes retries safe when storage uses `upsert: false`.
+ * for one upload id, so an authorized backfill can verify each expected object.
  * A small WebP source is reused instead of being recompressed unnecessarily.
  */
 export async function prepareCatalogImage(
@@ -61,32 +95,46 @@ export async function prepareCatalogImage(
   const bitmap = await createImageBitmap(file).catch(() => {
     throw new Error("Não foi possível ler esta foto. Tente outra imagem.");
   });
-  const originalPath = `uploads/${safeId}_original.${sourceExtension}`;
-  const uploads = new Map<string, { path: string; blob: Blob; contentType: string }>();
-  uploads.set(originalPath, { path: originalPath, blob: file, contentType: file.type });
-  const variants = {} as CatalogImageVariants;
+  const prepared: {
+    kind: CatalogImageKind;
+    width: number;
+    rendered?: { blob: Blob; extension: "webp" | "jpg" };
+  }[] = [];
   try {
     for (const [kind, width] of Object.entries(CATALOG_IMAGE_WIDTHS) as [
       CatalogImageKind,
       number,
     ][]) {
       if (file.type === "image/webp" && Math.max(bitmap.width, bitmap.height) <= width) {
-        variants[kind] = originalPath;
+        prepared.push({ kind, width });
         continue;
       }
       const quality = kind === "thumb" ? 0.8 : kind === "card" ? 0.84 : 0.88;
       const rendered = await renderVariant(bitmap, width, quality);
-      const path = `uploads/${safeId}_${width}.${rendered.extension}`;
-      variants[kind] = path;
-      uploads.set(path, {
-        path,
-        blob: rendered.blob,
-        contentType:
-          rendered.blob.type || (rendered.extension === "webp" ? "image/webp" : "image/jpeg"),
-      });
+      prepared.push({ kind, width, rendered });
     }
   } finally {
     bitmap.close?.();
+  }
+  const derivativeExtension = prepared.find((item) => item.rendered)?.rendered?.extension ?? "webp";
+  if (prepared.some((item) => item.rendered && item.rendered.extension !== derivativeExtension)) {
+    throw new Error("O navegador alternou o formato durante a conversão.");
+  }
+  const originalPath = `uploads/${safeId}_original_${derivativeExtension}.${sourceExtension}`;
+  const uploads = new Map<string, { path: string; blob: Blob; contentType: string }>();
+  uploads.set(originalPath, { path: originalPath, blob: file, contentType: file.type });
+  const variants = {} as CatalogImageVariants;
+  for (const item of prepared) {
+    const extension = item.rendered?.extension ?? derivativeExtension;
+    const path = `uploads/${safeId}_${item.width}.${extension}`;
+    variants[item.kind] = path;
+    uploads.set(path, {
+      path,
+      // A small WebP is already optimal; copy its bytes to the deterministic
+      // derivative name instead of decoding and recompressing it.
+      blob: item.rendered?.blob ?? file,
+      contentType: item.rendered?.blob.type || (extension === "webp" ? "image/webp" : "image/jpeg"),
+    });
   }
   return {
     originalPath,

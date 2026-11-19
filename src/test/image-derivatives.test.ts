@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { prepareCatalogImage } from "@/lib/photos/image-derivatives";
+import {
+  catalogDerivativePaths,
+  catalogImageId,
+  prepareCatalogImage,
+} from "@/lib/photos/image-derivatives";
 
 describe("catalog image derivatives", () => {
   const close = vi.fn();
@@ -31,14 +35,14 @@ describe("catalog image derivatives", () => {
     const file = new File(["original"], "photo.png", { type: "image/png" });
     const result = await prepareCatalogImage(file, "photo-id");
 
-    expect(result.originalPath).toBe("uploads/photo-id_original.png");
+    expect(result.originalPath).toBe("uploads/photo-id_original_webp.png");
     expect(result.variants).toEqual({
       thumb: "uploads/photo-id_128.webp",
       card: "uploads/photo-id_512.webp",
       gallery: "uploads/photo-id_1600.webp",
     });
     expect(result.uploads.map((item) => item.path)).toEqual([
-      "uploads/photo-id_original.png",
+      "uploads/photo-id_original_webp.png",
       "uploads/photo-id_128.webp",
       "uploads/photo-id_512.webp",
       "uploads/photo-id_1600.webp",
@@ -51,7 +55,7 @@ describe("catalog image derivatives", () => {
     expect(close).toHaveBeenCalledOnce();
   });
 
-  it("does not recompress a WebP that already fits every target", async () => {
+  it("copies, but does not recompress, a WebP that already fits every target", async () => {
     vi.mocked(createImageBitmap).mockResolvedValue({
       width: 100,
       height: 80,
@@ -61,12 +65,23 @@ describe("catalog image derivatives", () => {
     const result = await prepareCatalogImage(file, "small");
 
     expect(result.variants).toEqual({
-      thumb: "uploads/small_original.webp",
-      card: "uploads/small_original.webp",
-      gallery: "uploads/small_original.webp",
+      thumb: "uploads/small_128.webp",
+      card: "uploads/small_512.webp",
+      gallery: "uploads/small_1600.webp",
     });
-    expect(result.uploads).toHaveLength(1);
+    expect(result.uploads).toHaveLength(4);
+    expect(result.uploads.slice(1).every((upload) => upload.blob === file)).toBe(true);
     expect(toBlob).not.toHaveBeenCalled();
+  });
+
+  it("uses a stable, versioned content id for idempotent retries", async () => {
+    const file = new File(["same bytes"], "one.jpg", { type: "image/jpeg" });
+    const first = await catalogImageId(file);
+    const second = await catalogImageId(
+      new File(["same bytes"], "renamed.jpg", { type: "image/jpeg" }),
+    );
+    expect(first).toMatch(/^v1-[a-f0-9]{32}$/);
+    expect(second).toBe(first);
   });
 
   it("falls back to JPEG when WebP encoding is unavailable", async () => {
@@ -82,6 +97,8 @@ describe("catalog image derivatives", () => {
       card: "uploads/fallback_512.jpg",
       gallery: "uploads/fallback_1600.jpg",
     });
+    expect(result.originalPath).toBe("uploads/fallback_original_jpg.jpg");
+    expect(catalogDerivativePaths(result.originalPath)).toEqual(result.variants);
   });
 
   it("rejects unsupported originals before decoding", async () => {
@@ -89,5 +106,9 @@ describe("catalog image derivatives", () => {
       prepareCatalogImage(new File(["gif"], "photo.gif", { type: "image/gif" }), "gif"),
     ).rejects.toThrow("JPG, PNG ou WebP");
     expect(createImageBitmap).not.toHaveBeenCalled();
+  });
+
+  it("does not infer derivatives for legacy paths that were never processed", () => {
+    expect(catalogDerivativePaths("uploads/legacy.jpg")).toBeNull();
   });
 });
