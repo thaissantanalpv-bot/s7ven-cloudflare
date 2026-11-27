@@ -244,6 +244,12 @@ export function productPhotosFor(p: CatalogPhotoSource, kind: CatalogImageKind) 
     : (p.images ?? []);
   return [...new Set([cover, ...gallery].filter((url): url is string => Boolean(url)))];
 }
+
+export function galleryThumbnailUrl(thumbnail: string | undefined, photo: string) {
+  const url = thumbnail || photo;
+  // A legacy signed original can be several MB. Fetch it only as the selected photo.
+  return url === photo && url.includes("/storage/v1/object/sign/product-photos/") ? "" : url;
+}
 export function variationPhoto(
   p: Pick<CatalogProduct, "variationPhotos" | "variationPhotoPaths" | "photoVariants">,
   option: string,

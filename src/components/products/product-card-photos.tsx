@@ -2,7 +2,12 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StableCatalogImage } from "@/components/catalog/stable-catalog-image";
-import { productPhotosFor, variationPhoto, type CatalogProduct } from "@/lib/catalog";
+import {
+  galleryThumbnailUrl,
+  productPhotosFor,
+  variationPhoto,
+  type CatalogProduct,
+} from "@/lib/catalog";
 
 export function ProductCardPhotos({
   product,
@@ -70,24 +75,31 @@ export function ProductCardPhotos({
       </div>
       {photos.length > 1 && (
         <div className="flex gap-1.5 overflow-x-auto px-2 pb-2">
-          {photos.map((src, i) => (
-            <Button
-              key={src}
-              variant="outline"
-              aria-label={`Ver foto ${i + 1} de ${product.name}`}
-              aria-pressed={i === current}
-              onClick={() => setIndex(i)}
-              className={`size-11 shrink-0 overflow-hidden p-1 ${i === current ? "border-primary ring-1 ring-primary" : ""}`}
-            >
-              <img
-                src={thumbnails[i] ?? src}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                className="size-full object-contain"
-              />
-            </Button>
-          ))}
+          {photos.map((src, i) => {
+            const thumbnail = galleryThumbnailUrl(thumbnails[i], src);
+            return (
+              <Button
+                key={src}
+                variant="outline"
+                aria-label={`Ver foto ${i + 1} de ${product.name}`}
+                aria-pressed={i === current}
+                onClick={() => setIndex(i)}
+                className={`size-11 shrink-0 overflow-hidden p-1 ${i === current ? "border-primary ring-1 ring-primary" : ""}`}
+              >
+                {thumbnail ? (
+                  <img
+                    src={thumbnail}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="size-full object-contain"
+                  />
+                ) : (
+                  <span className="text-xs">{i + 1}</span>
+                )}
+              </Button>
+            );
+          })}
         </div>
       )}
     </div>

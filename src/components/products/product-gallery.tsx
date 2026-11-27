@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { StableCatalogImage } from "@/components/catalog/stable-catalog-image";
-import { productPhotosFor, type CatalogProduct } from "@/lib/catalog";
+import { galleryThumbnailUrl, productPhotosFor, type CatalogProduct } from "@/lib/catalog";
 import { brl } from "@/lib/products";
 
 export function ProductGallery({
@@ -86,24 +86,31 @@ export function ProductGallery({
               {current + 1} / {photos.length}
             </p>
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {photos.map((src, i) => (
-                <Button
-                  key={src}
-                  variant="outline"
-                  aria-label={`Ver foto ${i + 1}`}
-                  aria-pressed={i === current}
-                  onClick={() => setIndex(i)}
-                  className={`size-16 shrink-0 overflow-hidden p-1 ${i === current ? "border-primary ring-1 ring-primary" : ""}`}
-                >
-                  <img
-                    src={thumbnails[i] ?? src}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="size-full object-contain"
-                  />
-                </Button>
-              ))}
+              {photos.map((src, i) => {
+                const thumbnail = galleryThumbnailUrl(thumbnails[i], src);
+                return (
+                  <Button
+                    key={src}
+                    variant="outline"
+                    aria-label={`Ver foto ${i + 1}`}
+                    aria-pressed={i === current}
+                    onClick={() => setIndex(i)}
+                    className={`size-16 shrink-0 overflow-hidden p-1 ${i === current ? "border-primary ring-1 ring-primary" : ""}`}
+                  >
+                    {thumbnail ? (
+                      <img
+                        src={thumbnail}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="size-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-xs">{i + 1}</span>
+                    )}
+                  </Button>
+                );
+              })}
             </div>
           </>
         )}
