@@ -107,6 +107,8 @@ export type CatalogProduct = Product & {
   imagePath?: string;
   images?: string[];
   imagePaths?: string[];
+  /** Resolved original gallery URLs keyed by the persisted path. */
+  galleryPhotoUrls?: Record<string, string>;
   /** Runtime-only signed derivative URLs, keyed by the persisted original path. */
   photoVariants?: Record<string, CatalogImageVariants>;
   variationPhotos?: Record<string, string>;
@@ -229,21 +231,18 @@ export function productPhotos(p: Pick<CatalogProduct, "image" | "images">) {
 }
 type CatalogPhotoSource = Pick<
   CatalogProduct,
-  "image" | "images" | "imagePath" | "imagePaths" | "photoVariants"
+  "image" | "images" | "imagePath" | "imagePaths" | "galleryPhotoUrls" | "photoVariants"
 >;
 export function productPhotosFor(p: CatalogPhotoSource, kind: CatalogImageKind) {
-  const fallbacks = [p.image, ...(p.images ?? [])];
-  const paths = [p.imagePath, ...(p.imagePaths ?? [])];
-  return [
-    ...new Set(
-      fallbacks
-        .map((fallback, index) => {
-          const path = paths[index];
-          return (path ? p.photoVariants?.[path]?.[kind] : undefined) || fallback;
-        })
-        .filter((value): value is string => Boolean(value)),
-    ),
-  ];
+  const cover = (p.imagePath && p.photoVariants?.[p.imagePath]?.[kind]) || p.image;
+  // Older offline snapshots can contain compacted arrays. Use their existing URLs
+  // as-is when they lack a path-keyed mapping.
+  const gallery = p.galleryPhotoUrls
+    ? (p.imagePaths ?? []).map(
+        (path) => p.photoVariants?.[path]?.[kind] || p.galleryPhotoUrls?.[path],
+      )
+    : (p.images ?? []);
+  return [...new Set([cover, ...gallery].filter((url): url is string => Boolean(url)))];
 }
 export function variationPhoto(
   p: Pick<CatalogProduct, "variationPhotos" | "variationPhotoPaths" | "photoVariants">,
@@ -262,6 +261,7 @@ export function itemPhoto(
     | "images"
     | "imagePath"
     | "imagePaths"
+    | "galleryPhotoUrls"
     | "variationPhotos"
     | "variationPhotoPaths"
     | "photoVariants"

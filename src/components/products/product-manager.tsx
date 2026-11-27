@@ -166,6 +166,10 @@ export function ProductManager() {
       preview: "",
     });
   };
+  const editedProduct = products.find((product) => product.id === editing?.draft.id);
+  const editingGalleryPreview = editedProduct?.galleryPhotoUrls
+    ? (editedProduct.imagePaths ?? []).map((path) => editedProduct.galleryPhotoUrls?.[path] ?? "")
+    : (editedProduct?.images ?? []);
   return (
     <section className="py-7">
       <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label="Seções do catálogo">
@@ -518,7 +522,7 @@ export function ProductManager() {
               products={products.filter((p) => p.id !== editing.draft.id)}
               initial={editing.draft}
               preview={editing.preview}
-              galleryPreview={products.find((p) => p.id === editing.draft.id)?.images ?? []}
+              galleryPreview={editingGalleryPreview}
               videoPreview={products.find((p) => p.id === editing.draft.id)?.video ?? ""}
               categories={categories}
               busy={busy}

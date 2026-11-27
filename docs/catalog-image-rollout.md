@@ -33,3 +33,15 @@ Supabase de produção sem autorização explícita e uma janela de rollback.
 Reaplicar o mapa inverso no catálogo e banner. Como os originais antigos não são sobrescritos nem
 excluídos, a reversão não depende dos derivados novos. A limpeza de objetos órfãos deve ser uma
 tarefa posterior, separada e explicitamente autorizada.
+
+## Cache e verificação do build (HF-01)
+
+O build do Cloudflare gera `dist/client/sw.js` após compilar os assets do cliente.
+Em um build novo, execute `npm run build` e depois
+`npx playwright test --config playwright.sw.config.ts` para verificar a rota do worker,
+a atualização sobre uma instalação anterior e o cache no Chromium.
+
+O worker armazena apenas assets públicos. O HTML do catálogo, que contém links assinados,
+e as respostas de mídia privada ficam fora do Cache Storage. A atualização remove os
+caches antigos de HTML e fotos. Os dados públicos do catálogo ainda têm snapshot offline
+para uma aba aberta. Uma nova navegação e o carregamento de fotos privadas exigem conexão.

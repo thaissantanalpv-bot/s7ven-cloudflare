@@ -51,9 +51,9 @@ vi.mock("@/components/ui/switch", () => ({
 }));
 import { ProductManager } from "@/components/products/product-manager";
 
-function setup() {
+function setup(products = mergeCatalog([])) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  client.setQueryData(["admin-catalog-products"], mergeCatalog([]));
+  client.setQueryData(["admin-catalog-products"], products);
   client.invalidateQueries = vi.fn().mockResolvedValue(undefined);
   render(
     <QueryClientProvider client={client}>
@@ -86,6 +86,43 @@ describe("Product manager", () => {
     const draft = mocks.save.mock.calls[0]?.[0].data.product;
     expect(draft.image).toMatch(/^uploads\//);
     expect(draft.images).toEqual(["/produtos/p1.jpg"]);
+  });
+  it("keeps each admin preview and save attached to its stored gallery path", async () => {
+    const products = mergeCatalog([]);
+    const product = products.find((item) => item.name === "Combo Gin Viagem");
+    if (!product) throw new Error("Missing fixture product");
+    const missing = "uploads/missing.jpg";
+    const available = "uploads/available.jpg";
+    const signed = "https://example.test/available.jpg";
+    setup(
+      products.map((item) =>
+        item.id === product.id
+          ? {
+              ...item,
+              imagePaths: [missing, available],
+              images: [signed],
+              galleryPhotoUrls: { [missing]: "", [available]: signed },
+            }
+          : item,
+      ),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar Combo Gin Viagem" }));
+    const dialog = within(screen.getByRole("dialog"));
+    expect(dialog.queryByAltText("Foto 2 do produto")).toBeNull();
+    expect(dialog.getByAltText("Foto 3 do produto")).toHaveAttribute("src", signed);
+    fireEvent.click(dialog.getByRole("button", { name: "Remover foto 2" }));
+    expect(dialog.getByAltText("Foto 2 do produto")).toHaveAttribute("src", signed);
+    fireEvent.click(dialog.getByRole("button", { name: "Salvar produto" }));
+    await waitFor(() =>
+      expect(mocks.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            product: expect.objectContaining({ images: [available] }),
+          }),
+        }),
+      ),
+    );
   });
   beforeEach(() => {
     vi.stubGlobal(

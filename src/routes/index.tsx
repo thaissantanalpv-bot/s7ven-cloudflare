@@ -27,7 +27,7 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { publicStoreSettingsQuery as storeSettingsQuery } from "@/lib/store-settings.query";
 import { appearanceCss, appearanceFontsHref, isLightColor, parseAppearance } from "@/lib/catalog-appearance";
-import { savePublicSnapshot, readPublicSnapshot, offlinePhotoUrls } from "@/lib/offline-catalog";
+import { savePublicSnapshot, readPublicSnapshot } from "@/lib/offline-catalog";
 import { ordersOpen, storeStatus, upcomingSpecialDays, DAYS, deliveryFeeFrom } from "@/lib/store-settings";
 import { checkoutStage } from "@/lib/catalog-analytics";
 import { QRCodeSVG } from "qrcode.react";
@@ -130,10 +130,8 @@ function Catalog() {
   const navigate = useNavigate();
   const search = Route.useSearch();
   const tab: Tab = search.aba ?? "inicio";
-  const { data: catalogProducts } = useSuspenseQuery(catalogQuery);
+  const { data: products } = useSuspenseQuery(catalogQuery);
   const [online, setOnline] = useState(true);
-  const [photoUrls, setPhotoUrls] = useState<Map<string, string>>(new Map());
-  const products = useMemo<CatalogProduct[]>(() => online ? catalogProducts : catalogProducts.map(product => ({ ...product, ...(product.image ? { image: photoUrls.get(product.image) ?? product.image } : {}), ...(product.images ? { images: product.images.map(url => photoUrls.get(url) ?? url) } : {}) })), [catalogProducts, online, photoUrls]);
   useCatalogUpdates();
   // Paused products never appear to customers; `products` stays complete for saved-cart checks.
   const shown = useMemo(() => visibleProducts(products), [products]);
@@ -160,22 +158,10 @@ function Catalog() {
   }, [queryClient]);
   useEffect(() => {
     if (navigator.onLine) {
-      savePublicSnapshot("products", catalogProducts);
+      savePublicSnapshot("products", products);
       savePublicSnapshot("settings", settings);
     }
-    const urls = [...new Set(catalogProducts.flatMap(product => [product.image, ...(product.images ?? [])]).filter((url): url is string => Boolean(url)))];
-    // Disabled temporarily: a second fetch of every loaded photo doubles Storage egress.
-    // The stored offline catalog data remains available; offline photo prefetch is paused.
-    if (online) return;
-    let disposed = false;
-    let resolved = new Map<string, string>();
-    void offlinePhotoUrls(urls).then(result => {
-      resolved = result;
-      if (disposed) result.forEach(url => URL.revokeObjectURL(url));
-      else setPhotoUrls(result);
-    }).catch(() => {});
-    return () => { disposed = true; resolved.forEach(url => URL.revokeObjectURL(url)); };
-  }, [catalogProducts, settings, online]);
+  }, [products, settings]);
   const registerOrder = useServerFn(submitOrder);
   const startDistanceSession = useServerFn(startDeliverySession);
   const calculateDistance = useServerFn(quoteDelivery);

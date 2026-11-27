@@ -12,7 +12,7 @@ import {
   toDraft,
   type CatalogProduct,
 } from "./catalog";
-import { catalogDerivativePaths } from "./photos/image-derivatives";
+import { catalogDerivativePaths, publicCatalogDerivativePaths } from "./photos/image-derivatives";
 
 // Only the allowlisted, read-only sales projection is available to visitors.
 export const getCatalog = createServerFn({ method: "GET" }).handler(async () => {
@@ -44,7 +44,7 @@ export const getCatalog = createServerFn({ method: "GET" }).handler(async () => 
     },
   });
   const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
-  const mediaClient = serviceKey
+  const derivativeClient = serviceKey
     ? createClient<Database>(url, serviceKey, {
         auth: { persistSession: false, autoRefreshToken: false },
         global: {
@@ -61,7 +61,7 @@ export const getCatalog = createServerFn({ method: "GET" }).handler(async () => 
           },
         },
       })
-    : client;
+    : undefined;
   const rows = [];
   for (let offset = 0; ; offset += 500) {
     const { data, error } = await client.rpc("list_catalog_sales", { _offset: offset });
@@ -69,7 +69,7 @@ export const getCatalog = createServerFn({ method: "GET" }).handler(async () => 
     rows.push(...data);
     if (data.length < 500) break;
   }
-  return resolveCatalogPhotos(catalogFromRows(rows), mediaClient, Boolean(serviceKey));
+  return resolveCatalogMedia(catalogFromRows(rows), client, { access: "public", derivativeClient });
 });
 
 export const getAdminCatalog = createServerFn({ method: "POST" })
@@ -92,27 +92,55 @@ export const getAdminCatalog = createServerFn({ method: "POST" })
       rows.push(...data);
       if (data.length < 500) break;
     }
-    return resolveCatalogPhotos(catalogFromRows(rows), client, true);
+    return resolveCatalogMedia(catalogFromRows(rows), client, { access: "admin" });
   });
 
-async function signedPhotoUrls(client: SupabaseClient<Database>, paths: string[]) {
+function signedMediaUrl(url: string, bucket: string, path: string) {
+  try {
+    const parsed = new URL(url);
+    return (
+      (parsed.protocol === "https:" || parsed.protocol === "http:") &&
+      parsed.pathname === `/storage/v1/object/sign/${bucket}/${path}` &&
+      Boolean(parsed.searchParams.get("token"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function signedPhotoUrls(
+  client: SupabaseClient<Database>,
+  paths: string[],
+  optional = false,
+) {
   const result = new Map<string, string>();
   for (let offset = 0; offset < paths.length; offset += 100) {
     const batch = paths.slice(offset, offset + 100);
     const { data, error } = await client.storage
       .from("product-photos")
       .createSignedUrls(batch, 3600);
-    if (error) throw new Error("Não foi possível carregar as fotos.");
-    for (const item of data ?? [])
-      if (item.path && item.signedUrl) result.set(item.path, item.signedUrl);
+    if (error) {
+      if (optional) continue;
+      throw new Error("Não foi possível carregar as fotos.");
+    }
+    for (const item of data ?? []) {
+      if (item.error || !item.path || !item.signedUrl || !batch.includes(item.path)) continue;
+      if (signedMediaUrl(item.signedUrl, "product-photos", item.path)) {
+        result.set(item.path, item.signedUrl);
+      }
+    }
   }
   return result;
 }
 
-async function resolveCatalogPhotos(
+type CatalogMediaAccess =
+  | { access: "public"; derivativeClient: SupabaseClient<Database> | undefined }
+  | { access: "admin" };
+
+async function resolveCatalogMedia(
   products: CatalogProduct[],
   client: SupabaseClient<Database>,
-  includeDerivatives: boolean,
+  mediaAccess: CatalogMediaAccess,
 ) {
   const originals = [
     ...new Set(
@@ -125,78 +153,87 @@ async function resolveCatalogPhotos(
         .filter((path): path is string => Boolean(path?.startsWith("uploads/"))),
     ),
   ];
+  const originalUrls = await signedPhotoUrls(client, originals);
+  const derivativeClient = mediaAccess.access === "admin" ? client : mediaAccess.derivativeClient;
   const derivativePaths = new Map(
-    includeDerivatives
-      ? originals.flatMap((path) => {
-          const variants = catalogDerivativePaths(path);
+    derivativeClient
+      ? [...originalUrls.keys()].flatMap((path) => {
+          // A successful original signature under the caller's RLS is the authorization
+          // gate. Only deterministic siblings of that authorized original may be signed.
+          const variants =
+            mediaAccess.access === "public"
+              ? publicCatalogDerivativePaths(path)
+              : catalogDerivativePaths(path);
           return variants ? [[path, variants] as const] : [];
         })
       : [],
   );
-  const paths = [
-    ...new Set([
-      ...originals,
-      ...[...derivativePaths.values()].flatMap((variants) => Object.values(variants)),
-    ]),
-  ];
-  if (paths.length) {
-    const urls = await signedPhotoUrls(client, paths);
-    const resolvePhoto = (path: string) => {
-      if (!path.startsWith("uploads/")) return path;
-      return urls.get(path) ?? "";
-    };
-    for (const p of products) {
-      p.imagePaths = p.images ?? [];
-      p.images = p.imagePaths.map(resolvePhoto).filter(Boolean);
-      if (p.image?.startsWith("uploads/")) {
-        p.imagePath = p.image;
-        p.image = resolvePhoto(p.image);
-      }
-      if (p.variationPhotos) {
-        // Editing needs the stored paths; display needs the resolved links.
-        p.variationPhotoPaths = { ...p.variationPhotos };
-        const resolvedVariationPhotos: Record<string, string> = {};
-        for (const [name, path] of Object.entries(p.variationPhotos)) {
-          const resolved = resolvePhoto(path);
-          if (resolved) resolvedVariationPhotos[name] = resolved;
-        }
-        p.variationPhotos = resolvedVariationPhotos;
-      }
-      const stored = [
-        p.imagePath,
-        ...(p.imagePaths ?? []),
-        ...Object.values(p.variationPhotoPaths ?? {}),
-      ].filter((path): path is string => Boolean(path));
-      p.photoVariants = Object.fromEntries(
-        stored.flatMap((path) => {
-          const variants = derivativePaths.get(path);
-          if (!variants) return [];
-          const resolved = {
-            thumb: resolvePhoto(variants.thumb),
-            card: resolvePhoto(variants.card),
-            gallery: resolvePhoto(variants.gallery),
-          };
-          return resolved.thumb && resolved.card && resolved.gallery ? [[path, resolved]] : [];
+  const derivativeUrls = derivativeClient
+    ? await signedPhotoUrls(
+        derivativeClient,
+        [...new Set([...derivativePaths.values()].flatMap((variants) => Object.values(variants)))],
+        true,
+      )
+    : new Map<string, string>();
+  const resolvePhoto = (path: string) =>
+    path.startsWith("uploads/") ? (originalUrls.get(path) ?? "") : path;
+
+  for (const product of products) {
+    const galleryPaths = product.images ?? [];
+    const coverPath = product.image;
+    product.imagePaths = galleryPaths;
+    product.galleryPhotoUrls = Object.fromEntries(
+      galleryPaths.map((path) => [path, resolvePhoto(path)]),
+    );
+    product.images = galleryPaths.map(resolvePhoto).filter(Boolean);
+    if (coverPath?.startsWith("uploads/")) {
+      product.imagePath = coverPath;
+      product.image = resolvePhoto(coverPath);
+    }
+    if (product.variationPhotos) {
+      product.variationPhotoPaths = { ...product.variationPhotos };
+      product.variationPhotos = Object.fromEntries(
+        Object.entries(product.variationPhotoPaths).flatMap(([name, path]) => {
+          const url = resolvePhoto(path);
+          return url ? [[name, url]] : [];
         }),
       );
     }
+    const paths = [coverPath, ...galleryPaths, ...Object.values(product.variationPhotoPaths ?? {})];
+    product.photoVariants = Object.fromEntries(
+      paths.flatMap((path) => {
+        const variants = path && derivativePaths.get(path);
+        if (!variants) return [];
+        const thumb = derivativeUrls.get(variants.thumb);
+        const card = derivativeUrls.get(variants.card);
+        const gallery = derivativeUrls.get(variants.gallery);
+        return thumb && card && gallery ? [[path, { thumb, card, gallery }]] : [];
+      }),
+    );
   }
-  // Videos can be long, so their links stay valid for six hours of playback.
+
+  // Public videos are signed by the anonymous client and must belong to an active item.
+  // Admins continue to use the authenticated client after the role check.
   const videoPaths = [
     ...new Set(
-      products.map((p) => p.video).filter((v): v is string => Boolean(v?.startsWith("uploads/"))),
+      products
+        .filter((product) => mediaAccess.access === "admin" || product.active)
+        .map((product) => product.video)
+        .filter((path): path is string => Boolean(path?.startsWith("uploads/"))),
     ),
   ];
-  if (videoPaths.length) {
-    const { data: urls } = await client.storage
-      .from("product-videos")
-      .createSignedUrls(videoPaths, 6 * 3600);
-    for (const p of products) {
-      if (!p.video?.startsWith("uploads/")) continue;
-      const signed = urls?.find((u) => u.path === p.video)?.signedUrl;
-      p.videoPath = p.video;
-      p.video = signed ? signed : "";
-    }
+  const videoUrls = videoPaths.length
+    ? (await client.storage.from("product-videos").createSignedUrls(videoPaths, 6 * 3600)).data
+    : [];
+  for (const product of products) {
+    const path = product.video;
+    if (!path?.startsWith("uploads/")) continue;
+    product.videoPath = path;
+    const signed =
+      mediaAccess.access === "admin" || product.active
+        ? videoUrls?.find((item) => item.path === path && !item.error)?.signedUrl
+        : undefined;
+    product.video = signed && signedMediaUrl(signed, "product-videos", path) ? signed : "";
   }
   return products;
 }

@@ -6,7 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { EMPTY_SETTINGS, settingsSchema } from "./store-settings";
 import { appearanceSchema } from "./catalog-appearance";
-import { catalogDerivativePaths } from "./photos/image-derivatives";
+import { publicCatalogDerivativePaths } from "./photos/image-derivatives";
 
 export const getStoreSettings = createServerFn({ method: "GET" }).handler(async () => {
   const url = process.env["SUPABASE_URL"];
@@ -50,16 +50,21 @@ export const getStoreSettings = createServerFn({ method: "GET" }).handler(async 
   let banner_image_url = "";
   const bannerPath = settings.catalog_appearance?.bannerImage;
   if (bannerPath) {
-    const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
-    const signer = serviceKey
-      ? createClient<Database>(url, serviceKey, {
-          auth: { persistSession: false, autoRefreshToken: false },
-        })
-      : client;
-    const optimized = serviceKey ? catalogDerivativePaths(bannerPath)?.gallery : undefined;
-    const { data: signed } = await signer.storage
+    const { data: original, error } = await client.storage
       .from("product-photos")
-      .createSignedUrl(optimized ?? bannerPath, 6 * 3600);
+      .createSignedUrl(bannerPath, 6 * 3600);
+    let signed = error ? null : original;
+    const derivative = signed?.signedUrl && publicCatalogDerivativePaths(bannerPath)?.gallery;
+    const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+    if (serviceKey && derivative) {
+      const signer = createClient<Database>(url, serviceKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data: optimized } = await signer.storage
+        .from("product-photos")
+        .createSignedUrl(derivative, 6 * 3600);
+      if (optimized?.signedUrl) signed = optimized;
+    }
     if (signed?.signedUrl)
       banner_image_url = signed.signedUrl.replace(
         new URL(signed.signedUrl).origin,

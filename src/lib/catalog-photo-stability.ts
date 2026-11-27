@@ -60,7 +60,21 @@ export function retainCatalogPhotoUrls(
     if (product.imagePath && product.imagePath === old.imagePath) {
       result.image = reuseUrl(old.image, product.image, now) ?? product.image;
     }
-    if (product.images?.length && product.imagePaths?.length && old.imagePaths?.length) {
+    if (product.galleryPhotoUrls && product.imagePaths) {
+      const urls = Object.fromEntries(
+        Object.entries(product.galleryPhotoUrls).map(([path, url]) => [
+          path,
+          reuseUrl(old.galleryPhotoUrls?.[path], url, now) ?? url,
+        ]),
+      );
+      result.galleryPhotoUrls = urls;
+      result.images = product.imagePaths.map((path) => urls[path] ?? "").filter(Boolean);
+    } else if (
+      product.images &&
+      product.images.length === product.imagePaths?.length &&
+      old.images &&
+      old.images.length === old.imagePaths?.length
+    ) {
       const oldByPath = new Map(old.imagePaths.map((path, index) => [path, old.images?.[index]]));
       result.images = product.images.map(
         (url, index) => reuseUrl(oldByPath.get(product.imagePaths?.[index] ?? ""), url, now) ?? url,

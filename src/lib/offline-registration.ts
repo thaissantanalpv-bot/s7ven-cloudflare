@@ -7,18 +7,16 @@ export async function registerCatalogOffline() {
   if (!allowed) {
     const registrations = await navigator.serviceWorker.getRegistrations();
     await Promise.all(registrations.filter(registration => [registration.active, registration.waiting, registration.installing].some(worker => worker && new URL(worker.scriptURL).pathname === '/sw.js')).map(registration => registration.unregister()));
+    if ("caches" in window) {
+      await Promise.all([
+        "s7ven-public-photos-v1",
+        "s7ven-public-photos-v2",
+        "s7ven-public-pages-v1",
+      ].map(name => caches.delete(name)));
+    }
     return;
   }
-  const registration = await navigator.serviceWorker.register('/sw.js');
-  // Cache the first public navigation once the generated worker controls it.
-  if (location.pathname === '/') {
-    void navigator.serviceWorker.ready.then(async () => {
-      if (!navigator.serviceWorker.controller) {
-        await new Promise<void>(resolve => navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), { once: true }));
-      }
-      if (navigator.onLine) await fetch('/', { credentials: 'omit' });
-    }).catch(() => {});
-  }
+  const registration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: "none" });
   const update = () => { if (navigator.onLine) void registration.update().catch(() => {}); };
   window.addEventListener('online', update);
   update();

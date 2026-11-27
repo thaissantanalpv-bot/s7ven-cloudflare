@@ -48,6 +48,11 @@ export function catalogDerivativePaths(path: string): CatalogImageVariants | nul
   };
 }
 
+/** Only objects in the content-addressed upload namespace can authorize public siblings. */
+export function publicCatalogDerivativePaths(path: string): CatalogImageVariants | null {
+  return /^uploads\/v1-[a-f0-9]{32}_original_/.test(path) ? catalogDerivativePaths(path) : null;
+}
+
 const ACCEPTED_TYPES: Record<string, "jpg" | "png" | "webp"> = {
   "image/jpeg": "jpg",
   "image/png": "png",
