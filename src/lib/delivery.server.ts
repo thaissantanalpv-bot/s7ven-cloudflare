@@ -30,7 +30,7 @@ export async function verifyDeliveryToken(token: string | undefined, now = Date.
   return ok ? id : null;
 }
 export async function deliverySettingsHash(settings: StoreSettings) {
-  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(["aracatuba-v1", DELIVERY_TRAVEL_MODE, settings.delivery_origin, settings.delivery_distance_tiers, settings.delivery_enabled, settings.delivery_distance_enabled])));
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(["aracatuba-v2", DELIVERY_TRAVEL_MODE, settings.delivery_origin, settings.delivery_distance_tiers, settings.delivery_enabled, settings.delivery_distance_enabled])));
   return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, "0")).join("");
 }
 

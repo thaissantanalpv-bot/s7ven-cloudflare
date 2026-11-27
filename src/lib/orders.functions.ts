@@ -5,6 +5,7 @@ import { submitOrderSchema, priceOrder, statusSchema, workflowStatusSchema, canc
 import { EMPTY_SETTINGS, nextOpeningAt, ordersOpen, settingsSchema } from "./store-settings";
 import { catalogFromRows } from "./catalog";
 import { deliveryAddress } from "./delivery-address";
+import { DELIVERY_QUOTE_TTL_MS } from "./delivery-route";
 import { scheduleLabel, validateSchedule } from "./order-schedule";
 
 export const submitOrder = createServerFn({ method: "POST" })
@@ -56,7 +57,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       const { verifyDeliveryToken, deliverySettingsHash } = await import("./delivery.server");
       const sessionId = await verifyDeliveryToken(data.deliveryToken);
       if (!data.deliveryQuoteId || !sessionId) throw new Error("Calcule a taxa de entrega antes de enviar.");
-      const { data: quote, error: quoteError } = await supabaseAdmin.from("delivery_quotes").select("fee,distance_km,address,settings_hash").eq("id", data.deliveryQuoteId).eq("session_id", sessionId).gte("created_at", new Date(Date.now()-15*60000).toISOString()).maybeSingle();
+      const { data: quote, error: quoteError } = await supabaseAdmin.from("delivery_quotes").select("fee,distance_km,address,settings_hash").eq("id", data.deliveryQuoteId).eq("session_id", sessionId).gte("created_at", new Date(Date.now() - DELIVERY_QUOTE_TTL_MS).toISOString()).maybeSingle();
       if (quoteError || !quote || quote.address !== deliveryAddress(data.customer.address) || quote.settings_hash !== await deliverySettingsHash(settings)) throw new Error("O endereço ou a taxa mudou. Calcule a entrega novamente.");
       verifiedDelivery = { fee: Number(quote.fee), km: Number(quote.distance_km) };
     }

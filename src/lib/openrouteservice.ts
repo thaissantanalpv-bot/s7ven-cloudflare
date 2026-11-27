@@ -23,7 +23,7 @@ function sameNumber(a: string | undefined, b: string): boolean {
 }
 export function addressNumber(address: string): string {
   // A complete checkout address is: "Rua ..., 123, Bairro, Araçatuba, SP, Brasil".
-  return /,\s*(\d{1,6}[a-zA-Z-]*)\s*(?:,|$)/.exec(address)?.[1] ?? '';
+  return /^[^,]+,\s*(\d{1,6}[a-zA-Z-]*)\s*(?:,|$)/.exec(address)?.[1] ?? '';
 }
 export function inDeliveryCity(feature: OrsFeature): boolean {
   const p = feature.properties;
@@ -56,7 +56,18 @@ export function toOrsPoint(feature: OrsFeature, expectedNumber?: string): OrsPoi
 export function pickOrsAddress(features: OrsFeature[], address: string): OrsPoint {
   const number = addressNumber(address);
   if (!number) throw new Error('Informe rua e número completos para calcular a entrega.');
-  const match = features.find(f => inDeliveryCity(f) && f.properties?.layer === 'address' && f.properties.street && sameNumber(f.properties.housenumber, number));
+  const streetName = (value: string | undefined) => normalized(value)
+    .replace(/[^a-z0-9 ]/g, ' ').trim().replace(/\s+/g, ' ')
+    .replace(/^r /, 'rua ').replace(/^av /, 'avenida ')
+    .replace(/^tv /, 'travessa ').replace(/^al /, 'alameda ').replace(/^pca /, 'praca ');
+  const street = streetName(address.split(',')[0]);
+  const streetType = /^(?:rua|avenida|travessa|alameda|praca) /;
+  const matches = features.filter(f => inDeliveryCity(f) && f.properties?.layer === 'address' &&
+    f.properties.street && sameNumber(f.properties.housenumber, number));
+  const withoutType = matches.filter(f => !streetType.test(street) &&
+    streetName(f.properties?.street).replace(streetType, '') === street);
+  const match = matches.find(f => streetName(f.properties?.street) === street) ??
+    (new Set(withoutType.map(f => streetName(f.properties?.street))).size === 1 ? withoutType[0] : undefined);
   if (!match) throw new Error('Não foi possível confirmar esse número em Araçatuba no mapa gratuito. Revise o endereço ou escolha retirada na loja.');
   return toOrsPoint(match, number);
 }
