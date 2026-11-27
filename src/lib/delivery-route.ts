@@ -1,5 +1,6 @@
 /** ORS free public API supports driving-car, not a motorcycle route profile. */
 export const DELIVERY_TRAVEL_MODE = 'openrouteservice-driving-car-v1';
+export const DELIVERY_QUOTE_TTL_MS = 15 * 60_000;
 
 /** Legacy Google duration parser retained for regression tests; ORS returns numeric seconds. */
 export function routeDurationSeconds(duration: string) {

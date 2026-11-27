@@ -3,7 +3,7 @@ import { brazilPhoneSchema, normalizePhone } from "./phone";
 export { normalizePhone } from "./phone";
 import { PRODUCTS, PAYMENT_METHODS, STORE_NAME, type Product } from "./products";
 import { available, type CatalogProduct } from "./catalog";
-import { applyCoupon, type StoreSettings } from "./store-settings";
+import { applyCoupon, distanceFee, type StoreSettings } from "./store-settings";
 import { comboSelectionsSchema, type ComboSelection } from "./combos";
 import { analyticsIdentitySchema } from "./catalog-analytics";
 import { ratingLink } from "./ratings";
@@ -234,7 +234,11 @@ export function priceOrder(input: z.infer<typeof submitOrderSchema>, settings: S
   if (delivery && settings.delivery_enabled && !byDistance && settings.fixed_delivery_fee === null && !zone) throw new Error("Escolha o bairro ou região de entrega.");
   const subtotal =
     Math.round(items.reduce((s, i) => s + Math.round(i.price * 100) * i.qty, 0)) / 100;
-  const delivery_fee = byDistance ? verifiedDelivery?.fee ?? 0 : delivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
+  let delivery_fee = delivery && settings.delivery_enabled ? (settings.fixed_delivery_fee ?? zone?.fee ?? 0) : 0;
+  if (byDistance && verifiedDelivery) {
+    delivery_fee = distanceFee(settings, verifiedDelivery.km);
+    if (delivery_fee !== verifiedDelivery.fee) throw new Error("A taxa mudou. Calcule a entrega novamente.");
+  }
   let couponDiscount = couponOverride?.discount ?? 0;
   let couponCode = couponOverride?.code ?? null;
   if (!couponOverride && input.couponCode) {

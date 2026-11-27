@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { distanceFee, settingsSchema } from './store-settings';
 import { deliveryAddress } from './delivery-address';
 import { orsSuggestions } from './openrouteservice';
+import { DELIVERY_QUOTE_TTL_MS } from './delivery-route';
 
 export const startDeliverySession = createServerFn({ method: 'POST' }).handler(async () => {
   const { createDeliveryToken } = await import('./delivery.server');
@@ -61,13 +62,14 @@ export const quoteDelivery = createServerFn({ method: 'POST' })
     if (!settings.delivery_enabled || !settings.delivery_distance_enabled) throw new Error('A entrega por km não está ativa.');
     const hash = await deliverySettingsHash(settings); // Includes ORS driving-car provider; old Google quotes invalid.
     const address = deliveryAddress(data.address);
-    const since = new Date(Date.now() - 15 * 60000).toISOString();
+    const since = new Date(Date.now() - DELIVERY_QUOTE_TTL_MS).toISOString();
     const { data: cached } = await supabaseAdmin.from('delivery_quotes')
-      .select('id,distance_km,fee,duration_seconds').eq('session_id', sessionId)
+      .select('id,distance_km,fee,duration_seconds,created_at').eq('session_id', sessionId)
       .eq('address', address).eq('settings_hash', hash).gte('created_at', since).limit(1).maybeSingle();
     if (cached && cached.duration_seconds !== null) return {
       id: cached.id, address, km: Number(cached.distance_km), fee: Number(cached.fee),
       routeDurationSeconds: Number(cached.duration_seconds), neighborhood: '',
+      expiresAt: Date.parse(cached.created_at) + DELIVERY_QUOTE_TTL_MS,
     };
     const { count, error: countError } = await supabaseAdmin.from('delivery_quotes')
       .select('id', { head: true, count: 'exact' }).eq('session_id', sessionId).gte('created_at', since);
@@ -87,7 +89,8 @@ export const quoteDelivery = createServerFn({ method: 'POST' })
     const savedAddress = neighborhood ? deliveryAddress(`${data.address.trim()}, ${neighborhood}`) : address;
     const { data: saved, error: saveError } = await supabaseAdmin.from('delivery_quotes')
       .insert({ session_id: sessionId, address: savedAddress, settings_hash: hash,
-        distance_km: km, fee, duration_seconds: durationSeconds }).select('id').single();
+        distance_km: km, fee, duration_seconds: durationSeconds }).select('id,created_at').single();
     if (saveError || !saved) throw new Error('Não foi possível guardar o cálculo. Tente novamente.');
-    return { id: saved.id, address: savedAddress, km, fee, routeDurationSeconds: durationSeconds, neighborhood };
+    return { id: saved.id, address: savedAddress, km, fee, routeDurationSeconds: durationSeconds, neighborhood,
+      expiresAt: Date.parse(saved.created_at) + DELIVERY_QUOTE_TTL_MS };
   });

@@ -83,6 +83,18 @@ export function distanceFee(settings: StoreSettings, distanceKm: number) {
   if (!tier) throw new Error("Endereço fora da área de entrega. Escolha retirada ou fale com a loja.");
   return tier.fee;
 }
+
+export const SEVEN_DELIVERY_TIERS: StoreSettings["delivery_distance_tiers"] = [
+  { id: "seven-1", upToKm: 1, fee: 7 },
+  { id: "seven-3", upToKm: 3, fee: 7.5 },
+  { id: "seven-5", upToKm: 5, fee: 8.4 },
+  { id: "seven-6", upToKm: 6, fee: 9.3 },
+  { id: "seven-7", upToKm: 7, fee: 10.2 },
+  { id: "seven-9", upToKm: 9, fee: 11.1 },
+  { id: "seven-11", upToKm: 11, fee: 13 },
+  { id: "seven-13", upToKm: 13, fee: 14.5 },
+  { id: "seven-15", upToKm: 15, fee: 16 },
+];
 type Hours = { enabled: boolean; open: string; close: string };
 const shiftIsoDay = (isoDay: string, days: number) => {
   const d = new Date(`${isoDay}T12:00:00Z`);

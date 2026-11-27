@@ -13,19 +13,23 @@ function orsKey() {
   return key;
 }
 async function callOrs(url: string, init: RequestInit = {}) {
+  const key = orsKey();
+  const unavailable = 'O serviço de localização está temporariamente indisponível. Tente mais tarde ou escolha retirada na loja.';
   const response = await fetch(url, {
     ...init,
-    headers: { Authorization: orsKey(), Accept: 'application/json', ...init.headers },
+    headers: { Authorization: key, Accept: 'application/json', ...init.headers },
     signal: AbortSignal.timeout(8500),
+  }).catch(() => {
+    throw new Error(unavailable);
   });
   if (!response.ok) {
     // No query strings, tokens, street addresses, or customer positions in logs.
     console.error(`[S7VEN] ORS ${response.status} ${url.split('?')[0]}`);
     if (response.status === 429 || response.status === 403) throw new Error('O limite gratuito de consultas de rotas foi alcançado ou a chave não foi autorizada. Tente mais tarde ou escolha retirada na loja.');
     if (response.status === 401) throw new Error('A loja precisa revisar a chave de acesso às rotas.');
-    throw new Error('O serviço de localização está temporariamente indisponível. Tente mais tarde ou escolha retirada na loja.');
+    throw new Error(unavailable);
   }
-  return response.json();
+  return response.json().catch(() => { throw new Error(unavailable); });
 }
 function peliasUrl(type: 'autocomplete' | 'search' | 'reverse', params: Record<string, string>) {
   const url = new URL(`${PELIAS}/${type}`);
@@ -47,7 +51,7 @@ export async function orsGeocodeAddress(address: string): Promise<OrsPoint> {
     text: address, size: '10', 'focus.point.lat': CENTER_LAT,
     'focus.point.lon': CENTER_LON, 'boundary.country': 'BRA',
     'boundary.circle.lat': CENTER_LAT, 'boundary.circle.lon': CENTER_LON,
-    'boundary.circle.radius': '27',
+    'boundary.circle.radius': '27', layers: 'address',
   })) as PeliasResult;
   return pickOrsAddress(result.features ?? [], address);
 }

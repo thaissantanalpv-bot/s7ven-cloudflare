@@ -27,7 +27,7 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { publicStoreSettingsQuery as storeSettingsQuery } from "@/lib/store-settings.query";
 import { appearanceCss, appearanceFontsHref, isLightColor, parseAppearance } from "@/lib/catalog-appearance";
-import { savePublicSnapshot, readPublicSnapshot, offlinePhotoUrls } from "@/lib/offline-catalog";
+import { savePublicSnapshot, readPublicSnapshot } from "@/lib/offline-catalog";
 import { ordersOpen, storeStatus, upcomingSpecialDays, DAYS, deliveryFeeFrom } from "@/lib/store-settings";
 import { checkoutStage } from "@/lib/catalog-analytics";
 import { QRCodeSVG } from "qrcode.react";
@@ -130,10 +130,8 @@ function Catalog() {
   const navigate = useNavigate();
   const search = Route.useSearch();
   const tab: Tab = search.aba ?? "inicio";
-  const { data: catalogProducts } = useSuspenseQuery(catalogQuery);
+  const { data: products } = useSuspenseQuery(catalogQuery);
   const [online, setOnline] = useState(true);
-  const [photoUrls, setPhotoUrls] = useState<Map<string, string>>(new Map());
-  const products = useMemo<CatalogProduct[]>(() => online ? catalogProducts : catalogProducts.map(product => ({ ...product, ...(product.image ? { image: photoUrls.get(product.image) ?? product.image } : {}), ...(product.images ? { images: product.images.map(url => photoUrls.get(url) ?? url) } : {}) })), [catalogProducts, online, photoUrls]);
   useCatalogUpdates();
   // Paused products never appear to customers; `products` stays complete for saved-cart checks.
   const shown = useMemo(() => visibleProducts(products), [products]);
@@ -160,22 +158,10 @@ function Catalog() {
   }, [queryClient]);
   useEffect(() => {
     if (navigator.onLine) {
-      savePublicSnapshot("products", catalogProducts);
+      savePublicSnapshot("products", products);
       savePublicSnapshot("settings", settings);
     }
-    const urls = [...new Set(catalogProducts.flatMap(product => [product.image, ...(product.images ?? [])]).filter((url): url is string => Boolean(url)))];
-    // Disabled temporarily: a second fetch of every loaded photo doubles Storage egress.
-    // The stored offline catalog data remains available; offline photo prefetch is paused.
-    if (online) return;
-    let disposed = false;
-    let resolved = new Map<string, string>();
-    void offlinePhotoUrls(urls).then(result => {
-      resolved = result;
-      if (disposed) result.forEach(url => URL.revokeObjectURL(url));
-      else setPhotoUrls(result);
-    }).catch(() => {});
-    return () => { disposed = true; resolved.forEach(url => URL.revokeObjectURL(url)); };
-  }, [catalogProducts, settings, online]);
+  }, [products, settings]);
   const registerOrder = useServerFn(submitOrder);
   const startDistanceSession = useServerFn(startDeliverySession);
   const calculateDistance = useServerFn(quoteDelivery);
@@ -244,6 +230,7 @@ function Catalog() {
     fulfillment: "delivery" as "delivery" | "pickup",
   });
   const [addressLine, setAddressLine] = useState("");
+  const [deliveryComplement, setDeliveryComplement] = useState("");
 
   // Detecta endereço salvo anteriormente ao abrir o carrinho
   useEffect(() => {
@@ -447,14 +434,15 @@ function Catalog() {
         quote = await calculateDistance({ data: { address, token: retryToken, autoNeighborhood } });
       }
       if (request !== quoteRequest.current) return;
-      const { neighborhood, ...found } = quote;
-      setDeliveryQuote({ ...found, expires: Date.now()+14*60000, config: distanceConfig });
+      const { neighborhood, expiresAt, ...found } = quote;
+      setDeliveryQuote({ ...found, expires: expiresAt, config: distanceConfig });
       if (autoNeighborhood && neighborhood) setForm(f => f.neighborhood.trim() ? f : { ...f, neighborhood });
     } catch(e) { if (request === quoteRequest.current) setDeliveryError(e instanceof Error && e.message !== "DELIVERY_SESSION_EXPIRED" ? e.message : "Não foi possível calcular a entrega. Confira o endereço e tente novamente."); }
     finally { if (request === quoteRequest.current) { pendingQuote.current = ""; setQuoting(false); } }
   };
   // Sugestões de endereço enquanto o cliente digita a rua (somente Araçatuba).
   useEffect(() => {
+    const request = ++suggestRequest.current;
     const text = `${form.street.trim()} ${form.number.trim()}`.trim();
     // Avoid consuming a server-side ORS lookup on every short/unfinished street name.
     if (!isDelivery || !distanceMode || !online || text.length < 8) {
@@ -462,7 +450,6 @@ function Catalog() {
       setSuggestionsOpen(false);
       return;
     }
-    const request = ++suggestRequest.current;
     const timer = setTimeout(async () => {
       try {
         if (!deliveryToken.current) deliveryToken.current = (await startDistanceSession()).token;
@@ -483,13 +470,13 @@ function Catalog() {
     suggestRequest.current += 1;
     setSuggestions([]);
     setSuggestionsOpen(false);
-    const number = suggestion.number || form.number;
+    const number = form.number || suggestion.number;
     autoQuote.current = true;
     setAddressLine(joinAddressLine(suggestion.street, number));
     setForm(f => ({
       ...f,
       street: suggestion.street,
-      number: suggestion.number || f.number,
+      number,
       neighborhood: suggestion.neighborhood || f.neighborhood,
     }));
   };
@@ -514,9 +501,10 @@ function Catalog() {
           }
           setUseSavedAddress(false);
           autoQuote.current = true;
-          setAddressLine(joinAddressLine(found.street, found.number));
-          setForm(f => ({ ...f, street: found.street, number: found.number, neighborhood: found.neighborhood || f.neighborhood }));
-          if (!found.number) setDeliveryError("Confirme o número do seu endereço para calcular a entrega.");
+          const number = form.number || found.number;
+          setAddressLine(joinAddressLine(found.street, number));
+          setForm(f => ({ ...f, street: found.street, number, neighborhood: found.neighborhood || f.neighborhood }));
+          if (!number) setDeliveryError("Confirme o número do seu endereço para calcular a entrega.");
         } catch (e) {
           setDeliveryError(e instanceof Error ? e.message : "Não foi possível usar sua localização. Digite a rua e o número.");
         } finally {
@@ -608,7 +596,12 @@ function Catalog() {
       return setError(orderStatus.reason === "paused" ? "A loja pausou os pedidos por alguns instantes. Tente novamente mais tarde." : "A loja está fechada. Confira os horários de atendimento.");
     if (isDelivery && pickupOnly)
       return setError(`As entregas de hoje encerraram às ${settings.order_cutoff}. Escolha retirada na loja${pickupUntil}.`);
-    const r = customerSchema.safeParse({ ...form, address: fullAddress });
+    const complement = isDelivery && deliveryComplement.trim();
+    const notes = complement
+      ? [`Complemento: ${complement}`, form.notes.trim()].filter(Boolean).join("\n")
+      : form.notes;
+    if (notes.length > 300) return setError("Reduza o complemento ou as observações para continuar.");
+    const r = customerSchema.safeParse({ ...form, address: fullAddress, notes });
     if (!r.success) return setError(r.error.issues[0]?.message ?? "Verifique os dados");
     const d = r.data;
     const requestId = attempt?.signature === JSON.stringify({ customer: d, items: inputItems }) ? attempt.id : crypto.randomUUID();
@@ -1311,6 +1304,22 @@ function Catalog() {
                       </ul>
                     )}
                   </label>
+                  <input
+                    className="field py-2"
+                    aria-label="Bairro"
+                    placeholder="Bairro"
+                    maxLength={80}
+                    value={form.neighborhood}
+                    onChange={(e) => setForm((f) => ({ ...f, neighborhood: e.target.value }))}
+                  />
+                  <input
+                    className="field py-2"
+                    aria-label="Complemento"
+                    placeholder="Complemento (opcional)"
+                    maxLength={120}
+                    value={deliveryComplement}
+                    onChange={(e) => setDeliveryComplement(e.target.value)}
+                  />
                   {!distanceMode && (
                     <p className="text-xs">
                       <span className="text-muted-foreground">Bairro:</span>{" "}
